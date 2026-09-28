@@ -121,3 +121,71 @@ def bonus_action(game, actor, name, *args, **kw):
     if fn is None:
         raise Refusal(f"{actor.name} has no feature that grants a Bonus Action to {name}", page=10)
     return fn(game, actor, *args, **kw)
+
+
+# -- Cleric: Channel Divinity (p.37, 40) -------------------------------------------
+def _channel(game, pc):
+    _need(pc, "channel divinity")
+    if pc.inventory.find("holy symbol") is None:
+        raise Refusal(f"{pc.name} must present a Holy Symbol")
+    if pc.resource_left("channel divinity") <= 0:
+        raise Refusal(f"{pc.name} has no Channel Divinity uses left")
+    actions.spend(game, pc, "action", "Magic")
+    pc.spend("channel divinity")
+
+
+def divine_spark(game, pc, target, mode="heal", dtype="radiant"):
+    if pc.distance_to(target) > 30:
+        raise Refusal("Divine Spark reaches a creature within 30 feet")
+    _channel(game, pc)
+    n = 1 if pc.level < 7 else 2
+    total, rolls, _ = game.dice.roll_expr(f"{n}d8")
+    amount = total + pc.mod("wis")
+    game.log.player("feature", f"{pc.name} uses Channel Divinity: Divine Spark ({n}d8={rolls} + Wis {pc.mod('wis')} "
+                    f"= {amount})", page=37)
+    if mode == "heal":
+        return target.heal(amount, "Divine Spark", page=37)
+    r = target.save("con", pc.spell_dc(), label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})", page=37)
+    return target.take_damage(amount // 2 if r.success else amount, dtype, attacker=pc, source="Divine Spark")
+
+
+def turn_undead(game, pc, targets):
+    from .spells import TurnedEffect
+    _channel(game, pc)
+    game.log.player("feature", f"{pc.name} uses Channel Divinity: Turn Undead", page=37)
+    for t in targets:
+        if t.ctype != "undead" or pc.distance_to(t) > 30:
+            continue
+        r = t.save("wis", pc.spell_dc(), label=f"Wisdom save vs Turn Undead (DC {pc.spell_dc()})", page=37)
+        if not r.success:
+            for cond in ("frightened", "incapacitated"):
+                t.add_effect(TurnedEffect(cond, source="Turn Undead", caster=pc, until=game.clock + MINUTE))
+            game.log.player("condition", f"{t.name} is Frightened and Incapacitated for 1 minute and flees from "
+                            f"{pc.name} (ends if it takes damage)", page=37)
+            game.on_incapacitated(t)
+
+
+def preserve_life(game, pc, allocation: dict):
+    """p.40: restore 5 x Cleric level HP divided among Bloodied creatures within 30 ft,
+    none above half its HP maximum."""
+    _need(pc, "preserve life")
+    pool = 5 * pc.level
+    if sum(allocation.values()) > pool:
+        raise Refusal(f"Preserve Life restores at most {pool} HP in total", page=40)
+    for cid, amt in allocation.items():
+        t = game.get(cid)
+        if not t.bloodied:
+            raise Refusal(f"{t.name} isn't Bloodied", page=40)
+        if pc.distance_to(t) > 30:
+            raise Refusal(f"{t.name} is more than 30 ft away", page=40)
+    _channel(game, pc)
+    game.log.player("feature", f"{pc.name} uses Channel Divinity: Preserve Life ({pool} HP to divide)", page=40)
+    out = {}
+    for cid, amt in allocation.items():
+        t = game.get(cid)
+        cap = t.max_hp // 2
+        give = max(0, min(amt, cap - t.hp))
+        if give < amt:
+            game.log.player("feature", f"{t.name} can be restored only to half its HP maximum ({cap})", page=40)
+        out[cid] = t.heal(give, "Preserve Life", page=40)
+    return out
