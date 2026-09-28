@@ -33,7 +33,7 @@ Stuck on the goblin ambush? `docs/example-ambush.md` has a full winning session 
 ## Tests
 
 ```bash
-pip install pytest && python -m pytest
+pip install pytest && pytest       # pytest 7+; `python -m pytest` also works
 ```
 
 Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
