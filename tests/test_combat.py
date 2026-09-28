@@ -13,6 +13,8 @@ def start(game, *cs, surprised=()):
 
 def set_turn(game, c):
     cb = game.combat
+    if cb.current is not None:
+        C._expire(game, "end", cb.current)
     cb.index = next(i for i, (cid, _) in enumerate(cb.order) if cid == c.id)
     C.start_turn(game)
 
