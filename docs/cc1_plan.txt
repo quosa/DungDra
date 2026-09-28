@@ -1,0 +1,11 @@
+TASKS
+
+Wave 1: CORE engine (dice, log, d20 tests)
+
+Wave 2-3: Content data + character creation
+
+Wave 4: Combat, damage, conditions, rests, exploration, social
+
+Wave 5-6: Spells, spellcasting classes, magic items
+
+Wave 7-8: API, NL interface, adventure, CLI, journeys J1-J6

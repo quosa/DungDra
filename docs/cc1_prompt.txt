@@ -1,0 +1,5 @@
+We need to create a D&D (Dungeons and Dragons) game from the official rule set. I've used Opus 5.5 to extract acceptance scenarios from the ruleset, and your goal is to implement a game engine that fulfils those scenarios and allows the player to play a D&D campaign.
+
+Please iterate the implementation so that each increment provides something tangible and verifiable from the scenarios rule set, and don't move on unless the intended scenarios pass.
+
+Can't wait to start slaying monsters!
