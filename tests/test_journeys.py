@@ -97,7 +97,7 @@ def test_j2_deaths_door():
     s = p.session
     s.auto_gm = False
     g = p.game
-    for who, pos in (("mialee", [0, 0]), ("jozan", [70, 0]), ("brom", [5, 10]), ("lidda", [-5, 10])):
+    for who, pos in (("mialee", [0, 0]), ("jozan", [70, 0]), ("brom", [10, 5]), ("lidda", [-5, 10])):
         s.execute({"cmd": "place", "actor": who, "position": pos})
     s.execute({"cmd": "spawn", "monsters": ["goblin warrior", "goblin warrior"], "positions": [[5, 0], [0, 15]]})
     s.execute({"cmd": "award_xp", "amount": 300})                  # level 2: LIDDA has Cunning Action
@@ -111,10 +111,10 @@ def test_j2_deaths_door():
     p.say("end turn")                                               # MIALEE is unconscious
     # the goblins (GM) attack BROM and LIDDA
     g.dice.force_str("d20=[3]")
-    s.execute({"cmd": "attack", "actor": "goblin_warrior_1", "target": "brom", "weapon": "scimitar"})
+    assert s.execute({"cmd": "attack", "actor": "goblin_warrior_1", "target": "brom", "weapon": "scimitar"})["ok"]
     p.say("end turn")
     g.dice.force_str("d20=[3]")
-    s.execute({"cmd": "attack", "actor": "goblin_warrior_2", "target": "lidda", "weapon": "scimitar"})
+    assert s.execute({"cmd": "attack", "actor": "goblin_warrior_2", "target": "lidda", "weapon": "scimitar"})["ok"]
     p.say("end turn")
     assert g.combat.current.name == "JOZAN"
     p.say("JOZAN moves 10 feet toward MIALEE")
@@ -138,7 +138,7 @@ def test_j2_deaths_door():
     g.answer("shield", True, who="mialee")
     g.dice.force_str("d20=[9]")                                     # 9 + 4 = 13 vs AC 11 -> hit, Shield -> 16
     r = s.execute({"cmd": "attack", "actor": "goblin_warrior_1", "target": "mialee", "weapon": "scimitar"})
-    assert r["result"]["hit"] is False and m.slots_left(1) == 1
+    assert r["result"]["hit"] is False and m.slots_left(1) == 2
     assert any("REACTION" in e.text for e in g.log.of_kind("offer"))
     assert not [e for e in g.log.of_kind("oa") if "makes an Opportunity Attack" in e.text]
     assert reconcile(g) == []
