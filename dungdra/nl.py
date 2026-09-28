@@ -315,6 +315,9 @@ def parse(session, text: str) -> list[dict] | dict:
         return [{"cmd": "sheet", "actor": aid}]
     if re.fullmatch(r"(look|look around|where are we|describe)", t):
         return [{"cmd": "look"}]
+    m = re.search(r"\b(?:go|goes|head|heads|travel|travels|walk|walks|set off|proceed|return)\s+(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$", t)
+    if m and g.combat is None and session.adventure is not None:
+        return [{"cmd": "go", "where": m.group(1)}]
     if re.search(r"\b(continue|go on|press on|move on|onward|next scene|go (north|east|west|south|inside|in|deeper))\b",
                  t) and g.combat is None:
         return [{"cmd": "go"}]

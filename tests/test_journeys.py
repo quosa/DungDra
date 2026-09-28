@@ -353,3 +353,18 @@ def test_j5_goblin_boss_lair():
     assert g.combat is None and not getattr(g, "defeated", False)
     assert all(pc.xp == 900 + 187 for pc in g.pcs())
     assert "R-02" in g.log.rulings() and reconcile(g) == []
+
+
+def test_go_to_named_place():
+    p = Play(seed=3)
+    p.say("use the sample party")
+    p.say("begin the adventure")
+    out = p.say("go to the watchtower")
+    assert "toward The Ruined Watchtower" in out and "Forest Road" in out    # the road comes first
+    fight(p)
+    p.say("continue")
+    out = p.say("go to Millbrook")
+    assert "behind you" in out
+    out = p.say("head to the watchtower")
+    assert "Ruined Watchtower" in out
+    assert "I don't know a place" in p.say("go to Waterdeep")

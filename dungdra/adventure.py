@@ -5,6 +5,8 @@ fiction; encounter budgets stay in the GM log (R-03).
 """
 from __future__ import annotations
 
+import re
+
 from . import combat as C, encounters as E, gm, magic_items as MI, traps as T
 from .monster import Monster
 from .rules import Refusal
@@ -77,7 +79,24 @@ class Adventure:
 
     def describe(self):
         s = self.scenes[self.current]
-        return f"{s['name']}\n{s['text']}"
+        return f"{s['name']}\n{s['text']}\n{self.exits_text()}"
+
+    def exits_text(self):
+        nxt = self.scenes[self.current].get("next")
+        if nxt is None:
+            return "(This is the end of the road.)"
+        return f"(Say 'continue' or 'go to {self.scenes[nxt]['name']}' to press on.)"
+
+    def resolve(self, where: str):
+        """Match a place the player names to a scene id."""
+        w = where.lower().strip(" .!?")
+        w = re.sub(r"^(the|old|ruined)\s+", "", w)
+        for sid, sc in self.scenes.items():
+            names = {sid, sc["name"].lower()} | set(sc.get("aliases", []))
+            if any(w == n or w in n or n in w for n in names if len(n) > 3) or \
+                    any(word in sc["name"].lower().split() for word in w.split() if len(word) > 4):
+                return sid
+        return None
 
     def enter(self, sid):
         g = self.game
@@ -88,6 +107,8 @@ class Adventure:
         g.scene.sunlight = s.get("sunlight", False)
         g.scene.objects = {k: v for k, v in g.scene.objects.items() if "trap" not in v}
         g.log.player("scene", f"== {s['name']} ==\n{s['text']}")
+        if s.get("next") and not s.get("ambush") and not s.get("encounter"):
+            g.log.player("scene", self.exits_text())
         # lay out the party in marching order
         for i, p in enumerate(g.pcs()):
             p.position = (0, 5 * i)
@@ -104,6 +125,22 @@ class Adventure:
 
     def go(self, where=None):
         g = self.game
+        target = None
+        if where:
+            target = self.resolve(where)
+            if target is None:
+                raise Refusal(f"I don't know a place called '{where}'. {self.exits_text()}")
+            order = self.order
+            here, there = order.index(self.current), order.index(target)
+            if there == here:
+                raise Refusal(f"You're already at {self.scenes[target]['name']}.")
+            if there < here:
+                raise Refusal(f"This adventure only goes forward: {self.scenes[target]['name']} is behind you. "
+                              f"{self.exits_text()}")
+            if there > here + 1:
+                nxt = self.scenes[self.scenes[self.current]["next"]]
+                g.log.player("scene", f"You set off toward {self.scenes[target]['name']}; the way leads through "
+                             f"{nxt['name']} first.")
         if g.combat is not None:
             raise Refusal("You can't leave in the middle of a fight")
         g.resolve_dying()
@@ -127,7 +164,7 @@ class Adventure:
                 raise Refusal("The locked chest is still here. Open it (pick the lock, or disarm it) before moving on, "
                               "or say 'leave the chest'")
             self.take_loot()
-        nxt = where or s.get("next")
+        nxt = s.get("next")
         if nxt is None:
             g.log.player("scene", s.get("ending", "The adventure is over."))
             return "The End"
