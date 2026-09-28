@@ -393,10 +393,14 @@ class Session:
 
     def cmd_attune(self, item, actor=None):
         a = self._c(actor)
+        if a.inventory.find(item) is None:
+            raise Refusal(f"{a.name} has no {item}")
         return R.short_rest(self.game, [a], focus={a.id: ("attune", a.inventory.find(item))})
 
     def cmd_identify(self, item, actor=None):
         a = self._c(actor)
+        if a.inventory.find(item) is None:
+            raise Refusal(f"{a.name} has no {item}")
         return R.short_rest(self.game, [a], focus={a.id: ("identify", a.inventory.find(item))})
 
     def cmd_award_xp(self, amount, reason="GM award"):

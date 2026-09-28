@@ -483,8 +483,8 @@ def parse(session, text: str) -> list[dict] | dict:
         return [{"cmd": "craft", "actor": aid, "item": canonical(m.group(1).strip())}]
     m = re.search(r"\b(attunes?|identif(?:y|ies))\b.*?\b(?:the |a )?(cloak of protection|wand of magic missiles|bag of holding|[a-z +1]+)$", t)
     if m:
-        return [{"cmd": "attune" if m.group(1).startswith("attun") else "identify", "actor": aid,
-                 "item": m.group(2).strip()}]
+        item = re.sub(r"^(to |with )?(the |a |an |his |her |their )?", "", m.group(2).strip())
+        return [{"cmd": "attune" if m.group(1).startswith("attun") else "identify", "actor": aid, "item": item}]
     if re.search(r"\bcop(y|ies)\b.*\bscroll\b", t):
         return [{"cmd": "copy_scroll", "actor": aid}]
     m = re.search(r"\bprepares?\s+(.*)", t)
