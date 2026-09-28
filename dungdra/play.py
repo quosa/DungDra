@@ -7,7 +7,8 @@ from .events import PLAYER
 
 
 class Play:
-    def __init__(self, seed: int | None = 1, decider=None, adventure=True, llm=None):
+    def __init__(self, seed: int | None = 1, decider=None, adventure=True, llm=None, auto_end_turn=False):
+        self.auto_end_turn = auto_end_turn
         self.session = Session(seed=seed)
         self.game = self.session.game
         self.game.decider = decider
@@ -50,13 +51,34 @@ class Play:
                 out.append(f"(Refused) {res['error']}")
                 break
             r = res.get("result")
-            if isinstance(r, str) and cmd["cmd"] in ("status", "sheet", "look"):
+            if isinstance(r, str) and cmd["cmd"] in ("status", "sheet", "look", "inventory"):
                 out.append(r)
-        if self.game.combat is not None and self.game.combat.current is not None:
-            cur = self.game.combat.current
-            if cur.team == "party":
-                out.append(f"→ It's {cur.name}'s turn.")
+        out += self._turn_flow(cmds)
         return "\n".join(x for x in out if x)
+
+    def _turn_flow(self, cmds):
+        """After a command in combat: say what the active PC can still do, and end the turn
+        automatically once the character has nothing useful left (movement alone doesn't count)."""
+        from .turnhelp import turn_summary
+        out = []
+        info_only = all(c.get("cmd") in ("status", "sheet", "look", "inventory", "end_turn") for c in cmds)
+        for _ in range(8):
+            g = self.game
+            cb = g.combat
+            if cb is None or cb.current is None or cb.current.team != "party" or not cb.current.is_pc():
+                break
+            cur = cb.current
+            hint, left = turn_summary(g, cur)
+            acted = bool(cb.turn.log) or cb.turn.moved > 0 or cb.turn.bonus_used
+            if self.auto_end_turn and not left and acted and not info_only:
+                out.append(f"({cur.name} has nothing more to do this turn, so the turn ends.)")
+                res = self.session.execute({"cmd": "end_turn"})
+                out += res["events"]
+                info_only = True
+                continue
+            out.append(f"→ It's {cur.name}'s turn ({hint}).")
+            break
+        return out
 
     def _events(self, start):
         return "\n".join(str(e) for e in self.game.log.since(start) if e.visibility == PLAYER)

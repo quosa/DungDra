@@ -309,6 +309,20 @@ def parse(session, text: str) -> list[dict] | dict:
     aid = actor.id if actor else None
     if re.fullmatch(r"(end( my)? turn|done|pass|next|end)", t) or re.search(r"\bends? (his|her|their|my) turn\b", t):
         return [{"cmd": "end_turn"}]
+    if not re.search(r"\bcasts?\b", t):
+        sec = None
+        if re.search(r"\b(inventory|inventories|equipment|gear|belongings|what (do|does) \w+ (carry|have)|items)\b", t):
+            sec = "all"
+        if re.search(r"\b(spells?|spell list|spell slots|slots|cantrips)\b", t) and len(t.split()) <= 5:
+            sec = "spells"
+        if re.search(r"\bpotions?\b", t) and len(t.split()) <= 5 and not re.search(r"\b(drinks?|gives?|administers?)\b", t):
+            sec = "potions"
+        if re.search(r"^(show |list )?(\w+'?s? )?weapons\b|\bweapons$", t):
+            sec = "weapons"
+        if sec:
+            who = find_actor(session, t, default=False)
+            return [{"cmd": "inventory", "actor": who.id if who else None,
+                     "section": None if sec == "all" else sec}]
     if re.search(r"\b(status|how are we|hp\b)", t):
         return [{"cmd": "status"}]
     if re.search(r"\b(sheet|character sheet)\b", t):

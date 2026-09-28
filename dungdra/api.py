@@ -31,6 +31,7 @@ class Session:
         if fn is None:
             return {"ok": False, "error": f"Unknown command {name!r}", "events": []}
         args = {k: v for k, v in cmd.items() if k != "cmd"}
+        snap = self._snapshot_turn()
         try:
             out = fn(**args)
             ok = True
@@ -39,6 +40,8 @@ class Session:
             out, ok, err = None, False, f"Out of scope: {e.reason}"
         except Refusal as e:
             out, ok, err = None, False, e.reason
+        if not ok:
+            self._restore_turn(snap)          # a refused command costs nothing
         # after a PC acts in combat, let the GM run monster turns when the PC ends its turn
         events = [str(e) for e in g.log.since(start) if e.visibility == PLAYER]
         res = {"ok": ok, "events": events}
@@ -50,6 +53,33 @@ class Session:
         return res
 
     # -- helpers ---------------------------------------------------------------
+    def _snapshot_turn(self):
+        import copy
+        g = self.game
+        cb = g.combat
+        wield = {c.id: list(c.wielded) for c in g.pcs()}
+        if cb is None or cb.turn is None:
+            return (None, None, None, wield)
+        return (cb, copy.deepcopy(cb.turn), set(cb.reaction_used), wield)
+
+    def _restore_turn(self, snap):
+        cb, turn, reactions, wield = snap
+        g = self.game
+        for cid, w in wield.items():
+            if cid in g.creatures:
+                g.creatures[cid].wielded = w
+        if cb is not None and g.combat is cb and cb.turn is not None and turn is not None \
+                and cb.turn.cid == turn.cid:
+            cb.turn = turn
+            cb.reaction_used = reactions
+
+    def cmd_inventory(self, actor=None, section=None):
+        from .inventory_view import inventory_text
+        g = self.game
+        if actor is None and self.active is None and g.combat is None:
+            return "\n\n".join(inventory_text(p, section) for p in g.pcs())
+        return inventory_text(self._c(actor), section)
+
     def _c(self, ref=None):
         g = self.game
         if ref is None:

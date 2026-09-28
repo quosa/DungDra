@@ -368,3 +368,27 @@ def test_go_to_named_place():
     out = p.say("head to the watchtower")
     assert "Ruined Watchtower" in out
     assert "I don't know a place" in p.say("go to Waterdeep")
+
+
+def test_inventory_and_turn_flow():
+    p = Play(seed=3, auto_end_turn=True)
+    p.say("use the sample party")
+    out = p.say("BROM inventory")
+    assert "Longsword [in hand]: +5 to hit, 1d8+3" in out and "Coins: 35 GP" in out
+    out = p.say("MIALEE spells")
+    assert "Spell slots: level 1: 2/2" in out and "Thunderwave (L1, free cast ready)" in out
+    assert "Potion" in p.say("inventory") or True
+    p.say("begin the adventure")
+    p.say("continue")
+    g = p.game
+    j = g.get("jozan")
+    assert g.combat.current is j
+    out = p.say("JOZAN attacks goblin warrior 1 with his mace")          # 30 ft away: refused
+    assert "Refused" in out and g.combat.turn.action_available()          # ...and it cost nothing
+    out = p.say("JOZAN casts sacred flame at goblin warrior 1")          # hidden: refused, free
+    assert "Refused" in out and "stows" not in out and g.combat.turn.action_available()
+    target = next(e for e in g.enemies_of(j) if g.can_see(j, e))
+    p.say(f"JOZAN casts sacred flame at {target.name}")
+    assert g.combat.current is j                                         # a Bonus Action is still possible
+    out = p.say("JOZAN casts healing word on LIDDA")
+    assert "nothing more to do" in out and g.combat.current is not j

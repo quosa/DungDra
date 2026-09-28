@@ -9,6 +9,9 @@ from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can
 from .geometry import dist_points
 from .rules import DAY, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm, size_index
 
+# spells whose text says "that you can see"
+SIGHT_SPELLS = {"sacred flame", "healing word", "command", "hold person", "magic missile", "misty step"}
+
 FOCUS_FOR = {"cleric": ["holy symbol"], "wizard": ["arcane focus", "spellbook", "quarterstaff"]}
 
 
@@ -80,7 +83,6 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
     if getattr(caster, "armor", None) is not None and not caster.trained_in(caster.armor_category()):
         raise Refusal(f"{caster.name} lacks training with {caster.armor.display} and can't cast spells in it",
                       page=104)
-    _components(game, caster, spell, sd, scroll or item is not None)
     cb = game.combat
     if cb is not None and cb.is_turn(caster) and use_slot and cb.turn.slot_spell_cast:
         raise Refusal("Only one spell slot can be expended to cast a spell on a turn", page=105)
@@ -92,6 +94,12 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
         if hasattr(t, "id") and t is not caster and game.cover_between(caster, t) == "total":
             raise Refusal(f"{t.name} is behind Total Cover and can't be targeted", page=106)
     _range_check(game, caster, spell, sd, targets)
+    if spell in SIGHT_SPELLS:
+        for t in targets:
+            if hasattr(t, "id") and t is not caster and not can_see(caster, t):
+                raise Refusal(f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
+                              f"(try the Search action to find hidden creatures)", page=sd["page"])
+    _components(game, caster, spell, sd, scroll or item is not None)
     # --- action economy ----------------------------------------------------------
     time = sd["time"]
     if cb is not None:
