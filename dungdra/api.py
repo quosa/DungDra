@@ -20,6 +20,7 @@ class Session:
         self.builder: CharacterBuilder | None = None
         self.adventure = None
         self.active: str | None = None       # default acting PC
+        self.auto_gm = True                   # False: monster turns are driven through the API (tests/GM tools)
 
     # ------------------------------------------------------------------
     def execute(self, cmd: dict) -> dict:
@@ -121,20 +122,25 @@ class Session:
         foes = [g.get(e) for e in (enemies or [c.id for c in g.creatures.values() if c.team == "enemy" and not c.dead])]
         parts = [p for p in g.pcs() if not p.dead] + foes
         C.roll_initiative(g, parts, surprised=[g.get(s) for s in surprised])
-        gm.run_until_pc(g)
+        if self.auto_gm:
+            gm.run_until_pc(g)
 
     def cmd_end_turn(self, actor=None):
         g = self.game
         if g.combat is None:
             raise Refusal("There's no combat going on")
         C.end_turn(g)
-        gm.run_until_pc(g)
+        if self.auto_gm:
+            gm.run_until_pc(g)
+        elif gm.combat_over(g):
+            gm.finish_combat(g)
 
     def cmd_attack(self, target, actor=None, weapon=None, thrown=False, two_handed=False, light_extra=False,
                    unarmed=False):
         a = self._c(actor)
-        r = C.attack(self.game, a, self.game.get(target), weapon=weapon, thrown=thrown, two_handed=two_handed,
-                     light_extra=light_extra, unarmed=unarmed)
+        kw = {"weapon": weapon} if a.is_pc() else {"attack_name": weapon}
+        r = C.attack(self.game, a, self.game.get(target), thrown=thrown, two_handed=two_handed,
+                     light_extra=light_extra, unarmed=unarmed, **kw)
         self._after_pc_action()
         return {"hit": r.hit, "crit": r.crit, "damage": r.damage}
 
@@ -284,7 +290,70 @@ class Session:
 
     def cmd_long_rest(self, interrupt_after_hours=None):
         g = self.game
-        return R.long_rest(g, self._resters(), interrupt_after_hours=interrupt_after_hours)
+        pcs = self._resters()
+        sched = getattr(self, "scheduled_interrupt", None)
+        if sched is None:
+            return R.long_rest(g, pcs, interrupt_after_hours=interrupt_after_hours)
+        # a GM-scheduled interruption: rest N hours, then the encounter strikes
+        self.scheduled_interrupt = None
+        hours, keys = sched
+        R.begin_rest(g, "long", pcs)
+        g.log.player("rest", "Watches are set: each companion takes a turn standing guard (light activity)",
+                     page=185)
+        need = max(4 if "trance" in p.traits else 8 for p in pcs)
+        g.advance(int(hours * 3600), "Long Rest")
+        g.rest["interrupted"] = "an attack in the night"
+        g.log.player("rest", f"The Long Rest is interrupted after {hours:g} hours!", page=185)
+        if hours >= 1:
+            g.log.player("rest", "At least 1 hour had passed: the rest grants Short Rest benefits", page=185)
+            for p in pcs:
+                R.short_rest_benefits(g, p)
+        g.rest = None
+        self.paused_rest = {"need": need, "rested": hours, "interruptions": 1, "members": [p.id for p in pcs]}
+        mons = E.spawn(g, keys, [(25 + 5 * i, 10) for i in range(len(keys))])
+        E.rate(g, [p.level for p in pcs], mons)
+        C.roll_initiative(g, [p for p in g.pcs() if not p.dead] + mons, surprised=[])
+        gm.run_until_pc(g)
+        return False
+
+    def cmd_resume_rest(self):
+        g = self.game
+        pr = getattr(self, "paused_rest", None)
+        if pr is None:
+            raise Refusal("There's no interrupted Long Rest to resume")
+        pcs = [g.get(i) for i in pr["members"] if not g.get(i).dead and g.get(i).hp >= 1]
+        R.begin_rest(g, "long", pcs)
+        remaining = pr["need"] - pr["rested"] + pr["interruptions"]
+        g.log.player("rest", f"The Long Rest resumes: it needs {pr['interruptions']} extra hour(s) per interruption "
+                     f"({remaining:g} hours to go)", page=185)
+        self.paused_rest = None
+        g.advance(int(remaining * 3600), "Long Rest (resumed)")
+        return R.finish_long_rest(g, pcs)
+
+    # -- GM tools (setup; the natural-language player never issues these) ----------
+    def cmd_spawn(self, monsters, positions=None, team="enemy", names=None):
+        mons = E.spawn(self.game, monsters, positions, team)
+        if names:
+            for m, n in zip(mons, names):
+                m.name = n
+        return [m.id for m in mons]
+
+    def cmd_give(self, actor, item=None, gp=0, qty=1, **props):
+        a = self.game.get(actor)
+        if item:
+            try:
+                it = MI.make(item, **props)
+                a.inventory.add(it)
+            except (OutOfScope, Refusal):
+                a.inventory.add(item, qty)
+        if gp:
+            a.purse.add(gp=gp)
+
+    def cmd_schedule_interrupt(self, hours, monsters):
+        self.scheduled_interrupt = (hours, list(monsters))
+
+    def cmd_place(self, actor, position):
+        self.game.get(actor).position = tuple(position)
 
     def cmd_buy(self, item, qty=1, actor=None):
         gear.buy(self.game, self._c(actor), item, qty)

@@ -318,6 +318,8 @@ def parse(session, text: str) -> list[dict] | dict:
     if re.search(r"\b(continue|go on|press on|move on|onward|next scene|go (north|east|west|south|inside|in|deeper))\b",
                  t) and g.combat is None:
         return [{"cmd": "go"}]
+    if re.search(r"\bresume\b.*\brest\b|\bback to (sleep|rest)\b", t):
+        return [{"cmd": "resume_rest"}]
     if re.search(r"\bshort rest\b", t):
         return [{"cmd": "short_rest"}]
     if re.search(r"\blong rest\b|\bsleep for the night\b|\bmake camp\b", t):

@@ -2,6 +2,40 @@
 
 An attempt to build D&amp;D SRD 5.2.1 (5.5e) autonomously using the ruleset and AI-derived test scenarios using loop engineering.
 
+A rules-faithful, single-player game engine that is compatible with fifth edition. It's written in pure Python 3.10+ with no runtime dependencies.
+
+## Play
+
+```bash
+python -m dungdra              # interactive adventure: "The Goblin Trail"
+python -m dungdra --gm-log     # also show GM-only log lines (budgets, hidden DCs, rulings)
+```
+
+Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Here are some example commands: `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `LIDDA uses cunning action to hide`, `end turn`, `continue`, `short rest`, `status`. Whenever the rules offer you a choice (a Reaction such as Shield, Halfling Luck, Heroic Inspiration or Savage Attacker), the game asks you.
+
+## Architecture
+
+| Module | Role |
+|---|---|
+| `dice.py`, `events.py` | Forced-dice injection over a seeded RNG, and an event log where every entry is player-visible or GM-only and carries SRD pages and ruling IDs |
+| `d20.py`, `effects.py`, `creature.py` | D20 Tests, Advantage/Disadvantage, rerolls, and an effect-hook system that holds all 15 conditions, damage and healing |
+| `character.py`, `creation.py`, `features.py`, `fixtures.py` | Player characters, the validating creation builder, levels 1–3, and the four scenario fixtures |
+| `combat.py`, `actions.py`, `class_actions.py`, `mounted.py`, `damage.py` | Initiative, turn economy, attacks, weapon mastery, Opportunity Attacks, grappling, and death saves |
+| `spells.py`, `spellcasting.py`, `magic_items.py` | Spellcasting rules, the 32 subset spells, and the 7 magic items |
+| `monster.py`, `gm.py`, `encounters.py` | The 14 stat blocks, monster tactics, encounter budgets (R-03), and the XP split (R-02) |
+| `rest.py`, `hazards.py`, `traps.py`, `explore.py`, `gear.py` | Rests, hazards, poisons, traps, travel, jumping, trade, lifestyle, and crafting |
+| `api.py` | Structured command API: `Session().execute({"cmd": ..., ...})` |
+| `nl.py`, `play.py`, `cli.py`, `adventure.py` | Natural-language interface, the campaign, and the terminal UI |
+| `audit.py`, `snapshot.py` | JSON state snapshot and log reconciliation |
+
+## Tests
+
+```bash
+pip install pytest && python -m pytest
+```
+
+Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
+
 > **License note (CC-BY-4.0).** The SRD may be used freely, but the game and any repo that includes SRD text or data **must** include this attribution statement verbatim (SRD p.1):
 > *"This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."*
 > Don't add any other attribution to Wizards. You may say "compatible with fifth edition" or "5E compatible".
@@ -56,3 +90,4 @@ The engine must implement each of these as an explicit, logged ruling. The judge
 | R-01 | The SRD 5.2.1 has no rule for gaining the same proficiency twice. For example, the Rogue class and the Criminal background both grant Thieves' Tools. | The player picks a different tool proficiency instead. |
 | R-02 | The SRD says XP is awarded for defeating or neutralizing a monster (p.255) but doesn't say how XP is shared. | Divide the total evenly among participating PCs, rounding down. |
 | R-03 | The encounter rules build encounters to a budget (p.202). There's no label for an encounter whose XP exceeds the High budget. Such encounters can only come from authored content or GM improvisation, because generated encounters are built within budget. | The engine flags it as **"Over High budget"** in the **GM log only**, with the ruling ID, and never shows the flag to the player. If the GM improvises reinforcements, the engine blocks the over-budget addition or requires a logged justification. Danger is conveyed to the player **in the fiction** (SRD "Powerful Creatures" guidance, p.203), not as a number. |
+| R-04 | Disarming a trap (Poisoned Needle) without Thieves' Tools isn't covered; the tool's Utilize entry assumes the tool. | Allowed as a plain Dexterity (Sleight of Hand) check with no tool proficiency or tool+skill Advantage; logged GM-only. |
