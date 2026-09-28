@@ -189,3 +189,22 @@ def preserve_life(game, pc, allocation: dict):
             game.log.player("feature", f"{t.name} can be restored only to half its HP maximum ({cap})", page=40)
         out[cid] = t.heal(give, "Preserve Life", page=40)
     return out
+
+
+def change_mastery(game, pc, old: str, new: str):
+    """Weapon Mastery (p.48, p.62): after a Long Rest a Fighter may change one choice; a Rogue may change
+    both. Only allowed before anything else wears off the rest (tracked per Long Rest)."""
+    from .data.equipment import canonical, WEAPONS
+    old, new = canonical(old), canonical(new)
+    if pc.long_rest_finished_at is None:
+        raise Refusal("Weapon Mastery choices change only when you finish a Long Rest", page=48)
+    if old not in pc.weapon_masteries:
+        raise Refusal(f"{pc.name} doesn't have mastery with {old}")
+    if new not in WEAPONS or not pc.proficient_with(new):
+        raise Refusal(f"{pc.name} must be proficient with {new} to master it")
+    limit = 1 if pc.cls == "fighter" else len(pc.weapon_masteries)
+    if pc.notes.get("mastery_swaps", 0) >= limit:
+        raise Refusal(f"{pc.name} can change only {limit} Weapon Mastery choice(s) per Long Rest", page=48)
+    pc.weapon_masteries[pc.weapon_masteries.index(old)] = new
+    pc.notes["mastery_swaps"] = pc.notes.get("mastery_swaps", 0) + 1
+    game.log.player("feature", f"{pc.name} practices weapon drills: mastery {old.title()} → {new.title()}", page=48)

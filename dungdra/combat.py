@@ -909,6 +909,12 @@ def deal_attack_damage(game, attacker, target, item, matk, unarmed, crit, roll, 
         if item.magic_bonus:
             total += item.magic_bonus
             parts.append(f"+{item.magic_bonus} magic")
+    elif game.fixed_monster_damage and not crit:
+        # p.189: the GM uses either the static number or the dice, never both
+        from .dice import average
+        dtype = matk["dtype"]
+        total = average(matk["damage"])
+        parts.append(f"fixed {total} ({matk['damage']})")
     else:
         dtype = matk["dtype"]
         dice_total, dice = roll_damage_dice(game, attacker, matk["damage"], crit)

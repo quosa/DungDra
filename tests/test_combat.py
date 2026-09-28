@@ -515,3 +515,24 @@ def test_cls_ftr02_mace_no_mastery_and_champion(game):
     game.dice.force_str("d20=[5,14]")
     r = C.initiative_roll(game, brom)
     assert r.mode == "advantage" and r.chosen == 14
+
+
+def test_cls_ftr02_one_mastery_change_per_long_rest(game):
+    from dungdra import rest as R
+    b = pc(game, "BROM")
+    with pytest.raises(Refusal, match="Long Rest"):
+        CA.change_mastery(game, b, "glaive", "greataxe")
+    R.long_rest(game, [b])
+    CA.change_mastery(game, b, "glaive", "greataxe")
+    with pytest.raises(Refusal, match="only 1"):
+        CA.change_mastery(game, b, "javelin", "maul")
+    assert "greataxe" in b.weapon_masteries
+
+
+def test_mon01_fixed_or_dice(game):
+    b = pc(game, "LIDDA")
+    ogre = mon(game, "ogre", (5, 0))
+    game.fixed_monster_damage = True
+    game.dice.force_str("d20=[15]")
+    r = C.attack(game, ogre, b, attack_name="greatclub")
+    assert r.damage == 13 and game.dice.pending("d8") == 0 and not any(s == 8 for s, _, _ in game.dice.history)
