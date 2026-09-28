@@ -180,8 +180,17 @@ def search(game, actor, skill="perception", dc=None, target=None, what="", **kw)
         raise Refusal(f"The Search action uses Wisdom (Insight, Medicine, Perception or Survival), not {skill.title()}",
                       page=187)
     spend(game, actor, "action", "Search")
-    return actor.check(skill=skill, ability="wis", dc=dc, target=target,
-                       label=f"Search: Wisdom ({skill.title()})" + (f" — {what}" if what else ""), **kw)
+    r = actor.check(skill=skill, ability="wis", dc=dc, target=target,
+                    label=f"Search: Wisdom ({skill.title()})" + (f" — {what}" if what else ""), **kw)
+    if skill == "perception":
+        # A Perception Search finds hidden creatures whose Hide total the check meets (p.183)
+        hiders = [target] if target is not None else [e for e in game.enemies_of(actor) if not e.dead]
+        found = [h for h in hiders if h.hidden_total is not None and notices(game, actor, h, active_roll=r)]
+        if found:
+            game.log.player("found", f"{actor.name} spots " + ", ".join(h.name for h in found), page=183)
+        elif any(h.hidden_total is not None for h in hiders):
+            game.log.player("found", f"{actor.name} doesn't spot anyone hidden", page=183)
+    return r
 
 
 def study(game, actor, skill=None, dc=None, topic="", creature_type=None, **kw):

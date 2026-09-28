@@ -13,6 +13,8 @@ python -m dungdra --gm-log     # also show GM-only log lines (budgets, hidden DC
 
 Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Here are some example commands: `inventory`, `BROM inventory`, `MIALEE spells`, `JOZAN potions`, `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `LIDDA uses cunning action to hide`, `end turn`, `continue`, `short rest`, `status`. In combat, a refused command (such as an out-of-range attack) doesn't cost anything. After each command the game shows what the active character can still do, and the turn ends on its own once no action or useful Bonus Action is left. Use `--manual-turns` to always type `end turn` yourself. Whenever the rules offer you a choice (a Reaction such as Shield, Halfling Luck, Heroic Inspiration or Savage Attacker), the game asks you.
 
+Stuck on the goblin ambush? `docs/example-ambush.md` has a full winning session (`--seed 5`) with the commands used and some tactics.
+
 ## Architecture
 
 | Module | Role |

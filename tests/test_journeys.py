@@ -404,3 +404,22 @@ def test_travel_during_combat_explains():
     assert "fight is going on" in out and "turn" in out and "Goblin Warrior" in out
     out = p.say("dance a jig")
     assert "didn't catch" in out and "It's" in out
+
+
+def test_search_reveals_hidden_ambushers():
+    """A Perception Search that meets a hider's Stealth total finds it (p.183); a low one doesn't."""
+    p = Play(seed=5, auto_end_turn=True)
+    p.say("use the sample party")
+    p.say("begin the adventure")
+    p.say("go to the watchtower")
+    assert p.game.combat.current.name == "LIDDA"
+    gobs = [e for e in p.game.enemies_of(p.game.get("lidda"))]
+    assert all(g.hidden_total == 16 for g in gobs)
+    p.game.dice.force_str("d20=[3]")
+    out = p.say("LIDDA searches for hidden enemies")
+    assert "doesn't spot anyone hidden" in out and all(g.hidden_total == 16 for g in gobs)
+    p.game.dice.force_str("d20=[14]")
+    out = p.say("BROM searches for hidden enemies")    # 14 + 2 = 16 meets Stealth 16
+    assert "BROM spots" in out
+    assert all(g.hidden_total is None for g in gobs)
+    assert all(p.game.can_see(p.game.get("brom"), g) for g in gobs)

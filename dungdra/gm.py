@@ -133,8 +133,10 @@ def finish_combat(game):
     cb = game.combat
     if cb is None:
         return
-    foes = [game.creatures[i] for i in cb.participants if i in game.creatures and game.creatures[i].team == "enemy"]
-    pcs = [game.creatures[i] for i in cb.participants if i in game.creatures and game.creatures[i].is_pc()]
+    ids = [i for i, _ in cb.order if i in cb.participants] + sorted(i for i in cb.participants
+                                                                  if i not in dict(cb.order))
+    foes = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "enemy"]
+    pcs = [p for p in game.pcs() if p.id in cb.participants]
     if not any(not p.dead and p.hp > 0 for p in pcs):
         C.end_combat(game, "the party has fallen")
         game.defeated = True

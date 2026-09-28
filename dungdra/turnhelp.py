@@ -11,6 +11,7 @@ def bonus_options(game, pc) -> list[str]:
     if t.bonus_used or not pc.can_act():
         return []
     out = []
+    hurt = any(a.hp < a.max_hp for a in [pc] + game.allies_of(pc))
     if pc.has_feature("cunning action"):
         out.append("Cunning Action (Dash/Disengage/Hide)")
     if pc.has_feature("second wind") and pc.resource_left("second wind") and pc.hp < pc.max_hp:
@@ -22,11 +23,13 @@ def bonus_options(game, pc) -> list[str]:
                   and w.uid != t.notes["light_weapon"]]
         if others:
             out.append(f"extra attack with {others[0].display} (Light)")
-    if pc.inventory.find("potion of healing"):
+    if hurt and pc.inventory.find("potion of healing"):
         out.append("drink/administer a Potion of Healing")
     for sp in pc.all_known_spells():
         d = SPELLS.get(sp)
         if not d or d["time"] != "bonus action":
+            continue
+        if d.get("healing") and not hurt:
             continue
         ways = pc.castable(sp)
         free = any(w.get("free") and pc.free_casts[sp]["available"] for w in ways)

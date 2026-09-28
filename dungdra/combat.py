@@ -273,6 +273,8 @@ def end_combat(game, reason=""):
         return
     cb.ended = True
     rounds = cb.round
+    # the final round counts in full, even when the fight ends partway through it
+    game.clock = max(game.clock, cb.start_clock + rounds * ROUND)
     game.log.player("combat", f"Combat ends after {rounds} round{'s' if rounds != 1 else ''}"
                     + (f" ({reason})" if reason else ""), page=14, rounds=rounds)
     game.combat = None
