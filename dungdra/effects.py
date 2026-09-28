@@ -160,8 +160,6 @@ class Condition(Effect):
         if n == "blinded":
             if ctx.kind == "check" and "sight" in ctx.tags:
                 acc.fail("Blinded: can't see")
-            if ctx.kind == "attack" and not _sees_by_other_means(o, ctx.target):
-                acc.disadvantage("Blinded")
         elif n == "deafened":
             if ctx.kind == "check" and "hearing" in ctx.tags:
                 acc.fail("Deafened: can't hear")
@@ -177,8 +175,6 @@ class Condition(Effect):
                 acc.disadvantage("Incapacitated")
         elif n == "invisible":
             if ctx.kind == "initiative":
-                acc.advantage("Invisible")
-            if ctx.kind == "attack" and ctx.target is not None and not can_see(ctx.target, o):
                 acc.advantage("Invisible")
         elif n in ("paralyzed", "stunned", "unconscious", "petrified"):
             if ctx.kind == "save" and ctx.ability in ("str", "dex"):
@@ -200,11 +196,9 @@ class Condition(Effect):
         n = self.condition
         o = self.owner
         if ctx.kind == "attack":
-            if n == "blinded" and not _sees_by_other_means(o, ctx.actor):
-                acc.advantage(f"target {o.name} is Blinded")
-            elif n == "invisible" and not can_see(ctx.actor, o):
-                acc.disadvantage(f"target {o.name} is Invisible")
-            elif n in ("paralyzed", "stunned", "unconscious", "petrified", "restrained"):
+            # Blinded/Invisible attack effects are resolved by the attack code's
+            # "can see" test (p.14 Unseen Attackers and Targets).
+            if n in ("paralyzed", "stunned", "unconscious", "petrified", "restrained"):
                 acc.advantage(f"target {o.name} is {n.title()}")
                 if n in ("paralyzed", "unconscious") and _within5(ctx):
                     acc.auto_crit.append(f"{n.title()} target within 5 ft")

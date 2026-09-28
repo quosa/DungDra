@@ -627,6 +627,7 @@ def prepare_spells(pc, spells, at_creation=False):
         if not pc.notes.get("may_change_prepared"):
             raise Refusal("Prepared spells can be changed only after finishing a Long Rest")
     pc.prepared = counted
+    pc.notes.pop("may_change_prepared", None)
     if g:
         g.log.player("prepare", f"{pc.name} prepares {', '.join(s.title() for s in counted)}",
                      page=pc.cdata["page"])

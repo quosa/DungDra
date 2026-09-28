@@ -162,6 +162,9 @@ class Creature:
         if self.game and not already:
             self.game.log.player("condition", f"{self.name} has the {name.title()} condition"
                                  + (f" ({source})" if source else ""), page=page)
+        if name == "prone" and self.game and not already:
+            from .combat import _mounted_fall_check
+            _mounted_fall_check(self.game, self)
         if name in INCAPACITATING or IMPLIES.get(name, set()) & INCAPACITATING:
             self._on_incapacitated()
         if name == "unconscious":
@@ -409,6 +412,8 @@ class Creature:
     def damage_multiplier_parts(self, dtype: str) -> tuple[bool, bool, bool]:
         immune = dtype in self.immune
         resist = dtype in self.resist or "all" in self.resist or self.has("petrified")
+        if dtype == "fire" and self.game is not None and self.game.scene.underwater:
+            resist = True          # p.16: anything underwater has Resistance to Fire
         vuln = dtype in self.vuln
         for e in self.effects:
             f = getattr(e, "damage_traits", None)
@@ -498,12 +503,17 @@ class Creature:
         self.hp = 1
         self.add_condition("unconscious", "knocked out")
         self.notes["knocked_out"] = True
+        self.notes["ko_at"] = g.clock if g else 0
         if g:
             g.log.player("knockout", f"{self.name} is knocked out: 1 HP, Unconscious, and starts a Short Rest",
                          page=183)
 
     def _damage_at_zero(self, amount, crit):
         pass
+
+    def on_time_passed(self, start, end):
+        from .damage import on_time_passed
+        on_time_passed(self.game, self, start, end)
 
     def die(self, reason=""):
         if self.dead:

@@ -192,3 +192,78 @@ def single_action(game, actor, actions: list[str]):
     if len(actions) > 1:
         raise Refusal(f"{actor.name} can take only one action at a time: choose one of "
                       f"{', '.join(a.title() for a in actions)}", page=9)
+
+
+# -- Hide (p.183) ------------------------------------------------------------------
+def hide(game, actor, cover=None, obscured=None, bonus=False, source="Hide", dc=15, **kw):
+    """cover: 'three-quarters'|'total'; obscured: 'heavily'. Must be out of every enemy's line of sight."""
+    ok = cover in ("three-quarters", "total") or obscured == "heavily"
+    if not ok and cover == "creature" and actor.has_trait("naturally stealthy"):
+        ok = True
+    if not ok and actor.id in game.scene.heavily_obscured:
+        ok = True
+    if not ok:
+        raise Refusal(f"{actor.name} can't hide in plain view: needs Heavy Obscurement or Three-Quarters/Total "
+                      f"Cover and to be out of enemies' line of sight", page=183)
+    for e in game.enemies_of(actor):
+        if kw.get("seen_by") and e.id in kw["seen_by"]:
+            raise Refusal(f"{e.name} can see {actor.name}; hiding needs to be out of any enemy's line of sight",
+                          page=183)
+    spend(game, actor, "bonus" if bonus else "action", source)
+    r = actor.check("stealth", dc=dc, label="Dexterity (Stealth) check to Hide", page=183)
+    if r.success:
+        for e in list(actor.effects):
+            if e.condition == "invisible" and e.source.startswith("Hide"):
+                actor.effects.remove(e)
+        actor.add_condition("invisible", f"Hide (Stealth {r.total})")
+        actor.hidden_total = r.total
+        game.log.player("hide", f"{actor.name} is hidden (Invisible); a Wisdom (Perception) check of {r.total} or "
+                        f"higher finds them", page=183)
+    return r
+
+
+def end_hiding(game, actor, reason):
+    for e in list(actor.effects):
+        if e.condition == "invisible" and e.source.startswith("Hide"):
+            actor.remove_effect(e, reason)
+    actor.hidden_total = None
+
+
+def make_sound(game, actor, volume="whisper"):
+    """A sound louder than a whisper ends hiding (p.183)."""
+    if volume != "whisper" and actor.hidden_total is not None:
+        end_hiding(game, actor, f"made a sound louder than a whisper ({volume})")
+        return True
+    game.log.player("sound", f"{actor.name} {volume}s" + (" and stays hidden" if actor.hidden_total else ""), page=183)
+    return False
+
+
+def notices(game, observer, hider, active_roll=None) -> bool:
+    """Does `observer` find a hidden creature? Passive Perception or an active check vs the Hide total."""
+    if hider.hidden_total is None:
+        return True
+    total = active_roll.total if active_roll is not None else observer.passive("perception")
+    found = total >= hider.hidden_total
+    game.log.gm("notice", f"{observer.name} Perception {total} vs {hider.name}'s Hide total {hider.hidden_total}: "
+                + ("found" if found else "not found"), page=183)
+    if found:
+        end_hiding(game, hider, f"found by {observer.name}")
+    return found
+
+
+def search_for_hidden(game, actor, where: str, dc=None, **kw):
+    """Finding hidden objects (p.12): searching away from the object never reveals it."""
+    target = None
+    for name, h in game.scene.hidden.items():
+        if h.get("location") == where and not h.get("found"):
+            target = (name, h)
+            break
+    r = search(game, actor, "perception", dc=(target[1]["dc"] if target else dc or 10), what=f"searching {where}",
+               **kw)
+    if target and r.success:
+        target[1]["found"] = True
+        game.log.player("found", f"{actor.name} finds {target[0]}", page=12)
+        return target[0]
+    if not target:
+        game.log.player("found", f"{actor.name} finds nothing in {where}", page=12)
+    return None

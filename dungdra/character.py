@@ -268,7 +268,16 @@ class Character(Creature):
                 out.append(tuple(it.props.get("light", (20, 20))))
         return out
 
+    def _drop_to_zero(self, remainder, attacker, melee, dtype, crit, dealt):
+        from .damage import pc_drop_to_zero
+        pc_drop_to_zero(self, remainder, crit)
+
+    def _damage_at_zero(self, amount, crit):
+        from .damage import pc_damage_at_zero
+        pc_damage_at_zero(self, amount, crit)
+
     def on_time_passed(self, start, end):
+        super().on_time_passed(start, end)
         for it in list(self.inventory):
             if it.props.get("lit") and it.props.get("burns_until") is not None and end >= it.props["burns_until"]:
                 it.props["lit"] = False
