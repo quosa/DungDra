@@ -271,3 +271,85 @@ def test_j6_town_week():
     p.say("BROM attunes to the cloak of protection")
     assert b.attuned and b.ac() == 20
     assert reconcile(g) == []
+
+
+def test_j5_goblin_boss_lair():
+    p = _party(seed=9)
+    s, g = p.session, p.game
+    s.auto_gm = False
+    s.execute({"cmd": "award_xp", "amount": 900})
+    b, l, m, j = (g.get(n) for n in ("brom", "lidda", "mialee", "jozan"))
+    s.execute({"cmd": "give", "actor": "brom", "item": "+1 longsword", "base": "longsword"})
+    b.wielded = [b.inventory.find("longsword")]
+    b.wielded = [it for it in b.inventory if it.props.get("bonus") == 1]
+    for who, pos in (("brom", [20, 0]), ("lidda", [0, 10]), ("mialee", [0, 0]), ("jozan", [5, 5])):
+        s.execute({"cmd": "place", "actor": who, "position": pos})
+    ids = s.execute({"cmd": "spawn", "monsters": ["goblin boss", "goblin warrior", "goblin warrior", "ogre"],
+                     "positions": [[30, 0], [35, 0], [30, 25], [45, 15]]})["result"]
+    boss, w1, w2, ogre = (g.get(i) for i in ids)
+    from dungdra import encounters as E
+    assert E.rate(g, [3, 3, 3, 3], [boss, w1, w2, ogre])["band"] == "moderate"
+    # Initiative: BROM (Remarkable Athlete: Advantage) 14, LIDDA 16, MIALEE 17, JOZAN 19; monsters last
+    g.dice.force_str("d20=[12,12, 11, 16, 20, 1, 1, 2]")
+    s.execute({"cmd": "start_combat"})
+    assert g.combat.current is j
+    # Hold Person on the Boss: goblins are Fey -> invalid target, slot spent, it "appears to save"
+    out = p.say("JOZAN casts hold person on the goblin boss")
+    assert j.slots_left(2) == 1 and not boss.has("paralyzed") and "succeeds" in out
+    assert g.log.last("invalid_target").visibility == "gm"
+    p.say("end turn")
+    # Web on the second warrior (MIALEE concentrates)
+    g.dice.force_str("d20=[2]")
+    s.execute({"cmd": "give", "actor": "mialee", "item": "spell scroll", "spell": "web"})
+    out = p.say("MIALEE casts web from her scroll on goblin warrior 2")
+    assert "Refused" not in out, out
+    assert w2.has("restrained") and m.concentrating == "Web"
+    p.say("end turn")
+    # Steady Aim + Sneak Attack
+    g.dice.force_str("d20=[5,15]; d6=[3,3,3]")
+    out = p.say("LIDDA uses steady aim and shoots goblin warrior 2 with her shortbow")
+    assert "Sneak Attack" in out and "advantage" in out
+    p.say("end turn")
+    # Champion crit on a 19 with the +1 weapon; the Boss redirects the attack to its ally
+    p.say("BROM moves 10 feet toward the goblin boss")
+    g.answer("redirect_attack", w1.id)
+    g.answer("use_savage_attacker", False)
+    g.dice.force_str("d20=[19]; d8=[2,2]")
+    out = p.say("BROM attacks the goblin boss with his longsword")
+    assert "Redirect Attack" in out and "CRITICAL" in out and "+1 magic" in out
+    assert w1.dead or w1.hp < w1.max_hp
+    p.say("end turn")
+    # the monsters' turns (GM): the ogre bloodies BROM, a goblin shoots MIALEE -> Concentration check
+    while g.combat.current.team == "enemy" and g.combat.current is not ogre:
+        p.say("end turn")
+    g.dice.force_str("d20=[18]; d8=[6,6]")
+    s.execute({"cmd": "attack", "actor": ogre.id, "target": "brom", "weapon": "greatclub"})
+    s.execute({"cmd": "place", "actor": "brom", "position": [20, 0]})
+    boss.position = (5, 0)
+    while g.combat.current is not boss:
+        p.say("end turn")
+    g.answer("shield", False, who="mialee")
+    g.dice.force_str("d20=[19]; d6=[2]; d20=[15]")
+    s.execute({"cmd": "attack", "actor": boss.id, "target": "mialee", "weapon": "scimitar"})
+    assert any("Concentration save" in e.text for e in g.log.of_kind("save"))
+    while g.combat.current is not j:
+        p.say("end turn")
+    # Preserve Life: 15 HP among Bloodied allies, none above half its maximum
+    b.hp = 10
+    l.hp = 5
+    r = s.execute({"cmd": "preserve_life", "allocation": {"brom": 10, "lidda": 5}})
+    assert r["ok"] and b.hp == 15 and l.hp == 10
+    # Hold Person on the Ogre: a Giant -> also invalid
+    g.combat.turn.actions += 1
+    p.say("JOZAN casts hold person on the ogre")
+    assert j.slots_left(2) == 0 and not ogre.has("paralyzed")
+    p.say("end turn")
+    # finish the fight with the scripted player and the GM running the monsters
+    s.auto_gm = True
+    from dungdra import gm
+    if g.combat is not None and g.combat.current.team == "enemy":
+        gm.run_until_pc(g)
+    fight(p, limit=200)
+    assert g.combat is None and not getattr(g, "defeated", False)
+    assert all(pc.xp == 900 + 187 for pc in g.pcs())
+    assert "R-02" in g.log.rulings() and reconcile(g) == []

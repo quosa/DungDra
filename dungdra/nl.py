@@ -281,7 +281,7 @@ def find_creatures(session, t: str, exclude=None, enemies_first=True):
 def find_weapon(actor, t):
     if not hasattr(actor, "inventory"):
         return None
-    for it in actor.inventory:
+    for it in sorted(actor.inventory, key=lambda i: -i.magic_bonus):
         if it.kind == "weapon" and re.search(rf"\b{re.escape(it.base)}s?\b", t):
             return it.display if it.props.get("title") else it.base
     return None

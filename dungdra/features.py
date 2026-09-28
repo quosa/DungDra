@@ -93,6 +93,19 @@ def on_level_up(pc):
             pc.free_casts[sp] = {"available": True, "ability": ab, "source": f"{pc.lineage.title()} lineage"}
     if "stonecunning" in pc.traits:
         pc.add_resource("stonecunning", pc.pb)
+    if pc.cdata.get("spellcasting"):
+        # p.37/78: whenever the number of prepared spells increases, choose additional spells
+        max_lvl = max(pc.slots_max())
+        pool = pc.spellbook if pc.cls == "wizard" else CLASS_LISTS[pc.cls]
+        opts = [x for x in pool if x in SPELLS and 1 <= SPELLS[x]["level"] <= max_lvl
+                and x not in pc.prepared and x not in pc.always_prepared]
+        need = pc.prepared_limit() - len(pc.prepared)
+        if need > 0 and opts:
+            opts.sort(key=lambda x: -SPELLS[x]["level"])
+            picks = g.decide(pc, "prepare_more", opts, default=opts[:need],
+                             prompt=f"{pc.name} can prepare {need} more spell(s): choose from "
+                                    f"{', '.join(o.title() for o in opts)}") if g else opts[:need]
+            pc.prepared += [x for x in picks[:need] if x in opts]
     if g and pc.cdata.get("spellcasting"):
         g.log.player("spells", f"{pc.name} can now prepare {pc.prepared_limit()} spells; slots "
                      + ", ".join(f"level {l}: {m}" for l, m in pc.slots_max().items()), page=pc.cdata["page"])
