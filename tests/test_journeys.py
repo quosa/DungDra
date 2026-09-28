@@ -392,3 +392,15 @@ def test_inventory_and_turn_flow():
     assert g.combat.current is j                                         # a Bonus Action is still possible
     out = p.say("JOZAN casts healing word on LIDDA")
     assert "nothing more to do" in out and g.combat.current is not j
+
+
+def test_travel_during_combat_explains():
+    p = Play(seed=3, auto_end_turn=True)
+    p.say("use the sample party")
+    p.say("begin the adventure")
+    p.say("go to the watchtower")                     # arrives on the Forest Road: ambush
+    assert p.game.combat is not None
+    out = p.say("go to watchtower")
+    assert "fight is going on" in out and "turn" in out and "Goblin Warrior" in out
+    out = p.say("dance a jig")
+    assert "didn't catch" in out and "It's" in out

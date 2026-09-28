@@ -332,6 +332,9 @@ def parse(session, text: str) -> list[dict] | dict:
     m = re.search(r"\b(?:go|goes|head|heads|travel|travels|walk|walks|set off|proceed|return)\s+(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$", t)
     if m and g.combat is None and session.adventure is not None:
         return [{"cmd": "go", "where": m.group(1)}]
+    if (m or re.search(r"\b(continue|go on|press on|move on|onward|leave|travel)\b", t)) and g.combat is not None:
+        return {"say": _combat_help(session, "You can't travel on while a fight is going on. Defeat, drive off "
+                                             "or escape the enemies first.")}
     if re.search(r"\b(continue|go on|press on|move on|onward|next scene|go (north|east|west|south|inside|in|deeper))\b",
                  t) and g.combat is None:
         return [{"cmd": "go"}]
@@ -523,8 +526,36 @@ def parse(session, text: str) -> list[dict] | dict:
     if re.search(r"\bsells?\b", t):
         m = re.search(r"\bsells?\s+(?:the |a |an |his |her |their )?([a-z' +1]+)", t)
         return [{"cmd": "sell", "actor": aid, "item": m.group(1).strip()}]
-    return {"say": "I didn't catch that. Try e.g. 'BROM attacks the goblin with his longsword', "
-                   "'MIALEE casts magic missile at goblin 2', 'LIDDA hides', 'end turn', 'short rest', 'status'."}
+    if g.combat is not None:
+        return {"say": _combat_help(session, "I didn't catch that.")}
+    return {"say": "I didn't catch that. Try e.g. 'continue', 'go to the watchtower', 'inventory', 'BROM inventory', "
+                   "'MIALEE spells', 'short rest', 'status', or 'help' for more."}
+
+
+def _combat_help(session, lead: str) -> str:
+    """A combat-aware hint: whose turn it is, what they can do, and which enemies are about."""
+    g = session.game
+    cb = g.combat
+    cur = cb.current
+    foes = [e for e in g.creatures.values() if e.team == "enemy" and not e.dead and not e.notes.get("fled")]
+    seen = [e for e in foes if cur is not None and g.can_see(cur, e)]
+    hidden = [e for e in foes if e not in seen]
+    lines = [lead]
+    if cur is not None and cur.team == "party" and cur.is_pc():
+        from .turnhelp import turn_summary
+        hint, _ = turn_summary(g, cur)
+        lines.append(f"It's {cur.name}'s turn ({hint}).")
+        n = cur.name
+        ex = seen[0].name if seen else (foes[0].name if foes else "the goblin")
+        lines.append(f"Try: '{n} attacks {ex}', '{n} casts <spell> at {ex}', '{n} moves 30 feet toward {ex}', "
+                     f"'{n} searches for hidden enemies', '{n} dodges', 'end turn'.")
+    if seen:
+        lines.append("Enemies you can see: " + ", ".join(f"{e.name} ({cur.distance_to(e)} ft)" if cur else e.name
+                                                      for e in seen))
+    if hidden:
+        lines.append(f"{len(hidden)} more hidden enemy(ies) somewhere nearby.")
+    lines.append("Type 'status' for the initiative order, or 'help' for more examples.")
+    return "\n".join(lines)
 
 
 def _attack_cmd(session, actor, t):
