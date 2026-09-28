@@ -9,6 +9,10 @@ from .rules import DAY, SKILLS, Refusal, norm
 
 def spend(game, actor, what="action", label=""):
     """Spend an action/bonus action/reaction when in combat (no-op outside combat)."""
+    if actor.dead:
+        raise Refusal(f"{actor.name} is dead")
+    if actor.has("incapacitated"):
+        raise Refusal(f"{actor.name} can't take actions (Incapacitated)", page=184)
     if game.combat is not None:
         game.combat.spend(actor, what, label)
 
@@ -80,6 +84,15 @@ def use_tool(game, actor, task: str, dc: int | None = None, tool: str | None = N
     else:
         spend(game, actor, "action", f"Utilize ({task})")
     ability = TOOLS[tool]["ability"]
+    if task == "pick a lock":
+        needle = next((o["trap"] for o in game.scene.objects.values() if "trap" in o
+                       and o["trap"].kind == "poisoned needle" and not o["trap"].disabled
+                       and not o["trap"].triggered), None)
+        if needle is not None:
+            from .traps import trigger
+            game.log.player("trap", "Opening the lock without its key springs a hidden needle!", page=200)
+            trigger(game, actor, needle)
+            needle.disabled = True
     return actor.check(skill=skill, ability=ability, dc=dc, tool=tool,
                        label=f"{task.capitalize()} ({ability.title()} check with {tool.title()})", **kw)
 

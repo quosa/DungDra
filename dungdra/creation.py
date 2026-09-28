@@ -130,6 +130,7 @@ class CharacterBuilder:
 
     def _set_scores(self, v: dict):
         v = {_ab(k): int(s) for k, s in v.items()}
+        v = {a: v[a] for a in ABILITIES if a in v}
         if set(v) != set(ABILITIES):
             raise Refusal("Assign a score to each of the six abilities")
         method = self.c.get("ability_method", "standard")
@@ -336,6 +337,9 @@ class CharacterBuilder:
             raise Refusal(f"{cls.title()} starting equipment options: "
                           f"{', '.join(k[0] for k in eq if k.endswith('_gp'))}")
         self.c["class_equipment"] = v
+        if isinstance(eq.get(v), list):
+            self.c.pop("purchases", None)
+            self.c.pop("purchase_total", None)
 
     def _set_bg_equipment(self, v):
         v = str(v).upper().replace("OPTION", "").strip()
@@ -460,6 +464,12 @@ class CharacterBuilder:
         c = self.c
         cls, spn, bgn = c["cls"], c["species"], c["background"]
         cd, sp, bg = CLASSES[cls], SPECIES[spn], BACKGROUNDS[bgn]
+        if c.get("purchase_total", 0) > self.starting_gold_cp():
+            raise Refusal("The purchases cost more than the starting gold of the chosen option")
+        if cd.get("spellcasting"):
+            n = cd["spellcasting"]["cantrips"][1] + (1 if c.get("divine_order") == "thaumaturge" else 0)
+            if len(c["cantrips"]) != n:
+                raise Refusal(f"Choose exactly {n} {cls.title()} cantrips")
         pc = Character(c["name"], cls)
         if g:
             g.add(pc, team="party")

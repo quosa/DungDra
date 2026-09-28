@@ -207,7 +207,20 @@ class Game:
         world.scene_gather(self, creature, ctx, acc)
 
     # -- time -------------------------------------------------------------
+    def resolve_dying(self):
+        """Outside combat, a dying character keeps making Death Saving Throws every 6 seconds
+        until Stable, healed or dead (p.17-18)."""
+        from .damage import death_save
+        for c in self.pcs():
+            guard = 0
+            while c.hp == 0 and not c.dead and not c.stable and guard < 50:
+                guard += 1
+                self.clock += ROUND
+                death_save(self, c)
+
     def advance(self, seconds: int, reason: str = "", log=True):
+        if self.combat is None and seconds > ROUND:
+            self.resolve_dying()
         start = self.clock
         self.clock += seconds
         if log and seconds:
