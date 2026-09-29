@@ -1,0 +1,5 @@
+Ok, we've done a D&D implementation using the SRD rulebook and derived scenarios.
+
+Now I'd like you to think about what changes you would make to the core game components to make the game more playable and enjoyable.
+
+Think about this as a senior engineer would: is the architecture and code structure sound; what are the weaknesses in the current codebase; what kind of verification items/steps are missing; does the implementation really fulfil the requirements; can the engine be used to construct a meaningful D&D campaign that the player can play through?
