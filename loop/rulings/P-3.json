@@ -1,0 +1,14 @@
+{
+  "id": "P-3",
+  "unit": "GLOSS.grappled",
+  "ambiguity": "“Your Speed is 0 and can’t increase”: does it cover special speeds, and speeds gained later?",
+  "ruling": "Every Speed (Climb, Swim, Fly, including speeds gained after the grapple starts) is 0 and can't increase while Grappled.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_grappled_special_speed_is_zero_too",
+    "tests/srd/test_glossary.py::test_grappled_speed_cant_increase_with_a_bonus"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

@@ -54,7 +54,7 @@ def test_grappled_speed_is_zero(game):
     assert gob.speed() == 0
 
 
-@pytest.mark.srd(U, clause=f"{U}#1", kind="positive")
+@pytest.mark.srd(U, clause=f"{U}#1", kind="positive", ruling="P-3")
 def test_grappled_special_speed_is_zero_too(game):
     brom = brom_free_hand(game)
     rat = mon(game, "giant rat", (5, 0))
@@ -82,7 +82,7 @@ def test_grappled_turn_starts_with_no_movement(game):
     assert game.combat.turn.movement_left == 0
 
 
-@pytest.mark.srd(U, clause=f"{U}#1", kind="boundary")
+@pytest.mark.srd(U, clause=f"{U}#1", kind="boundary", ruling="P-3")
 def test_grappled_speed_cant_increase_with_a_bonus(game):
     brom = brom_free_hand(game)
     gob = mon(game, "goblin warrior", (5, 0))
@@ -182,7 +182,7 @@ def test_disadvantage_ends_with_the_grapple(game):
     assert r.roll.mode == "normal"
 
 
-@pytest.mark.srd(U, clause=f"{U}#2", kind="boundary", ruling="proposed: any current grappler")
+@pytest.mark.srd(U, clause=f"{U}#2", kind="boundary", ruling="P-2")
 def test_two_grapplers_neither_attack_has_disadvantage(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (5, 0))
@@ -294,7 +294,7 @@ def test_dragging_exactly_one_size_smaller_for_large_costs_double(game):
     assert C.move(game, ogre, to=(-10, 0), drag=bandit) == 20
 
 
-@pytest.mark.srd(U, clause=f"{U}#4", kind="boundary", ruling="proposed: Tiny exemption is literal")
+@pytest.mark.srd(U, clause=f"{U}#4", kind="boundary", ruling="P-1")
 def test_tiny_dragging_tiny_costs_nothing_extra(game):
     gob = mon(game, "goblin warrior", (0, 0))
     gob.size = "tiny"
