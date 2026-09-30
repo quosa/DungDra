@@ -55,9 +55,6 @@ def fingerprint(parts: dict[str, str]) -> str:
 
 
 def is_stale(state: dict, current: str) -> bool:
-    """A finished unit whose inputs changed since it finished must run again."""
-    return (
-        state.get("status") in TERMINAL
-        and state.get("status") != "out-of-scope"
-        and state.get("fingerprint") != current
-    )
+    """A finished unit whose inputs changed since it finished must run again. That includes an
+    out-of-scope unit: once the engine code it relates to changes, it is looked at again."""
+    return state.get("status") in TERMINAL and state.get("fingerprint") != current

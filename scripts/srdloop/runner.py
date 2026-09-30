@@ -207,6 +207,16 @@ def stash(paths: tuple[str, ...], message: str) -> None:
         git("stash", "push", "--include-untracked", "-m", message, "--", *present)
 
 
+def set_aside(message: str) -> None:
+    """After failed work: stash every change except the loop's own files, wherever the agent put
+    it (a gate caught it writing outside its zone; that file must not stay behind either)."""
+    import fnmatch
+
+    files = [f for f in dirty() if not any(fnmatch.fnmatch(f, g) for g in Gt.HARNESS)]
+    if files:
+        git("stash", "push", "--include-untracked", "-m", message, "--", *files)
+
+
 def commit(message: str, paths: tuple[str, ...]) -> str:
     git("add", "--all", "--", *_paths(paths))
     git("commit", "-q", "-m", message)
@@ -262,30 +272,56 @@ def stage_gate(ctx: P.Context, uid: str, stage: str, output: dict) -> list[str]:
     return gate_verification(output, stage_output(uid, "C"))
 
 
-def run_unit(ctx: P.Context, uid: str, budget: C.Budget, invoke: Invoke = C.invoke) -> str:
+def _pending(uid: str, stage: str, runs: Path = RUNS) -> Path:
+    return runs / uid / f"{stage}.pending.json"
+
+
+def run_unit(ctx: P.Context, uid: str, budget: C.Budget, invoke: Invoke = C.invoke, runs: Path = RUNS) -> str:
+    """Stages A-D for one unit. Every attempt's output and gate problems are kept in
+    loop/runs/<unit>/<stage>.attempt<n>.json; a failed attempt leaves <stage>.pending.json, so a
+    run that pauses before the retry resumes with the retry (and the agent's files), not from scratch."""
     st = S.load(uid)
     st["status"] = "in-progress"
     S.save(st)
     for stage in [s for s in S.STAGES if s not in st["stages"]]:
-        if stage == "C":
+        role = C.ROLES[STAGE_ROLE[stage]]
+        pending = _pending(uid, stage, runs)
+        first, problems = 1, []
+        if pending.exists():  # resume a retry
+            p = json.loads(pending.read_text())
+            first, problems = p["attempt"] + 1, p["problems"]
+        elif stage == "C":
             stash(AGENT_ZONES, f"srdloop: {uid} stage C leftovers")  # C starts from a clean test tree
-        problems: list[str] = []
-        for attempt in (1, 2):
-            cap = C.ROLES[STAGE_ROLE[stage]].cap_usd * (1.5 if attempt == 2 else 1.0)
+        for attempt in range(first, 3):
+            left = budget.limit_usd - budget.spent_usd
+            cap = role.cap_usd if attempt == 1 else max(role.cap_usd, min(role.cap_usd * 1.5, left))
             prompt = stage_prompt(ctx, uid, stage, problems)
             res = invoke(STAGE_ROLE[stage], prompt, budget=budget, about=uid, stage=stage, cap=cap)
             if res.output is None:
                 problems = [f"no structured output ({res.error})"]
             else:
                 problems = stage_gate(ctx, uid, stage, res.output)
+            (runs / uid).mkdir(parents=True, exist_ok=True)
+            record = {
+                "output": res.output,
+                "problems": problems,
+                "cost_usd": res.cost_usd,
+                "session": res.session_id,
+            }
+            (runs / uid / f"{stage}.attempt{attempt}.json").write_text(
+                json.dumps(record, indent=1, ensure_ascii=False)
+            )
             if not problems:
-                checkpoint(uid, stage, res.output)
+                pending.unlink(missing_ok=True)
+                checkpoint(uid, stage, res.output, runs)
                 break
+            pending.write_text(json.dumps({"attempt": attempt, "problems": problems}, ensure_ascii=False))
         else:
+            pending.unlink(missing_ok=True)
             st = S.load(uid)
             st.update(status="incomplete", problems={"stage": stage, "problems": problems[:40]})
             S.save(st)
-            stash(AGENT_ZONES, f"srdloop: {uid} incomplete at stage {stage}")
+            set_aside(f"srdloop: {uid} incomplete at stage {stage}")
             commit(f"srd: {uid} incomplete at stage {stage}", Gt.HARNESS)
             return "incomplete"
     return finish_unit(ctx, uid)
@@ -311,7 +347,9 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
         for n in names:
             set_ticket(n, tk["id"])
         tickets.append(tk["id"])
-    for n in plan["not_testable"]:
+    missing = [n for n in plan["not_testable"] if n.get("kind", "missing") == "missing"]
+    out_of_scope = [n for n in plan["not_testable"] if n.get("kind") == "out-of-scope"]
+    for n in missing:  # the engine should support it: an infra ticket
         tickets.append(T.create("infra", uid, f"{uid}: {n['infra_ticket']}", [])["id"])
     if plan["rulings_proposed"]:
         PROPOSED.parent.mkdir(parents=True, exist_ok=True)
@@ -319,7 +357,15 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
             for r in plan["rulings_proposed"]:
                 f.write(f"\n- **{uid}**: {r['ambiguity']} — proposed: {r['ruling']}\n")
     analysis = stage_output(uid, "A")
-    status = "red" if by_title else ("blocked" if plan["not_testable"] else "green")
+    clauses = {c["id"] for c in analysis["clauses"]}
+    if by_title:
+        status = "red"
+    elif missing:
+        status = "blocked"
+    elif out_of_scope and not kept and clauses <= {n["clause"] for n in out_of_scope}:
+        status = "out-of-scope"  # nothing here the implemented subset covers; re-queued when that changes
+    else:
+        status = "green"
     st.update(
         status=status,
         relations=analysis["relations"],
@@ -327,6 +373,7 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
         refuted=[t["name"] for t in refuted if t["name"] not in for_review],
         for_review=for_review,
         tests=[t["name"] for t in kept],
+        out_of_scope=[{"clause": n["clause"], "reason": n["reason"]} for n in out_of_scope],
         fingerprint=S.fingerprint(P.inputs(ctx, uid)),
     )
     st.pop("problems", None)
@@ -406,7 +453,7 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     tk["attempts"] += 1
     if problems:
         git("checkout", "--", *[t.split("::")[0] for t in tk["tests"]])  # restore the xfail markers
-        stash(DEV_ZONES, f"srdloop: {tk['id']} attempt {tk['attempts']}")
+        set_aside(f"srdloop: {tk['id']} attempt {tk['attempts']}")
         tk["status"] = "stuck" if tk["attempts"] >= T.MAX_ATTEMPTS else "open"
         T.record(tk, "failed", problems=problems[:30])
         commit(f"dev: {tk['id']} attempt {tk['attempts']} failed", Gt.HARNESS)

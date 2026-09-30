@@ -11,6 +11,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .gates import srd_markers
+
 SCENARIOS = Path("docs/dnd-golden-scenarios-srd521.md")
 SCENARIO_TESTS = Path("tests/scenarios")
 SRD_TESTS = Path("tests/srd")
@@ -103,18 +105,9 @@ def srd_tests(root: Path = SRD_TESTS) -> dict[str, list[str]]:
     if not root.exists():
         return out
     for f in sorted(root.rglob("test_*.py")):
-        for node in ast.walk(ast.parse(f.read_text())):
-            if not isinstance(node, ast.FunctionDef):
-                continue
-            for d in node.decorator_list:
-                if (
-                    isinstance(d, ast.Call)
-                    and isinstance(d.func, ast.Attribute)
-                    and d.func.attr == "srd"
-                    and d.args
-                    and isinstance(d.args[0], ast.Constant)
-                ):
-                    out.setdefault(d.args[0].value, []).append(f"{f.as_posix()}::{node.name}")
+        for name, m in srd_markers(f.read_text()).items():
+            if m["unit"]:
+                out.setdefault(m["unit"], []).append(f"{f.as_posix()}::{name}")
     return out
 
 

@@ -97,6 +97,42 @@ def _marker(fn: ast.FunctionDef) -> ast.Call | None:
     return None
 
 
+def _constants(tree: ast.Module) -> dict[str, str]:
+    """Module-level NAME = "string" bindings, so a marker may say srd(U, ...) with U = "GLOSS.x"."""
+    out = {}
+    for node in tree.body:
+        if (
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+        ):
+            out |= {t.id: node.value.value for t in node.targets if isinstance(t, ast.Name)}
+    return out
+
+
+def _value(node: ast.AST | None, consts: dict[str, str]):
+    if isinstance(node, ast.Constant):
+        return node.value
+    if isinstance(node, ast.Name):
+        return consts.get(node.id)
+    return None
+
+
+def srd_markers(src: str) -> dict[str, dict]:
+    """test name -> {"unit", "clause", "kind"} from its @pytest.mark.srd(...) marker."""
+    tree = ast.parse(src)
+    consts = _constants(tree)
+    out = {}
+    for fn in ast.walk(tree):
+        if isinstance(fn, ast.FunctionDef) and (m := _marker(fn)) is not None:
+            kw = {k.arg: _value(k.value, consts) for k in m.keywords}
+            out[fn.name] = {
+                "unit": _value(m.args[0], consts) if m.args else None,
+                **{k: kw.get(k) for k in ("clause", "kind")},
+            }
+    return out
+
+
 def _asserts(fn: ast.AST) -> int:
     """Assertions in a test: assert statements, pytest.raises blocks, assert_* helper calls."""
     n = 0
@@ -125,23 +161,20 @@ def test_file_problems(path: Path, unit_ids: set[str], srd: bool = True) -> list
     out = [
         f"{path}: uses mocks ({m.group(1)}); the SRD suites use the real engine" for m in MOCKS.finditer(src)
     ][:1]
+    markers = srd_markers(src)
     for name, fn in _tests(src).items():
         if _asserts(fn) == 0:
             out.append(f"{path}::{name}: asserts nothing")
         if not srd:
             continue
-        m = _marker(fn)
+        m = markers.get(name)
         if m is None:
             out.append(f"{path}::{name}: no @pytest.mark.srd(...) marker")
             continue
-        uid = m.args[0].value if m.args and isinstance(m.args[0], ast.Constant) else None
-        kind = next(
-            (k.value.value for k in m.keywords if k.arg == "kind" and isinstance(k.value, ast.Constant)), None
-        )
-        if uid not in unit_ids:
-            out.append(f"{path}::{name}: marker names unknown unit {uid!r}")
-        if kind not in KINDS:
-            out.append(f"{path}::{name}: marker kind {kind!r} is not one of {KINDS}")
+        if m["unit"] not in unit_ids:
+            out.append(f"{path}::{name}: marker names unknown unit {m['unit']!r}")
+        if m["kind"] not in KINDS:
+            out.append(f"{path}::{name}: marker kind {m['kind']!r} is not one of {KINDS}")
     return out
 
 

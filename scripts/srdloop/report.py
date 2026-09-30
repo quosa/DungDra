@@ -45,6 +45,17 @@ def render(ctx: Context, queue: list[dict]) -> str:
     lines += [
         f"{i + 1}. `{q['id']}` ({q['scope']}, from stage {q['next_stage']})" for i, q in enumerate(queue[:10])
     ]
+    oos = [(uid, x) for uid, st in sorted(ctx.states.items()) for x in st.get("out_of_scope", [])]
+    if oos:
+        lines += [
+            "",
+            "## Out of scope",
+            "",
+            "Clauses the test designer found outside the implemented subset (no ticket).",
+            "",
+        ]
+        lines += ["| Unit | Clause | Reason |", "|---|---|---|"]
+        lines += [f"| `{uid}` | {x['clause']} | {x['reason']} |" for uid, x in oos]
     terms = G._glossary_terms(ctx.units)
     unresolved = sorted(
         {

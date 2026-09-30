@@ -125,6 +125,7 @@
     "additionalProperties": false,
     "required": [
      "clause",
+     "kind",
      "reason",
      "infra_ticket"
     ],
@@ -137,7 +138,14 @@
      },
      "infra_ticket": {
       "type": "string",
-      "description": "what the engine lacks"
+      "description": "for missing: what the engine lacks; for out-of-scope: empty"
+     },
+     "kind": {
+      "enum": [
+       "missing",
+       "out-of-scope"
+      ],
+      "description": "missing: the engine should support this and doesn't (an infra ticket); out-of-scope: outside the implemented subset (an OutOfScope refusal, a class level above 3, content the engine doesn't have), no ticket"
      }
     }
    }
