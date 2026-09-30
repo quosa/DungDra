@@ -24,6 +24,8 @@ Rules:
 - Run `python -m pytest tests/unit -q`, the ticket's tests with `--runxfail`, and
   `python -m scripts.srdloop dev-gate`. The harness removes the xfail marker, re-runs
   everything and commits; you never commit.
+- If your fix also makes another ticket's red test pass, that's good, not a dispute: the harness
+  sees it, drops that ticket's markers, re-runs its tests and closes it too.
 - If you believe the acceptance test itself is wrong, stop and explain it in `dispute`. If a
   refactor needs acceptance tests changed, describe it in `test_change_request` (a person
   decides). Never weaken a test to make it pass.

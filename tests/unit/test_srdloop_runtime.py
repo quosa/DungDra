@@ -487,3 +487,36 @@ def test_run_ticket_rolls_back_a_failed_attempt(tmp_path, monkeypatch, no_qualit
     for _ in range(2):
         Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dev(fix=True, review="reject"))
     assert T.load("T-1")["status"] == "stuck"  # three failed attempts: a person decides
+
+
+RED_2 = """
+
+@pytest.mark.srd("GLOSS.grappled", clause="GLOSS.grappled#1", kind="abuse")
+@pytest.mark.xfail(strict=True, reason="T-2: a large bonus still applies")
+def test_large_bonus_does_not_raise_grappled_speed():
+    assert grappled_speed(30) == 0
+"""
+
+
+def test_one_fix_that_also_fixes_another_ticket_closes_both(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    write(tmp_path, {"tests/srd/test_rule.py": RED + RED_2})
+    T.create(
+        "bug",
+        "GLOSS.grappled",
+        "a large bonus still applies",
+        ["tests/srd/test_rule.py::test_large_bonus_does_not_raise_grappled_speed"],
+    )
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "second ticket"], check=True)
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dev(fix=True)).startswith("fixed")
+    assert T.load("T-2")["status"] == "fixed" and T.load("T-2")["history"][-1] == {
+        "event": "fixed",
+        "by": "T-1",
+    }
+    assert "xfail" not in Path("tests/srd/test_rule.py").read_text()
+    log = subprocess.run(["git", "log", "--format=%s"], capture_output=True, text=True, check=True).stdout
+    assert log.splitlines()[0] == "fix: T-1 a Speed bonus still applies (also fixes T-2)"

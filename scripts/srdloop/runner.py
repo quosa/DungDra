@@ -421,6 +421,40 @@ def run(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
 
 
 # ---------------------------------------------------------------- dev loop
+def xfail_ticket(nodeid: str) -> str | None:
+    """The ticket id named in a test's xfail marker, if it has one."""
+    path, _, name = nodeid.partition("::")
+    if not Path(path).exists():
+        return None
+    src = Path(path).read_text()
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.FunctionDef) and node.name == name.split("[")[0]:
+            for d in node.decorator_list:
+                text = ast.get_source_segment(src, d) or ""
+                if "xfail" in text and (m := re.search(r"\bT-\d+\b", text)):
+                    return m.group(0)
+    return None
+
+
+def close_co_fixed(tk: dict, red: list[str]) -> tuple[list[dict], list[str]]:
+    """A fix may also fix another open ticket: its strict-xfail tests now xpass. Drop those
+    markers and re-run that ticket's tests; if they all pass, the ticket is fixed too."""
+    fixed, problems = [], []
+    others = sorted({t for n in red if (t := xfail_ticket(n)) and t != tk["id"]})
+    for tid in others:
+        other = T.load(tid)
+        if other["status"] != "open":
+            continue
+        for n in other["tests"]:
+            drop_xfail(n, tid)
+        outcomes = Gt.run_pytest(other["tests"])
+        if all(o == "passed" for o in outcomes.values()):
+            fixed.append(other)
+        else:
+            problems += [f"{n}: {o} (after also fixing {tid})" for n, o in outcomes.items() if o != "passed"]
+    return fixed, problems
+
+
 def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.invoke) -> str:
     unit = ctx.by_id.get(tk["unit"])
     failures = "\n".join(f"{n}: {o}" for n, o in Gt.run_pytest(tk["tests"]).items())
@@ -430,7 +464,7 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     if out.get("dispute") or out.get("test_change_request"):
         tk["status"] = "dispute"
         T.record(tk, "dispute", reason=out.get("dispute") or out.get("test_change_request"))
-        stash(DEV_ZONES, f"srdloop: {tk['id']} dispute")
+        set_aside(f"srdloop: {tk['id']} dispute")
         commit(f"dev: {tk['id']} disputed", Gt.HARNESS)
         return "dispute"
     for n in tk["tests"]:
@@ -438,6 +472,8 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     outcomes = Gt.run_pytest(tk["tests"])
     problems = [f"{n}: {o}" for n, o in outcomes.items() if o != "passed"]
     problems += Gt.zone_problems([f for f in Gt.changed_files() if not f.startswith("tests/srd")], "fixer")
+    co_fixed, co_problems = close_co_fixed(tk, suite_red())
+    problems += co_problems
     red = [n for n in suite_red() if n not in tk["tests"]]
     problems += [f"now failing: {n}" for n in red]
     gate_problems, metrics = Q.dev_gate()
@@ -454,7 +490,7 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
             ]
     tk["attempts"] += 1
     if problems:
-        git("checkout", "--", *[t.split("::")[0] for t in tk["tests"]])  # restore the xfail markers
+        git("checkout", "--", "tests/srd")  # restore the xfail markers the harness dropped
         set_aside(f"srdloop: {tk['id']} attempt {tk['attempts']}")
         tk["status"] = "stuck" if tk["attempts"] >= T.MAX_ATTEMPTS else "open"
         T.record(tk, "failed", problems=problems[:30])
@@ -464,9 +500,14 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
         T.create(f["kind"], tk["unit"], f["title"], [])
     tk["status"] = "fixed"
     T.record(tk, "fixed", summary=out.get("summary", ""))
+    for other in co_fixed:
+        other["status"] = "fixed"
+        T.record(other, "fixed", by=tk["id"])
     Q.update_baseline(metrics)
+    also = f" (also fixes {', '.join(o['id'] for o in co_fixed)})" if co_fixed else ""
     sha = commit(
-        f"fix: {tk['id']} {tk['title']}", DEV_ZONES + ("tests/srd", "loop/quality-baseline.json") + Gt.HARNESS
+        f"fix: {tk['id']} {tk['title']}{also}",
+        DEV_ZONES + ("tests/srd", "loop/quality-baseline.json") + Gt.HARNESS,
     )
     return f"fixed ({sha})"
 
