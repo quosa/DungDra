@@ -6,12 +6,16 @@
   "tests": [
     "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling"
   ],
-  "status": "dispute",
+  "status": "open",
   "attempts": 0,
   "history": [
     {
       "event": "dispute",
       "reason": "This fix also makes tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples (T-3) pass, and it now fails as a strict XPASS. Please remove its xfail marker too and close T-3 as fixed by this change, since the rule is the same: only the grappler can drag."
+    },
+    {
+      "event": "dispute resolved",
+      "reason": "harness gap, not a test problem: the fix also fixed T-3; the harness now closes co-fixed tickets"
     }
   ]
 }
