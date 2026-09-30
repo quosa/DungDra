@@ -1,10 +1,15 @@
 {
   "id": "T-8",
-  "kind": "coverage",
+  "kind": "infra",
   "unit": "GLOSS.grappled",
   "title": "GLOSS.flying: a flying creature whose Fly Speed drops to 0 or who becomes Prone/Incapacitated falls (not modelled yet)",
   "tests": [],
   "status": "open",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "edited",
+      "reason": "a missing mechanic (falling when Fly Speed drops to 0), not unit-test coverage"
+    }
+  ]
 }
