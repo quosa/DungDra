@@ -239,7 +239,6 @@ def test_grappler_moving_without_dragging_leaves_target(game):
 
 
 @pytest.mark.srd(U, clause=f"{U}#3", kind="abuse")
-@pytest.mark.xfail(strict=True, reason="T-2: move(drag=...) drags a creature the mover isn't grappling")
 def test_cant_drag_a_creature_you_arent_grappling(game):
     brom = brom_free_hand(game)
     gob = mon(game, "goblin warrior", (5, 0))
@@ -248,9 +247,6 @@ def test_cant_drag_a_creature_you_arent_grappling(game):
 
 
 @pytest.mark.srd(U, clause=f"{U}#3", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-3: move(drag=...) lets a non-grappler drag someone else's grappled creature"
-)
 def test_cant_drag_a_creature_someone_else_grapples(game):
     brom = brom_free_hand(game)
     lidda = pc(game, "LIDDA", (5, 5))

@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "dispute",
@@ -16,6 +16,10 @@
     {
       "event": "dispute resolved",
       "reason": "harness gap, not a test problem: the fix also fixed T-3; the harness now closes co-fixed tickets"
+    },
+    {
+      "event": "fixed",
+      "summary": "I fixed T-2. When `drag=` is given, `combat.move` now checks that the mover is one of the target's grapplers before anything else happens. That means a Grappled effect on the target with `grappler == mover.id`. If not, it refuses with page=182 and nothing moves or changes. The ticket's test passes with --runxfail. So does T-3's `test_cant_drag_a_creature_someone_else_grapples`, because it's the same rule; without --runxfail both show as XPASS(strict) until the harness drops their markers. The tag is SRD[GLOSS.grappled#3]. I added three unit tests in tests/unit/test_combat.py: a refusal when the target isn't grappled, a refusal when someone else is the grappler, and a successful drag by the real grappler. Unit tests: 153 passed. Glossary suite with --runxfail: 27 passed. ruff check and ruff format --check are clean, and dev-gate passes."
     }
   ]
 }

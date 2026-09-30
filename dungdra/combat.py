@@ -351,6 +351,11 @@ def move(
     mode: walk | climb | crawl | swim.  forced/teleport never provoke OAs."""
     cb = game.combat
     start = tuple(c.position)
+    # SRD[GLOSS.grappled#3] only "the grappler" can drag the Grappled creature
+    if drag is not None and not any(
+        e.condition == "grappled" and e.data.get("grappler") == c.id for e in drag.effects
+    ):
+        raise Refusal(f"{c.name} isn't grappling {drag.name}, so it can't drag it", page=182)
     if toward is not None:
         dest = step_toward(start, toward.position, feet if feet is not None else 1000)
         # stop adjacent rather than inside the target's space
