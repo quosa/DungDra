@@ -10,6 +10,19 @@
     {
       "event": "note",
       "reason": "the reviewer wants detailed traceability of what the engine applied, and why"
+    },
+    {
+      "event": "waiver",
+      "check": "diff_coverage",
+      "reason": "Deliberate engine-wide change (rule= and ruling= on every event and refusal); the reviewer chose one large change over a gradual migration. Lint, the full suite and the review still apply."
+    },
+    {
+      "event": "cap",
+      "usd": 20.0
     }
-  ]
+  ],
+  "waive": {
+    "diff_coverage": "Deliberate engine-wide change (rule= and ruling= on every event and refusal); the reviewer chose one large change over a gradual migration. Lint, the full suite and the review still apply."
+  },
+  "cap_usd": 20.0
 }
