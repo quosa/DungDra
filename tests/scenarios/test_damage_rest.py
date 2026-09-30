@@ -208,6 +208,7 @@ def test_cond02(game):
     assert C.stand_up(game, gob) == 15 and game.combat.turn.movement_left == 15
     gob.add_condition("prone")
     gob.add_condition("grappled", grappler=b.id)
+    assert gob.speed() == 0
     with pytest.raises(Refusal):
         C.stand_up(game, gob)
     # Frightened

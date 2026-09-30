@@ -1,0 +1,12 @@
+{
+  "id": "T-1",
+  "kind": "bug",
+  "unit": "GLOSS.grappled",
+  "title": "With two grapplers, attacking one grappler still has Disadvantage from the other grapple",
+  "tests": [
+    "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

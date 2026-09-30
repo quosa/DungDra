@@ -231,6 +231,9 @@ def test_cmb06_grapple_shove(game):
     game.dice.force_str("d20=[10,10]")
     r = C.attack(game, gob, lidda, attack_name="shortbow")
     assert any("Grappled" in s for s in r.roll.dis)
+    game.dice.force_str("d20=[10]")
+    r = C.attack(game, gob, brom, attack_name="scimitar")
+    assert not any("Grappled" in s for s in r.roll.dis)  # no Disadvantage against the grappler
     game.dice.force_str("d20=[20]")
     start(game, brom, gob, lidda)
     set_turn(game, brom)

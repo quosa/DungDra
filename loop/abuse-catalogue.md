@@ -9,6 +9,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Moving farther than Speed allows; Difficult Terrain for free; moving while Speed is 0.
 - Standing up from Prone without spending movement; crawling at full speed.
 - Teleporting or stepping to a position the rules don't allow.
+- Dashing (or stacking a Speed bonus) to get movement while your Speed is 0 and can't increase.
+- Spending movement left over from before you gained a Speed-0 condition mid-turn.
+- Dragging a creature you aren't grappling, or one someone else is grappling, to move it for free.
+- Dragging a grappled creature past what your Speed covers once the extra drag cost is counted.
 
 ## Action economy
 - Taking two actions, two Bonus Actions or two Reactions in one turn or round.
