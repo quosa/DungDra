@@ -15,7 +15,7 @@ from pathlib import Path
 KINDS = ("positive", "negative", "boundary", "abuse")
 REQUIRED_KINDS = ("positive", "negative")  # every clause; "boundary" too where the clause has a threshold
 ACCEPTANCE = ("tests/srd", "tests/scenarios")  # append-only suites
-TICKET = re.compile(r"\bT-\d+\b")
+TICKET = re.compile(r"\bT-(?:\d+|new)\b")  # "T-new": a red test before the harness numbers its ticket
 
 # What each role may change. The harness itself writes loop/state, loop/runs, loop/tickets.
 HARNESS = (

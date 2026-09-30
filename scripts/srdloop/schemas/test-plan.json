@@ -1,0 +1,192 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "interactions",
+  "abuse",
+  "tests",
+  "not_testable",
+  "scenario_changes",
+  "rulings_proposed",
+  "summary"
+ ],
+ "properties": {
+  "interactions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "with",
+     "risk",
+     "note"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "with": {
+      "type": "string",
+      "description": "unit id, condition, item, spell, monster or feature"
+     },
+     "risk": {
+      "enum": [
+       "high",
+       "medium",
+       "low"
+      ]
+     },
+     "note": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "abuse": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "case",
+     "test",
+     "reason"
+    ],
+    "properties": {
+     "case": {
+      "type": "string"
+     },
+     "test": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "tests": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "name",
+     "clause",
+     "kind",
+     "rule_quote",
+     "claim",
+     "ticket_title"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "pytest node id"
+     },
+     "clause": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "positive",
+       "negative",
+       "boundary",
+       "abuse"
+      ]
+     },
+     "rule_quote": {
+      "type": "string",
+      "description": "verbatim from the unit"
+     },
+     "claim": {
+      "enum": [
+       "green",
+       "red"
+      ]
+     },
+     "ticket_title": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "for red tests: what the engine gets wrong"
+     }
+    }
+   }
+  },
+  "not_testable": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "reason",
+     "infra_ticket"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "infra_ticket": {
+      "type": "string",
+      "description": "what the engine lacks"
+     }
+    }
+   }
+  },
+  "scenario_changes": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "scenario",
+     "change",
+     "note_row"
+    ],
+    "properties": {
+     "scenario": {
+      "type": "string"
+     },
+     "change": {
+      "type": "string"
+     },
+     "note_row": {
+      "type": "string",
+      "description": "row for docs/scenario-notes.md"
+     }
+    }
+   }
+  },
+  "rulings_proposed": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "ambiguity",
+     "ruling"
+    ],
+    "properties": {
+     "ambiguity": {
+      "type": "string"
+     },
+     "ruling": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "summary": {
+   "type": "string"
+  }
+ }
+}

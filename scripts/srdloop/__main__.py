@@ -8,6 +8,19 @@ gate --role R        audit gates on the working tree: write zones for role R, ap
                      acceptance tests, SRD test-file rules (markers, assertions, no mocks)
 dev-gate             dev-loop quality gates: lint, suppressions, coverage ratchet and diff
                      coverage, import layers, duplication, dead code, unit-test hygiene
+run --budget USD [--units ID ...]
+                     the audit loop (stages A-D per unit); exit 4 = paused, run again to resume
+dev --budget USD [--tickets T-n ...]
+                     the dev loop (fix open tickets)
+tickets              list tickets
+mutate FILE LINE OLD NEW NODEID
+                     break one engine line in a scratch copy and run a test there
+
+Interactive mode (the /srd-rule skill runs the stages in a Claude Code session):
+prompt STAGE UNIT    print the prompt for stage A, B, C or D of a unit
+accept STAGE UNIT FILE
+                     gate a stage's JSON output; on success checkpoint it
+finish UNIT          after stage D: remove refuted tests, open tickets, commit the unit
 """
 
 from __future__ import annotations
@@ -18,9 +31,12 @@ import sys
 from pathlib import Path
 
 from . import gates as Gt
+from . import mutate as M
 from . import plan as P
 from . import quality as Q
 from . import report as Rep
+from . import runner as Run
+from . import tickets as T
 from . import units as U
 
 
@@ -33,7 +49,11 @@ def _verdict(problems: list[str], note: str = "") -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="python -m scripts.srdloop", description=__doc__.split("\n\n")[0])
+    ap = argparse.ArgumentParser(
+        prog="python -m scripts.srdloop",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("status")
     sub.add_parser("plan")
@@ -43,9 +63,42 @@ def main(argv: list[str] | None = None) -> int:
     gate = sub.add_parser("gate")
     gate.add_argument("--role", required=True, choices=sorted(Gt.ZONES))
     gate.add_argument("--ref", default="HEAD")
-    dev = sub.add_parser("dev-gate")
-    dev.add_argument("--ref", default="HEAD")
+    devg = sub.add_parser("dev-gate")
+    devg.add_argument("--ref", default="HEAD")
+    run = sub.add_parser("run")
+    run.add_argument("--budget", type=float, required=True, help="USD for this run")
+    run.add_argument("--units", nargs="*")
+    dev = sub.add_parser("dev")
+    dev.add_argument("--budget", type=float, required=True, help="USD for this run")
+    dev.add_argument("--tickets", nargs="*")
+    sub.add_parser("tickets")
+    mut = sub.add_parser("mutate")
+    mut.add_argument("file")
+    mut.add_argument("line", type=int)
+    mut.add_argument("old")
+    mut.add_argument("new")
+    mut.add_argument("nodeid")
+    pr = sub.add_parser("prompt")
+    pr.add_argument("stage", choices=list("ABCD"))
+    pr.add_argument("unit")
+    acc = sub.add_parser("accept")
+    acc.add_argument("stage", choices=list("ABCD"))
+    acc.add_argument("unit")
+    acc.add_argument("file")
+    fin = sub.add_parser("finish")
+    fin.add_argument("unit")
     a = ap.parse_args(argv)
+    if a.cmd == "mutate":
+        print(M.mutate(a.file, a.line, a.old, a.new, a.nodeid))
+        return 0
+    if a.cmd == "tickets":
+        for t in T.all_tickets():
+            print(f"{t['id']:6} {t['status']:8} {t['kind']:8} {t['unit']}: {t['title']}")
+        return 0
+    if a.cmd == "run":
+        return Run.run(a.budget, a.units)
+    if a.cmd == "dev":
+        return Run.dev(a.budget, a.tickets)
     if a.cmd == "dev-gate":
         problems, metrics = Q.dev_gate(a.ref)
         shown = {k: v for k, v in metrics.items() if not k.startswith("_")}
@@ -55,6 +108,18 @@ def main(argv: list[str] | None = None) -> int:
     except U.NotApproved as e:
         print(f"refusing to run: {e}", file=sys.stderr)
         return 2
+    if a.cmd == "prompt":
+        print(Run.stage_prompt(ctx, a.unit, a.stage))
+        return 0
+    if a.cmd == "accept":
+        output = json.loads(Path(a.file).read_text())
+        problems = Run.stage_gate(ctx, a.unit, a.stage, output)
+        if not problems:
+            Run.checkpoint(a.unit, a.stage, output)
+        return _verdict(problems, f"stage {a.stage} of {a.unit} checkpointed" if not problems else "")
+    if a.cmd == "finish":
+        print(f"{a.unit}: {Run.finish_unit(ctx, a.unit)}")
+        return 0
     if a.cmd == "gate":
         problems = Gt.zone_problems(Gt.changed_files(a.ref), a.role) + Gt.append_only(a.ref)
         for f in sorted(Path("tests/srd").rglob("test_*.py")):
