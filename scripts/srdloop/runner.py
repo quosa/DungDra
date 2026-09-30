@@ -528,14 +528,21 @@ def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
     return r
 
 
-def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.invoke) -> str:
+def run_ticket(
+    ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.invoke, recheck: bool = False
+) -> str:
+    """One attempt at a ticket. With recheck, the change is already in the working tree (a
+    person restored or wrote it): skip the fixer and run the gates, the review and the commit."""
     unit = ctx.by_id.get(tk["unit"])
-    failures = "\n".join(f"{n}: {o}" for n, o in Gt.run_pytest(tk["tests"]).items())
     problems: list[str] = []
-    cap = tk.get("cap_usd") or C.ROLES["fixer"].cap_usd
-    prompt = Pr.fix(tk, unit, failures, problems)
-    res = invoke("fixer", prompt, budget=budget, about=tk["id"], stage="fix", cap=cap)
-    out = res.output or {}
+    if recheck:
+        out = {"summary": "rechecked the change already in the working tree"}
+    else:
+        failures = "\n".join(f"{n}: {o}" for n, o in Gt.run_pytest(tk["tests"]).items())
+        cap = tk.get("cap_usd") or C.ROLES["fixer"].cap_usd
+        prompt = Pr.fix(tk, unit, failures, problems)
+        res = invoke("fixer", prompt, budget=budget, about=tk["id"], stage="fix", cap=cap)
+        out = res.output or {}
     if out.get("dispute") or out.get("test_change_request"):
         tk["status"] = "dispute"
         T.record(tk, "dispute", reason=out.get("dispute") or out.get("test_change_request"))
@@ -593,6 +600,18 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
         DEV_ZONES + ("tests/srd", "loop/quality-baseline.json") + Gt.HARNESS,
     )
     return f"fixed ({sha})"
+
+
+def recheck(tid: str, budget_usd: float, invoke: Invoke = C.invoke, log=print) -> int:
+    """Gates, review and commit for a ticket whose change is already in the working tree."""
+    budget = C.Budget(budget_usd)
+    try:
+        result = run_ticket(P.Context.load(), T.load(tid), budget, invoke, recheck=True)
+    except C.Paused as e:
+        log(f"paused: {e}")
+        return 4
+    log(f"  {tid}: {result}")
+    return 0 if result.startswith("fixed") else 1
 
 
 def dev(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.invoke, log=print) -> int:

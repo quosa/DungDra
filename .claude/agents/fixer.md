@@ -29,3 +29,7 @@ Rules:
 - If you believe the acceptance test itself is wrong, stop and explain it in `dispute`. If a
   refactor needs acceptance tests changed, describe it in `test_change_request` (a person
   decides). Never weaken a test to make it pass.
+
+Clause numbers in `rule="<unit id>#<n>"` and `SRD[<unit id>#<n>]` are the loop's own, from
+stage A's analysis (`loop/runs/<unit id>/A.json`, shown in the prompt), not the SRD's run-in
+labels: a unit with three labelled effects may have four clauses.

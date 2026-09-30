@@ -347,3 +347,9 @@ def test_rule_references_must_name_real_units(tmp_path):
         f"{tmp_path / 'a.py'}:2: 'GLOSS.invented#1' is not <unit id>[#<clause number>] of a real SRD unit",
         f"{tmp_path / 'a.py'}:3: 'GLOSS.grappled#two' is not <unit id>[#<clause number>] of a real SRD unit",
     ]
+
+
+def test_rule_references_check_clause_numbers_against_stage_a(tmp_path):
+    (tmp_path / "a.py").write_text('x(rule="GLOSS.grappled#4")\ny(rule="GLOSS.grappled#5")\n')
+    problems = Q.rule_references(tmp_path, {"GLOSS.grappled"}, {"GLOSS.grappled": 4})
+    assert problems == [f"{tmp_path / 'a.py'}:2: 'GLOSS.grappled#5': stage A numbered GLOSS.grappled #1..#4"]

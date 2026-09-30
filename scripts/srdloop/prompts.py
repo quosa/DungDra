@@ -89,8 +89,22 @@ def fix(ticket: dict, unit: dict | None, failures: str, problems: list[str] = ()
     return (
         f"Fix ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}{waived}\n\n"
         f"## Acceptance tests that must pass\n\n" + "\n".join(f"- `{t}`" for t in ticket["tests"]) + "\n\n"
-        f"## The rule\n\n{rule}\n\n## Current failures\n\n```\n{failures[-6000:]}\n```" + _retry(problems)
+        f"## The rule\n\n{rule}\n\n"
+        "## Clause numbering (for rule= and SRD[...], from stage A)\n\n"
+        f"{clause_lists(rule + ticket['title'])}\n\n"
+        f"## Current failures\n\n```\n{failures[-6000:]}\n```" + _retry(problems)
     )
+
+
+def clause_lists(text: str, runs: Path = Path("loop/runs")) -> str:
+    """The stage-A clause numbering of every analysed unit the text mentions."""
+    out = []
+    for a in sorted(runs.glob("*/A.json")):
+        uid = a.parent.name
+        if uid in text:
+            clauses = json.loads(a.read_text()).get("clauses", [])
+            out.append(f"{uid}:\n" + "\n".join(f"  {c['id']}: {c['text']}" for c in clauses))
+    return "\n".join(out) or "(no analysed unit mentioned)"
 
 
 def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = ()) -> str:
@@ -100,5 +114,7 @@ def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = ()) ->
     return (
         f"Review this fix for ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}\n\n"
         f"## Gate results\n\n```\n{gate}\n```\n\n## The diff\n\n```diff\n{diff[-40000:]}\n```\n\n"
+        "## Clause numbering (rule= and SRD[...] use stage A's numbers, not the SRD's labels)\n\n"
+        f"{clause_lists(diff)}\n\n"
         f"## Open tickets (don't file a follow-up one of these already covers)\n\n{others or '(none)'}"
     )

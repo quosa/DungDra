@@ -12,6 +12,8 @@ run --budget USD [--units ID ...]
                      the audit loop (stages A-D per unit); exit 4 = paused, run again to resume
 dev --budget USD [--tickets T-n ...]
                      the dev loop (fix open tickets)
+dev --budget USD --recheck T-n
+                     gates, review and commit for a change already in the working tree
 tickets              list tickets
 mutate FILE LINE OLD NEW NODEID
                      break one engine line in a scratch copy and run a test there
@@ -121,6 +123,9 @@ def main(argv: list[str] | None = None) -> int:
     dev = sub.add_parser("dev")
     dev.add_argument("--budget", type=float, required=True, help="USD for this run")
     dev.add_argument("--tickets", nargs="*")
+    dev.add_argument(
+        "--recheck", metavar="T-n", help="gate, review and commit the change already in the tree"
+    )
     sub.add_parser("tickets")
     mut = sub.add_parser("mutate")
     mut.add_argument("file")
@@ -162,7 +167,7 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "run":
         return Run.run(a.budget, a.units)
     if a.cmd == "dev":
-        return Run.dev(a.budget, a.tickets)
+        return Run.recheck(a.recheck, a.budget) if a.recheck else Run.dev(a.budget, a.tickets)
     if a.cmd == "dev-gate":
         problems, metrics = Q.dev_gate(a.ref)
         shown = {k: v for k, v in metrics.items() if not k.startswith("_")}

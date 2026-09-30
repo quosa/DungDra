@@ -146,12 +146,24 @@ def unit_test_hygiene(paths: list[Path]) -> list[str]:
 RULE_REF = re.compile(r"""\brule\s*=\s*["']([^"']+)["']|SRD\[([^\]]+)\]""")
 
 
-def rule_references(root: Path = Path("dungdra"), units: set[str] | None = None) -> list[str]:
-    """Every rule="<unit id>#<n>" and SRD[<unit id>#<n>] in the engine names a real SRD unit."""
+def clause_counts(runs: Path = Path("loop/runs")) -> dict[str, int]:
+    """Units the loop has analysed, and how many clauses stage A found (clause numbers are its)."""
+    out = {}
+    for a in runs.glob("*/A.json"):
+        out[a.parent.name] = len(json.loads(a.read_text()).get("clauses", []))
+    return out
+
+
+def rule_references(
+    root: Path = Path("dungdra"), units: set[str] | None = None, clauses: dict[str, int] | None = None
+) -> list[str]:
+    """Every rule="<unit id>#<n>" and SRD[<unit id>#<n>] in the engine names a real SRD unit, and for
+    a unit the loop has analysed, a clause stage A numbered (loop/runs/<unit>/A.json)."""
     if units is None:
         from .units import load
 
         units = {u["id"] for u in load(require_approval=False)}
+    clauses = clause_counts() if clauses is None else clauses
     out = []
     for f in sorted(root.rglob("*.py")):
         for no, line in enumerate(f.read_text().splitlines(), 1):
@@ -160,6 +172,8 @@ def rule_references(root: Path = Path("dungdra"), units: set[str] | None = None)
                 uid, _, clause = ref.partition("#")
                 if uid not in units or (clause and not clause.isdigit()):
                     out.append(f"{f}:{no}: {ref!r} is not <unit id>[#<clause number>] of a real SRD unit")
+                elif clause and uid in clauses and not 1 <= int(clause) <= clauses[uid]:
+                    out.append(f"{f}:{no}: {ref!r}: stage A numbered {uid} #1..#{clauses[uid]}")
     return out
 
 

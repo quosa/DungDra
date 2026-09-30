@@ -520,3 +520,19 @@ def test_one_fix_that_also_fixes_another_ticket_closes_both(tmp_path, monkeypatc
     assert "xfail" not in Path("tests/srd/test_rule.py").read_text()
     log = subprocess.run(["git", "log", "--format=%s"], capture_output=True, text=True, check=True).stdout
     assert log.splitlines()[0] == "fix: T-1 a Speed bonus still applies (also fixes T-2)"
+
+
+def test_recheck_gates_and_commits_a_change_already_in_the_tree(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    write(tmp_path, {"dungdra/rule.py": "def grappled_speed(bonus):\n    return 0\n"})  # a person's change
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    roles: list[str] = []
+
+    def reviewer_only(role, prompt, **kw):
+        roles.append(role)
+        return fake_dev(fix=False)(role, prompt, **kw)
+
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), reviewer_only, recheck=True).startswith("fixed")
+    assert roles == ["fix-reviewer"] and T.load("T-1")["status"] == "fixed"

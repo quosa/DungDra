@@ -22,3 +22,7 @@ import layers; you judge what they can't:
 follow-ups, one per problem, and not one an open ticket (listed in the prompt) already covers:
 `refactor` (structure: duplication, layering, a clearer design), `infra` (a rule or capability
 the engine doesn't model yet), `coverage` (behaviour that exists but has no unit tests). Use `git diff`, `git show` and reading; you cannot change files.
+
+Clause numbers in `rule="<unit id>#<n>"` and `SRD[<unit id>#<n>]` are the loop's own, from
+stage A's analysis (`loop/runs/<unit id>/A.json`, shown in the prompt), not the SRD's run-in
+labels: a unit with three labelled effects may have four clauses.
