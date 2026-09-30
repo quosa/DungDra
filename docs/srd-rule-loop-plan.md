@@ -208,7 +208,7 @@ SRD PDF ─ extract.py (pdfplumber) ─► docs/srd/units.jsonl ─ check-units 
 
 Then the human approves.
 
-**Scope tags.** Each unit is `core`, `content-in` or `content-out`. For content-out units a **script, not a model**, generates a parametrised "engine refuses X" test and a `needs-content` row.
+**Scope tags.** Each unit is `core`, `content-in` or `content-out`. Content-out units (spells, monsters, class features and items the engine doesn't implement) are left out of the queue: the loop improves the accuracy of what exists and doesn't test absent features. When a piece of content is implemented, its unit becomes content-in and is queued automatically.
 
 ### Plan: a typed relation graph
 
@@ -456,7 +456,7 @@ Cache writes cost about 1.25× input. Claude Code caches its system prompt and e
 | Core units: Glossary 155 + Playing the Game 38 + Toolbox 30 | ~225 | 1,200 |
 | Content-in units: 4 classes at levels 1–3, origins and feats, the equipment chapter, spellcasting rules plus 32 spells, monster rules plus 14 monsters, magic item rules plus 7 items | ~175 | 950 |
 | Chapter journey passes | ~10 | 100 |
-| Content-out units (script-generated refusal tests, no model) | ~1,050 | 0 |
+| Content-out units (not queued until the content is implemented) | ~1,190 | 0 |
 | **Audit loop subtotal** | | **≈ $2,250** |
 | Dev loop: ~130 bug tickets at ~$6 (fixer, reviewer, retries) | | 800 |
 | Dev loop: ~8 large infra tickets (map/geometry, validate/apply split, reaction choices, rule-id events) at ~$40 | | 320 |

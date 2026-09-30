@@ -143,6 +143,11 @@ def _function_span(src: str, name: str) -> tuple[int, int] | None:
     return None
 
 
+def tidy(path: str) -> None:
+    """After the harness edits a test file, the formatter cleans up (blank lines, spacing)."""
+    Q.run("ruff", "format", "--quiet", path)
+
+
 def remove_test(nodeid: str) -> None:
     """The harness removes a refuted test (the designer may not delete tests)."""
     path, _, name = nodeid.partition("::")
@@ -151,8 +156,8 @@ def remove_test(nodeid: str) -> None:
     if span:
         lines = src.splitlines(keepends=True)
         del lines[span[0] - 1 : span[1]]
-        text = re.sub(r"\n{3,}(?=\S)", "\n\n\n", "".join(lines))
-        Path(path).write_text(text.rstrip("\n") + "\n")
+        Path(path).write_text("".join(lines))
+        tidy(path)
 
 
 def set_ticket(nodeid: str, tid: str) -> None:
@@ -165,6 +170,7 @@ def set_ticket(nodeid: str, tid: str) -> None:
         for i in range(span[0] - 1, span[1]):
             lines[i] = lines[i].replace("T-new", tid)
         Path(path).write_text("".join(lines))
+        tidy(path)
 
 
 def drop_xfail(nodeid: str, tid: str) -> None:
@@ -180,6 +186,7 @@ def drop_xfail(nodeid: str, tid: str) -> None:
             if not (span[0] - 1 <= i < span[1] and "xfail" in ln and tid in ln)
         ]
         Path(path).write_text("".join(keep))
+        tidy(path)
 
 
 # ---------------------------------------------------------------- working tree

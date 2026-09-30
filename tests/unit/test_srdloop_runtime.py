@@ -44,7 +44,10 @@ def test_agent_files_match_roles():
         text = (REPO / ".claude/agents" / f"{role}.md").read_text()
         front = dict(line.split(": ", 1) for line in text.split("---")[1].strip().splitlines())
         assert front["name"] == role and front["model"] == r.model
-        assert {t.strip() for t in front["tools"].strip('"').split(",") if t.strip()} == set(r.tools)
+        tools = {t.strip() for t in front["tools"].strip('"').split(",") if t.strip()}
+        # interactively an empty tools list means "all tools", so the analyst's file says Read;
+        # headless, the harness gives it none (--tools "")
+        assert tools == (set(r.tools) or {"Read"})
         assert (C.SCHEMAS / f"{r.schema}.json").exists()
 
 

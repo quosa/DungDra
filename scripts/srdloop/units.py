@@ -86,7 +86,7 @@ def engine_content() -> dict[str, set[str]]:
 
 def scope(unit: dict, content: dict[str, set[str]]) -> str:
     """ "core" (a rules chapter), "content-in" (rules or content the engine implements) or
-    "content-out" (content the engine should refuse: only a refusal check, no model)."""
+    "content-out" (content the engine does not implement: not queued until it does)."""
     ch, path, title = unit["chapter"], unit["heading_path"], norm_name(unit["title"])
     if ch in CORE_CHAPTERS:
         return "core"

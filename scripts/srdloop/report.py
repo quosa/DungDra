@@ -23,7 +23,7 @@ def render(ctx: Context, queue: list[dict]) -> str:
     scopes = Counter(ctx.scope(u["id"]) for u in ctx.units)
     lines += [
         f"{len(ctx.units)} rule units: {scopes['core']} core, {scopes['content-in']} implemented content, "
-        f"{scopes['content-out']} content the engine refuses (checked by script, no model).",
+        f"{scopes['content-out']} content the engine doesn't implement (not queued until it does).",
         "",
         "## Units by chapter and state",
         "",
