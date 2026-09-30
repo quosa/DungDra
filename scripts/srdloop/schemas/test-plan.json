@@ -181,7 +181,8 @@
     "additionalProperties": false,
     "required": [
      "ambiguity",
-     "ruling"
+     "ruling",
+     "tests"
     ],
     "properties": {
      "ambiguity": {
@@ -189,6 +190,13 @@
      },
      "ruling": {
       "type": "string"
+     },
+     "tests": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "node ids of the tests that depend on this reading"
      }
     }
    }

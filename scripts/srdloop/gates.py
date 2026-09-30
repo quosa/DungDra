@@ -22,6 +22,7 @@ HARNESS = (
     "loop/state/**",
     "loop/runs/**",
     "loop/tickets/**",
+    "loop/rulings/**",
     "loop/costs.jsonl",
     "loop/COVERAGE.md",
     "loop/RULEMAP.md",
@@ -36,7 +37,6 @@ ZONES: dict[str, tuple[str, ...]] = {
         "tests/scenarios/**",
         "tests/support/**",
         "docs/scenario-notes.md",
-        "loop/rulings-proposed.md",
         "loop/abuse-catalogue.md",
     ),
     "fixer": ("dungdra/**", "tests/unit/**", "loop/requests/**"),
@@ -128,7 +128,7 @@ def srd_markers(src: str) -> dict[str, dict]:
             kw = {k.arg: _value(k.value, consts) for k in m.keywords}
             out[fn.name] = {
                 "unit": _value(m.args[0], consts) if m.args else None,
-                **{k: kw.get(k) for k in ("clause", "kind")},
+                **{k: kw.get(k) for k in ("clause", "kind", "ruling")},
             }
     return out
 
@@ -154,7 +154,9 @@ def _tests(src: str) -> dict[str, ast.FunctionDef]:
     }
 
 
-def test_file_problems(path: Path, unit_ids: set[str], srd: bool = True) -> list[str]:
+def test_file_problems(
+    path: Path, unit_ids: set[str], srd: bool = True, rulings: set[str] | None = None
+) -> list[str]:
     """SRD tests: an srd("<unit id>", kind=…) marker naming a real unit, at least one
     assertion, and no mocks anywhere in the file."""
     src = path.read_text()
@@ -175,6 +177,12 @@ def test_file_problems(path: Path, unit_ids: set[str], srd: bool = True) -> list
             out.append(f"{path}::{name}: marker names unknown unit {m['unit']!r}")
         if m["kind"] not in KINDS:
             out.append(f"{path}::{name}: marker kind {m['kind']!r} is not one of {KINDS}")
+        if rulings is not None and m["ruling"] is not None and m["ruling"] not in rulings:
+            out.append(
+                f"{path}::{name}: ruling {m['ruling']!r} is neither in the register nor pending; "
+                "name an R-<n> or leave it out (report the ambiguity in rulings_proposed and the "
+                "harness adds P-<n>)"
+            )
     return out
 
 
@@ -189,9 +197,12 @@ def git(*args: str) -> str:
     return subprocess.run(["git", *args], capture_output=True, text=True, check=False).stdout
 
 
-def append_only(ref: str = "HEAD", roots: tuple[str, ...] = ACCEPTANCE) -> list[str]:
+def append_only(
+    ref: str = "HEAD", roots: tuple[str, ...] = ACCEPTANCE, allow: frozenset[str] = frozenset()
+) -> list[str]:
     """Acceptance tests may be added to, never weakened: no test removed, no assertion dropped,
-    no skip, and no xfail that doesn't name a ticket (T-<n>)."""
+    no skip, and no xfail that doesn't name a ticket (T-<n>). `allow`: node ids that may change
+    anyway (tests of a rejected ruling, which stage C must rewrite)."""
     out = []
     old_files = [
         f for f in git("ls-tree", "-r", "--name-only", ref, "--", *roots).splitlines() if f.endswith(".py")
@@ -200,6 +211,8 @@ def append_only(ref: str = "HEAD", roots: tuple[str, ...] = ACCEPTANCE) -> list[
         old = _tests(git("show", f"{ref}:{f}"))
         new = _tests(Path(f).read_text()) if Path(f).exists() else {}
         for name, fn in old.items():
+            if f"{f}::{name}" in allow:
+                continue
             if name not in new:
                 out.append(f"{f}::{name}: removed")
             elif _asserts(new[name]) < _asserts(fn):

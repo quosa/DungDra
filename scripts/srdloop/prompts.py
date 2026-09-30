@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 
 RULINGS = Path("README.md")  # the rulings register (R-01…) lives in the README
-PROPOSED = Path("loop/rulings-proposed.md")
 ABUSE = Path("loop/abuse-catalogue.md")
 
 
@@ -18,12 +17,23 @@ def _unit_block(u: dict) -> str:
     return f"### {u['id']} — {u['title']} ({pages}; {where})\n\n{u['text']}"
 
 
-def _rulings() -> str:
+def _rulings(unit_id: str | None = None) -> str:
+    from . import rulings as Ru
+
     text = RULINGS.read_text() if RULINGS.exists() else ""
     rows = [ln for ln in text.splitlines() if ln.startswith("| R-")]
     out = "\n".join(rows) or "(none)"
-    if PROPOSED.exists():
-        out += "\n\nProposed, not yet accepted:\n" + PROPOSED.read_text()
+    waiting = Ru.pending()
+    if waiting:
+        out += "\n\nProposed, not yet decided (don't build on these):\n"
+        out += "\n".join(f"- {r['id']} ({r['unit']}): {r['ambiguity']} — {r['ruling']}" for r in waiting)
+    rejected = [r for r in Ru.all_rulings() if r["status"] == "rejected" and r["unit"] == unit_id]
+    if rejected:
+        out += "\n\nRejected for this unit (rewrite the tests that used them; don't propose them again):\n"
+        out += "\n".join(
+            f"- {r['id']}: {r['ruling']} — rejected because: {r['reason']}. Tests: {r['tests']}"
+            for r in rejected
+        )
     return out
 
 
@@ -39,7 +49,7 @@ def analysis(unit: dict, related_units: list[dict], problems: list[str] = ()) ->
     return (
         f"Analyse this SRD 5.2.1 rule unit.\n\n## The unit\n\n{_unit_block(unit)}\n\n"
         f"## Units it references (for relations and conflicts)\n\n{rel}\n\n"
-        f"## Rulings register\n\n{_rulings()}" + _retry(problems)
+        f"## Rulings register\n\n{_rulings(unit['id'])}" + _retry(problems)
     )
 
 
@@ -60,7 +70,7 @@ def test_plan(unit: dict, analysis: dict, verdicts: dict, problems: list[str] = 
         f"{json.dumps(analysis, indent=1, ensure_ascii=False)}\n```\n\n"
         f"## Stage B verdicts on existing scenarios, tests and code\n\n```json\n"
         f"{json.dumps(verdicts, indent=1, ensure_ascii=False)}\n```\n\n"
-        f"## Rulings register\n\n{_rulings()}\n\n## Abuse catalogue\n\n{abuse}" + _retry(problems)
+        f"## Rulings register\n\n{_rulings(unit['id'])}\n\n## Abuse catalogue\n\n{abuse}" + _retry(problems)
     )
 
 
@@ -81,8 +91,12 @@ def fix(ticket: dict, unit: dict | None, failures: str, problems: list[str] = ()
     )
 
 
-def review(ticket: dict, diff: str, gate: str) -> str:
+def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = ()) -> str:
+    others = "\n".join(
+        f"- {t['id']} ({t['kind']}): {t['title']}" for t in open_tickets if t["id"] != ticket["id"]
+    )
     return (
         f"Review this fix for ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}\n\n"
-        f"## Gate results\n\n```\n{gate}\n```\n\n## The diff\n\n```diff\n{diff[-40000:]}\n```"
+        f"## Gate results\n\n```\n{gate}\n```\n\n## The diff\n\n```diff\n{diff[-40000:]}\n```\n\n"
+        f"## Open tickets (don't file a follow-up one of these already covers)\n\n{others or '(none)'}"
     )

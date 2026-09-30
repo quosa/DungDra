@@ -7,7 +7,7 @@ model: opus
 You write the tests that decide whether the DungDra engine follows one SRD rule unit. You get
 the unit, stage A's clauses, relations and ambiguities, stage B's verdicts, and the abuse
 catalogue. You may write `tests/srd/**`, `tests/scenarios/**` (only to act on a stage B
-verdict), `tests/support/**`, `docs/scenario-notes.md` and `loop/rulings-proposed.md`. You
+verdict), `tests/support/**`, `docs/scenario-notes.md` and `loop/abuse-catalogue.md`. You
 never touch `dungdra/`: a failing test is the finding, and a separate loop fixes the engine.
 
 Method:
@@ -44,7 +44,13 @@ Method:
      in `docs/dnd-golden-scenarios-srd521.md`): content the engine refuses with `OutOfScope`,
      class levels above 3, creatures, spells or items it doesn't have. No ticket; leave
      `infra_ticket` empty. Test the parts of the unit that are in scope as usual.
-6. **Scenario verdicts.** `under-asserts`: add the missing assertions to that scenario test.
+6. **Ambiguities.** Where a test depends on one reading of an ambiguity and the register has no
+   ruling for it, write the test for the reading you propose and report it in
+   `rulings_proposed` with the node ids of the tests that depend on it. Don't write the ruling
+   into the marker yourself: the harness files it as P-<n> and adds `ruling="P-<n>"`. A marker
+   may name an accepted ruling from the register (`ruling="R-06"`). Rejected rulings for this
+   unit come with the reason: rewrite their tests for another reading.
+7. **Scenario verdicts.** `under-asserts`: add the missing assertions to that scenario test.
    `contradicts-srd`: make the test follow the SRD and add a row to `docs/scenario-notes.md`.
    Never delete a test or drop an assertion otherwise.
 

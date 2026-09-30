@@ -27,16 +27,16 @@ from . import gates as Gt
 from . import plan as P
 from . import prompts as Pr
 from . import quality as Q
+from . import rulings as Ru
 from . import state as S
 from . import tickets as T
 from .gates import git
 
 RUNS = Path("loop/runs")
-PROPOSED = Path("loop/rulings-proposed.md")
 MAX_OPEN_TICKETS = 15
 MAX_CONSECUTIVE_INCOMPLETE = 3
 STAGE_ROLE = {"A": "rule-analyst", "B": "scenario-auditor", "C": "test-designer", "D": "test-verifier"}
-AGENT_ZONES = ("tests", "docs/scenario-notes.md", "loop/rulings-proposed.md", "loop/abuse-catalogue.md")
+AGENT_ZONES = ("tests", "docs/scenario-notes.md", "loop/abuse-catalogue.md")
 DEV_ZONES = ("dungdra", "tests/unit", "loop/requests")
 
 
@@ -118,10 +118,24 @@ def gate_tests(unit: dict, out: dict, analysis: dict, unit_ids: set[str], ref: s
     problems += [f"{t['name']}: no such test" for t in out["tests"] if not _test_exists(t["name"])]
     changed = Gt.changed_files(ref)
     problems += Gt.zone_problems(changed, "test-designer")
-    problems += Gt.append_only(ref)
+    rejected = frozenset(
+        n
+        for r in Ru.all_rulings()
+        if r["status"] == "rejected" and r["unit"] == unit["id"]
+        for n in r["tests"]
+    )
+    problems += Gt.append_only(ref, allow=rejected)  # tests of a rejected ruling must change
+    known = Ru.known_ids()
     for f in changed:
         if f.startswith("tests/srd/") and Path(f).name.startswith("test_") and Path(f).exists():
-            problems += Gt.test_file_problems(Path(f), unit_ids)
+            problems += Gt.test_file_problems(Path(f), unit_ids, rulings=known)
+    names = {t["name"] for t in out["tests"]}
+    for r in out["rulings_proposed"]:
+        problems += [
+            f"proposed ruling names {n!r}, which isn't one of your tests"
+            for n in r["tests"]
+            if n not in names
+        ]
     live = [t for t in out["tests"] if _test_exists(t["name"])]
     problems += Gt.claimed_outcomes(
         {t["name"]: t["claim"] for t in live}, Gt.run_pytest([t["name"] for t in live])
@@ -353,14 +367,19 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
     out_of_scope = [n for n in plan["not_testable"] if n.get("kind") == "out-of-scope"]
     for n in missing:  # the engine should support it: an infra ticket
         tickets.append(T.create("infra", uid, f"{uid}: {n['infra_ticket']}", [])["id"])
-    if plan["rulings_proposed"]:
-        PROPOSED.parent.mkdir(parents=True, exist_ok=True)
-        with PROPOSED.open("a") as f:
-            for r in plan["rulings_proposed"]:
-                f.write(f"\n- **{uid}**: {r['ambiguity']} — proposed: {r['ruling']}\n")
+    kept_names = {t["name"] for t in kept}
+    for r in plan["rulings_proposed"]:  # file each proposal and mark the tests that depend on it
+        tests = [n for n in r["tests"] if n in kept_names]
+        if tests:
+            pr = Ru.create(uid, r["ambiguity"], r["ruling"], tests)
+            for n in tests:
+                Ru.set_marker(n, pr["id"])
+                tidy(n.split("::")[0])
     analysis = stage_output(uid, "A")
     clauses = {c["id"] for c in analysis["clauses"]}
-    if by_title:
+    if Ru.pending(uid):
+        status = "blocked"  # a reading nobody has agreed to yet: python -m scripts.srdloop ruling ...
+    elif by_title:
         status = "red"
     elif missing:
         status = "blocked"
@@ -455,6 +474,54 @@ def close_co_fixed(tk: dict, red: list[str]) -> tuple[list[dict], list[str]]:
     return fixed, problems
 
 
+def waits_for_ruling(tk: dict) -> str | None:
+    """A ticket whose tests depend on a proposed (undecided) ruling waits: returns its id."""
+    pending = {r["id"] for r in Ru.pending()}
+    for n in tk["tests"]:
+        path, _, name = n.partition("::")
+        if Path(path).exists():
+            ruling = Gt.srd_markers(Path(path).read_text()).get(name.split("[")[0], {}).get("ruling")
+            if ruling in pending:
+                return ruling
+    return None
+
+
+def refresh_status(uid: str) -> str:
+    """After a ruling decision: blocked while proposals are pending, else red while tickets are open."""
+    st = S.load(uid)
+    if st["status"] not in ("blocked", "red", "green"):
+        return st["status"]
+    open_ids = {t["id"] for t in T.open_tickets()}
+    bugs = [t for t in st.get("tickets", []) if t in open_ids]
+    st["status"] = "blocked" if Ru.pending(uid) else ("red" if bugs else "green")
+    S.save(st)
+    return st["status"]
+
+
+def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
+    """Accept (text = an optional note) or reject (text = the reason) a proposal, then commit."""
+    if accept:
+        r = Ru.accept(pid, note=text)
+        for n in r["tests"]:
+            tidy(n.split("::")[0])
+        status = refresh_status(r["unit"])
+        message = f"ruling: {pid} accepted as {r['register_id']} ({r['unit']} {status})"
+        commit(message, ("README.md", "tests/srd", "loop/rulings") + Gt.HARNESS)
+        return r
+    r = Ru.reject(pid, reason=text)
+    st = S.load(r["unit"])
+    st["fingerprint"] = None  # stale: stage C rewrites the tests that used this reading
+    st["stages"].pop("C", None)
+    st["stages"].pop("D", None)
+    S.save(st)
+    for t in T.open_tickets():  # tickets built on the rejected reading are void
+        if set(t["tests"]) & set(r["tests"]):
+            t["status"] = "void"
+            T.record(t, "void", reason=f"ruling {pid} rejected")
+    commit(f"ruling: {pid} rejected ({r['unit']} re-queued)", ("loop/rulings",) + Gt.HARNESS)
+    return r
+
+
 def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.invoke) -> str:
     unit = ctx.by_id.get(tk["unit"])
     failures = "\n".join(f"{n}: {o}" for n, o in Gt.run_pytest(tk["tests"]).items())
@@ -480,7 +547,7 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     problems += gate_problems
     verdict = None
     if not problems:
-        prompt = Pr.review(tk, git("diff", "HEAD"), "all gates pass")
+        prompt = Pr.review(tk, git("diff", "HEAD"), "all gates pass", T.open_tickets())
         rev = invoke("fix-reviewer", prompt, budget=budget, about=tk["id"], stage="review")
         verdict = rev.output or {"verdict": "reject", "findings": [], "followups": []}
         if verdict["verdict"] != "approve":  # a rejection blocks even without findings
@@ -521,7 +588,9 @@ def dev(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             raise Stop(f"the test suite is red before the dev loop starts: {red[:5]}")
         while True:
             ctx = P.Context.load()
-            todo = [t for t in T.open_tickets() if only is None or t["id"] in only]
+            todo = [
+                t for t in T.open_tickets() if (only is None or t["id"] in only) and not waits_for_ruling(t)
+            ]
             if not todo:
                 log("dev loop: no open tickets")
                 return 0

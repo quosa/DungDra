@@ -21,6 +21,13 @@ prompt STAGE UNIT    print the prompt for stage A, B, C or D of a unit
 accept STAGE UNIT FILE
                      gate a stage's JSON output; on success checkpoint it
 finish UNIT          after stage D: remove refuted tests, open tickets, commit the unit
+
+Rulings (ambiguities the test designer had to resolve):
+ruling list          proposed, accepted and rejected rulings
+ruling accept P-n [--note TEXT]
+                     make it the next R-<n> in the README register; its tests' markers follow
+ruling reject P-n --reason TEXT
+                     re-queue the unit: stage C rewrites those tests for another reading
 """
 
 from __future__ import annotations
@@ -35,6 +42,7 @@ from . import mutate as M
 from . import plan as P
 from . import quality as Q
 from . import report as Rep
+from . import rulings as Ru
 from . import runner as Run
 from . import tickets as T
 from . import units as U
@@ -46,6 +54,25 @@ def _verdict(problems: list[str], note: str = "") -> int:
     head = f"FAIL ({len(problems)} problems)" if problems else "PASS"
     print(head + (f"; {note}" if note else ""))
     return 1 if problems else 0
+
+
+def _ruling(a) -> int:
+    if a.action == "list":
+        for r in Ru.all_rulings():
+            rid = f" → {r['register_id']}" if r["register_id"] else ""
+            print(f"{r['id']:5} {r['status']:9}{rid} {r['unit']}: {r['ruling']}")
+            if r["reason"]:
+                print(f"      rejected because: {r['reason']}")
+        return 0
+    if not a.id:
+        print("which ruling? e.g. ruling accept P-1", file=sys.stderr)
+        return 1
+    if a.action == "reject" and not a.reason.strip():
+        print("a rejection needs --reason: stage C uses it to pick another reading", file=sys.stderr)
+        return 1
+    r = Run.decide_ruling(a.id, a.action == "accept", a.note if a.action == "accept" else a.reason)
+    print(f"{r['id']}: {r['status']}" + (f" as {r['register_id']}" if r["register_id"] else ""))
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -87,7 +114,14 @@ def main(argv: list[str] | None = None) -> int:
     acc.add_argument("file")
     fin = sub.add_parser("finish")
     fin.add_argument("unit")
+    ru = sub.add_parser("ruling")
+    ru.add_argument("action", choices=["list", "accept", "reject"])
+    ru.add_argument("id", nargs="?")
+    ru.add_argument("--note", default="")
+    ru.add_argument("--reason", default="")
     a = ap.parse_args(argv)
+    if a.cmd == "ruling":
+        return _ruling(a)
     if a.cmd == "mutate":
         print(M.mutate(a.file, a.line, a.old, a.new, a.nodeid))
         return 0

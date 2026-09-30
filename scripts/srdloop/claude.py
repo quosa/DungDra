@@ -49,7 +49,7 @@ ROLES: dict[str, Role] = {
             *READ,
             *PYTEST,
             *_write("tests/srd/**", "tests/scenarios/**", "tests/support/**"),
-            *_write("docs/scenario-notes.md", "loop/rulings-proposed.md", "loop/abuse-catalogue.md"),
+            *_write("docs/scenario-notes.md", "loop/abuse-catalogue.md"),
         ),
         "test-plan",
         6.0,

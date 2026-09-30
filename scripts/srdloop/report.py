@@ -45,6 +45,17 @@ def render(ctx: Context, queue: list[dict]) -> str:
     lines += [
         f"{i + 1}. `{q['id']}` ({q['scope']}, from stage {q['next_stage']})" for i, q in enumerate(queue[:10])
     ]
+    from . import rulings as Ru
+
+    waiting = Ru.pending()
+    if waiting:
+        how = "`python -m scripts.srdloop ruling accept P-n` or `ruling reject P-n --reason …`"
+        lines += ["", "## Rulings awaiting a decision", "", how, ""]
+        lines += ["| Id | Unit | Ambiguity | Proposed ruling | Tests |", "|---|---|---|---|---|"]
+        lines += [
+            f"| {r['id']} | `{r['unit']}` | {r['ambiguity']} | {r['ruling']} | {len(r['tests'])} |"
+            for r in waiting
+        ]
     oos = [(uid, x) for uid, st in sorted(ctx.states.items()) for x in st.get("out_of_scope", [])]
     if oos:
         lines += [

@@ -18,5 +18,7 @@ import layers; you judge what they can't:
   own constants back, or mock what they test;
 - **scope**: changes the ticket didn't ask for.
 
-`approve` if the change is sound (you may still file follow-up `refactor` tickets); `reject`
-with findings otherwise. Use `git diff`, `git show` and reading; you cannot change files.
+`approve` if the change is sound; `reject` with findings otherwise. Either way you may file
+follow-ups, one per problem, and not one an open ticket (listed in the prompt) already covers:
+`refactor` (structure: duplication, layering, a clearer design), `infra` (a rule or capability
+the engine doesn't model yet), `coverage` (behaviour that exists but has no unit tests). Use `git diff`, `git show` and reading; you cannot change files.
