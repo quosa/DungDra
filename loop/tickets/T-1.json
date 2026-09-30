@@ -7,6 +7,13 @@
     "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
   ],
   "status": "open",
-  "attempts": 0,
-  "history": []
+  "attempts": 1,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage: xpassed"
+      ]
+    }
+  ]
 }
