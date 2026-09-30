@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from .d20 import D20Roll, roll_d20_test
-from .effects import IMPLIES, INCAPACITATING, Acc, Condition, Ctx, Effect
+from .effects import IMPLIES, INCAPACITATING, Acc, Condition, Ctx, Effect, condition_rule
 from .events import PLAYER
 from .rules import ABILITIES, ABILITY_NAMES, SKILLS, Refusal, ability_mod, div
 
@@ -124,6 +124,7 @@ class Creature:
                     "effect_end",
                     f"{self.name}: {eff.describe()} ends" + (f" ({reason})" if reason else ""),
                     page=eff.page,
+                    rule=eff.rule,
                 )
 
     def find_effects(self, name=None, cls=None, source=None):
@@ -157,16 +158,28 @@ class Creature:
         return bool(name == "poisoned" and self.has("petrified"))
 
     def add_condition(
-        self, name: str, source: str = "", caster=None, ends=None, until=None, page="176-191", **data
+        self,
+        name: str,
+        source: str = "",
+        caster=None,
+        ends=None,
+        until=None,
+        page="176-191",
+        rule=None,
+        **data,
     ) -> Condition | None:
         name = name.lower()
+        rule = rule or condition_rule(name)
         if name == "exhaustion":
             self.gain_exhaustion(1, source)
             return None
         if self.is_immune_to_condition(name):
             if self.game:
                 self.game.log.player(
-                    "immune", f"{self.name} is immune to the {name.title()} condition", page=page
+                    "immune",
+                    f"{self.name} is immune to the {name.title()} condition",
+                    page=page,
+                    rule="PLAY.damage-and-healing.immunity",
                 )
             return None
         already = self.has(name)
@@ -177,6 +190,9 @@ class Creature:
                 "condition",
                 f"{self.name} has the {name.title()} condition" + (f" ({source})" if source else ""),
                 page=page,
+                rule=rule,
+                # R-07: while Grappled, every Speed (also one gained later) is 0 and can't increase
+                ruling="R-07" if name == "grappled" else None,
             )
         if name == "prone" and self.game and not already:
             from .combat import _mounted_fall_check
@@ -188,7 +204,10 @@ class Creature:
             if self.held:
                 if self.game:
                     self.game.log.player(
-                        "drop", f"{self.name} drops {', '.join(map(str, self.held))}", page=191
+                        "drop",
+                        f"{self.name} drops {', '.join(map(str, self.held))}",
+                        page=191,
+                        rule="GLOSS.unconscious",
                     )
                 self.held = []
             self._drop_held()
@@ -214,13 +233,19 @@ class Creature:
                 f"{self.name} no longer has the {name.title()} condition"
                 + (f" ({reason})" if reason else ""),
                 page="176-191",
+                rule=condition_rule(name),
             )
         return removed
 
-    def gain_exhaustion(self, n: int = 1, source: str = "", page=181):
+    def gain_exhaustion(self, n: int = 1, source: str = "", page=181, rule="GLOSS.exhaustion"):
         if "exhaustion" in self.cond_immune:
             if self.game:
-                self.game.log.player("immune", f"{self.name} is immune to Exhaustion", page=page)
+                self.game.log.player(
+                    "immune",
+                    f"{self.name} is immune to Exhaustion",
+                    page=page,
+                    rule="PLAY.damage-and-healing.immunity",
+                )
             return
         self.exhaustion += n
         if source:
@@ -231,6 +256,7 @@ class Creature:
                 f"{self.name} gains {n} Exhaustion level"
                 f"{'s' if n > 1 else ''} (now {self.exhaustion})" + (f" from {source}" if source else ""),
                 page=page,
+                rule=rule,
             )
         if self.exhaustion >= 6:
             self.die("Exhaustion level 6")
@@ -264,6 +290,7 @@ class Creature:
                 f"{self.name} loses {take} Exhaustion level"
                 f"{'s' if take > 1 else ''} (now {self.exhaustion})" + (f" ({reason})" if reason else ""),
                 page=181,
+                rule="GLOSS.exhaustion",
             )
         return take
 
@@ -364,6 +391,7 @@ class Creature:
         visibility=PLAYER,
         page="6",
         dice_bonus=(),
+        rule=None,
     ) -> D20Roll:
         if skill:
             skill = skill.lower()
@@ -396,15 +424,17 @@ class Creature:
         roll.auto, roll.auto_reason = acc.auto, acc.auto_reason
         if acc.auto == "fail":
             roll.auto_reason = acc.auto_reason
-            return self._finish(roll, acc, visibility, page, auto_only=True)
-        return self._finish(roll, acc, visibility, page, list(dice_bonus))
+            return self._finish(roll, acc, visibility, page, auto_only=True, rule=rule)
+        return self._finish(roll, acc, visibility, page, list(dice_bonus), rule=rule)
 
-    def _finish(self, roll, acc, visibility, page, bonus_dice=(), auto_only=False):
+    def _finish(self, roll, acc, visibility, page, bonus_dice=(), auto_only=False, rule=None):
         for e in acc.consumed:
             if e.owner is not None:
                 e.owner.remove_effect(e)
         if auto_only:
-            return roll_d20_test(self.game, self, roll, page=page, visibility=visibility)
+            return roll_d20_test(
+                self.game, self, roll, page=page, visibility=visibility, rule=rule, rulings=acc.rulings
+            )
         roll.auto = None if roll.auto != "success" else roll.auto
         return roll_d20_test(
             self.game,
@@ -413,6 +443,8 @@ class Creature:
             bonus_dice=list(acc.bonus_dice) + list(bonus_dice),
             page=page,
             visibility=visibility,
+            rule=rule,
+            rulings=acc.rulings,
         )
 
     def save_modifier_parts(self, ability: str) -> list[tuple[int, str]]:
@@ -440,15 +472,20 @@ class Creature:
         tags=(),
         visibility=PLAYER,
         page="7",
+        rule=None,
     ) -> D20Roll:
         name = label or f"{ABILITY_NAMES[ability]} saving throw"
         roll = D20Roll("save", name, self.name, target=dc)
         if choose_to_fail:
             roll.auto, roll.auto_reason = "fail", "chose to fail without rolling"
-            return roll_d20_test(self.game, self, roll, page=187, visibility=visibility)
+            return roll_d20_test(
+                self.game, self, roll, page=187, visibility=visibility, rule="GLOSS.saving-throw"
+            )
         if self.score(ability) is None:
             roll.auto, roll.auto_reason = "fail", "lacks the ability score"
-            return roll_d20_test(self.game, self, roll, page=187, visibility=visibility)
+            return roll_d20_test(
+                self.game, self, roll, page=187, visibility=visibility, rule="GLOSS.saving-throw"
+            )
         ctx = Ctx("save", self, ability=ability, avoid=set(avoid), source=source, tags=set(tags))
         acc = self.gather(ctx)
         roll.mods = self.save_modifier_parts(ability) + list(bonus) + acc.mods
@@ -456,11 +493,11 @@ class Creature:
         roll.dis = acc.dis + list(dis)
         if acc.auto == "fail":
             roll.auto, roll.auto_reason = "fail", acc.auto_reason
-            return self._finish(roll, acc, visibility, page, auto_only=True)
+            return self._finish(roll, acc, visibility, page, auto_only=True, rule=rule)
         if acc.auto == "success":
             roll.auto, roll.auto_reason = "success", acc.auto_reason
-            return self._finish(roll, acc, visibility, page, auto_only=True)
-        return self._finish(roll, acc, visibility, page)
+            return self._finish(roll, acc, visibility, page, auto_only=True, rule=rule)
+        return self._finish(roll, acc, visibility, page, rule=rule)
 
     def skill_total(self, skill: str) -> int:
         return sum(v for v, _ in self.check_modifier_parts(SKILLS[skill], skill))
@@ -521,6 +558,7 @@ class Creature:
         adjusted=False,
         within5=False,
         page="16-17",
+        rule="PLAY.damage-and-healing",
     ) -> int:
         """Apply one instance of damage. Returns HP actually lost (incl. temp HP)."""
         if self.dead:
@@ -544,7 +582,15 @@ class Creature:
         old = self.hp
         if g:
             g.log.player(
-                "damage", msg, page=page, target=self.id, amount=dealt, dtype=dtype, raw=amount, crit=crit
+                "damage",
+                msg,
+                page=page,
+                rule=rule,
+                target=self.id,
+                amount=dealt,
+                dtype=dtype,
+                raw=amount,
+                crit=crit,
             )
         if dealt <= 0:
             return 0
@@ -598,6 +644,7 @@ class Creature:
                 "knockout",
                 f"{self.name} is knocked out: 1 HP, Unconscious, and starts a Short Rest",
                 page=183,
+                rule="GLOSS.knocking-out-a-creature",
             )
 
     def _damage_at_zero(self, amount, crit):
@@ -614,13 +661,20 @@ class Creature:
         self.dead = True
         self.hp = 0
         if self.game:
-            self.game.log.player("death", f"{self.name} dies" + (f" ({reason})" if reason else ""), page=17)
+            self.game.log.player(
+                "death",
+                f"{self.name} dies" + (f" ({reason})" if reason else ""),
+                page=17,
+                rule="PLAY.damage-and-healing.dropping-to-0-hit-points",
+            )
             self.game.on_death(self)
 
-    def heal(self, amount: int, source: str = "", page="17") -> int:
+    def heal(self, amount: int, source: str = "", page="17", rule="PLAY.damage-and-healing.healing") -> int:
         if self.dead:
             if self.game:
-                self.game.log.player("heal", f"{self.name} is dead and can't regain Hit Points", page=180)
+                self.game.log.player(
+                    "heal", f"{self.name} is dead and can't regain Hit Points", page=180, rule="GLOSS.dead"
+                )
             return 0
         before = self.hp
         self.hp = min(self.max_hp, self.hp + max(0, amount))
@@ -633,6 +687,7 @@ class Creature:
                 + (f" ({amount} rolled, capped at max {self.max_hp})" if gained < amount else "")
                 + f" → {self.hp}/{self.max_hp}",
                 page=page,
+                rule=rule,
                 amount=gained,
             )
         if before == 0 and self.hp > 0:
@@ -648,7 +703,10 @@ class Creature:
                     self.effects.remove(e)
             if self.game:
                 self.game.log.player(
-                    "conscious", f"{self.name} regains consciousness (still Prone)", page=191
+                    "conscious",
+                    f"{self.name} regains consciousness (still Prone)",
+                    page=191,
+                    rule="GLOSS.unconscious",
                 )
             if not self.has("prone"):
                 self.add_condition("prone", "was Unconscious")
@@ -666,7 +724,10 @@ class Creature:
             )
             if not keep_new:
                 g.log.player(
-                    "temp_hp", f"{self.name} keeps {self.temp_hp} Temporary HP (declines {amount})", page=18
+                    "temp_hp",
+                    f"{self.name} keeps {self.temp_hp} Temporary HP (declines {amount})",
+                    page=18,
+                    rule="GLOSS.temporary-hit-points",
                 )
                 return self.temp_hp
         self.temp_hp = amount
@@ -675,6 +736,7 @@ class Creature:
                 "temp_hp",
                 f"{self.name} has {amount} Temporary HP" + (f" from {source}" if source else ""),
                 page=18,
+                rule="GLOSS.temporary-hit-points",
             )
         return self.temp_hp
 

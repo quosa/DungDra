@@ -52,6 +52,7 @@ class Acc:
         self.ac: list[tuple[int, str]] = []  # AC adjustments (attack vs owner)
         self.auto_crit: list[str] = []
         self.consumed: list = []  # effects to remove if the roll happens
+        self.rulings: list[tuple[str, str, str]] = []  # (rule, register ruling, what it decided)
 
     def advantage(self, src):
         if src not in self.adv:
@@ -75,11 +76,17 @@ class Acc:
         if self.auto is None:
             self.auto, self.auto_reason = "success", reason
 
+    def ruling(self, rule: str, ruling: str, what: str):
+        """Record that a register ruling decided how `rule` applies to this roll."""
+        if (rule, ruling, what) not in self.rulings:
+            self.rulings.append((rule, ruling, what))
+
 
 class Effect:
     name = "effect"
     condition: str | None = None  # set when this effect *is* a condition
     page = None
+    rule: str | None = None  # the SRD rule the effect applies, "<unit id>[#<clause>]"
 
     def __init__(self, source: str = "", caster=None, concentration=False, ends=None, until=None, **data):
         self.id = next(_ids)
@@ -142,6 +149,11 @@ IMPLIES = {
 }
 
 
+def condition_rule(name: str) -> str:
+    """The SRD rule of a condition: each has its own Rules Glossary entry, GLOSS.<name>."""
+    return f"GLOSS.{name}"
+
+
 def _within5(ctx):
     return ctx.distance is not None and ctx.distance <= 5
 
@@ -153,6 +165,7 @@ class Condition(Effect):
         super().__init__(source or name.title(), **kw)
         self.condition = name
         self.name = name
+        self.rule = condition_rule(name)
 
     # ---- d20 tests made by the owner
     def d20(self, ctx, acc):
@@ -173,6 +186,12 @@ class Condition(Effect):
             grapplers.add(self.data.get("grappler"))
             if ctx.kind == "attack" and ctx.target is not None and ctx.target.id not in grapplers:
                 acc.disadvantage("Grappled (attacking someone other than the grappler)")
+            if ctx.kind == "attack" and ctx.target is not None and len(grapplers - {None}) > 1:
+                acc.ruling(
+                    "GLOSS.grappled#2",
+                    "R-06",
+                    "with two or more grapplers, attacks against any of them have no Disadvantage",
+                )
         elif n == "incapacitated":
             if ctx.kind == "initiative":
                 acc.disadvantage("Incapacitated")

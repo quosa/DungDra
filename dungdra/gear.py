@@ -22,11 +22,14 @@ def don_armor(game, pc, name: str):
             f"{pc.name} is already wearing {pc.armor.display}; a creature can wear only one suit "
             f"of armor at a time",
             page=92,
+            rule="EQUIP.armor.one-at-a-time",
         )
     cat = it.armor["category"]
     if game.combat is not None:
         raise Refusal(
-            f"Donning {cat} armor takes {DON_DOFF[cat][0] // 60} minutes; not possible mid-combat", page=92
+            f"Donning {cat} armor takes {DON_DOFF[cat][0] // 60} minutes; not possible mid-combat",
+            page=92,
+            rule="EQUIP.armor",
         )
     pc.armor = it
     if pc.notes.pop("mage_armor", None):
@@ -43,6 +46,7 @@ def don_armor(game, pc, name: str):
         "equip",
         f"{pc.name} dons {it.display} (AC {pc.ac()})" + (f" — {'; '.join(warn)}" if warn else ""),
         page=92,
+        rule="EQUIP.armor",
     )
     return it
 
@@ -53,12 +57,14 @@ def doff_armor(game, pc):
     cat = pc.armor.armor["category"]
     if game.combat is not None:
         raise Refusal(
-            f"Doffing {cat} armor takes {DON_DOFF[cat][1] // 60} minutes; not possible mid-combat", page=92
+            f"Doffing {cat} armor takes {DON_DOFF[cat][1] // 60} minutes; not possible mid-combat",
+            page=92,
+            rule="EQUIP.armor",
         )
     it = pc.armor
     pc.armor = None
     game.advance(DON_DOFF[cat][1], f"{pc.name} doffs {it.display}")
-    game.log.player("equip", f"{pc.name} removes {it.display} (AC {pc.ac()})", page=92)
+    game.log.player("equip", f"{pc.name} removes {it.display} (AC {pc.ac()})", page=92, rule="EQUIP.armor")
 
 
 def equip_shield(game, pc, it=None):
@@ -66,12 +72,19 @@ def equip_shield(game, pc, it=None):
     if it is None:
         raise Refusal(f"{pc.name} has no Shield")
     if pc.shield is not None:
-        raise Refusal(f"{pc.name} can wield only one Shield at a time", page=92)
+        raise Refusal(
+            f"{pc.name} can wield only one Shield at a time", page=92, rule="EQUIP.armor.one-at-a-time"
+        )
     if game.combat is not None:
         game.combat.spend(pc, "action", "Utilize (don Shield)")
     pc.shield = it
     note = "" if pc.trained_in("shield") else " — untrained: no AC bonus"
-    game.log.player("equip", f"{pc.name} takes up the Shield (Utilize action){note} (AC {pc.ac()})", page=92)
+    game.log.player(
+        "equip",
+        f"{pc.name} takes up the Shield (Utilize action){note} (AC {pc.ac()})",
+        page=92,
+        rule="EQUIP.armor.armor-training.shield",
+    )
 
 
 def unequip_shield(game, pc):
@@ -80,7 +93,12 @@ def unequip_shield(game, pc):
     if game.combat is not None:
         game.combat.spend(pc, "action", "Utilize (doff Shield)")
     pc.shield = None
-    game.log.player("equip", f"{pc.name} sets the Shield aside (AC {pc.ac()})", page=92)
+    game.log.player(
+        "equip",
+        f"{pc.name} sets the Shield aside (AC {pc.ac()})",
+        page=92,
+        rule="EQUIP.armor.armor-training.shield",
+    )
 
 
 # -- carrying (p.178) ----------------------------------------------------------------
@@ -93,22 +111,29 @@ def pick_up(game, pc, name: str, qty: int = 1, weight: float | None = None, **pr
     new = pc.load() + it.weight()
     if new > carry:
         raise Refusal(
-            f"{pc.name} can't carry that: {new:g} lb exceeds carrying capacity {carry:g} lb", page=178
+            f"{pc.name} can't carry that: {new:g} lb exceeds carrying capacity {carry:g} lb",
+            page=178,
+            rule="GLOSS.carrying-capacity",
         )
     pc.inventory.add(it)
-    game.log.player("inventory", f"{pc.name} picks up {it}", page=178)
+    game.log.player("inventory", f"{pc.name} picks up {it}", page=178, rule="GLOSS.carrying-capacity")
     return it
 
 
 def drag(game, pc, weight: float):
     _, maxdrag = pc.capacity()
     if weight > maxdrag:
-        raise Refusal(f"{weight:g} lb exceeds {pc.name}'s drag/lift/push limit of {maxdrag:g} lb", page=178)
+        raise Refusal(
+            f"{weight:g} lb exceeds {pc.name}'s drag/lift/push limit of {maxdrag:g} lb",
+            page=178,
+            rule="GLOSS.carrying-capacity",
+        )
     pc.notes["dragging"] = weight
     game.log.player(
         "inventory",
         f"{pc.name} drags {weight:g} lb; Speed is at most 5 ft while doing so (now {pc.speed()} ft)",
         page=178,
+        rule="GLOSS.carrying-capacity",
     )
 
 
@@ -126,7 +151,10 @@ def buy(game, pc, name: str, qty: int = 1):
     pc.purse.pay(price)
     pc.inventory.add(n, qty)
     game.log.player(
-        "trade", f"{pc.name} buys {qty} × {n.title()} for {fmt_cp(price)} (left: {pc.purse})", page=89
+        "trade",
+        f"{pc.name} buys {qty} × {n.title()} for {fmt_cp(price)} (left: {pc.purse})",
+        page=89,
+        rule="EQUIP.coins",
     )
 
 
@@ -144,7 +172,10 @@ def sell(game, pc, name: str, qty: int = 1):
         pc.wielded.remove(it)
     pc.purse.add(price)
     game.log.player(
-        "trade", f"{pc.name} sells {qty} × {it.display} for {fmt_cp(price)} (half price)", page=89
+        "trade",
+        f"{pc.name} sells {qty} × {it.display} for {fmt_cp(price)} (half price)",
+        page=89,
+        rule="EQUIP.coins",
     )
     return price
 
@@ -156,6 +187,7 @@ def pay_with(game, pc, cost_cp: int, coin_cp: int):
         f"{pc.name} pays {fmt_cp(cost_cp)} with {fmt_cp(coin_cp)}; change "
         f"{ch['gp']} GP {ch['sp']} SP" + (f" {ch['cp']} CP" if ch["cp"] else ""),
         page=89,
+        rule="EQUIP.coins",
     )
     return ch
 
@@ -175,6 +207,7 @@ def live(game, pcs, lifestyle: str, days: int):
             "lifestyle",
             f"{pc.name} pays {fmt_cp(per)} for {days} days of {lifestyle.title()} living",
             page=101,
+            rule="EQUIP.lifestyle-expenses",
         )
     game.advance(days * DAY, f"{days} days of {lifestyle.title()} living")
 
@@ -236,13 +269,16 @@ def craft(game, pc, item: str, helpers=()):
         raise Refusal(
             f"{pc.name} needs proficiency with {' or '.join(t.title() for t in tools)} to craft {n.title()}",
             page=103,
+            rule="EQUIP.crafting-nonmagical-items.tools",
         )
     if pc.inventory.find(tool) is None:
         pc.notes.setdefault("borrowed_tools", []).append(tool)
     for h in helpers:
         if not h.has_tool_prof(tool):
             raise Refusal(
-                f"{h.name} can't help: helpers must also be proficient with {tool.title()}", page=103
+                f"{h.name} can't help: helpers must also be proficient with {tool.title()}",
+                page=103,
+                rule="EQUIP.crafting-nonmagical-items.time",
             )
     plan = craft_plan(n, len(helpers))
     pc.purse.pay(plan["materials_cp"])
@@ -253,6 +289,7 @@ def craft(game, pc, item: str, helpers=()):
         f"{fmt_cp(plan['materials_cp'])}, {plan['days']} day(s) of work"
         + (f" split among {1 + len(helpers)} crafters ({plan['work_days']:g} days)" if helpers else ""),
         page=103,
+        rule="EQUIP.crafting-nonmagical-items",
     )
     game.advance(int(-(-plan["work_days"] // 1)) * DAY, f"crafting {n.title()}")
     pc.inventory.add(n, 1)

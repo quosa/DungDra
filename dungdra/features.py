@@ -56,7 +56,10 @@ def on_level_up(pc):
         new += CLASSES[pc.cls]["subclasses"][pc.subclass].get(3, [])
     if g and new:
         g.log.player(
-            "features", f"{pc.name} gains: {', '.join(f.title() for f in new)}", page=CLASSES[pc.cls]["page"]
+            "features",
+            f"{pc.name} gains: {', '.join(f.title() for f in new)}",
+            page=CLASSES[pc.cls]["page"],
+            rule=f"CLASS.{pc.cls}.{pc.cls}-class-features",
         )
     # Fighting Style may be swapped whenever you gain a Fighter level (p.47)
     if pc.cls == "fighter" and g:
@@ -70,7 +73,12 @@ def on_level_up(pc):
         if swap and swap != pc.fighting_style:
             old = pc.fighting_style
             pc.fighting_style = swap
-            g.log.player("feat", f"{pc.name} replaces {old.title()} with {swap.title()}", page=47)
+            g.log.player(
+                "feat",
+                f"{pc.name} replaces {old.title()} with {swap.title()}",
+                page=47,
+                rule="CLASS.fighter.level-1-fighting-style",
+            )
     # Wizard: two new spellbook spells per level (p.78); Scholar at 2
     if pc.cls == "wizard":
         max_lvl = max(pc.slots_max())
@@ -115,7 +123,12 @@ def on_level_up(pc):
                 pc.scholar_skill = sk
                 pc.skills[sk] = 2
                 if g:
-                    g.log.player("features", f"{pc.name} gains Expertise in {sk.title()} (Scholar)", page=78)
+                    g.log.player(
+                        "features",
+                        f"{pc.name} gains Expertise in {sk.title()} (Scholar)",
+                        page=78,
+                        rule="CLASS.wizard.level-2-scholar",
+                    )
     # Species: Elf lineage spell at character level 3 (p.84)
     if pc.lineage and lvl >= 3:
         lin = SPECIES["elf"]["lineages"][pc.lineage]
@@ -160,6 +173,7 @@ def on_level_up(pc):
             f"{pc.name} can now prepare {pc.prepared_limit()} spells; slots "
             + ", ".join(f"level {lvl}: {m}" for lvl, m in pc.slots_max().items()),
             page=pc.cdata["page"],
+            rule=f"CLASS.{pc.cls}.level-1-spellcasting",
         )
 
 
@@ -179,6 +193,7 @@ def add_to_spellbook(pc, spells, how=""):
                 else ""
             ),
             page=78,
+            rule="CLASS.wizard.level-1-spellcasting",
         )
 
 
@@ -226,4 +241,9 @@ def choose_subclass(pc, name: str):
                 raise Refusal("Evocation Savant spells must be Evocation spells of level 2 or lower")
         add_to_spellbook(pc, picks[:2], "Evocation Savant")
     if g:
-        g.log.player("subclass", f"{pc.name} becomes a {name.title()}", page=pc.cdata["page"])
+        g.log.player(
+            "subclass",
+            f"{pc.name} becomes a {name.title()}",
+            page=pc.cdata["page"],
+            rule=f"CLASS.{pc.cls}.{pc.cls}-subclass-{name.replace(' ', '-')}",
+        )

@@ -1,6 +1,10 @@
 """Unit tests for dungdra.effects: conditions' effects on the owner's D20 Tests."""
 
-from dungdra.effects import Condition, Ctx
+import json
+from pathlib import Path
+
+from dungdra.effects import Acc, Condition, Ctx, condition_rule
+from dungdra.rules import CONDITIONS
 from tests.support.helpers import mon, pc
 
 GRAPPLED_DIS = "Grappled (attacking someone other than the grappler)"
@@ -54,3 +58,37 @@ def test_grappled_does_not_affect_saves(game):
     grappled_by(brom, gob)
     acc = brom.gather(Ctx("save", actor=brom, ability="str"))
     assert GRAPPLED_DIS not in acc.dis
+
+
+def test_two_grapplers_record_ruling_r06_on_the_attack(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    bandit = mon(game, "bandit", (0, 5))
+    grappled_by(brom, gob, bandit)
+    acc = brom.gather(Ctx("attack", actor=brom, target=gob, distance=5))
+    assert [(rule, ruling) for rule, ruling, _ in acc.rulings] == [("GLOSS.grappled#2", "R-06")]
+
+
+def test_one_grappler_needs_no_ruling(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    guard = mon(game, "guard", (-5, 0))
+    grappled_by(brom, gob)
+    assert brom.gather(Ctx("attack", actor=brom, target=guard, distance=5)).rulings == []
+
+
+def test_acc_records_each_ruling_once():
+    acc = Acc()
+    acc.ruling("GLOSS.grappled#2", "R-06", "why")
+    acc.ruling("GLOSS.grappled#2", "R-06", "why")
+    assert acc.rulings == [("GLOSS.grappled#2", "R-06", "why")]
+
+
+def test_a_condition_names_its_glossary_entry():
+    assert Condition("prone").rule == "GLOSS.prone"
+    assert condition_rule("grappled") == "GLOSS.grappled"
+
+
+def test_every_condition_names_a_real_srd_unit():
+    ids = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
+    assert {condition_rule(n) for n in CONDITIONS} <= ids

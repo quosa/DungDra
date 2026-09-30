@@ -311,6 +311,7 @@ class Game:
             "concentration",
             f"{caster.name}'s Concentration on {what} ends" + (f" ({reason})" if reason else ""),
             page=179,
+            rule="GLOSS.concentration",
         )
         for c, e in self._conc_effects(caster):
             if c is None:
@@ -324,7 +325,13 @@ class Game:
 
     def concentration_check(self, caster, damage: int):
         dc = min(30, max(10, damage // 2))
-        r = caster.save("con", dc, label=f"Concentration save (DC {dc}: {damage} damage)", page=179)
+        r = caster.save(
+            "con",
+            dc,
+            label=f"Concentration save (DC {dc}: {damage} damage)",
+            page=179,
+            rule="GLOSS.concentration",
+        )
         if not r.success:
             self.end_concentration(caster, "failed Concentration save")
         return r

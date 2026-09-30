@@ -9,7 +9,12 @@ def grant_heroic_inspiration(game, pc, source="GM"):
     """p.8: only one at a time; a surplus may be given to a PC who lacks it, else lost."""
     if not pc.heroic_inspiration:
         pc.heroic_inspiration = True
-        game.log.player("inspiration", f"{pc.name} gains Heroic Inspiration ({source})", page=8)
+        game.log.player(
+            "inspiration",
+            f"{pc.name} gains Heroic Inspiration ({source})",
+            page=8,
+            rule="GLOSS.heroic-inspiration",
+        )
         return pc
     lacking = [c for c in game.pcs() if not c.heroic_inspiration and c is not pc and not c.dead]
     if lacking:
@@ -28,10 +33,14 @@ def grant_heroic_inspiration(game, pc, source="GM"):
                 "inspiration",
                 f"{pc.name} already has Heroic Inspiration and gives the new instance to {other.name}",
                 page=8,
+                rule="GLOSS.heroic-inspiration",
             )
             return other
     game.log.player(
-        "inspiration", f"{pc.name} already has Heroic Inspiration; the new instance is lost", page=8
+        "inspiration",
+        f"{pc.name} already has Heroic Inspiration; the new instance is lost",
+        page=8,
+        rule="GLOSS.heroic-inspiration",
     )
     return None
 
@@ -52,6 +61,7 @@ def begin_rest(game, kind: str, pcs, focus=None):
             raise Refusal(
                 f"{pc.name} has 0 Hit Points; a rest needs at least 1 Hit Point to start",
                 page=185 if kind == "long" else 187,
+                rule="GLOSS.long-rest" if kind == "long" else "GLOSS.short-rest",
             )
         if (
             kind == "long"
@@ -64,6 +74,7 @@ def begin_rest(game, kind: str, pcs, focus=None):
                 f"hours ago; "
                 f"must wait at least 16 hours between Long Rests ({wait / HOUR:g} more)",
                 page=185,
+                rule="GLOSS.long-rest",
             )
     game.rest = {
         "kind": kind,
@@ -77,6 +88,7 @@ def begin_rest(game, kind: str, pcs, focus=None):
         "rest",
         f"{', '.join(p.name for p in pcs)} begin a {kind.title()} Rest",
         page=185 if kind == "long" else 187,
+        rule="GLOSS.long-rest" if kind == "long" else "GLOSS.short-rest",
     )
     return game.rest
 
@@ -100,7 +112,10 @@ def finish_short_rest(game, pcs, hit_dice=None):
         return False
     if r["interrupted"]:
         game.log.player(
-            "rest", f"The Short Rest is interrupted ({r['interrupted']}); it confers no benefits", page=187
+            "rest",
+            f"The Short Rest is interrupted ({r['interrupted']}); it confers no benefits",
+            page=187,
+            rule="GLOSS.short-rest",
         )
         return False
     for pc in pcs:
@@ -125,7 +140,12 @@ def short_rest_benefits(game, pc, max_dice=None, focus=None):
         roll = game.dice.roll(pc.hit_die)
         pc.hit_dice_spent += 1
         spent += 1
-        pc.heal(max(1, roll + con), f"Hit Die (d{pc.hit_die}={roll} + Con {con})", page=187)
+        pc.heal(
+            max(1, roll + con),
+            f"Hit Die (d{pc.hit_die}={roll} + Con {con})",
+            page=187,
+            rule="GLOSS.hit-point-dice",
+        )
     for _name, res in pc.resources.items():
         if res["short"] == "all":
             res["used"] = 0
@@ -136,6 +156,7 @@ def short_rest_benefits(game, pc, max_dice=None, focus=None):
         f"{pc.name} finishes a Short Rest: {pc.hp}/{pc.max_hp} HP, {pc.hit_dice_left()} Hit Dice "
         f"left; " + ", ".join(f"{k} {v['max'] - v['used']}/{v['max']}" for k, v in pc.resources.items()),
         page=187,
+        rule="GLOSS.short-rest",
     )
     if pc.cls == "wizard" and pc.resource_left("arcane recovery") > 0:
         from .spellcasting import arcane_recovery_offer
@@ -157,11 +178,17 @@ def long_rest(game, pcs, interrupt_after_hours=None, interruption="combat", resu
         game.rest["interrupted"] = interruption
         rested = interrupt_after_hours
         game.log.player(
-            "rest", f"The Long Rest is interrupted after {rested:g} hours ({interruption})", page=185
+            "rest",
+            f"The Long Rest is interrupted after {rested:g} hours ({interruption})",
+            page=185,
+            rule="GLOSS.long-rest",
         )
         if rested >= 1:
             game.log.player(
-                "rest", "At least 1 hour had passed: the rest grants Short Rest benefits", page=185
+                "rest",
+                "At least 1 hour had passed: the rest grants Short Rest benefits",
+                page=185,
+                rule="GLOSS.long-rest",
             )
             for pc in pcs:
                 short_rest_benefits(game, pc)
@@ -177,6 +204,7 @@ def long_rest(game, pcs, interrupt_after_hours=None, interruption="combat", resu
             f"The Long Rest resumes; it needs {extra} extra hour(s) per interruption "
             f"({remaining:g} hours to go)",
             page=185,
+            rule="GLOSS.long-rest",
         )
         game.advance(int(remaining * HOUR), "Long Rest (resumed)")
     else:
@@ -188,7 +216,12 @@ def finish_long_rest(game, pcs, need=None):
     r = game.rest
     game.rest = None
     if r is None or r["interrupted"]:
-        game.log.player("rest", "The Long Rest was interrupted and gives no Long Rest benefits", page=185)
+        game.log.player(
+            "rest",
+            "The Long Rest was interrupted and gives no Long Rest benefits",
+            page=185,
+            rule="GLOSS.long-rest",
+        )
         return False
     for pc in pcs:
         long_rest_benefits(game, pc, trance=(need or {}).get(pc.id) == 4)
@@ -215,6 +248,7 @@ def long_rest_benefits(game, pc, trance=False):
         f"{pc.name} finishes a Long Rest{' (4-hour Trance)' if trance else ''}: all HP and Hit "
         f"Dice restored, spell slots and features recharged",
         page=185,
+        rule="GLOSS.long-rest",
     )
     if "resourceful" in pc.traits:
         grant_heroic_inspiration(game, pc, "Resourceful")

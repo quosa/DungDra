@@ -88,26 +88,46 @@ class Combat:
     def spend(self, actor, what="action", label=""):
         if what == "reaction":
             if actor.id in self.reaction_used:
-                raise Refusal(f"{actor.name} has already used their Reaction this round", page=186)
+                raise Refusal(
+                    f"{actor.name} has already used their Reaction this round",
+                    page=186,
+                    rule="GLOSS.reaction",
+                )
             if not actor.can_act():
-                raise Refusal(f"{actor.name} can't take Reactions (Incapacitated)", page=184)
+                raise Refusal(
+                    f"{actor.name} can't take Reactions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
+                )
             self.reaction_used.add(actor.id)
             return
         if not self.is_turn(actor):
             raise Refusal(f"It isn't {actor.name}'s turn")
         if not actor.can_act():
-            raise Refusal(f"{actor.name} can't take actions (Incapacitated)", page=184)
+            raise Refusal(
+                f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
+            )
         t = self.turn
         if what == "action":
             if not t.action_available():
-                raise Refusal(f"{actor.name} has already taken their action this turn", page=13)
+                raise Refusal(
+                    f"{actor.name} has already taken their action this turn",
+                    page=13,
+                    rule="PLAY.combat.the-order-of-combat",
+                )
             if label == "Magic" and t.surge_active and t.actions_used == 1:
-                raise Refusal("Action Surge grants an additional action other than the Magic action", page=48)
+                raise Refusal(
+                    "Action Surge grants an additional action other than the Magic action",
+                    page=48,
+                    rule="CLASS.fighter.level-2-action-surge",
+                )
             t.actions_used += 1
             t.log.append(label or "action")
         elif what == "bonus":
             if t.bonus_used:
-                raise Refusal(f"{actor.name} has already taken a Bonus Action this turn", page=10)
+                raise Refusal(
+                    f"{actor.name} has already taken a Bonus Action this turn",
+                    page=10,
+                    rule="PLAY.actions.bonus-actions",
+                )
             t.bonus_used = True
             t.log.append(f"bonus: {label}")
         elif what == "free":
@@ -116,6 +136,7 @@ class Combat:
                     f"{actor.name} already used their free object interaction; "
                     f"another needs the Utilize action",
                     page=13,
+                    rule="PLAY.combat.the-order-of-combat",
                 )
             t.free_interaction = True
 
@@ -138,7 +159,7 @@ def roll_initiative(game, participants, surprised=(), groups=None):
     surprised = {getattr(s, "id", s) for s in surprised}
     results: dict[str, int] = {}
     group_rolls: dict[str, int] = {}
-    game.log.player("combat", "Roll Initiative!", page=13)
+    game.log.player("combat", "Roll Initiative!", page=13, rule="PLAY.combat.the-order-of-combat")
     for c in participants:
         if c.dead:
             continue
@@ -147,7 +168,10 @@ def roll_initiative(game, participants, surprised=(), groups=None):
         if gkey and gkey in group_rolls:
             results[c.id] = group_rolls[gkey]
             game.log.player(
-                "initiative", f"{c.name} shares its group's Initiative {group_rolls[gkey]}", page=13
+                "initiative",
+                f"{c.name} shares its group's Initiative {group_rolls[gkey]}",
+                page=13,
+                rule="PLAY.combat.the-order-of-combat",
             )
             continue
         r = initiative_roll(game, c, c.id in surprised)
@@ -183,6 +207,7 @@ def roll_initiative(game, participants, surprised=(), groups=None):
         "combat",
         "Initiative order: " + ", ".join(f"{game.creatures[i].name} {v}" for i, v in cb.order),
         page=13,
+        rule="PLAY.combat.the-order-of-combat",
     )
     cb.index = 0
     start_turn(game)
@@ -208,6 +233,7 @@ def _tie_log(game, ordered):
                 f"Tie at {v} between {', '.join(game.creatures[i].name for i in ids)}; "
                 f"order decided by the {who}",
                 page=13,
+                rule="PLAY.combat.the-order-of-combat",
             )
 
 
@@ -219,18 +245,33 @@ def initiative_roll(game, c, surprised=False) -> D20Roll:
     roll.mods = [(base, "Initiative" if hasattr(c, "init_bonus") else "Dex")] + acc.mods
     roll.adv = list(acc.adv)
     roll.dis = list(acc.dis) + (["surprised"] if surprised else [])
-    return roll_d20_test(game, c, roll, bonus_dice=acc.bonus_dice, page=13)
+    return roll_d20_test(
+        game,
+        c,
+        roll,
+        bonus_dice=acc.bonus_dice,
+        page=13,
+        rule="PLAY.combat.the-order-of-combat",
+        rulings=acc.rulings,
+    )
 
 
 def swap_initiative(game, a, b):
     if a.has("incapacitated") or b.has("incapacitated"):
-        raise Refusal("Initiative Swap isn't possible while either creature is Incapacitated", page=87)
+        raise Refusal(
+            "Initiative Swap isn't possible while either creature is Incapacitated",
+            page=87,
+            rule="FEAT.feat-descriptions.origin-feats.alert",
+        )
     cb = game.combat
     ia, ib = cb.initiative_of(a), cb.initiative_of(b)
     cb.order = [(cid, ib if cid == a.id else ia if cid == b.id else v) for cid, v in cb.order]
     cb.order.sort(key=lambda kv: -kv[1])
     game.log.player(
-        "initiative", f"{a.name} swaps Initiative with {b.name}: {a.name} {ib}, {b.name} {ia}", page=87
+        "initiative",
+        f"{a.name} swaps Initiative with {b.name}: {a.name} {ib}, {b.name} {ia}",
+        page=87,
+        rule="FEAT.feat-descriptions.origin-feats.alert",
     )
 
 
@@ -246,7 +287,9 @@ def start_turn(game):
     cb.reaction_used.discard(c.id)
     cb.turn.movement_left = c.speed()
     game.turn_actor = c
-    game.log.player("turn", f"Round {cb.round}: {c.name}'s turn", page=13)
+    game.log.player(
+        "turn", f"Round {cb.round}: {c.name}'s turn", page=13, rule="PLAY.combat.the-order-of-combat"
+    )
     _expire(game, "start", c)
     for e in list(c.effects):
         e.on_turn_start(game)
@@ -312,6 +355,7 @@ def end_combat(game, reason=""):
         "combat",
         f"Combat ends after {rounds} round{'s' if rounds != 1 else ''}" + (f" ({reason})" if reason else ""),
         page=14,
+        rule="PLAY.combat",
         rounds=rounds,
     )
     game.combat = None
@@ -356,7 +400,11 @@ def move(
     if drag is not None and not any(
         e.condition == "grappled" and e.data.get("grappler") == c.id for e in drag.effects
     ):
-        raise Refusal(f"{c.name} isn't grappling {drag.name}, so it can't drag it", page=182)
+        raise Refusal(
+            f"{c.name} isn't grappling {drag.name}, so it can't drag it",
+            page=182,
+            rule="GLOSS.grappled#3",
+        )
     if toward is not None:
         dest = step_toward(start, toward.position, feet if feet is not None else 1000)
         # stop adjacent rather than inside the target's space
@@ -373,7 +421,12 @@ def move(
         _check_leave_reach(game, c, start, dest, provoke=False)
         c.position = dest
         _after_move(game, c, start)
-        game.log.player("move", f"{c.name} {'teleports' if teleport else 'is moved'} {dist} ft", page=190)
+        game.log.player(
+            "move",
+            f"{c.name} {'teleports' if teleport else 'is moved'} {dist} ft",
+            page=190,
+            rule="GLOSS.teleportation" if teleport else "PLAY.combat.movement-and-position",
+        )
         return 0
     if c.has("frightened"):
         for e in c.effects:
@@ -381,7 +434,9 @@ def move(
                 src = game.creatures[e.caster_id]
                 if dist_points(dest, src.position) < dist_points(start, src.position):
                     raise Refusal(
-                        f"{c.name} is Frightened and can't willingly move closer to {src.name}", page=182
+                        f"{c.name} is Frightened and can't willingly move closer to {src.name}",
+                        page=182,
+                        rule="GLOSS.frightened",
                     )
     cost = dist
     notes = []
@@ -404,14 +459,18 @@ def move(
             difficult = False
     # SRD[GLOSS.fly-speed#1] flying needs a Fly Speed
     if mode == "fly" and c.speeds.get("fly", 0) == 0:
-        raise Refusal(f"{c.name} has no Fly Speed", page=182)
+        raise Refusal(f"{c.name} has no Fly Speed", page=182, rule="GLOSS.fly-speed#1")
     if difficult or (game.scene.difficult and mode == "walk"):
         cost += dist
         notes.append("Difficult Terrain")
     # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
-    if drag is not None and not (drag.size == "tiny" or size_index(c.size) - size_index(drag.size) >= 2):
+    two_smaller = drag is not None and size_index(c.size) - size_index(drag.size) >= 2
+    if drag is not None and not (drag.size == "tiny" or two_smaller):
         cost += dist
         notes.append(f"dragging {drag.name}")
+    # SRD[GLOSS.grappled#4] R-05: a Tiny grappled creature never adds extra cost, whatever the
+    # grappler's size; the ruling decides only when the grappler isn't two sizes larger anyway
+    drag_ruling = "R-05" if drag is not None and drag.size == "tiny" and not two_smaller else None
     speed = c.speed(
         "fly"
         if mode == "fly"
@@ -422,11 +481,22 @@ def move(
         else "walk"
     )
     if speed == 0 and dist > 0:
-        raise Refusal(f"{c.name}'s Speed is 0", page=188)
+        if c.has("grappled"):
+            # SRD[GLOSS.grappled#1] Speed 0; R-07: that covers every Speed, not just walking
+            raise Refusal(
+                f"{c.name}'s Speed is 0",
+                page=182,
+                rule="GLOSS.grappled#1",
+                ruling="R-07" if mode != "walk" and c.speeds.get(mode, 0) > 0 else None,
+            )
+        raise Refusal(f"{c.name}'s Speed is 0", page=188, rule="GLOSS.speed")
     if cb is not None and cb.is_turn(c):
         if cost > cb.turn.movement_left:
             raise Refusal(
-                f"{c.name} needs {cost} ft of movement but has {cb.turn.movement_left} ft left", page=14
+                f"{c.name} needs {cost} ft of movement but has {cb.turn.movement_left} ft left",
+                page=14,
+                rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
+                ruling=drag_ruling,
             )
     elif cb is None and cost > max(speed, 0) and not jump:
         pass  # outside combat, movement isn't budgeted per turn
@@ -448,6 +518,8 @@ def move(
         + (f" ({', '.join(notes)}; costs {cost} ft)" if notes else "")
         + (f"; {cb.turn.movement_left} ft left" if cb and cb.is_turn(c) else ""),
         page=14,
+        rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
+        ruling=drag_ruling,
     )
     return cost
 
@@ -490,16 +562,23 @@ def _check_leave_reach(game, mover, start, dest, provoke=True):
                 f"{mover.name} leaves {enemy.name}'s reach without provoking "
                 f"(not moving under its own power)",
                 page=15,
+                rule="GLOSS.opportunity-attacks",
             )
             continue
         if mover.find_effects("disengage"):
             game.log.player(
-                "oa", f"{mover.name} leaves {enemy.name}'s reach without provoking (Disengage)", page=181
+                "oa",
+                f"{mover.name} leaves {enemy.name}'s reach without provoking (Disengage)",
+                page=181,
+                rule="GLOSS.disengage",
             )
             continue
         if not game.combat.has_reaction(enemy):
             game.log.player(
-                "oa", f"{enemy.name} can't make an Opportunity Attack (no Reaction available)", page=185
+                "oa",
+                f"{enemy.name} can't make an Opportunity Attack (no Reaction available)",
+                page=185,
+                rule="GLOSS.opportunity-attacks",
             )
             continue
         if not can_see(enemy, mover):
@@ -517,6 +596,7 @@ def _check_leave_reach(game, mover, start, dest, provoke=True):
                 "oa",
                 f"{enemy.name} makes an Opportunity Attack against {mover.name} as it leaves its reach",
                 page=185,
+                rule="GLOSS.opportunity-attacks",
             )
             opportunity_attack(game, enemy, mover)
 
@@ -593,7 +673,11 @@ def attack(
     _charm_check(game, attacker, target)
     cover = game.cover_between(attacker, target)
     if cover == "total":
-        raise Refusal(f"{target.name} is behind Total Cover and can't be targeted directly", page=15)
+        raise Refusal(
+            f"{target.name} is behind Total Cover and can't be targeted directly",
+            page=15,
+            rule="PLAY.combat.cover",
+        )
     dist = distance if distance is not None else attacker.distance_to(target)
     is_pc = attacker.is_pc()
     item = None
@@ -622,7 +706,9 @@ def attack(
         reach = attacker.reach + (5 if "reach" in wd["props"] else 0)
         if thrown and "thrown" not in wd["props"]:
             raise Refusal(
-                f"{item.display} doesn't have the Thrown property (it would be an improvised weapon)"
+                f"{item.display} doesn't have the Thrown property (it would be an improvised weapon)",
+                page=90,
+                rule="EQUIP.weapons.properties.thrown",
             )
     else:
         wd = WEAPONS.get(matk.get("weapon") or "")
@@ -653,7 +739,11 @@ def attack(
         if matk and matk.get("range"):
             rng = matk["range"]
         if dist > rng[1] and not ignore_range:
-            raise Refusal(f"{target.name} is {dist} ft away, beyond the long range of {rng[1]} ft", page=90)
+            raise Refusal(
+                f"{target.name} is {dist} ft away, beyond the long range of {rng[1]} ft",
+                page=90,
+                rule="EQUIP.weapons.properties.range",
+            )
         if dist > rng[0]:
             if game.scene.underwater:
                 auto_miss = "underwater: target beyond the weapon's normal range"
@@ -675,11 +765,17 @@ def attack(
         if item is not None and "ammunition" in wd["props"]:
             ammo = attacker.inventory.find(wd["ammo"])
             if ammo is None or ammo.qty <= 0:
-                raise Refusal(f"{attacker.name} has no {wd['ammo']} for the {item.display}", page=89)
+                raise Refusal(
+                    f"{attacker.name} has no {wd['ammo']} for the {item.display}",
+                    page=89,
+                    rule="EQUIP.weapons.properties.ammunition",
+                )
     else:
         if dist > reach and not ignore_range:
             raise Refusal(
-                f"{target.name} is {dist} ft away, beyond {attacker.name}'s reach of {reach} ft", page=15
+                f"{target.name} is {dist} ft away, beyond {attacker.name}'s reach of {reach} ft",
+                page=15,
+                rule="PLAY.combat.melee-attacks",
             )
         if game.scene.underwater and attacker.speed("swim") == 0:
             dtype = wd["dtype"] if wd else (matk["dtype"] if matk else "bludgeoning")
@@ -729,22 +825,42 @@ def attack(
     if cover in ("half", "three-quarters"):
         ac_parts.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
     roll.target = sum(v for v, _ in ac_parts)
-    roll_d20_test(game, attacker, roll, bonus_dice=acc.bonus_dice, page="14-15")
+    roll_d20_test(
+        game,
+        attacker,
+        roll,
+        bonus_dice=acc.bonus_dice,
+        page="14-15",
+        rule="PLAY.combat.making-an-attack",
+        rulings=acc.rulings,
+    )
     _reveal_attacker(game, attacker)
     # Redirect Attack (Goblin Boss): swap with an ally who becomes the target
     target, roll = _redirect(game, attacker, target, roll, cover)
     hit = bool(roll.success) and auto_miss is None
     if auto_miss:
-        game.log.player("attack", f"The attack automatically misses ({auto_miss})", page=16)
+        game.log.player(
+            "attack",
+            f"The attack automatically misses ({auto_miss})",
+            page=16,
+            rule="PLAY.combat.underwater-combat",
+        )
     crit = hit and roll.crit
     if hit and not crit and acc.auto_crit:
         crit = True
-        game.log.player("attack", f"Critical Hit: {acc.auto_crit[0]}", page="186/191")
+        game.log.player(
+            "attack", f"Critical Hit: {acc.auto_crit[0]}", page="186/191", rule="GLOSS.critical-hit"
+        )
     # Shield spell reaction: +5 AC including against the triggering attack
     if hit and not crit and _shield_reaction(game, target, roll):
         hit = roll.total >= roll.target
         if not hit:
-            game.log.player("attack", f"The attack now misses {target.name} (AC {roll.target})", page=161)
+            game.log.player(
+                "attack",
+                f"The attack now misses {target.name} (AC {roll.target})",
+                page=161,
+                rule="SPELL.shield",
+            )
     res = AttackResult(roll, hit, crit, target=target)
     _after_attack_roll(game, attacker, target, roll)
     if hit:
@@ -789,13 +905,25 @@ def attack(
                 f"{attacker.name} may move up to {attacker.speed() // 2} ft without provoking "
                 f"Opportunity Attacks (Remarkable Athlete)",
                 page=49,
+                rule="CLASS.fighter.fighter-subclass-champion.level-3-remarkable-athlete",
             )
     else:
         if item is not None and attacker.has_mastery(item) and item.weapon["mastery"] == "graze":
             m = attacker.mod(abil)
             if m > 0:
-                game.log.player("mastery", f"Graze: {target.name} takes {m} damage despite the miss", page=90)
-                target.take_damage(m, item.weapon["dtype"], attacker=attacker, source="Graze")
+                game.log.player(
+                    "mastery",
+                    f"Graze: {target.name} takes {m} damage despite the miss",
+                    page=90,
+                    rule="EQUIP.weapons.mastery-properties.graze",
+                )
+                target.take_damage(
+                    m,
+                    item.weapon["dtype"],
+                    attacker=attacker,
+                    source="Graze",
+                    rule="EQUIP.weapons.mastery-properties.graze",
+                )
     _consume_ammo(game, attacker, item, ranged, thrown)
     return res
 
@@ -803,7 +931,11 @@ def attack(
 def _charm_check(game, attacker, target):
     for e in attacker.effects:
         if e.condition == "charmed" and e.caster_id == target.id:
-            raise Refusal(f"{attacker.name} is Charmed by {target.name} and can't attack it", page=178)
+            raise Refusal(
+                f"{attacker.name} is Charmed by {target.name} and can't attack it",
+                page=178,
+                rule="GLOSS.charmed",
+            )
 
 
 def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
@@ -817,18 +949,29 @@ def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
         # Light property (p.89): extra attack with a different Light weapon after the Attack action
         if not t.attack_action_taken:
             raise Refusal(
-                "The Light extra attack requires taking the Attack action with a Light weapon first", page=89
+                "The Light extra attack requires taking the Attack action with a Light weapon first",
+                page=89,
+                rule="EQUIP.weapons.properties.light",
             )
         first = t.notes.get("light_weapon")
         if item is None or "light" not in item.weapon["props"] or first is None:
             raise Refusal(
                 "The extra attack must be made with a Light weapon after attacking with a Light weapon",
                 page=89,
+                rule="EQUIP.weapons.properties.light",
             )
         if item.uid == first:
-            raise Refusal("The extra attack must use a different Light weapon", page=89)
+            raise Refusal(
+                "The extra attack must use a different Light weapon",
+                page=89,
+                rule="EQUIP.weapons.properties.light",
+            )
         if t.light_attack_done:
-            raise Refusal("You can make only one Light extra attack per turn", page=89)
+            raise Refusal(
+                "You can make only one Light extra attack per turn",
+                page=89,
+                rule="EQUIP.weapons.properties.light",
+            )
         use_nick = nick or (
             attacker.is_pc() and attacker.has_mastery(item) and item.weapon["mastery"] == "nick"
         )
@@ -838,6 +981,7 @@ def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
                 "mastery",
                 "Nick: the extra Light attack is part of the Attack action; the Bonus Action stays free",
                 page=90,
+                rule="EQUIP.weapons.mastery-properties.nick",
             )
         else:
             cb.spend(attacker, "bonus", "Light weapon extra attack")
@@ -857,7 +1001,10 @@ def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
             t.attack_equip_used = True
             attacker.wielded.append(item)
             game.log.player(
-                "equip", f"{attacker.name} draws the {item.display} as part of the attack", page=177
+                "equip",
+                f"{attacker.name} draws the {item.display} as part of the attack",
+                page=177,
+                rule="GLOSS.attack",
             )
         else:
             cb.spend(attacker, "free", f"draw {item.display}")
@@ -866,7 +1013,9 @@ def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
         key = "action"
         if key in t.loading_fired:
             raise Refusal(
-                "Loading: only one piece of ammunition per action, Bonus Action or Reaction", page=90
+                "Loading: only one piece of ammunition per action, Bonus Action or Reaction",
+                page=90,
+                rule="EQUIP.weapons.properties.loading",
             )
         t.loading_fired.add(key)
 
@@ -915,7 +1064,13 @@ def _sanctuary(game, attacker, target):
         if getattr(e, "name", "") == "Sanctuary":
             caster = game.creatures.get(e.caster_id)
             dc = caster.spell_dc() if caster is not None and hasattr(caster, "spell_dc") else 13
-            r = attacker.save("wis", dc, label=f"Wisdom save vs Sanctuary on {target.name}", page=159)
+            r = attacker.save(
+                "wis",
+                dc,
+                label=f"Wisdom save vs Sanctuary on {target.name}",
+                page=159,
+                rule="SPELL.sanctuary",
+            )
             if not r.success:
                 others = [
                     c
@@ -932,10 +1087,15 @@ def _sanctuary(game, attacker, target):
                 )
                 if pick:
                     game.log.player(
-                        "spell", f"{attacker.name} turns to attack {game.get(pick).name} instead", page=159
+                        "spell",
+                        f"{attacker.name} turns to attack {game.get(pick).name} instead",
+                        page=159,
+                        rule="SPELL.sanctuary",
                     )
                     return game.get(pick)
-                game.log.player("spell", f"{attacker.name} loses the attack (Sanctuary)", page=159)
+                game.log.player(
+                    "spell", f"{attacker.name} loses the attack (Sanctuary)", page=159, rule="SPELL.sanctuary"
+                )
                 if game.combat and game.combat.is_turn(attacker):
                     pass
                 return None
@@ -968,6 +1128,7 @@ def _redirect(game, attacker, target, roll, cover):
         "reaction",
         f"{target.name} uses Redirect Attack: swaps places with {ally.name}, who becomes the target",
         page=290,
+        rule="MONSTER.goblins.goblin-boss",
     )
     ac_parts = ally.ac_parts()
     roll.target = sum(v for v, _ in ac_parts)
@@ -977,6 +1138,7 @@ def _redirect(game, attacker, target, roll, cover):
         f"The attack roll of {roll.total} is now against {ally.name} (AC {roll.target}) → "
         + ("hit" if roll.success else "miss"),
         page=290,
+        rule="MONSTER.goblins.goblin-boss",
     )
     return ally, roll
 
@@ -1014,7 +1176,12 @@ def recover_ammunition(game, pc, ammo="arrows", used=None):
         pc.inventory.add(ammo, back)
     pc.notes.get("ammo_spent", {}).pop(ammo, None)
     game.advance(60, f"{pc.name} recovers ammunition")
-    game.log.player("ammo", f"{pc.name} recovers {back} of {spent} {ammo}", page=89)
+    game.log.player(
+        "ammo",
+        f"{pc.name} recovers {back} of {spent} {ammo}",
+        page=89,
+        rule="EQUIP.weapons.properties.ammunition",
+    )
     return back
 
 
@@ -1042,12 +1209,22 @@ def roll_damage_dice(
             choice = (
                 [rolls, again][choice] if choice in (0, 1) else (again if sum(again) == choice else rolls)
             )
-        game.log.player("feat", f"Savage Attacker: rolled {rolls} and {again}; uses {choice}", page=87)
+        game.log.player(
+            "feat",
+            f"Savage Attacker: rolled {rolls} and {again}; uses {choice}",
+            page=87,
+            rule="FEAT.feat-descriptions.origin-feats.savage-attacker",
+        )
         rolls = list(choice)
     if gwf:
         new = [3 if r in (1, 2) else r for r in rolls]
         if new != rolls:
-            game.log.player("feat", f"Great Weapon Fighting: {rolls} → {new}", page=88)
+            game.log.player(
+                "feat",
+                f"Great Weapon Fighting: {rolls} → {new}",
+                page=88,
+                rule="FEAT.feat-descriptions.fighting-style-feats.great-weapon-fighting",
+            )
         rolls = new
     rolls = _inspiration_reroll_damage(game, attacker, rolls, s)
     return sum(rolls) + m, rolls
@@ -1074,6 +1251,7 @@ def _inspiration_reroll_damage(game, actor, rolls, sides):
         f"{actor.name} spends Heroic Inspiration to reroll a damage die: {old} → "
         f"{rolls[pick]} (must use the new roll)",
         page=8,
+        rule="GLOSS.heroic-inspiration",
     )
     return rolls
 
@@ -1193,6 +1371,7 @@ def deal_attack_damage(
         + (" (CRITICAL)" if crit else "")
         + f": {'; '.join(parts)}",
         page=16,
+        rule="PLAY.damage-and-healing.damage-rolls",
     )
     ko = knock_out
     if ko is None:
@@ -1239,7 +1418,12 @@ def _sneak_attack(game, rogue, target, item, roll, crit) -> int:
     if cb is not None and cb.turn.sneak_attack_used and cb.is_turn(rogue):
         return 0
     if not ("finesse" in wd["props"] or wd["kind"] == "ranged"):
-        game.log.player("sneak", "No Sneak Attack: the weapon isn't Finesse or Ranged", page=61)
+        game.log.player(
+            "sneak",
+            "No Sneak Attack: the weapon isn't Finesse or Ranged",
+            page=61,
+            rule="CLASS.rogue.level-1-sneak-attack",
+        )
         return 0
     ok = roll.mode == "advantage"
     why = "Advantage"
@@ -1254,6 +1438,7 @@ def _sneak_attack(game, rogue, target, item, roll, crit) -> int:
             "sneak",
             "No Sneak Attack (no Advantage, and no able ally next to the target without Disadvantage)",
             page=61,
+            rule="CLASS.rogue.level-1-sneak-attack",
         )
         return 0
     from .features import sneak_attack_dice
@@ -1263,7 +1448,12 @@ def _sneak_attack(game, rogue, target, item, roll, crit) -> int:
     if cb is not None:
         cb.turn.sneak_attack_used = True
         rogue.notes["sneak_used_turn"] = (cb.round, cb.index)
-    game.log.player("sneak", f"Sneak Attack ({why}): {n}d6{'x2' if crit else ''} = {dice}", page=61)
+    game.log.player(
+        "sneak",
+        f"Sneak Attack ({why}): {n}d6{'x2' if crit else ''} = {dice}",
+        page=61,
+        rule="CLASS.rogue.level-1-sneak-attack",
+    )
     return total
 
 
@@ -1279,6 +1469,7 @@ def _mastery_on_hit(game, attacker, target, item, abil, dmg):
             f"Sap: {target.name} has Disadvantage on its next attack roll before the start of "
             f"{attacker.name}'s next turn",
             page=90,
+            rule="EQUIP.weapons.mastery-properties.sap",
         )
     elif m == "vex" and dmg > 0:
         eff = AdvNext(f"Vex ({item.display})", kinds=("attack",), target=target, ends=[("end", attacker.id)])
@@ -1290,6 +1481,7 @@ def _mastery_on_hit(game, attacker, target, item, abil, dmg):
             f"Vex: {attacker.name} has Advantage on the next attack roll against {target.name} "
             f"before the end of their next turn",
             page=90,
+            rule="EQUIP.weapons.mastery-properties.vex",
         )
     elif m == "slow" and dmg > 0:
         existing = [e for e in target.effects if isinstance(e, SpeedPenalty) and e.group == "Slow"]
@@ -1299,6 +1491,7 @@ def _mastery_on_hit(game, attacker, target, item, abil, dmg):
             f"Slow: {target.name}'s Speed drops by 10 ft until the start of {attacker.name}'s "
             f"next turn" + (" (doesn't stack past 10 ft)" if existing else ""),
             page=90,
+            rule="EQUIP.weapons.mastery-properties.slow",
         )
     elif m == "push":
         if size_index(target.size) <= size_index("large") and game.decide(
@@ -1308,7 +1501,13 @@ def _mastery_on_hit(game, attacker, target, item, abil, dmg):
     elif m == "topple":
         dc = 8 + attacker.mod(abil) + attacker.pb
         if game.decide(attacker, "topple", [True, False], default=True, prompt="Topple: force a Con save?"):
-            r = target.save("con", dc, label=f"Con save vs Topple (DC {dc})", page=90)
+            r = target.save(
+                "con",
+                dc,
+                label=f"Con save vs Topple (DC {dc})",
+                page=90,
+                rule="EQUIP.weapons.mastery-properties.topple",
+            )
             if not r.success:
                 target.add_condition("prone", "Topple")
     elif m == "cleave":
@@ -1317,6 +1516,7 @@ def _mastery_on_hit(game, attacker, target, item, abil, dmg):
             "Cleave: a melee attack against a second creature within 5 ft of the first is "
             "available (once per turn)",
             page=90,
+            rule="EQUIP.weapons.mastery-properties.cleave",
         )
         if cb:
             cb.turn.notes["cleave_available"] = target.id
@@ -1354,10 +1554,12 @@ def hands_free(c) -> int:
 def grapple(game, attacker, target):
     if size_index(target.size) - size_index(attacker.size) > 1:
         raise Refusal(
-            f"{target.name} is more than one size larger than {attacker.name}; it can't be grappled", page=190
+            f"{target.name} is more than one size larger than {attacker.name}; it can't be grappled",
+            page=190,
+            rule="GLOSS.unarmed-strike",
         )
     if hands_free(attacker) < 1:
-        raise Refusal(f"{attacker.name} needs a free hand to grapple", page=182)
+        raise Refusal(f"{attacker.name} needs a free hand to grapple", page=182, rule="GLOSS.grappling")
     if attacker.distance_to(target) > 5:
         raise Refusal(f"{target.name} is out of reach (5 ft)")
     if game.combat is not None:
@@ -1370,6 +1572,7 @@ def grapple(game, attacker, target):
         label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs grapple (DC {dc})",
         avoid={"grappled"},
         page=190,
+        rule="GLOSS.unarmed-strike",
     )
     if not r.success:
         target.add_condition(
@@ -1389,7 +1592,9 @@ def _save_choice(target) -> str:
 def shove(game, attacker, target, effect="prone"):
     if size_index(target.size) - size_index(attacker.size) > 1:
         raise Refusal(
-            f"{target.name} is more than one size larger than {attacker.name}; it can't be shoved", page=190
+            f"{target.name} is more than one size larger than {attacker.name}; it can't be shoved",
+            page=190,
+            rule="GLOSS.unarmed-strike",
         )
     if attacker.distance_to(target) > 5:
         raise Refusal(f"{target.name} is out of reach (5 ft)")
@@ -1398,7 +1603,11 @@ def shove(game, attacker, target, effect="prone"):
     dc = 8 + attacker.mod("str") + attacker.pb
     ab = _save_choice(target)
     r = target.save(
-        ab, dc, label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs shove (DC {dc})", page=190
+        ab,
+        dc,
+        label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs shove (DC {dc})",
+        page=190,
+        rule="GLOSS.unarmed-strike",
     )
     if r.success:
         return False
@@ -1425,6 +1634,7 @@ def escape_grapple(game, c, skill=None):
         avoid={"grappled"},
         label=f"{skill.title()} check to escape the grapple (DC {dc})",
         page=182,
+        rule="GLOSS.grappling",
     )
     if r.success:
         release_grapple(game, c)
@@ -1449,35 +1659,51 @@ def interact(game, actor, what: str):
     """One free object interaction per turn; more need the Utilize action (p.13)."""
     cb = game.combat
     if cb is None or not cb.is_turn(actor):
-        game.log.player("interact", f"{actor.name}: {what}", page=13)
+        game.log.player("interact", f"{actor.name}: {what}", page=13, rule="PLAY.combat.the-order-of-combat")
         return "free"
     if not cb.turn.free_interaction:
         cb.turn.free_interaction = True
-        game.log.player("interact", f"{actor.name}: {what} (free object interaction)", page=13)
+        game.log.player(
+            "interact",
+            f"{actor.name}: {what} (free object interaction)",
+            page=13,
+            rule="PLAY.combat.the-order-of-combat",
+        )
         return "free"
     cb.spend(actor, "action", f"Utilize ({what})")
-    game.log.player("interact", f"{actor.name}: {what} (Utilize action)", page=13)
+    game.log.player("interact", f"{actor.name}: {what} (Utilize action)", page=13, rule="GLOSS.utilize")
     return "utilize"
 
 
 def drop_prone(game, c):
     if c.speed() == 0:
-        raise Refusal(f"{c.name} can't drop Prone while their Speed is 0", page=14)
+        raise Refusal(
+            f"{c.name} can't drop Prone while their Speed is 0",
+            page=14,
+            rule="PLAY.combat.movement-and-position",
+        )
     c.add_condition("prone", "dropped prone")
-    game.log.player("move", f"{c.name} drops Prone (no movement spent)", page=14)
+    game.log.player(
+        "move",
+        f"{c.name} drops Prone (no movement spent)",
+        page=14,
+        rule="PLAY.combat.movement-and-position",
+    )
 
 
 def stand_up(game, c):
     if not c.has("prone"):
         raise Refusal(f"{c.name} isn't Prone")
     if c.speed() == 0:
-        raise Refusal(f"{c.name} can't right themselves with Speed 0", page=186)
+        raise Refusal(f"{c.name} can't right themselves with Speed 0", page=186, rule="GLOSS.prone")
     cost = c.speed() // 2
     cb = game.combat
     if cb is not None and cb.is_turn(c):
         if cb.turn.movement_left < cost:
             raise Refusal(
-                f"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left", page=186
+                f"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left",
+                page=186,
+                rule="GLOSS.prone",
             )
         cb.turn.movement_left -= cost
     c.remove_condition("prone", reason=f"stood up for {cost} ft of movement")

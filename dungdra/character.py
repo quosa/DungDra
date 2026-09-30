@@ -333,7 +333,12 @@ class Character(Creature):
                 if it.name == "torch":
                     self.inventory.remove(it, 1) if it.qty == 1 else None
                     if self.game:
-                        self.game.log.player("light", f"{self.name}'s Torch burns out", page=100)
+                        self.game.log.player(
+                            "light",
+                            f"{self.name}'s Torch burns out",
+                            page=100,
+                            rule="EQUIP.adventuring-gear.torch-1-cp",
+                        )
 
     # -- XP and levels (p.23) ------------------------------------------------------
     def award_xp(self, amount: int, reason: str = "", ruling=None):
@@ -344,6 +349,7 @@ class Character(Creature):
                 "xp",
                 f"{self.name} gains {amount} XP (total {self.xp})" + (f" — {reason}" if reason else ""),
                 page=23,
+                rule="CREATE.level-advancement",
                 ruling=ruling,
             )
         target = level_for_xp(self.xp)
@@ -355,6 +361,7 @@ class Character(Creature):
                 f"{self.name} has {self.xp} XP, enough for level {target}, but level 4+ is "
                 f"out of scope; {self.name} stays at level {MAX_LEVEL_IN_SCOPE}.",
                 page=23,
+                rule="CREATE.level-advancement",
             )
 
     def gain_level(self, rolled: bool = False):
@@ -384,6 +391,7 @@ class Character(Creature):
                 f"{self.name} reaches level {self.level}: +{gain} HP ({how}) → max "
                 f"{self.max_hp}; Proficiency Bonus +{self.pb}",
                 page=23,
+                rule="CREATE.level-advancement.gaining-a-level",
             )
         features.on_level_up(self)
 

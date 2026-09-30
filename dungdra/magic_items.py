@@ -91,21 +91,35 @@ def drink_potion(game, user, target=None, potion="potion of healing"):
     if it is None:
         raise Refusal(f"{user.name} has no {potion}")
     if target is not user and user.distance_to(target) > 5:
-        raise Refusal("You can administer a potion only to a creature within 5 feet", page=99)
+        raise Refusal(
+            "You can administer a potion only to a creature within 5 feet",
+            page=99,
+            rule="EQUIP.adventuring-gear.potion-of-healing-50-gp",
+        )
     if game.combat is not None:
         game.combat.spend(user, "bonus", "potion")
     user.inventory.remove(it, 1)
     total, rolls, _ = game.dice.roll_expr("2d4+2")
     who = "drinks" if target is user else f"administers to {target.name}"
     game.log.player(
-        "item", f"{user.name} {who} a Potion of Healing (Bonus Action): 2d4+2 = {rolls}+2", page=99
+        "item",
+        f"{user.name} {who} a Potion of Healing (Bonus Action): 2d4+2 = {rolls}+2",
+        page=99,
+        rule="EQUIP.adventuring-gear.potion-of-healing-50-gp",
     )
-    return target.heal(total, "Potion of Healing", page=99)
+    return target.heal(
+        total, "Potion of Healing", page=99, rule="EQUIP.adventuring-gear.potion-of-healing-50-gp"
+    )
 
 
 def taste(game, c, item):
     item.props["identified"] = True
-    game.log.player("item", f"{c.name} tastes the potion and learns what it does: {item.display}", page=102)
+    game.log.player(
+        "item",
+        f"{c.name} tastes the potion and learns what it does: {item.display}",
+        page=102,
+        rule="EQUIP.magic-items.identifying-a-magic-item",
+    )
 
 
 # -- identify & attune (p.102-103) -------------------------------------------------------
@@ -118,6 +132,7 @@ def short_rest_focus(game, pc, focus):
             "item",
             f"{pc.name} studies the {item.display} during the Short Rest and learns its properties",
             page=102,
+            rule="EQUIP.magic-items.identifying-a-magic-item",
         )
     elif what == "attune":
         attune(game, pc, item)
@@ -133,16 +148,24 @@ def attune(game, pc, item):
     if item.props.get("identified_on") == game.clock:
         pass
     if any(a.name == item.name for a in pc.attuned):
-        raise Refusal(f"{pc.name} can't attune to more than one copy of {item.display}", page=102)
+        raise Refusal(
+            f"{pc.name} can't attune to more than one copy of {item.display}",
+            page=102,
+            rule="EQUIP.magic-items.attunement.no-more-than-three-items",
+        )
     limit = 3
     if len(pc.attuned) >= limit:
         raise Refusal(
-            f"{pc.name} is already attuned to {limit} magic items; end one Attunement first", page=102
+            f"{pc.name} is already attuned to {limit} magic items; end one Attunement first",
+            page=102,
+            rule="EQUIP.magic-items.attunement.no-more-than-three-items",
         )
     pc.attuned.append(item)
     item.props["attuned_to"] = pc.id
     _apply_item(game, pc, item)
-    game.log.player("item", f"{pc.name} attunes to the {item.display}", page=102)
+    game.log.player(
+        "item", f"{pc.name} attunes to the {item.display}", page=102, rule="EQUIP.magic-items.attunement"
+    )
 
 
 def end_attunement(game, pc, item, reason="voluntarily, over a Short Rest"):
@@ -153,7 +176,12 @@ def end_attunement(game, pc, item, reason="voluntarily, over a Short Rest"):
     for e in list(pc.effects):
         if e.data.get("item") == item.uid:
             pc.effects.remove(e)
-    game.log.player("item", f"{pc.name}'s Attunement to the {item.display} ends ({reason})", page=103)
+    game.log.player(
+        "item",
+        f"{pc.name}'s Attunement to the {item.display} ends ({reason})",
+        page=103,
+        rule="EQUIP.magic-items.attunement.ending-attunement",
+    )
 
 
 def wear(game, pc, item):
@@ -161,11 +189,20 @@ def wear(game, pc, item):
     if slot:
         for other in pc.inventory:
             if other is not item and other.props.get("slot") == slot and other.props.get("worn"):
-                raise Refusal(f"{pc.name} can't wear more than one {slot}", page=103)
+                raise Refusal(
+                    f"{pc.name} can't wear more than one {slot}",
+                    page=103,
+                    rule="EQUIP.magic-items.wearing-and-wielding-items.multiple-items-of-the-same-kind",
+                )
     item.props["worn"] = True
     if item in pc.attuned:
         _apply_item(game, pc, item)
-    game.log.player("item", f"{pc.name} puts on the {item.display}", page=103)
+    game.log.player(
+        "item",
+        f"{pc.name} puts on the {item.display}",
+        page=103,
+        rule="EQUIP.magic-items.wearing-and-wielding-items",
+    )
 
 
 def _apply_item(game, pc, item):
@@ -196,6 +233,7 @@ def scroll_casting(game, caster, spell, item):
         raise Refusal(
             f"The scroll is unintelligible to {caster.name}: {spell.title()} isn't on their spell list",
             page=244,
+            rule="MAGIC.spell-scroll",
         )
     lvl = SPELLS[spell]["level"]
     max_lvl = max(caster.slots_max()) if caster.slots_max() else 0
@@ -206,10 +244,16 @@ def scroll_casting(game, caster, spell, item):
             dc=dc,
             label=f"{caster.spell_ability.title()} check to cast {spell.title()} from a scroll (DC {dc})",
             page=244,
+            rule="MAGIC.spell-scroll",
         )
         if not r.success:
             caster.inventory.remove(item, 1)
-            game.log.player("item", "The spell vanishes from the scroll with no other effect", page=244)
+            game.log.player(
+                "item",
+                "The spell vanishes from the scroll with no other effect",
+                page=244,
+                rule="MAGIC.spell-scroll",
+            )
             raise Refusal(f"{caster.name} fails to cast {spell.title()} from the scroll; it's lost")
     dc, atk = SCROLL_DC[lvl]
     return caster.spell_ability, dc, atk, "Spell Scroll"
@@ -228,6 +272,7 @@ def copy_scroll(game, wizard, item):
             f"{sp.title()} is level {lvl}; {wizard.name} can only copy spells of a level they can prepare "
             f"(up to {max_lvl})",
             page=78,
+            rule="CLASS.wizard.level-1-spellcasting",
         )
     if sp in wizard.spellbook:
         raise Refusal(f"{sp.title()} is already in the spellbook")
@@ -239,6 +284,7 @@ def copy_scroll(game, wizard, item):
         dc=10 + lvl,
         label=f"Intelligence (Arcana) check to copy {sp.title()} (DC {10 + lvl})",
         page=244,
+        rule="MAGIC.spell-scroll",
     )
     wizard.inventory.remove(item, 1)
     if r.success:
@@ -248,9 +294,12 @@ def copy_scroll(game, wizard, item):
             f"{wizard.name} copies {sp.title()} into the spellbook (50 GP × {lvl}, "
             f"{2 * lvl} hours); the scroll is destroyed",
             page=78,
+            rule="CLASS.wizard.level-1-spellcasting",
         )
     else:
-        game.log.player("spellbook", "The copying fails; the scroll is destroyed", page=244)
+        game.log.player(
+            "spellbook", "The copying fails; the scroll is destroyed", page=244, rule="MAGIC.spell-scroll"
+        )
     return r.success
 
 
@@ -260,7 +309,11 @@ def wand_casting(game, caster, spell, item, charges):
         raise Refusal("That item can't cast that spell")
     charges = charges or 1
     if charges > 3:
-        raise Refusal("You can expend no more than 3 charges from the Wand of Magic Missiles", page=251)
+        raise Refusal(
+            "You can expend no more than 3 charges from the Wand of Magic Missiles",
+            page=251,
+            rule="MAGIC.wand-of-magic-missiles",
+        )
     if item.props["charges"] < charges:
         raise Refusal(f"The wand has only {item.props['charges']} charges")
     item.props["charges"] -= charges
@@ -269,14 +322,22 @@ def wand_casting(game, caster, spell, item, charges):
         f"{caster.name} expends {charges} charge(s) from the Wand of Magic Missiles "
         f"({item.props['charges']} left); no spell slot is used",
         page=251,
+        rule="MAGIC.wand-of-magic-missiles",
     )
     if item.props["charges"] == 0:
         r = game.dice.roll(20)
-        game.log.player("item", f"The wand's last charge is spent: d20={r}", page=251)
+        game.log.player(
+            "item", f"The wand's last charge is spent: d20={r}", page=251, rule="MAGIC.wand-of-magic-missiles"
+        )
         if r == 1:
             item.props["destroyed"] = True
             caster.inventory.remove(item, 1)
-            game.log.player("item", "The wand crumbles into ashes and is destroyed", page=251)
+            game.log.player(
+                "item",
+                "The wand crumbles into ashes and is destroyed",
+                page=251,
+                rule="MAGIC.wand-of-magic-missiles",
+            )
     return None, 13, 5, "Wand of Magic Missiles"
 
 
@@ -293,6 +354,7 @@ def dawn(game):
                     f"At dawn the Wand of Magic Missiles regains 1d6+1 = {r + 1} charges "
                     f"({before} → {it.props['charges']})",
                     page=251,
+                    rule="MAGIC.wand-of-magic-missiles",
                 )
 
 
@@ -304,13 +366,18 @@ def bag_put(game, pc, bag, name, qty=1):
     w = it.unit_weight() * qty
     inside = sum(x.weight() for x in pc.inventory if x.props.get("in_bag") == bag.uid)
     if inside + w > 500:
-        raise Refusal("The Bag of Holding holds at most 500 pounds", page=212)
+        raise Refusal("The Bag of Holding holds at most 500 pounds", page=212, rule="MAGIC.bag-of-holding")
     if qty < it.qty:
         pc.inventory.remove(it, qty)
         it = pc.inventory.add(Item(it.name, qty, in_bag=bag.uid))
     else:
         it.props["in_bag"] = bag.uid
-    game.log.player("item", f"{pc.name} puts {qty} × {it.display} in the Bag of Holding", page=212)
+    game.log.player(
+        "item",
+        f"{pc.name} puts {qty} × {it.display} in the Bag of Holding",
+        page=212,
+        rule="MAGIC.bag-of-holding",
+    )
 
 
 def bag_take(game, pc, bag, name):
@@ -328,6 +395,9 @@ def bag_take(game, pc, bag, name):
         game.combat.spend(pc, "action", "Utilize (retrieve from Bag of Holding)")
     it.props.pop("in_bag")
     game.log.player(
-        "item", f"{pc.name} takes the {it.display} out of the Bag of Holding (Utilize action)", page=212
+        "item",
+        f"{pc.name} takes the {it.display} out of the Bag of Holding (Utilize action)",
+        page=212,
+        rule="MAGIC.bag-of-holding",
     )
     return it

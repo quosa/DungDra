@@ -58,7 +58,14 @@ def rate(game, levels, monsters, gm_log=True) -> dict:
         )
         if strong:
             text += f"; a creature's CR ({max(strong):g}) is above the party's level {party_level} (p.203)"
-        game.log.gm("encounter", text, page=202, ruling="R-03" if band == "over high" else None, **res)
+        game.log.gm(
+            "encounter",
+            text,
+            page=202,
+            rule="TOOLBOX.combat-encounters.combat-encounter-difficulty",
+            ruling="R-03" if band == "over high" else None,
+            **res,
+        )
     return res
 
 
@@ -71,6 +78,8 @@ def add_reinforcements(game, levels, current, new, justification: str | None = N
             raise Refusal(
                 "Those reinforcements would push the encounter over the High budget; blocked (R-03). "
                 "Provide a justification to override.",
+                page=202,
+                rule="TOOLBOX.combat-encounters.combat-encounter-difficulty",
                 ruling="R-03",
             )
         game.log.gm(
@@ -78,6 +87,7 @@ def add_reinforcements(game, levels, current, new, justification: str | None = N
             f"Reinforcements push the encounter over High ({r['xp']} XP); justification: {justification}",
             ruling="R-03",
             page=202,
+            rule="TOOLBOX.combat-encounters.combat-encounter-difficulty",
         )
     return after
 
@@ -117,6 +127,7 @@ def build(game, levels, difficulty="moderate", terrain="forest", rng=None) -> li
         f"Generated {difficulty} {terrain} encounter: {', '.join(m.title() for m in chosen)} "
         f"({budget - left}/{budget} XP); terrain: {features.get(norm(terrain), 'broken ground')}",
         page=202,
+        rule="TOOLBOX.combat-encounters.combat-encounter-difficulty",
     )
     return chosen
 
@@ -141,7 +152,11 @@ def award_xp(game, monsters, pcs, reason="defeated foes"):
     total = encounter_xp(monsters)
     share = total // max(1, len(pcs))
     game.log.player(
-        "xp", f"{total} XP for {reason}, divided among {len(pcs)} PCs: {share} each", page=255, ruling="R-02"
+        "xp",
+        f"{total} XP for {reason}, divided among {len(pcs)} PCs: {share} each",
+        page=255,
+        rule="MONSTER.parts-of-a-stat-block.challenge-rating",
+        ruling="R-02",
     )
     for pc in pcs:
         pc.award_xp(share, reason, ruling="R-02")

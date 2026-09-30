@@ -1,0 +1,10 @@
+{
+  "id": "T-10",
+  "kind": "coverage",
+  "unit": "ENGINE",
+  "title": "Unit tests that assert_applied(ruling=...) for R-01 (creation tool proficiency), R-02 (XP split), R-03 (encounter budget GM-only / blocked reinforcements) and R-04 (disarm without Thieves' Tools); only R-05..R-07 are covered by the new traceability tests",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

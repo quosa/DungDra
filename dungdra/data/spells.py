@@ -371,3 +371,8 @@ def spell_level(name: str) -> int | None:
         if name in names:
             return lvl
     return None
+
+
+def spell_rule(name: str) -> str:
+    """The SRD unit of a spell's description: SPELL.<name as a slug>, e.g. SPELL.cure-wounds."""
+    return "SPELL." + "-".join("".join(ch if ch.isalnum() else " " for ch in name.replace("'", "")).split())

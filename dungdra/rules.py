@@ -102,13 +102,15 @@ DAY = 86400
 
 
 class Refusal(Exception):
-    """An attempted action the rules don't allow. Carries a player-facing reason."""
+    """An attempted action the rules don't allow. Carries a player-facing reason, and the SRD
+    page, rule ("<unit id>[#<clause>]") and register ruling that forbid it, when there are any."""
 
-    def __init__(self, reason: str, page: str | int | None = None, ruling=None):
+    def __init__(self, reason: str, page: str | int | None = None, ruling=None, rule: str | None = None):
         super().__init__(reason)
         self.reason = reason
         self.page = page
         self.ruling = ruling
+        self.rule = rule
 
 
 class OutOfScope(Refusal):

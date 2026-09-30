@@ -26,13 +26,21 @@ class UndeadFortitude(Effect):
                 f"{o.name}'s Undead Fortitude doesn't apply "
                 f"({'Radiant damage' if dtype == 'radiant' else 'Critical Hit'})",
                 page=343,
+                rule="MONSTER.zombies.zombie",
             )
             return False
         dc = 5 + dealt
-        r = o.save("con", dc, label=f"Undead Fortitude Con save (DC {dc})", page=343)
+        r = o.save(
+            "con", dc, label=f"Undead Fortitude Con save (DC {dc})", page=343, rule="MONSTER.zombies.zombie"
+        )
         if r.success:
             o.hp = 1
-            game.log.player("trait", f"{o.name} drops to 1 HP instead (Undead Fortitude)", page=343)
+            game.log.player(
+                "trait",
+                f"{o.name} drops to 1 HP instead (Undead Fortitude)",
+                page=343,
+                rule="MONSTER.zombies.zombie",
+            )
             return True
         return False
 

@@ -76,14 +76,15 @@ class Session:
             return {"ok": False, "error": f"Unknown command {name!r}", "events": []}
         args = {k: v for k, v in cmd.items() if k != "cmd"}
         snap = self._snapshot_turn()
+        refusal = None
         try:
             out = fn(**args)
             ok = True
             err = None
         except OutOfScope as e:
-            out, ok, err = None, False, f"Out of scope: {e.reason}"
+            out, ok, err, refusal = None, False, f"Out of scope: {e.reason}", e
         except Refusal as e:
-            out, ok, err = None, False, e.reason
+            out, ok, err, refusal = None, False, e.reason, e
         if not ok:
             self._restore_turn(snap)  # a refused command costs nothing
         # after a PC acts in combat, let the GM run monster turns when the PC ends its turn
@@ -91,7 +92,8 @@ class Session:
         res = {"ok": ok, "events": events}
         if err:
             res["error"] = err
-            g.log.player("refused", f"Refused: {err}")
+            ref = {k: getattr(refusal, k) for k in ("page", "rule", "ruling")} if refusal else {}
+            g.log.player("refused", f"Refused: {err}", **ref)
         if out is not None and not isinstance(out, (Refusal,)):
             res["result"] = _plain(out)
         return res
@@ -433,6 +435,7 @@ class Session:
                     "rest",
                     f"{p.name} has 0 Hit Points and can't start a rest (needs healing first)",
                     page=187,
+                    rule="GLOSS.short-rest",
                 )
         if not pcs:
             raise Refusal("Nobody is able to rest")
@@ -457,14 +460,24 @@ class Session:
         hours, keys = sched
         R.begin_rest(g, "long", pcs)
         g.log.player(
-            "rest", "Watches are set: each companion takes a turn standing guard (light activity)", page=185
+            "rest",
+            "Watches are set: each companion takes a turn standing guard (light activity)",
+            page=185,
+            rule="GLOSS.long-rest",
         )
         need = max(4 if "trance" in p.traits else 8 for p in pcs)
         g.advance(int(hours * 3600), "Long Rest")
         g.rest["interrupted"] = "an attack in the night"
-        g.log.player("rest", f"The Long Rest is interrupted after {hours:g} hours!", page=185)
+        g.log.player(
+            "rest", f"The Long Rest is interrupted after {hours:g} hours!", page=185, rule="GLOSS.long-rest"
+        )
         if hours >= 1:
-            g.log.player("rest", "At least 1 hour had passed: the rest grants Short Rest benefits", page=185)
+            g.log.player(
+                "rest",
+                "At least 1 hour had passed: the rest grants Short Rest benefits",
+                page=185,
+                rule="GLOSS.long-rest",
+            )
             for p in pcs:
                 R.short_rest_benefits(g, p)
         g.rest = None
@@ -488,6 +501,7 @@ class Session:
             f"The Long Rest resumes: it needs {pr['interruptions']} extra hour(s) per interruption "
             f"({remaining:g} hours to go)",
             page=185,
+            rule="GLOSS.long-rest",
         )
         self.paused_rest = None
         g.advance(int(remaining * 3600), "Long Rest (resumed)")
@@ -625,6 +639,7 @@ class Session:
                 )
                 + f" ({p.inventory.count('rations')} left)",
                 page=185,
+                rule="GLOSS.long-rest",
             )
 
     def cmd_lose_item(self, item, actor=None, qty=1):

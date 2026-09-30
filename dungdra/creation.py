@@ -571,6 +571,7 @@ class CharacterBuilder:
                     "ruling",
                     f"{pc.name} would gain {', '.join(dup)} proficiency twice; takes "
                     f"{c['replacement_tool'].title()} instead",
+                    rule="ORIGIN.character-backgrounds.parts-of-a-background.tool-proficiency",
                     ruling="R-01",
                 )
         pc.tools = set(tools)
@@ -626,6 +627,7 @@ class CharacterBuilder:
                 f"{pc.name} is created: {spn.title()} {cls.title()} 1 ({bgn.title()})"
                 + (f"; {'; '.join(notes)}" if notes else ""),
                 page="19-23",
+                rule="CREATE.create-your-character",
             )
         return pc
 
@@ -703,7 +705,10 @@ def prepare_spells(pc, spells, at_creation=False):
     pc.notes.pop("may_change_prepared", None)
     if g:
         g.log.player(
-            "prepare", f"{pc.name} prepares {', '.join(s.title() for s in counted)}", page=pc.cdata["page"]
+            "prepare",
+            f"{pc.name} prepares {', '.join(s.title() for s in counted)}",
+            page=pc.cdata["page"],
+            rule=f"CLASS.{pc.cls}.level-1-spellcasting",
         )
 
 

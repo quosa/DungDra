@@ -1,0 +1,10 @@
+{
+  "id": "T-11",
+  "kind": "refactor",
+  "unit": "ENGINE",
+  "title": "add_condition logs ruling=\"R-07\" on every Grappled condition, even for a creature with only a walking Speed; log R-07 only when the grappled creature has, or later gains, a non-walk Speed that the ruling zeroes",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -13,7 +13,9 @@ def spend(game, actor, what="action", label=""):
     if actor.dead:
         raise Refusal(f"{actor.name} is dead")
     if actor.has("incapacitated"):
-        raise Refusal(f"{actor.name} can't take actions (Incapacitated)", page=184)
+        raise Refusal(
+            f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
+        )
     if game.combat is not None:
         game.combat.spend(actor, what, label)
 
@@ -29,6 +31,7 @@ def help_check(game, helper, ally, skill=None, tool=None):
                 f"{helper.name} can only Help with a skill or tool they are proficient in "
                 f"(not proficient with {tool.title()})",
                 page=182,
+                rule="GLOSS.help",
             )
     elif skill:
         skill = norm(skill)
@@ -37,6 +40,7 @@ def help_check(game, helper, ally, skill=None, tool=None):
                 f"{helper.name} can only Help with a skill or tool they are proficient in "
                 f"(not proficient in {skill.title()})",
                 page=182,
+                rule="GLOSS.help",
             )
     else:
         raise Refusal("Choose one of your skill or tool proficiencies to Help with")
@@ -56,6 +60,7 @@ def help_check(game, helper, ally, skill=None, tool=None):
         f"{helper.name} Helps {ally.name}: Advantage on the next {what} check "
         f"before the start of {helper.name}'s next turn",
         page=183,
+        rule="GLOSS.help",
     )
     return eff
 
@@ -65,7 +70,11 @@ def help_attack(game, helper, enemy):
         raise Refusal(f"{helper.name} can't take actions right now")
     d = helper.distance_to(enemy)
     if d > 5:
-        raise Refusal(f"{enemy.name} is {d} ft away; Help can only distract an enemy within 5 feet", page=183)
+        raise Refusal(
+            f"{enemy.name} is {d} ft away; Help can only distract an enemy within 5 feet",
+            page=183,
+            rule="GLOSS.help",
+        )
     spend(game, helper, "action", "Help")
     eff = HelpAttack(f"Help from {helper.name}", caster=helper, ends=[("start", helper.id)])
     enemy.add_effect(eff)
@@ -74,6 +83,7 @@ def help_attack(game, helper, enemy):
         f"{helper.name} distracts {enemy.name}: the next attack roll by an ally against it "
         f"has Advantage (expires at the start of {helper.name}'s next turn)",
         page=183,
+        rule="GLOSS.help",
     )
     return eff
 
@@ -105,7 +115,9 @@ def use_tool(
     if tool not in TOOLS:
         raise Refusal(f"{tool!r} isn't a tool")
     if not getattr(actor, "inventory", None) or actor.inventory.find(tool) is None:
-        raise Refusal(f"{actor.name} doesn't have {tool.title()}; the attempt needs them", page=94)
+        raise Refusal(
+            f"{actor.name} doesn't have {tool.title()}; the attempt needs them", page=94, rule="EQUIP.tools"
+        )
     if bonus_action:
         if not actor.has_feature("fast hands"):
             raise Refusal(f"{actor.name} has no feature that allows this as a Bonus Action")
@@ -128,7 +140,12 @@ def use_tool(
         if needle is not None:
             from .traps import trigger
 
-            game.log.player("trap", "Opening the lock without its key springs a hidden needle!", page=200)
+            game.log.player(
+                "trap",
+                "Opening the lock without its key springs a hidden needle!",
+                page=200,
+                rule="TOOLBOX.traps.example-traps",
+            )
             trigger(game, actor, needle)
             needle.disabled = True
     return actor.check(
@@ -137,6 +154,7 @@ def use_tool(
         dc=dc,
         tool=tool,
         label=f"{task.capitalize()} ({ability.title()} check with {tool.title()})",
+        rule="EQUIP.tools",
         **kw,
     )
 
@@ -148,7 +166,10 @@ def dash(game, actor, bonus=False, source="Dash"):
         game.combat.turn.movement_left += actor.speed()
         game.combat.turn.dashes += 1
     game.log.player(
-        "action", f"{actor.name} takes the Dash action" + (" as a Bonus Action" if bonus else ""), page=180
+        "action",
+        f"{actor.name} takes the Dash action" + (" as a Bonus Action" if bonus else ""),
+        page=180,
+        rule="GLOSS.dash",
     )
 
 
@@ -161,13 +182,14 @@ def disengage(game, actor, bonus=False, source="Disengage"):
         + (" as a Bonus Action" if bonus else "")
         + ": no Opportunity Attacks this turn",
         page=181,
+        rule="GLOSS.disengage",
     )
 
 
 def dodge(game, actor):
     spend(game, actor, "action", "Dodge")
     actor.add_effect(Dodge("Dodge", ends=[("start", actor.id)]))
-    game.log.player("action", f"{actor.name} takes the Dodge action", page=181)
+    game.log.player("action", f"{actor.name} takes the Dodge action", page=181, rule="GLOSS.dodge")
 
 
 # -- Influence (p.184) -------------------------------------------------------------
@@ -199,16 +221,23 @@ def influence(
         raise Refusal(
             f"{npc.name} already refused that; wait {hrs} more hours before urging it the same way again",
             page=184,
+            rule="GLOSS.influence",
         )
     spend(game, actor, "action", "Influence")
     if disposition == "willing":
         game.log.player(
-            "influence", f"{npc.name} is willing: it does as urged, no check needed ({request})", page=184
+            "influence",
+            f"{npc.name} is willing: it does as urged, no check needed ({request})",
+            page=184,
+            rule="GLOSS.influence",
         )
         return True
     if disposition == "unwilling":
         game.log.player(
-            "influence", f"{npc.name} is unwilling: it refuses, no check possible ({request})", page=184
+            "influence",
+            f"{npc.name} is unwilling: it refuses, no check possible ({request})",
+            page=184,
+            rule="GLOSS.influence",
         )
         return False
     skill = skill or INFLUENCE_SKILLS.get(norm(approach), "persuasion")
@@ -223,6 +252,7 @@ def influence(
         "influence_dc",
         f"Influence DC for {npc.name}: {dc} (15 or Int {npc.score('int')}, whichever is higher)",
         page=184,
+        rule="GLOSS.influence",
     )
     r = actor.check(
         skill=skill,
@@ -232,15 +262,17 @@ def influence(
         target=npc,
         tags={"social"},
         label=f"{skill.title()} check to influence {npc.name}",
+        rule="GLOSS.influence",
     )
     if r.success:
-        game.log.player("influence", f"{npc.name} agrees: {request}", page=184)
+        game.log.player("influence", f"{npc.name} agrees: {request}", page=184, rule="GLOSS.influence")
     else:
         game.influence_cooldowns[key] = game.clock + DAY
         game.log.player(
             "influence",
             f"{npc.name} won't do it; {actor.name} must wait 24 hours before urging it that way again",
             page=184,
+            rule="GLOSS.influence",
         )
     return r.success
 
@@ -272,6 +304,7 @@ def search(game, actor, skill="perception", dc=None, target=None, what="", **kw)
         raise Refusal(
             f"The Search action uses Wisdom (Insight, Medicine, Perception or Survival), not {skill.title()}",
             page=187,
+            rule="GLOSS.search",
         )
     spend(game, actor, "action", "Search")
     r = actor.check(
@@ -280,6 +313,7 @@ def search(game, actor, skill="perception", dc=None, target=None, what="", **kw)
         dc=dc,
         target=target,
         label=f"Search: Wisdom ({skill.title()})" + (f" — {what}" if what else ""),
+        rule="GLOSS.search",
         **kw,
     )
     if skill == "perception":
@@ -287,9 +321,14 @@ def search(game, actor, skill="perception", dc=None, target=None, what="", **kw)
         hiders = [target] if target is not None else [e for e in game.enemies_of(actor) if not e.dead]
         found = [h for h in hiders if h.hidden_total is not None and notices(game, actor, h, active_roll=r)]
         if found:
-            game.log.player("found", f"{actor.name} spots " + ", ".join(h.name for h in found), page=183)
+            game.log.player(
+                "found",
+                f"{actor.name} spots " + ", ".join(h.name for h in found),
+                page=183,
+                rule="GLOSS.hide",
+            )
         elif any(h.hidden_total is not None for h in hiders):
-            game.log.player("found", f"{actor.name} doesn't spot anyone hidden", page=183)
+            game.log.player("found", f"{actor.name} doesn't spot anyone hidden", page=183, rule="GLOSS.hide")
     return r
 
 
@@ -300,6 +339,7 @@ def study(game, actor, skill=None, dc=None, topic="", creature_type=None, **kw):
             raise Refusal(
                 f"Lore about {creature_type.title()} creatures is {want.title()}, not {skill.title()}",
                 page=189,
+                rule="GLOSS.study",
             )
         skill = want
     skill = norm(skill or "investigation")
@@ -307,6 +347,7 @@ def study(game, actor, skill=None, dc=None, topic="", creature_type=None, **kw):
         raise Refusal(
             "The Study action uses Intelligence (Arcana, History, Investigation, Nature or Religion)",
             page=189,
+            rule="GLOSS.study",
         )
     spend(game, actor, "action", "Study")
     return actor.check(
@@ -314,6 +355,7 @@ def study(game, actor, skill=None, dc=None, topic="", creature_type=None, **kw):
         ability="int",
         dc=dc,
         label=f"Study: Intelligence ({skill.title()})" + (f" — {topic}" if topic else ""),
+        rule="GLOSS.study",
         **kw,
     )
 
@@ -325,6 +367,7 @@ def single_action(game, actor, actions: list[str]):
             f"{actor.name} can take only one action at a time: choose one of "
             f"{', '.join(a.title() for a in actions)}",
             page=9,
+            rule="PLAY.actions.one-thing-at-a-time",
         )
 
 
@@ -341,15 +384,17 @@ def hide(game, actor, cover=None, obscured=None, bonus=False, source="Hide", dc=
             f"{actor.name} can't hide in plain view: needs Heavy Obscurement or Three-Quarters/Total "
             f"Cover and to be out of enemies' line of sight",
             page=183,
+            rule="GLOSS.hide",
         )
     for e in game.enemies_of(actor):
         if kw.get("seen_by") and e.id in kw["seen_by"]:
             raise Refusal(
                 f"{e.name} can see {actor.name}; hiding needs to be out of any enemy's line of sight",
                 page=183,
+                rule="GLOSS.hide",
             )
     spend(game, actor, "bonus" if bonus else "action", source)
-    r = actor.check("stealth", dc=dc, label="Dexterity (Stealth) check to Hide", page=183)
+    r = actor.check("stealth", dc=dc, label="Dexterity (Stealth) check to Hide", page=183, rule="GLOSS.hide")
     if r.success:
         for e in list(actor.effects):
             if e.condition == "invisible" and e.source.startswith("Hide"):
@@ -361,6 +406,7 @@ def hide(game, actor, cover=None, obscured=None, bonus=False, source="Hide", dc=
             f"{actor.name} is hidden (Invisible); a Wisdom (Perception) check of {r.total} or "
             f"higher finds them",
             page=183,
+            rule="GLOSS.hide",
         )
     return r
 
@@ -378,7 +424,10 @@ def make_sound(game, actor, volume="whisper"):
         end_hiding(game, actor, f"made a sound louder than a whisper ({volume})")
         return True
     game.log.player(
-        "sound", f"{actor.name} {volume}s" + (" and stays hidden" if actor.hidden_total else ""), page=183
+        "sound",
+        f"{actor.name} {volume}s" + (" and stays hidden" if actor.hidden_total else ""),
+        page=183,
+        rule="GLOSS.hide",
     )
     return False
 
@@ -394,6 +443,7 @@ def notices(game, observer, hider, active_roll=None) -> bool:
         f"{observer.name} Perception {total} vs {hider.name}'s Hide total {hider.hidden_total}: "
         + ("found" if found else "not found"),
         page=183,
+        rule="GLOSS.hide",
     )
     if found:
         end_hiding(game, hider, f"found by {observer.name}")
@@ -417,8 +467,10 @@ def search_for_hidden(game, actor, where: str, dc=None, **kw):
     )
     if target and r.success:
         target[1]["found"] = True
-        game.log.player("found", f"{actor.name} finds {target[0]}", page=12)
+        game.log.player("found", f"{actor.name} finds {target[0]}", page=12, rule="PLAY.exploration.hiding")
         return target[0]
     if not target:
-        game.log.player("found", f"{actor.name} finds nothing in {where}", page=12)
+        game.log.player(
+            "found", f"{actor.name} finds nothing in {where}", page=12, rule="PLAY.exploration.hiding"
+        )
     return None

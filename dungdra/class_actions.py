@@ -20,8 +20,13 @@ def second_wind(game, pc):
     actions.spend(game, pc, "bonus", "Second Wind")
     pc.spend("second wind")
     r = game.dice.roll(10)
-    game.log.player("feature", f"{pc.name} uses Second Wind: 1d10={r} + {pc.level}", page=48)
-    return pc.heal(r + pc.level, "Second Wind")
+    game.log.player(
+        "feature",
+        f"{pc.name} uses Second Wind: 1d10={r} + {pc.level}",
+        page=48,
+        rule="CLASS.fighter.level-1-second-wind",
+    )
+    return pc.heal(r + pc.level, "Second Wind", rule="CLASS.fighter.level-1-second-wind")
 
 
 def tactical_mind(game, pc, roll):
@@ -36,13 +41,17 @@ def tactical_mind(game, pc, roll):
     if roll.success:
         pc.spend("second wind")
         game.log.player(
-            "feature", f"Tactical Mind: +{r} → {roll.total}, success; a Second Wind use is expended", page=48
+            "feature",
+            f"Tactical Mind: +{r} → {roll.total}, success; a Second Wind use is expended",
+            page=48,
+            rule="CLASS.fighter.level-2-tactical-mind",
         )
     else:
         game.log.player(
             "feature",
             f"Tactical Mind: +{r} → {roll.total}, still a failure; the Second Wind use isn't expended",
             page=48,
+            rule="CLASS.fighter.level-2-tactical-mind",
         )
     return roll
 
@@ -62,7 +71,10 @@ def action_surge(game, pc):
     cb.turn.surge_active = True
     cb.turn.attacks_left = 0
     game.log.player(
-        "feature", f"{pc.name} uses Action Surge: one additional action (not the Magic action)", page=48
+        "feature",
+        f"{pc.name} uses Action Surge: one additional action (not the Magic action)",
+        page=48,
+        rule="CLASS.fighter.level-2-action-surge",
     )
 
 
@@ -75,14 +87,22 @@ def cunning_action(game, pc, what):
         return actions.disengage(game, pc, bonus=True, source="Cunning Action (Disengage)")
     if what == "hide":
         return None  # caller uses actions.hide(..., bonus=True)
-    raise Refusal("Cunning Action allows only Dash, Disengage or Hide as a Bonus Action", page=62)
+    raise Refusal(
+        "Cunning Action allows only Dash, Disengage or Hide as a Bonus Action",
+        page=62,
+        rule="CLASS.rogue.level-2-cunning-action",
+    )
 
 
 def steady_aim(game, pc):
     _need(pc, "steady aim")
     cb = game.combat
     if cb is not None and cb.is_turn(pc) and cb.turn.moved > 0:
-        raise Refusal("Steady Aim can be used only if you haven't moved this turn", page=62)
+        raise Refusal(
+            "Steady Aim can be used only if you haven't moved this turn",
+            page=62,
+            rule="CLASS.rogue.level-3-steady-aim",
+        )
     actions.spend(game, pc, "bonus", "Steady Aim")
     pc.add_effect(AdvNext("Steady Aim", kinds=("attack",), ends=[("end", pc.id)]))
     pc.add_effect(Flag("speed 0", "Steady Aim: Speed 0", ends=[("end", pc.id)]))
@@ -90,7 +110,10 @@ def steady_aim(game, pc):
     if cb is not None and cb.is_turn(pc):
         cb.turn.movement_left = 0
     game.log.player(
-        "feature", f"{pc.name} uses Steady Aim: Advantage on the next attack this turn; Speed 0", page=62
+        "feature",
+        f"{pc.name} uses Steady Aim: Advantage on the next attack this turn; Speed 0",
+        page=62,
+        rule="CLASS.rogue.level-3-steady-aim",
     )
 
 
@@ -106,14 +129,23 @@ def stonecunning(game, pc, on_stone=True):
     if "stonecunning" not in pc.traits:
         raise Refusal(f"{pc.name} doesn't have Stonecunning")
     if not on_stone:
-        raise Refusal("Stonecunning works only while on or touching a stone surface", page=84)
+        raise Refusal(
+            "Stonecunning works only while on or touching a stone surface",
+            page=84,
+            rule="ORIGIN.character-species.species-descriptions.dwarf",
+        )
     if pc.resource_left("stonecunning") <= 0:
         raise Refusal("No Stonecunning uses left")
     actions.spend(game, pc, "bonus", "Stonecunning")
     pc.spend("stonecunning")
     pc.senses["tremorsense"] = 60
     pc.add_effect(Flag("tremorsense", "Stonecunning: Tremorsense 60 ft", until=game.clock + 10 * MINUTE))
-    game.log.player("feature", f"{pc.name} gains Tremorsense 60 ft for 10 minutes (Stonecunning)", page=84)
+    game.log.player(
+        "feature",
+        f"{pc.name} gains Tremorsense 60 ft for 10 minutes (Stonecunning)",
+        page=84,
+        rule="ORIGIN.character-species.species-descriptions.dwarf",
+    )
 
 
 BONUS_ACTIONS = {
@@ -130,7 +162,11 @@ def bonus_action(game, actor, name, *args, **kw):
         return cunning_action(game, actor, n.split(":")[-1].strip() if ":" in n else kw.pop("what", "dash"))
     fn = BONUS_ACTIONS.get(n)
     if fn is None:
-        raise Refusal(f"{actor.name} has no feature that grants a Bonus Action to {name}", page=10)
+        raise Refusal(
+            f"{actor.name} has no feature that grants a Bonus Action to {name}",
+            page=10,
+            rule="PLAY.actions.bonus-actions",
+        )
     return fn(game, actor, *args, **kw)
 
 
@@ -156,24 +192,46 @@ def divine_spark(game, pc, target, mode="heal", dtype="radiant"):
         "feature",
         f"{pc.name} uses Channel Divinity: Divine Spark ({n}d8={rolls} + Wis {pc.mod('wis')} = {amount})",
         page=37,
+        rule="CLASS.cleric.level-2-channel-divinity",
     )
     if mode == "heal":
-        return target.heal(amount, "Divine Spark", page=37)
+        return target.heal(amount, "Divine Spark", page=37, rule="CLASS.cleric.level-2-channel-divinity")
     r = target.save(
-        "con", pc.spell_dc(), label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})", page=37
+        "con",
+        pc.spell_dc(),
+        label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})",
+        page=37,
+        rule="CLASS.cleric.level-2-channel-divinity",
     )
-    return target.take_damage(amount // 2 if r.success else amount, dtype, attacker=pc, source="Divine Spark")
+    return target.take_damage(
+        amount // 2 if r.success else amount,
+        dtype,
+        attacker=pc,
+        source="Divine Spark",
+        rule="CLASS.cleric.level-2-channel-divinity",
+    )
 
 
 def turn_undead(game, pc, targets):
     from .spells import TurnedEffect
 
     _channel(game, pc)
-    game.log.player("feature", f"{pc.name} uses Channel Divinity: Turn Undead", page=37)
+    game.log.player(
+        "feature",
+        f"{pc.name} uses Channel Divinity: Turn Undead",
+        page=37,
+        rule="CLASS.cleric.level-2-channel-divinity",
+    )
     for t in targets:
         if t.ctype != "undead" or pc.distance_to(t) > 30:
             continue
-        r = t.save("wis", pc.spell_dc(), label=f"Wisdom save vs Turn Undead (DC {pc.spell_dc()})", page=37)
+        r = t.save(
+            "wis",
+            pc.spell_dc(),
+            label=f"Wisdom save vs Turn Undead (DC {pc.spell_dc()})",
+            page=37,
+            rule="CLASS.cleric.level-2-channel-divinity",
+        )
         if not r.success:
             for cond in ("frightened", "incapacitated"):
                 t.add_effect(TurnedEffect(cond, source="Turn Undead", caster=pc, until=game.clock + MINUTE))
@@ -182,6 +240,7 @@ def turn_undead(game, pc, targets):
                 f"{t.name} is Frightened and Incapacitated for 1 minute and flees from "
                 f"{pc.name} (ends if it takes damage)",
                 page=37,
+                rule="CLASS.cleric.level-2-channel-divinity",
             )
             game.on_incapacitated(t)
 
@@ -192,16 +251,31 @@ def preserve_life(game, pc, allocation: dict):
     _need(pc, "preserve life")
     pool = 5 * pc.level
     if sum(allocation.values()) > pool:
-        raise Refusal(f"Preserve Life restores at most {pool} HP in total", page=40)
+        raise Refusal(
+            f"Preserve Life restores at most {pool} HP in total",
+            page=40,
+            rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
+        )
     for cid in allocation:
         t = game.get(cid)
         if not t.bloodied:
-            raise Refusal(f"{t.name} isn't Bloodied", page=40)
+            raise Refusal(
+                f"{t.name} isn't Bloodied",
+                page=40,
+                rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
+            )
         if pc.distance_to(t) > 30:
-            raise Refusal(f"{t.name} is more than 30 ft away", page=40)
+            raise Refusal(
+                f"{t.name} is more than 30 ft away",
+                page=40,
+                rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
+            )
     _channel(game, pc)
     game.log.player(
-        "feature", f"{pc.name} uses Channel Divinity: Preserve Life ({pool} HP to divide)", page=40
+        "feature",
+        f"{pc.name} uses Channel Divinity: Preserve Life ({pool} HP to divide)",
+        page=40,
+        rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
     )
     out = {}
     for cid, amt in allocation.items():
@@ -210,9 +284,17 @@ def preserve_life(game, pc, allocation: dict):
         give = max(0, min(amt, cap - t.hp))
         if give < amt:
             game.log.player(
-                "feature", f"{t.name} can be restored only to half its HP maximum ({cap})", page=40
+                "feature",
+                f"{t.name} can be restored only to half its HP maximum ({cap})",
+                page=40,
+                rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
             )
-        out[cid] = t.heal(give, "Preserve Life", page=40)
+        out[cid] = t.heal(
+            give,
+            "Preserve Life",
+            page=40,
+            rule="CLASS.cleric.cleric-subclass-life-domain.level-3-preserve-life",
+        )
     return out
 
 
@@ -223,16 +305,27 @@ def change_mastery(game, pc, old: str, new: str):
 
     old, new = canonical(old), canonical(new)
     if pc.long_rest_finished_at is None:
-        raise Refusal("Weapon Mastery choices change only when you finish a Long Rest", page=48)
+        raise Refusal(
+            "Weapon Mastery choices change only when you finish a Long Rest",
+            page=48,
+            rule=f"CLASS.{pc.cls}.level-1-weapon-mastery",
+        )
     if old not in pc.weapon_masteries:
         raise Refusal(f"{pc.name} doesn't have mastery with {old}")
     if new not in WEAPONS or not pc.proficient_with(new):
         raise Refusal(f"{pc.name} must be proficient with {new} to master it")
     limit = 1 if pc.cls == "fighter" else len(pc.weapon_masteries)
     if pc.notes.get("mastery_swaps", 0) >= limit:
-        raise Refusal(f"{pc.name} can change only {limit} Weapon Mastery choice(s) per Long Rest", page=48)
+        raise Refusal(
+            f"{pc.name} can change only {limit} Weapon Mastery choice(s) per Long Rest",
+            page=48,
+            rule=f"CLASS.{pc.cls}.level-1-weapon-mastery",
+        )
     pc.weapon_masteries[pc.weapon_masteries.index(old)] = new
     pc.notes["mastery_swaps"] = pc.notes.get("mastery_swaps", 0) + 1
     game.log.player(
-        "feature", f"{pc.name} practices weapon drills: mastery {old.title()} → {new.title()}", page=48
+        "feature",
+        f"{pc.name} practices weapon drills: mastery {old.title()} → {new.title()}",
+        page=48,
+        rule=f"CLASS.{pc.cls}.level-1-weapon-mastery",
     )

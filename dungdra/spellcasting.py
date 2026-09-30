@@ -36,9 +36,17 @@ def arcane_recovery_offer(game, pc, slots=None):
 def arcane_recovery(game, pc, slots):
     budget = -(-pc.level // 2)
     if pc.resource_left("arcane recovery") <= 0:
-        raise Refusal("Arcane Recovery has already been used; it returns after a Long Rest", page=78)
+        raise Refusal(
+            "Arcane Recovery has already been used; it returns after a Long Rest",
+            page=78,
+            rule="CLASS.wizard.level-1-arcane-recovery",
+        )
     if sum(slots) > budget:
-        raise Refusal(f"Arcane Recovery recovers at most {budget} slot levels", page=78)
+        raise Refusal(
+            f"Arcane Recovery recovers at most {budget} slot levels",
+            page=78,
+            rule="CLASS.wizard.level-1-arcane-recovery",
+        )
     for lvl in slots:
         if pc.slots_used.get(lvl, 0) <= 0:
             raise Refusal(f"No expended level {lvl} slot to recover")
@@ -48,5 +56,6 @@ def arcane_recovery(game, pc, slots):
         "feature",
         f"{pc.name} uses Arcane Recovery: regains slot(s) of level {', '.join(map(str, slots))}",
         page=78,
+        rule="CLASS.wizard.level-1-arcane-recovery",
     )
     return slots

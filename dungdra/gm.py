@@ -19,7 +19,7 @@ def monster_turn(game, m):
     flank for Pack Tactics; low-Int monsters just charge; weak foes flee when badly hurt."""
     cb = game.combat
     if m.dead or not m.can_act():
-        game.log.player("turn", f"{m.name} can't act", page=184)
+        game.log.player("turn", f"{m.name} can't act", page=184, rule="GLOSS.incapacitated")
         return
     if m.notes.get("fled"):
         return
@@ -39,7 +39,12 @@ def monster_turn(game, m):
             with contextlib.suppress(Refusal):
                 CA.nimble_escape(game, m, "disengage")
         m.notes["fled"] = True
-        game.log.player("flee", f"{m.name} flees the fight!", page=255)
+        game.log.player(
+            "flee",
+            f"{m.name} flees the fight!",
+            page=255,
+            rule="MONSTER.parts-of-a-stat-block.challenge-rating",
+        )
         return
     turned = any(e.source == "Turn Undead" for e in m.effects)
     if turned:

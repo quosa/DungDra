@@ -48,11 +48,14 @@ def travel(
             f"The {terrain} terrain allows at most a {mp.title()} pace"
             + ("" if road else " (a good road raises it one step)"),
             page=192,
+            rule="TOOLBOX.travel-pace",
         )
     for pc in pcs:
         if pc.speed() <= pc.speeds.get("walk", 30) // 2 and pace != "slow":
             raise Refusal(
-                f"{pc.name}'s Speed is halved or worse: the group must move at a Slow pace", page=192
+                f"{pc.name}'s Speed is halved or worse: the group must move at a Slow pace",
+                page=192,
+                rule="TOOLBOX.travel-pace.slower-travelers",
             )
     mph = PACE_MPH[pace]
     if hours is None:
@@ -67,6 +70,7 @@ def travel(
         + ("on a good road " if road else "")
         + f"({hours:g} hours)",
         page=12,
+        rule="PLAY.exploration.travel",
     )
     # hour by hour so extended travel saves happen at the end of hours 9, 10, ...
     whole = int(hours)
@@ -85,9 +89,15 @@ def travel(
 def extended_travel_saves(game, pcs, hour: int):
     dc = 10 + (hour - 8)
     for pc in pcs:
-        r = pc.save("con", dc, label=f"Constitution save for hour {hour} of travel (DC {dc})", page=192)
+        r = pc.save(
+            "con",
+            dc,
+            label=f"Constitution save for hour {hour} of travel (DC {dc})",
+            page=192,
+            rule="TOOLBOX.travel-pace.extended-travel",
+        )
         if not r.success:
-            pc.gain_exhaustion(1, "extended travel", page=192)
+            pc.gain_exhaustion(1, "extended travel", page=192, rule="TOOLBOX.travel-pace.extended-travel")
 
 
 # -- jumping (p.183-185) ------------------------------------------------------------------
@@ -117,7 +127,7 @@ def long_jump(game, pc, distance: int, running=True):
     cb = game.combat
     if cb is not None and cb.is_turn(pc):
         if cb.turn.movement_left < distance:
-            raise Refusal("Each foot of the jump costs a foot of movement", page=185)
+            raise Refusal("Each foot of the jump costs a foot of movement", page=185, rule="GLOSS.long-jump")
         cb.turn.movement_left -= min(distance, reach)
     ok = distance <= reach
     game.log.player(
@@ -125,6 +135,7 @@ def long_jump(game, pc, distance: int, running=True):
         f"{pc.name} makes a {'running' if running else 'standing'} Long Jump: up to {reach} ft; "
         f"the gap is {distance} ft → {'clears it' if ok else 'falls short'}",
         page=185,
+        rule="GLOSS.long-jump",
     )
     return ok
 
@@ -132,7 +143,10 @@ def long_jump(game, pc, distance: int, running=True):
 def high_jump(game, pc, running=True):
     h = high_jump_distance(pc, running)
     game.log.player(
-        "jump", f"{pc.name} makes a {'running' if running else 'standing'} High Jump of {h} ft", page=183
+        "jump",
+        f"{pc.name} makes a {'running' if running else 'standing'} High Jump of {h} ft",
+        page=183,
+        rule="GLOSS.high-jump",
     )
     return h
 
@@ -150,6 +164,9 @@ def light_torch(game, pc):
     if game.combat is not None:
         game.combat.spend(pc, "bonus", "light a Torch with a Tinderbox")
     game.log.player(
-        "light", f"{pc.name} lights a Torch: Bright Light 20 ft, Dim Light 20 ft more, for 1 hour", page=100
+        "light",
+        f"{pc.name} lights a Torch: Bright Light 20 ft, Dim Light 20 ft more, for 1 hour",
+        page=100,
+        rule="EQUIP.adventuring-gear.torch-1-cp",
     )
     return t

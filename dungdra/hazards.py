@@ -22,6 +22,7 @@ def fall(game, c, feet: int, into_water=False, use_reaction=True):
             dc=15,
             label=f"{skill.title()} check to hit the water feet or head first (DC 15)",
             page=182,
+            rule="GLOSS.falling",
         )
         halve = r.success
     rolls = game.dice.roll_many(n, 6)
@@ -32,8 +33,9 @@ def fall(game, c, feet: int, into_water=False, use_reaction=True):
         "fall",
         f"{c.name} falls {feet} ft: {n}d6={rolls}" + (" halved (good water entry)" if halve else ""),
         page=182,
+        rule="GLOSS.falling",
     )
-    dealt = c.take_damage(dmg, "bludgeoning", source="falling")
+    dealt = c.take_damage(dmg, "bludgeoning", source="falling", rule="GLOSS.falling")
     if dealt > 0 and not c.dead:
         c.add_condition("prone", "fell")
     return dealt
@@ -55,7 +57,7 @@ class HoldingBreath(Effect):
     def on_turn_end(self, game):
         o = self.owner
         if game.clock - self.start >= breath_seconds(o):
-            o.gain_exhaustion(1, "suffocation", page=189)
+            o.gain_exhaustion(1, "suffocation", page=189, rule="GLOSS.suffocation")
 
 
 def start_holding_breath(game, c):
@@ -65,6 +67,7 @@ def start_holding_breath(game, c):
         "hazard",
         f"{c.name} holds their breath: {breath_seconds(c) // 60} minutes before suffocating",
         page=189,
+        rule="GLOSS.suffocation",
     )
     return e
 
@@ -91,15 +94,20 @@ def end_of_day_food(game, c, food_fraction: float):
     if food_fraction == 0:
         c.food_days_without = getattr(c, "food_days_without", 0) + 1
         if c.food_days_without >= 5:
-            c.gain_exhaustion(1, "malnutrition", page=185)
+            c.gain_exhaustion(1, "malnutrition", page=185, rule="GLOSS.malnutrition")
         else:
             game.log.player(
-                "hazard", f"{c.name} has eaten nothing for {c.food_days_without} day(s)", page=185
+                "hazard",
+                f"{c.name} has eaten nothing for {c.food_days_without} day(s)",
+                page=185,
+                rule="GLOSS.malnutrition",
             )
     elif food_fraction < 0.5:
-        r = c.save("con", 10, label="Constitution save vs malnutrition (DC 10)", page=185)
+        r = c.save(
+            "con", 10, label="Constitution save vs malnutrition (DC 10)", page=185, rule="GLOSS.malnutrition"
+        )
         if not r.success:
-            c.gain_exhaustion(1, "malnutrition", page=185)
+            c.gain_exhaustion(1, "malnutrition", page=185, rule="GLOSS.malnutrition")
 
 
 def end_of_day_water(game, c, water_fraction: float):
@@ -109,7 +117,7 @@ def end_of_day_water(game, c, water_fraction: float):
         return
     if water_fraction < 0.5:
         locked.add("dehydration")
-        c.gain_exhaustion(1, "dehydration", page=181)
+        c.gain_exhaustion(1, "dehydration", page=181, rule="GLOSS.dehydration")
 
 
 # -- Burning (p.178) ---------------------------------------------------------------------
@@ -118,14 +126,16 @@ class Burning(Effect):
 
     def on_turn_start(self, game):
         r = game.dice.roll(4)
-        game.log.player("hazard", f"{self.owner.name} is burning: 1d4={r} Fire damage", page=178)
-        self.owner.take_damage(r, "fire", source="burning")
+        game.log.player(
+            "hazard", f"{self.owner.name} is burning: 1d4={r} Fire damage", page=178, rule="GLOSS.burning"
+        )
+        self.owner.take_damage(r, "fire", source="burning", rule="GLOSS.burning")
 
 
 def set_burning(game, c):
     if not c.find_effects(cls=Burning):
         c.add_effect(Burning("Burning"))
-        game.log.player("hazard", f"{c.name} starts burning", page=178)
+        game.log.player("hazard", f"{c.name} starts burning", page=178, rule="GLOSS.burning")
 
 
 def extinguish_by_rolling(game, c):
@@ -169,14 +179,20 @@ def apply_poison_to_weapon(game, c, weapon_name: str, poison="serpent venom"):
         else f" (it deals {it.weapon['dtype'].title()} damage, so the poison will never be delivered)"
     )
     game.log.player(
-        "poison", f"{c.name} coats the {it.display} with {poison.title()} (Bonus Action){warn}", page=197
+        "poison",
+        f"{c.name} coats the {it.display} with {poison.title()} (Bonus Action){warn}",
+        page=197,
+        rule="EQUIP.adventuring-gear.poison-basic-100-gp",
     )
 
 
 def trigger_coating(game, attacker, target, item):
     poison = item.props.pop("coating")
     game.log.player(
-        "poison", f"The {poison.title()} on the {item.display} enters {target.name}'s wound", page=197
+        "poison",
+        f"The {poison.title()} on the {item.display} enters {target.name}'s wound",
+        page=197,
+        rule="TOOLBOX.poison",
     )
     expose(game, target, poison)
 
@@ -191,13 +207,19 @@ def expose(game, target, poison):
             avoid=avoid,
             label=f"Constitution save vs {poison.title()} (DC {p['dc']})",
             page=198,
+            rule="TOOLBOX.poison.sample-poisons",
         )
         total, rolls, _ = game.dice.roll_expr(p["damage"])
         dmg = div(total, 2) if r.success and p.get("half") else (0 if r.success else total)
         game.log.player(
-            "poison", f"{poison.title()}: {p['damage']}={rolls}" + (" halved" if r.success else ""), page=198
+            "poison",
+            f"{poison.title()}: {p['damage']}={rolls}" + (" halved" if r.success else ""),
+            page=198,
+            rule="TOOLBOX.poison.sample-poisons",
         )
-        target.take_damage(dmg, "poison", source=poison.title())
+        target.take_damage(dmg, "poison", source=poison.title(), rule="TOOLBOX.poison.sample-poisons")
     else:
         total, rolls, _ = game.dice.roll_expr(p["extra"])
-        target.take_damage(total, "poison", source=poison.title())
+        target.take_damage(
+            total, "poison", source=poison.title(), rule="EQUIP.adventuring-gear.poison-basic-100-gp"
+        )

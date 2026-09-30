@@ -9,21 +9,32 @@ MOUNT_ACTIONS = ("dash", "disengage", "dodge")
 
 def mount(game, rider, steed, controlled=True):
     if size_index(steed.size) - size_index(rider.size) < 1:
-        raise Refusal(f"{steed.name} must be at least one size larger than {rider.name}", page=15)
+        raise Refusal(
+            f"{steed.name} must be at least one size larger than {rider.name}",
+            page=15,
+            rule="PLAY.combat.mounted-combat",
+        )
     if rider.distance_to(steed) > 5:
-        raise Refusal(f"{steed.name} must be within 5 ft to mount it", page=15)
+        raise Refusal(
+            f"{steed.name} must be within 5 ft to mount it", page=15, rule="PLAY.combat.mounted-combat"
+        )
     cost = rider.speed() // 2
     cb = game.combat
     if cb is not None and cb.is_turn(rider):
         if cb.turn.movement_left < cost:
-            raise Refusal(f"Mounting costs {cost} ft of movement", page=15)
+            raise Refusal(f"Mounting costs {cost} ft of movement", page=15, rule="PLAY.combat.mounted-combat")
         cb.turn.movement_left -= cost
     rider.notes["mount"] = steed.id
     steed.notes["rider"] = rider.id
     steed.notes["controlled"] = controlled
     rider.position = steed.position
     steed.team = rider.team if controlled else steed.team
-    game.log.player("mount", f"{rider.name} mounts {steed.name} (costs {cost} ft of movement)", page=15)
+    game.log.player(
+        "mount",
+        f"{rider.name} mounts {steed.name} (costs {cost} ft of movement)",
+        page=15,
+        rule="PLAY.combat.mounted-combat",
+    )
     if controlled and cb is not None:
         ini = cb.initiative_of(rider)
         cb.order = [(cid, v) for cid, v in cb.order if cid != steed.id]
@@ -36,6 +47,7 @@ def mount(game, rider, steed, controlled=True):
             f"{steed.name} is a controlled mount: it acts on {rider.name}'s Initiative ({ini}) "
             f"and can only Dash, Disengage or Dodge",
             page=16,
+            rule="PLAY.combat.mounted-combat",
         )
     return cost
 
@@ -51,12 +63,18 @@ def dismount(game, rider):
     if cb is not None and cb.is_turn(rider):
         cb.turn.movement_left = max(0, cb.turn.movement_left - cost)
     rider.position = (steed.position[0] + 5, steed.position[1])
-    game.log.player("mount", f"{rider.name} dismounts (costs {cost} ft)", page=15)
+    game.log.player(
+        "mount", f"{rider.name} dismounts (costs {cost} ft)", page=15, rule="PLAY.combat.mounted-combat"
+    )
 
 
 def mount_action(game, steed, action):
     if steed.notes.get("controlled") and action.lower() not in MOUNT_ACTIONS:
-        raise Refusal("A controlled mount can only take the Dash, Disengage or Dodge action", page=16)
+        raise Refusal(
+            "A controlled mount can only take the Dash, Disengage or Dodge action",
+            page=16,
+            rule="PLAY.combat.mounted-combat",
+        )
     from . import actions
 
     a = action.lower()
@@ -68,12 +86,19 @@ def fall_off_check(game, rider, why):
     sid = rider.notes.get("mount")
     if sid is None:
         return None
-    r = rider.save("dex", 10, label=f"Dexterity save to stay mounted ({why})", page=16)
+    r = rider.save(
+        "dex", 10, label=f"Dexterity save to stay mounted ({why})", page=16, rule="PLAY.combat.mounted-combat"
+    )
     if not r.success:
         steed = game.creatures[sid]
         rider.notes.pop("mount", None)
         steed.notes.pop("rider", None)
         rider.position = (steed.position[0] + 5, steed.position[1])
         rider.add_condition("prone", "fell off the mount")
-        game.log.player("mount", f"{rider.name} falls off {steed.name} and lands Prone", page=16)
+        game.log.player(
+            "mount",
+            f"{rider.name} falls off {steed.name} and lands Prone",
+            page=16,
+            rule="PLAY.combat.mounted-combat",
+        )
     return r

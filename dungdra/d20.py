@@ -137,12 +137,33 @@ def choose(dice: list[int], mode: str) -> int:
     return dice[0]
 
 
+# SRD[PLAY.d20-tests] the rule each kind of D20 Test applies, unless the caller names a narrower one
+D20_RULES = {
+    "check": "PLAY.d20-tests.ability-checks",
+    "initiative": "PLAY.combat.the-order-of-combat",
+    "save": "PLAY.d20-tests.saving-throws",
+    "death save": "GLOSS.death-saving-throw",
+    "attack": "PLAY.d20-tests.attack-rolls",
+}
+
+
 def roll_d20_test(
-    game, actor, roll: D20Roll, bonus_dice=(), page="6-8", visibility=PLAYER, allow_rerolls=True
+    game,
+    actor,
+    roll: D20Roll,
+    bonus_dice=(),
+    page="6-8",
+    visibility=PLAYER,
+    allow_rerolls=True,
+    rule=None,
+    rulings=(),
 ) -> D20Roll:
-    """Roll a prepared D20Roll: dice, rerolls, bonus dice. Logs the result."""
+    """Roll a prepared D20Roll: dice, rerolls, bonus dice. Logs the result, then each register
+    ruling (rule, ruling, what it decided) that shaped the roll as a GM-only event."""
+    rule = rule or D20_RULES.get(roll.kind, "PLAY.d20-tests")
     if roll.auto and roll.auto in ("fail", "success") and roll.chosen is None and roll.auto_reason:
-        game.log.add(roll.kind, roll.describe(), visibility, page=page, roll=roll.to_dict())
+        game.log.add(roll.kind, roll.describe(), visibility, page=page, rule=rule, roll=roll.to_dict())
+        _log_rulings(game, roll, rulings)
         return roll
     roll.mode = resolve_mode(roll.adv, roll.dis)
     n = 1 if roll.mode == "normal" else 2
@@ -183,12 +204,23 @@ def roll_d20_test(
                 roll.dice[pick] = game.dice.d20()
                 actor.heroic_inspiration = False
                 roll.rerolls.append(f"Heroic Inspiration {old}→{roll.dice[pick]}")
-                game.log.player("inspiration", f"{actor.name} spends Heroic Inspiration", page=8)
+                game.log.player(
+                    "inspiration",
+                    f"{actor.name} spends Heroic Inspiration",
+                    page=8,
+                    rule="PLAY.d20-tests.advantage-disadvantage",
+                )
 
     roll.chosen = choose(roll.dice, roll.mode)
     for expr, src in bonus_dice:
         total, rolled, _ = game.dice.roll_expr(expr)
         sign = -1 if src.startswith("-") else 1
         roll.add_mod(sign * total, f"{src.lstrip('-')} ({expr}={rolled})")
-    game.log.add(roll.kind, roll.describe(), visibility, page=page, roll=roll.to_dict())
+    game.log.add(roll.kind, roll.describe(), visibility, page=page, rule=rule, roll=roll.to_dict())
+    _log_rulings(game, roll, rulings)
     return roll
+
+
+def _log_rulings(game, roll: D20Roll, rulings) -> None:
+    for rule, ruling, what in rulings:
+        game.log.gm("ruling", f"{ruling} ({roll.label}): {what}", rule=rule, ruling=ruling)

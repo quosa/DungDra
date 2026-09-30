@@ -21,6 +21,7 @@ def pc_drop_to_zero(pc, remainder: int, crit: bool):
             f"{pc.name} drops to 0 HP ({remainder} damage left over, below the HP maximum of "
             f"{pc.max_hp}) and is Unconscious",
             page=17,
+            rule="PLAY.damage-and-healing.dropping-to-0-hit-points",
         )
     if not pc.has("unconscious"):
         pc.add_condition("unconscious", "0 Hit Points")
@@ -34,7 +35,7 @@ def pc_damage_at_zero(pc, amount: int, crit: bool):
     if pc.stable:
         pc.stable = False
         if g:
-            g.log.player("death_save", f"{pc.name} is no longer Stable", page=18)
+            g.log.player("death_save", f"{pc.name} is no longer Stable", page=18, rule="GLOSS.stable")
     n = 2 if crit else 1
     add_failures(pc, n, "Critical Hit at 0 HP" if crit else "damage at 0 HP")
 
@@ -48,6 +49,7 @@ def add_failures(pc, n, why):
             f"{pc.name} suffers {n} Death Saving Throw failure{'s' if n > 1 else ''} ({why}); "
             f"successes {pc.death_saves['success']}, failures {pc.death_saves['failure']}",
             page=18,
+            rule="GLOSS.death-saving-throw",
         )
     if pc.death_saves["failure"] >= 3:
         pc.die("three Death Saving Throw failures")
@@ -56,13 +58,16 @@ def add_failures(pc, n, why):
 def death_save(game, pc) -> D20Roll:
     """p.17-18: at the start of the turn with 0 HP. 10+ succeeds; 1 = two failures; 20 = regain 1 HP."""
     roll = D20Roll("death save", "Death Saving Throw", pc.name, target=10)
-    roll_d20_test(game, pc, roll, page=17)
+    roll_d20_test(game, pc, roll, page=17, rule="GLOSS.death-saving-throw")
     d = roll.chosen + roll.modifier
     if roll.chosen == 20:
         game.log.player(
-            "death_save", f"{pc.name} rolls a 20 on the Death Saving Throw and regains 1 HP", page=18
+            "death_save",
+            f"{pc.name} rolls a 20 on the Death Saving Throw and regains 1 HP",
+            page=18,
+            rule="GLOSS.death-saving-throw",
         )
-        pc.heal(1, "natural 20 on a Death Saving Throw", page=18)
+        pc.heal(1, "natural 20 on a Death Saving Throw", page=18, rule="GLOSS.death-saving-throw")
         return roll
     if roll.chosen == 1:
         add_failures(pc, 2, "rolled a 1")
@@ -74,6 +79,7 @@ def death_save(game, pc) -> D20Roll:
             f"{pc.name}: success ({pc.death_saves['success']} successes, "
             f"{pc.death_saves['failure']} failures)",
             page=17,
+            rule="GLOSS.death-saving-throw",
         )
         if pc.death_saves["success"] >= 3:
             make_stable(game, pc, "three successes")
@@ -96,6 +102,7 @@ def make_stable(game, pc, how: str):
         "stable",
         f"{pc.name} is Stable ({how}); still Unconscious, regains 1 HP after 1d4={wake} hours if not healed",
         page=18,
+        rule="GLOSS.stable",
     )
 
 
@@ -105,7 +112,13 @@ def first_aid(game, helper, patient, dc=10):
         raise Refusal(f"{helper.name} must be within 5 ft of {patient.name}")
     if game.combat is not None:
         game.combat.spend(helper, "action", "Help (first aid)")
-    r = helper.check("medicine", dc=dc, label=f"Wisdom (Medicine) check to stabilize {patient.name}", page=18)
+    r = helper.check(
+        "medicine",
+        dc=dc,
+        label=f"Wisdom (Medicine) check to stabilize {patient.name}",
+        page=18,
+        rule="PLAY.damage-and-healing.dropping-to-0-hit-points",
+    )
     if r.success:
         if patient.notes.get("knocked_out"):
             patient.remove_condition("unconscious", reason="first aid")
@@ -137,7 +150,7 @@ def on_time_passed(game, c, start, end):
         at = c.notes.get("stable_wake_at")
         if at is not None and end >= at:
             c.notes.pop("stable_wake_at", None)
-            c.heal(1, "Stable for 1d4 hours", page=18)
+            c.heal(1, "Stable for 1d4 hours", page=18, rule="GLOSS.stable")
     if c.notes.get("knocked_out") and end - c.notes.get("ko_at", start) >= HOUR:
         c.notes.pop("knocked_out", None)
         c.remove_condition("unconscious", reason="finished its Short Rest")
