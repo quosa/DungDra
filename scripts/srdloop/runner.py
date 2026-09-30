@@ -423,6 +423,12 @@ def run(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             if len(T.open_tickets()) > MAX_OPEN_TICKETS:
                 raise Stop(f"more than {MAX_OPEN_TICKETS} open tickets; run the dev loop first")
             uid = queue[0]["id"]
+            if queue[0]["revisit"] or queue[0]["stale"]:  # start over from its first stage to redo
+                st = S.load(uid)
+                keep = S.STAGES[: S.STAGES.index(queue[0]["next_stage"])]
+                st["stages"] = {k: v for k, v in st["stages"].items() if k in keep}
+                st["revisit"] = False
+                S.save(st)
             log(f"» {uid} (from stage {queue[0]['next_stage']}; ${budget.spent_usd:.2f} spent)")
             status = run_unit(ctx, uid, budget, invoke)
             log(f"  {uid}: {status}")
@@ -570,6 +576,11 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     for other in co_fixed:
         other["status"] = "fixed"
         T.record(other, "fixed", by=tk["id"])
+    for t in [tk, *co_fixed]:  # a capability the unit's untestable clauses waited for now exists
+        if t["kind"] == "infra" and t["unit"] in ctx.by_id:
+            st = S.load(t["unit"])
+            st["revisit"] = True
+            S.save(st)
     Q.update_baseline(metrics)
     also = f" (also fixes {', '.join(o['id'] for o in co_fixed)})" if co_fixed else ""
     sha = commit(

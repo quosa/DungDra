@@ -274,9 +274,33 @@ def test_plan_queues_unfinished_and_stale_units_and_skips_done_and_out_of_scope(
     ]
 
 
-def test_plan_inputs_change_when_a_dependency_finishes():
-    us = [unit("GLOSS.a", title="A"), unit("GLOSS.b", title="B")]
+def test_only_rule_text_or_scope_make_a_finished_unit_stale():
+    us = [unit("GLOSS.a", title="A", text="old"), unit("GLOSS.b", title="B")]
     ctx = _ctx(us, edges=[G.Edge("GLOSS.a", "GLOSS.b", "requires")])
-    before = P.inputs(ctx, "GLOSS.a")
-    ctx.states = {"GLOSS.b": {"id": "GLOSS.b", "status": "red"}}
-    assert P.inputs(ctx, "GLOSS.a")["deps"] != before["deps"]
+    before = S.fingerprint(P.inputs(ctx, "GLOSS.a"))
+    ctx.states = {"GLOSS.b": {"id": "GLOSS.b", "status": "red"}}  # a dependency's status: no
+    ctx.engine = {"dungdra/x.py": ["changed"]}  # engine code: no
+    assert S.fingerprint(P.inputs(ctx, "GLOSS.a")) == before
+    ctx.units[0]["text"] = "new"  # the rule text: yes
+    assert S.fingerprint(P.inputs(ctx, "GLOSS.a")) != before
+
+
+def test_revisits_go_to_the_end_of_the_queue_from_stage_c():
+    us = [unit("GLOSS.a", title="A"), unit("GLOSS.b", title="B"), unit("GLOSS.c", title="C")]
+    ctx = _ctx(us)
+    fp = {i: S.fingerprint(P.inputs(ctx, i)) for i in ("GLOSS.a", "GLOSS.b")}
+    ctx.states = {
+        "GLOSS.a": {
+            "id": "GLOSS.a",
+            "status": "green",
+            "stages": {},
+            "fingerprint": fp["GLOSS.a"],
+            "revisit": True,
+        },
+        "GLOSS.b": {"id": "GLOSS.b", "status": "green", "stages": {}, "fingerprint": fp["GLOSS.b"]},
+    }
+    q = P.build(ctx)
+    assert [(x["id"], x["next_stage"], x["revisit"]) for x in q] == [
+        ("GLOSS.c", "A", False),
+        ("GLOSS.a", "C", True),
+    ]

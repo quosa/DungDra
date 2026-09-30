@@ -63,38 +63,27 @@ def _sha(text: str) -> str:
 
 
 def inputs(ctx: Context, uid: str) -> dict[str, str]:
-    """What a unit's result depends on: its own text, the scenarios and engine files related
-    to it, and the status of the units it depends on. A change in any of them makes it stale."""
-    rel = ctx.related(uid)
-    scen = {s.id: s.text for s in ctx.scenarios}
-    files = sorted({c["file"] for c in rel["code"]})
-    deps = sorted({e.dst for e in ctx.edges if e.src == uid and e.kind in G.ORDERING})
-    return {
-        "text": _sha(ctx.by_id[uid]["text"]),
-        "scenarios": _sha("".join(scen[s["id"]] for s in rel["scenarios"])),
-        "code": _sha("".join("\n".join(ctx.engine[f]) for f in files)),
-        "deps": _sha(json.dumps({d: ctx.state(d).get("status") for d in deps}, sort_keys=True)),
-    }
+    """What makes a finished unit worth doing again: its own rule text, or its scope (content was
+    implemented or removed). Engine changes don't: most come from fixing this very unit, and the
+    loop works breadth-first across the rules rather than digging deeper into one."""
+    return {"text": _sha(ctx.by_id[uid]["text"]), "scope": ctx.scope(uid)}
 
 
 def build(ctx: Context) -> list[dict]:
-    """The queue: in-scope units that are pending, unfinished or stale, dependencies first."""
+    """The queue: in-scope units that are pending, unfinished or stale, dependencies first; then
+    units to revisit (an infra ticket they opened was fixed, so stage C can test more) at the end,
+    behind everything not yet done."""
     include = {u["id"] for u in ctx.units if ctx.scope(u["id"]) != "content-out"}
-    out = []
+    first, revisit = [], []
     for uid in G.queue(ctx.units, ctx.edges, include):
         st = ctx.state(uid)
         stale = S.is_stale(st, S.fingerprint(inputs(ctx, uid))) if st["status"] in S.TERMINAL else False
+        item = {"id": uid, "scope": ctx.scope(uid), "status": st["status"], "stale": stale, "revisit": False}
         if st["status"] not in S.TERMINAL or stale:
-            out.append(
-                {
-                    "id": uid,
-                    "scope": ctx.scope(uid),
-                    "status": st["status"],
-                    "stale": stale,
-                    "next_stage": S.next_stage(st) if not stale else "A",
-                }
-            )
-    return out
+            first.append({**item, "next_stage": S.next_stage(st) if not stale else "A"})
+        elif st.get("revisit"):
+            revisit.append({**item, "revisit": True, "next_stage": "C"})
+    return first + revisit
 
 
 def write(queue: list[dict], path: Path = QUEUE) -> None:

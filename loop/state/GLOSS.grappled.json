@@ -1,5 +1,5 @@
 {
-  "fingerprint": "371c3ad5bed8cc05",
+  "fingerprint": "5d33369d343c57cd",
   "for_review": [],
   "id": "GLOSS.grappled",
   "out_of_scope": [],
@@ -24,6 +24,7 @@
       "type": "interacts_with"
     }
   ],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1790792344,
