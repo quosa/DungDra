@@ -3,9 +3,10 @@
 Every entry is tagged player-visible or GM-only, and may carry an SRD page
 reference, a ruling ID and structured data (state diffs, roll details).
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
 PLAYER = "player"
@@ -43,10 +44,17 @@ class EventLog:
         self.clock_fn = lambda: 0
         self.listeners: list = []
 
-    def add(self, kind: str, text: str, visibility: str = PLAYER, page=None,
-            ruling=None, **data) -> Event:
-        ev = Event(kind, text, visibility, str(page) if page is not None else None,
-                   ruling, data, len(self.events), self.clock_fn())
+    def add(self, kind: str, text: str, visibility: str = PLAYER, page=None, ruling=None, **data) -> Event:
+        ev = Event(
+            kind,
+            text,
+            visibility,
+            str(page) if page is not None else None,
+            ruling,
+            data,
+            len(self.events),
+            self.clock_fn(),
+        )
         self.events.append(ev)
         for fn in self.listeners:
             fn(ev)
@@ -78,8 +86,7 @@ class EventLog:
         return self.events[seq:]
 
     def text(self, visibility: str | None = PLAYER) -> str:
-        return "\n".join(str(e) for e in self.events
-                         if visibility is None or e.visibility == visibility)
+        return "\n".join(str(e) for e in self.events if visibility is None or e.visibility == visibility)
 
     def __len__(self):
         return len(self.events)

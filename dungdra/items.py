@@ -1,10 +1,18 @@
 """Items, inventory, coins and carrying capacity (SRD p.89-103, 178)."""
+
 from __future__ import annotations
 
 import itertools
 
-from .data.equipment import (AMMO_BUNDLE, ARMOR, GEAR, GP, PACKS, SHIELD, SP, TOOLS, WEAPONS,
-                             canonical, item_cost, item_weight)
+from .data.equipment import (
+    ARMOR,
+    PACKS,
+    TOOLS,
+    WEAPONS,
+    canonical,
+    item_cost,
+    item_weight,
+)
 from .rules import Refusal, div
 
 _ids = itertools.count(1)
@@ -18,7 +26,7 @@ class Item:
         self.qty = qty
         self.uid = next(_ids)
         self.props = dict(props)
-        base = self.props.get("base")          # magic items built on a mundane item
+        base = self.props.get("base")  # magic items built on a mundane item
         self.base = canonical(base) if base else self.name
         if self.name == "healer's kit" and "uses" not in self.props:
             self.props["uses"] = 10
@@ -77,8 +85,15 @@ class Item:
         return self.__repr__()
 
     def to_dict(self):
-        return {"name": self.name, "qty": self.qty, **{k: v for k, v in self.props.items()
-                                                       if isinstance(v, (int, str, float, bool, list, type(None)))}}
+        return {
+            "name": self.name,
+            "qty": self.qty,
+            **{
+                k: v
+                for k, v in self.props.items()
+                if isinstance(v, (int, str, float, bool, list, type(None)))
+            },
+        }
 
 
 def titlecase(s: str) -> str:
@@ -110,8 +125,9 @@ class Inventory:
     def find(self, name: str, stack_only=False) -> Item | None:
         n = canonical(name)
         for it in self.items:
-            if (it.name == n or it.base == n or (it.props.get("title", "").lower() == name.lower())) and \
-                    (not stack_only or it.stackable()):
+            if (it.name == n or it.base == n or (it.props.get("title", "").lower() == name.lower())) and (
+                not stack_only or it.stackable()
+            ):
                 return it
         return None
 

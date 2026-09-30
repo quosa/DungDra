@@ -1,11 +1,15 @@
 """DMG, COND, REST, CLS-FTR-01, ORIG-02/03, EQP-05 (non-spell parts)."""
+
 import pytest
 
 from dungdra import Refusal
-from dungdra import actions, combat as C, class_actions as CA, damage as D, rest as R, hazards as H
-from dungdra.effects import Condition
-from tests.support.helpers import pc, mon
-from tests.scenarios.test_combat import start, set_turn
+from dungdra import class_actions as CA
+from dungdra import combat as C
+from dungdra import damage as D
+from dungdra import hazards as H
+from dungdra import rest as R
+from tests.scenarios.test_combat import set_turn, start
+from tests.support.helpers import mon, pc
 
 
 # ---------------- DMG-01 ----------------
@@ -19,7 +23,8 @@ def test_dmg01b_death_saves_nat20(game):
     m = pc(game, "MIALEE")
     m.take_damage(8, "slashing")
     game.dice.force_str("d20=[12,3,20]")
-    D.death_save(game, m); D.death_save(game, m)
+    D.death_save(game, m)
+    D.death_save(game, m)
     assert m.death_saves == {"success": 1, "failure": 1}
     D.death_save(game, m)
     assert m.hp == 1 and m.death_saves == {"success": 0, "failure": 0} and not m.has("unconscious")
@@ -109,11 +114,14 @@ def test_dmg02(game):
     sk2 = mon(game, "skeleton", name="S2")
     assert sk2.take_damage(10, "poison") == 0
     from dungdra.creature import Creature
+
     x = game.add(Creature("Thing", max_hp=100))
-    x.resist.add("all"); x.vuln.add("fire")
+    x.resist.add("all")
+    x.vuln.add("fire")
     assert x.take_damage(28, "fire", reduction=5) == 22
     y = game.add(Creature("Resister", max_hp=100))
-    y.resist.add("fire"); y.resist.add("all")
+    y.resist.add("fire")
+    y.resist.add("all")
     assert y.take_damage(12, "fire") == 6
     assert y.take_damage(1, "fire", reduction=5) == 0
 
@@ -190,15 +198,16 @@ def test_cond02(game):
     game.answer("use_savage_attacker", False)
     game.dice.force_str("d20=[5,5]")
     assert C.attack(game, b, gob, weapon="longsword").roll.mode == "advantage"
-    l = pc(game, "LIDDA", (40, 0))
+    lidda = pc(game, "LIDDA", (40, 0))
     game.dice.force_str("d20=[5,5]")
-    assert C.attack(game, l, gob, weapon="shortbow").roll.mode == "disadvantage"
+    assert C.attack(game, lidda, gob, weapon="shortbow").roll.mode == "disadvantage"
     b2 = pc(game, "BROM", (0, 20))
     game.dice.force_str("d20=[20, 1, 1]")
     start(game, gob, b, b2)
     set_turn(game, gob)
     assert C.stand_up(game, gob) == 15 and game.combat.turn.movement_left == 15
-    gob.add_condition("prone"); gob.add_condition("grappled", grappler=b.id)
+    gob.add_condition("prone")
+    gob.add_condition("grappled", grappler=b.id)
     with pytest.raises(Refusal):
         C.stand_up(game, gob)
     # Frightened
@@ -236,7 +245,8 @@ def test_cond03(game):
     game.dice.force_str("d20=[5,5]")
     assert gob.check("persuasion", target=b, tags={"social"}).mode == "advantage"
     b.remove_condition("charmed")
-    b.add_condition("poisoned"); b.add_condition("poisoned")
+    b.add_condition("poisoned")
+    b.add_condition("poisoned")
     game.dice.force_str("d20=[5,5]")
     assert b.check("athletics").mode == "disadvantage"
     assert sorted(b.conditions()).count("poisoned") == 1
@@ -270,7 +280,8 @@ def test_rest02(game):
     b.hp = 3
     b.max_hp_reduction = 4
     b.gain_exhaustion(1)
-    b.spend("second wind"); b.spend("action surge")
+    b.spend("second wind")
+    b.spend("action surge")
     R.long_rest(game, [b])
     assert b.hp == b.max_hp == 22 and b.hit_dice_left() == 2 and b.exhaustion == 0
     assert b.resource_left("second wind") == 2 and b.resource_left("action surge") == 1
@@ -347,6 +358,7 @@ def test_orig02a_serpent_venom(game):
 
 def test_orig02b_poisoned_needle(game):
     from dungdra import traps
+
     b = pc(game, "BROM")
     t = traps.place(game, "poisoned needle")
     game.dice.force_str("d20=[3,15]; d10=[8]")
@@ -356,10 +368,10 @@ def test_orig02b_poisoned_needle(game):
 
 # ---------------- ORIG-03 ----------------
 def test_orig03_human_inspiration(game):
-    j, l = pc(game, "JOZAN"), pc(game, "LIDDA")
+    j, lidda = pc(game, "JOZAN"), pc(game, "LIDDA")
     R.long_rest(game, [j])
     assert j.heroic_inspiration
-    l.heroic_inspiration = True
+    lidda.heroic_inspiration = True
     R.grant_heroic_inspiration(game, j)
     assert "lost" in game.log.last("inspiration").text
     gob = mon(game, "ogre", (5, 0))

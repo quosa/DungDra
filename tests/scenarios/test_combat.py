@@ -1,10 +1,11 @@
 """CMB: combat (p.13-16), plus FEAT-01/02, CLS-ROG-01, EQP-02/03, CMB-07."""
+
 import pytest
 
-from dungdra import Refusal
-from dungdra import actions, combat as C, class_actions as CA, mounted
-from dungdra.effects import Flag
-from tests.support.helpers import pc, mon
+from dungdra import Refusal, actions, mounted
+from dungdra import class_actions as CA
+from dungdra import combat as C
+from tests.support.helpers import mon, pc
 
 
 def start(game, *cs, surprised=()):
@@ -27,20 +28,25 @@ def test_cmb01_surprise(game):
         g.add_condition("invisible", "Hide (Stealth 16)")
         g.hidden_total = 16
     surprised = [p for p in party if not any(actions.notices(game, p, g) for g in gobs)]
-    assert len(surprised) == 4                     # best Passive Perception 15 < 16
+    assert len(surprised) == 4  # best Passive Perception 15 < 16
     game.answer("alert_swap", None)
     game.dice.force_str("d20=[11,6, 15,4, 15,4, 15,4, 15,4]")
     cb = start(game, *gobs, *party, surprised=surprised)
     inits = dict(cb.order)
     assert all(inits[g.id] == 13 for g in gobs)
-    assert inits["brom"] == 4 + 2 and inits["lidda"] == 4 + 5 and inits["mialee"] == 4 + 1 and inits["jozan"] == 4 - 1
+    assert (
+        inits["brom"] == 4 + 2
+        and inits["lidda"] == 4 + 5
+        and inits["mialee"] == 4 + 1
+        and inits["jozan"] == 4 - 1
+    )
     rolls = game.log.of_kind("initiative")
     assert any("surprised" in e.text for e in rolls) and any("Invisible" in e.text for e in rolls)
     order0 = list(cb.order)
     for _ in range(len(order0)):
         C.end_turn(game)
     assert cb.round == 2 and cb.order == order0
-    assert cb.current.id == order0[0][0]          # nobody loses a turn
+    assert cb.current.id == order0[0][0]  # nobody loses a turn
 
 
 # ---------------- FEAT-01 · Alert ----------------
@@ -69,12 +75,12 @@ def test_cmb02_turn_economy(game):
     assert any("draws the Javelin" in e.text for e in game.log.of_kind("equip"))
     C.move(game, brom, to=(10, 20))
     with pytest.raises(Refusal):
-        C.move(game, brom, to=(10, 25))              # 35 ft > Speed 30
+        C.move(game, brom, to=(10, 25))  # 35 ft > Speed 30
     assert C.interact(game, brom, "open the door") == "free"
     with pytest.raises(Refusal, match="action"):
         C.interact(game, brom, "pick up a Shield")  # second interaction needs Utilize; action already used
     with pytest.raises(Refusal):
-        actions.dodge(game, brom)                   # a second action
+        actions.dodge(game, brom)  # a second action
     set_turn(game, mia)
     with pytest.raises(Refusal, match="no feature"):
         CA.bonus_action(game, mia, "dash")
@@ -90,7 +96,7 @@ def test_cmb02_one_reaction_per_round(game):
     with pytest.raises(Refusal):
         game.combat.spend(brom, "reaction")
     set_turn(game, brom)
-    game.combat.spend(brom, "reaction")             # reset at the start of his turn
+    game.combat.spend(brom, "reaction")  # reset at the start of his turn
 
 
 # ---------------- CMB-03 extra: crits double extra dice ----------------
@@ -123,13 +129,13 @@ def test_cmb04_oa(game):
     start(game, lidda, ogre)
     set_turn(game, lidda)
     game.dice.force_str("d20=[2]")
-    C.move(game, lidda, to=(-15, 0))                  # (a) leaves reach -> OA
+    C.move(game, lidda, to=(-15, 0))  # (a) leaves reach -> OA
     assert _oa_count(game) == 1
     lidda.position = (0, 0)
     set_turn(game, ogre)
-    set_turn(game, lidda)                           # new turn: ogre's reaction reset at ogre's turn
+    set_turn(game, lidda)  # new turn: ogre's reaction reset at ogre's turn
     actions.disengage(game, lidda)
-    C.move(game, lidda, to=(-15, 0))                  # (b) no OA
+    C.move(game, lidda, to=(-15, 0))  # (b) no OA
     assert _oa_count(game) == 1
 
 
@@ -140,17 +146,17 @@ def test_cmb04_nimble_forced_teleport_reaction(game):
     game.dice.force_str("d20=[20, 1, 1]")
     start(game, brom, gob, ogre)
     set_turn(game, gob)
-    CA.nimble_escape(game, gob, "disengage")         # (c)
+    CA.nimble_escape(game, gob, "disengage")  # (c)
     C.move(game, gob, to=(30, 0))
     assert _oa_count(game) == 0 and game.combat.turn.action_available()
     gob.position = (5, 0)
-    C.move(game, brom, to=(10, 0), forced=True)      # (d) shoved out of the ogre's reach
+    C.move(game, brom, to=(10, 0), forced=True)  # (d) shoved out of the ogre's reach
     assert _oa_count(game) == 0
     brom.position = (0, 0)
-    C.move(game, brom, to=(30, 0), teleport=True)    # (e) Misty Step
+    C.move(game, brom, to=(30, 0), teleport=True)  # (e) Misty Step
     assert _oa_count(game) == 0
     brom.position = (0, 0)
-    game.combat.reaction_used.add(brom.id)           # (f) PC already used its Reaction
+    game.combat.reaction_used.add(brom.id)  # (f) PC already used its Reaction
     set_turn(game, gob)
     gob.effects = [e for e in gob.effects if e.name != "disengage"]
     C.move(game, gob, to=(30, 0))
@@ -159,19 +165,22 @@ def test_cmb04_nimble_forced_teleport_reaction(game):
 
 def test_cmb04_controlled_mount_provokes(game):
     jozan = pc(game, "JOZAN", (0, 0))
-    horse = game.add(__import__("dungdra.monster", fromlist=["Monster"]).Monster("riding horse"), team="party",
-                     position=(5, 0))
+    horse = game.add(
+        __import__("dungdra.monster", fromlist=["Monster"]).Monster("riding horse"),
+        team="party",
+        position=(5, 0),
+    )
     gob = mon(game, "goblin warrior", (10, 0))
     game.dice.force_str("d20=[20, 5, 1]")
     start(game, jozan, horse, gob)
     set_turn(game, jozan)
     mounted.mount(game, jozan, horse)
-    assert game.combat.turn.movement_left == 15      # CMB-08: mounting costs half Speed
+    assert game.combat.turn.movement_left == 15  # CMB-08: mounting costs half Speed
     assert game.combat.initiative_of(horse) == game.combat.initiative_of(jozan)
     with pytest.raises(Refusal):
         mounted.mount_action(game, horse, "attack")
     game.dice.force_str("d20=[2]")
-    C.move(game, horse, to=(-30, 0))                # (g) the mount leaves using its own speed
+    C.move(game, horse, to=(-30, 0))  # (g) the mount leaves using its own speed
     assert _oa_count(game) == 1
 
 
@@ -190,11 +199,12 @@ def test_cmb05_ranged_cover(game):
     game.scene.cover[(lidda.id, gob.id)] = "three-quarters"
     game.scene.cover_all[gob.id] = "half"
     game.dice.force_str("d20=[10]")
-    assert C.attack(game, lidda, gob, weapon="shortbow").roll.target == 20   # only best degree
+    assert C.attack(game, lidda, gob, weapon="shortbow").roll.target == 20  # only best degree
     game.scene.cover[(lidda.id, gob.id)] = "total"
     with pytest.raises(Refusal, match="Total Cover"):
         C.attack(game, lidda, gob, weapon="shortbow")
-    game.scene.cover.clear(); game.scene.cover_all.clear()
+    game.scene.cover.clear()
+    game.scene.cover_all.clear()
     gob.position = (400, 0)
     with pytest.raises(Refusal):
         C.attack(game, lidda, gob, weapon="shortbow")
@@ -210,7 +220,7 @@ def test_cmb05_ranged_cover(game):
 # ---------------- CMB-06 · Grapple and Shove ----------------
 def test_cmb06_grapple_shove(game):
     brom = pc(game, "BROM", (0, 0))
-    brom.shield = None                               # Shield hand free
+    brom.shield = None  # Shield hand free
     gob = mon(game, "goblin warrior", (5, 0))
     game.dice.force_str("d20=[9]")
     assert C.grapple(game, brom, gob)
@@ -241,7 +251,8 @@ def test_cmb06_grapple_shove(game):
     game.dice.force_str("d20=[1]")
     set_turn(game, brom)
     game.combat.turn.actions += 1
-    brom.position = (0, 0); gob.position = (5, 0)
+    brom.position = (0, 0)
+    gob.position = (5, 0)
     game.dice.force_str("d20=[1]")
     C.grapple(game, brom, gob)
     brom.add_condition("incapacitated", "test")
@@ -251,7 +262,7 @@ def test_cmb06_grapple_shove(game):
 # ---------------- CMB-07 · Light-weapon extra attack ----------------
 def test_cmb07_light_extra(game):
     lidda = pc(game, "LIDDA", (0, 0))
-    lidda.weapon_masteries = []                      # no Nick/Vex for this test
+    lidda.weapon_masteries = []  # no Nick/Vex for this test
     gob = mon(game, "goblin warrior", (5, 0))
     gob.base_max_hp = gob.hp = 100
     game.dice.force_str("d20=[20, 1]")
@@ -293,11 +304,12 @@ def test_cmb08_underwater(game):
     assert not C.attack(game, lidda, far, weapon="shortbow").hit
     hp = far.hp
     far.take_damage(4, "fire")
-    assert hp - far.hp == 2                               # Resistance to Fire underwater
+    assert hp - far.hp == 2  # Resistance to Fire underwater
 
 
 def test_cmb08_fall_off_mount(game):
     from dungdra.monster import Monster
+
     jozan = pc(game, "JOZAN", (0, 0))
     horse = game.add(Monster("riding horse"), team="party", position=(5, 0))
     mounted.mount(game, jozan, horse)
@@ -356,7 +368,7 @@ def test_rog01c_greatclub(game, rog):
     lidda.inventory.add("greatclub")
     lidda.shield = None
     game.dice.force_str("d20=[15,15]; d8=[4]")
-    r = C.attack(game, lidda, gob, weapon="greatclub", adv=["test"])
+    C.attack(game, lidda, gob, weapon="greatclub", adv=["test"])
     assert not any("Sneak Attack" in e.text for e in game.log.of_kind("sneak") if "d6" in e.text)
 
 
@@ -382,7 +394,7 @@ def test_rog01f_once_per_turn_and_crit(game, rog):
     game.dice.force_str("d20=[15]; d6=[4,5]")
     assert C.attack(game, lidda, gob, weapon="shortsword").damage == 12
     game.dice.force_str("d20=[15]; d4=[2]")
-    assert C.attack(game, lidda, gob, weapon="dagger", light_extra=True).damage == 2   # Nick, no SA
+    assert C.attack(game, lidda, gob, weapon="dagger", light_extra=True).damage == 2  # Nick, no SA
     set_turn(game, lidda)
     game.dice.force_str("d20=[20]; d6=[1,2,3,4]")
     r = C.attack(game, lidda, gob, weapon="shortsword")
@@ -393,6 +405,7 @@ def test_rog01_level3_2d6(game):
     lidda = pc(game, "LIDDA")
     lidda.award_xp(900)
     from dungdra.features import sneak_attack_dice
+
     assert sneak_attack_dice(lidda) == 2
 
 
@@ -404,7 +417,7 @@ def test_eqp02_properties(game):
     gob.base_max_hp = gob.hp = 200
     game.dice.force_str("d20=[15]; d4=[2]")
     r = C.attack(game, lidda, gob, weapon="dagger")
-    assert ("Dex" in [s for _, s in r.roll.mods] and r.damage == 5)
+    assert "Dex" in [s for _, s in r.roll.mods] and r.damage == 5
     brom.shield = None
     game.answer("use_savage_attacker", False)
     game.dice.force_str("d20=[15]; d10=[7]")
@@ -424,7 +437,8 @@ def test_eqp02_properties(game):
     assert any("Strength 12 < 13" in s for s in r.roll.dis)
     # Loading: one shot per action
     x = pc(game, "BROM", (0, 30))
-    x.inventory.add("light crossbow"); x.inventory.add("bolts", 20)
+    x.inventory.add("light crossbow")
+    x.inventory.add("bolts", 20)
     x.shield = None
     game.dice.force_str("d20=[20, 1, 1, 1]")
     start(game, x, gob, lidda, brom)
@@ -469,8 +483,8 @@ def test_eqp03_masteries(game):
     C.attack(game, lidda, gob, weapon="shortsword")
     game.dice.force_str("d20=[5,15]; d4=[3]")
     r = C.attack(game, lidda, gob, weapon="dagger", light_extra=True)
-    assert any("Vex" in s for s in r.roll.adv)      # Vex: Advantage on the next attack vs that target
-    assert r.damage == 3                             # Nick extra attack: no ability modifier
+    assert any("Vex" in s for s in r.roll.adv)  # Vex: Advantage on the next attack vs that target
+    assert r.damage == 3  # Nick extra attack: no ability modifier
     t = game.combat.turn
     assert t.nick_used and not t.bonus_used
     set_turn(game, brom)
@@ -479,7 +493,7 @@ def test_eqp03_masteries(game):
     game.dice.force_str("d20=[2]")
     hp = gob.hp
     C.attack(game, brom, gob, weapon="glaive")
-    assert hp - gob.hp == 3                          # Graze
+    assert hp - gob.hp == 3  # Graze
     set_turn(game, brom)
     gob.position = (20, 0)
     game.answer("use_savage_attacker", False)
@@ -490,7 +504,7 @@ def test_eqp03_masteries(game):
     game.combat.turn.actions += 1
     game.dice.force_str("d20=[15]; d6=[2]")
     C.attack(game, brom, gob, weapon="javelin", thrown=True)
-    assert gob.speed() == 20                         # doesn't stack past 10
+    assert gob.speed() == 20  # doesn't stack past 10
     set_turn(game, jozan)
     gob.position = (15, 10)
     game.dice.force_str("d20=[15]; d6=[2]")
@@ -519,6 +533,7 @@ def test_cls_ftr02_mace_no_mastery_and_champion(game):
 
 def test_cls_ftr02_one_mastery_change_per_long_rest(game):
     from dungdra import rest as R
+
     b = pc(game, "BROM")
     with pytest.raises(Refusal, match="Long Rest"):
         CA.change_mastery(game, b, "glaive", "greataxe")
@@ -535,4 +550,6 @@ def test_mon01_fixed_or_dice(game):
     game.fixed_monster_damage = True
     game.dice.force_str("d20=[15]")
     r = C.attack(game, ogre, b, attack_name="greatclub")
-    assert r.damage == 13 and game.dice.pending("d8") == 0 and not any(s == 8 for s, _, _ in game.dice.history)
+    assert (
+        r.damage == 13 and game.dice.pending("d8") == 0 and not any(s == 8 for s, _, _ in game.dice.history)
+    )

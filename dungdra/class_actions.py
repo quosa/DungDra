@@ -1,4 +1,5 @@
 """Class and species feature actions (levels 1-3)."""
+
 from __future__ import annotations
 
 from . import actions
@@ -34,11 +35,15 @@ def tactical_mind(game, pc, roll):
     roll.add_mod(r, f"Tactical Mind (1d10={r})")
     if roll.success:
         pc.spend("second wind")
-        game.log.player("feature", f"Tactical Mind: +{r} → {roll.total}, success; a Second Wind use is expended",
-                        page=48)
+        game.log.player(
+            "feature", f"Tactical Mind: +{r} → {roll.total}, success; a Second Wind use is expended", page=48
+        )
     else:
-        game.log.player("feature", f"Tactical Mind: +{r} → {roll.total}, still a failure; the Second Wind use "
-                        f"isn't expended", page=48)
+        game.log.player(
+            "feature",
+            f"Tactical Mind: +{r} → {roll.total}, still a failure; the Second Wind use isn't expended",
+            page=48,
+        )
     return roll
 
 
@@ -56,7 +61,9 @@ def action_surge(game, pc):
     cb.turn.action_surge_used = True
     cb.turn.surge_active = True
     cb.turn.attacks_left = 0
-    game.log.player("feature", f"{pc.name} uses Action Surge: one additional action (not the Magic action)", page=48)
+    game.log.player(
+        "feature", f"{pc.name} uses Action Surge: one additional action (not the Magic action)", page=48
+    )
 
 
 def cunning_action(game, pc, what):
@@ -82,7 +89,9 @@ def steady_aim(game, pc):
     pc.effects[-1].speed_zero = lambda owner: True
     if cb is not None and cb.is_turn(pc):
         cb.turn.movement_left = 0
-    game.log.player("feature", f"{pc.name} uses Steady Aim: Advantage on the next attack this turn; Speed 0", page=62)
+    game.log.player(
+        "feature", f"{pc.name} uses Steady Aim: Advantage on the next attack this turn; Speed 0", page=62
+    )
 
 
 def nimble_escape(game, monster, what="disengage", **kw):
@@ -108,7 +117,9 @@ def stonecunning(game, pc, on_stone=True):
 
 
 BONUS_ACTIONS = {
-    "second wind": second_wind, "steady aim": steady_aim, "stonecunning": stonecunning,
+    "second wind": second_wind,
+    "steady aim": steady_aim,
+    "stonecunning": stonecunning,
 }
 
 
@@ -141,16 +152,22 @@ def divine_spark(game, pc, target, mode="heal", dtype="radiant"):
     n = 1 if pc.level < 7 else 2
     total, rolls, _ = game.dice.roll_expr(f"{n}d8")
     amount = total + pc.mod("wis")
-    game.log.player("feature", f"{pc.name} uses Channel Divinity: Divine Spark ({n}d8={rolls} + Wis {pc.mod('wis')} "
-                    f"= {amount})", page=37)
+    game.log.player(
+        "feature",
+        f"{pc.name} uses Channel Divinity: Divine Spark ({n}d8={rolls} + Wis {pc.mod('wis')} = {amount})",
+        page=37,
+    )
     if mode == "heal":
         return target.heal(amount, "Divine Spark", page=37)
-    r = target.save("con", pc.spell_dc(), label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})", page=37)
+    r = target.save(
+        "con", pc.spell_dc(), label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})", page=37
+    )
     return target.take_damage(amount // 2 if r.success else amount, dtype, attacker=pc, source="Divine Spark")
 
 
 def turn_undead(game, pc, targets):
     from .spells import TurnedEffect
+
     _channel(game, pc)
     game.log.player("feature", f"{pc.name} uses Channel Divinity: Turn Undead", page=37)
     for t in targets:
@@ -160,8 +177,12 @@ def turn_undead(game, pc, targets):
         if not r.success:
             for cond in ("frightened", "incapacitated"):
                 t.add_effect(TurnedEffect(cond, source="Turn Undead", caster=pc, until=game.clock + MINUTE))
-            game.log.player("condition", f"{t.name} is Frightened and Incapacitated for 1 minute and flees from "
-                            f"{pc.name} (ends if it takes damage)", page=37)
+            game.log.player(
+                "condition",
+                f"{t.name} is Frightened and Incapacitated for 1 minute and flees from "
+                f"{pc.name} (ends if it takes damage)",
+                page=37,
+            )
             game.on_incapacitated(t)
 
 
@@ -172,21 +193,25 @@ def preserve_life(game, pc, allocation: dict):
     pool = 5 * pc.level
     if sum(allocation.values()) > pool:
         raise Refusal(f"Preserve Life restores at most {pool} HP in total", page=40)
-    for cid, amt in allocation.items():
+    for cid in allocation:
         t = game.get(cid)
         if not t.bloodied:
             raise Refusal(f"{t.name} isn't Bloodied", page=40)
         if pc.distance_to(t) > 30:
             raise Refusal(f"{t.name} is more than 30 ft away", page=40)
     _channel(game, pc)
-    game.log.player("feature", f"{pc.name} uses Channel Divinity: Preserve Life ({pool} HP to divide)", page=40)
+    game.log.player(
+        "feature", f"{pc.name} uses Channel Divinity: Preserve Life ({pool} HP to divide)", page=40
+    )
     out = {}
     for cid, amt in allocation.items():
         t = game.get(cid)
         cap = t.max_hp // 2
         give = max(0, min(amt, cap - t.hp))
         if give < amt:
-            game.log.player("feature", f"{t.name} can be restored only to half its HP maximum ({cap})", page=40)
+            game.log.player(
+                "feature", f"{t.name} can be restored only to half its HP maximum ({cap})", page=40
+            )
         out[cid] = t.heal(give, "Preserve Life", page=40)
     return out
 
@@ -194,7 +219,8 @@ def preserve_life(game, pc, allocation: dict):
 def change_mastery(game, pc, old: str, new: str):
     """Weapon Mastery (p.48, p.62): after a Long Rest a Fighter may change one choice; a Rogue may change
     both. Only allowed before anything else wears off the rest (tracked per Long Rest)."""
-    from .data.equipment import canonical, WEAPONS
+    from .data.equipment import WEAPONS, canonical
+
     old, new = canonical(old), canonical(new)
     if pc.long_rest_finished_at is None:
         raise Refusal("Weapon Mastery choices change only when you finish a Long Rest", page=48)
@@ -207,4 +233,6 @@ def change_mastery(game, pc, old: str, new: str):
         raise Refusal(f"{pc.name} can change only {limit} Weapon Mastery choice(s) per Long Rest", page=48)
     pc.weapon_masteries[pc.weapon_masteries.index(old)] = new
     pc.notes["mastery_swaps"] = pc.notes.get("mastery_swaps", 0) + 1
-    game.log.player("feature", f"{pc.name} practices weapon drills: mastery {old.title()} → {new.title()}", page=48)
+    game.log.player(
+        "feature", f"{pc.name} practices weapon drills: mastery {old.title()} → {new.title()}", page=48
+    )

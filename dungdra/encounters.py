@@ -1,4 +1,5 @@
 """Combat encounter budgets and XP awards (Gameplay Toolbox p.202-203, p.255)."""
+
 from __future__ import annotations
 
 from .data.monsters import MONSTERS
@@ -21,7 +22,7 @@ def budgets(levels: list[int]) -> dict[str, int]:
     """p.202: per-character budget by level, summed over the party (no multipliers)."""
     out = {d: 0 for d in DIFFICULTIES}
     for lvl in levels:
-        for d, v in zip(DIFFICULTIES, XP_BUDGET[lvl]):
+        for d, v in zip(DIFFICULTIES, XP_BUDGET[lvl], strict=False):
             out[d] += v
     return out
 
@@ -50,8 +51,11 @@ def rate(game, levels, monsters, gm_log=True) -> dict:
     strong = [c for c in crs if c > party_level]
     res = {"xp": xp, "budgets": b, "band": band, "cr_above_level": bool(strong)}
     if gm_log:
-        text = (f"Encounter rating: {xp} XP vs budgets Low {b['low']} / Moderate {b['moderate']} / High {b['high']} "
-                f"→ {'Over High budget' if band == 'over high' else band.title()}")
+        text = (
+            f"Encounter rating: {xp} XP vs budgets Low {b['low']} / Moderate {b['moderate']} / High "
+            f"{b['high']} "
+            f"→ {'Over High budget' if band == 'over high' else band.title()}"
+        )
         if strong:
             text += f"; a creature's CR ({max(strong):g}) is above the party's level {party_level} (p.203)"
         game.log.gm("encounter", text, page=202, ruling="R-03" if band == "over high" else None, **res)
@@ -64,10 +68,17 @@ def add_reinforcements(game, levels, current, new, justification: str | None = N
     r = rate(game, levels, after, gm_log=False)
     if r["band"] == "over high":
         if not justification:
-            raise Refusal("Those reinforcements would push the encounter over the High budget; blocked (R-03). "
-                          "Provide a justification to override.", ruling="R-03")
-        game.log.gm("encounter", f"Reinforcements push the encounter over High ({r['xp']} XP); justification: "
-                    f"{justification}", ruling="R-03", page=202)
+            raise Refusal(
+                "Those reinforcements would push the encounter over the High budget; blocked (R-03). "
+                "Provide a justification to override.",
+                ruling="R-03",
+            )
+        game.log.gm(
+            "encounter",
+            f"Reinforcements push the encounter over High ({r['xp']} XP); justification: {justification}",
+            ruling="R-03",
+            page=202,
+        )
     return after
 
 
@@ -75,8 +86,11 @@ def build(game, levels, difficulty="moderate", terrain="forest", rng=None) -> li
     """Generate an encounter from subset monsters, spending the budget without going over."""
     difficulty = norm(difficulty)
     budget = budgets(levels)[difficulty]
-    pool = [m for m in TERRAIN_MONSTERS.get(norm(terrain), TERRAIN_MONSTERS["forest"])
-            if MONSTERS[m]["xp"] <= budget and not MONSTERS[m].get("mount")]
+    pool = [
+        m
+        for m in TERRAIN_MONSTERS.get(norm(terrain), TERRAIN_MONSTERS["forest"])
+        if MONSTERS[m]["xp"] <= budget and not MONSTERS[m].get("mount")
+    ]
     rng = rng or game.dice.rng
     party_level = max(levels)
     pool = [m for m in pool if MONSTERS[m]["cr"] <= party_level] or pool
@@ -91,11 +105,19 @@ def build(game, levels, difficulty="moderate", terrain="forest", rng=None) -> li
         if not cheaper:
             break
         lead = rng.choice(cheaper)
-    features = {"forest": "a fallen log and thick undergrowth (Difficult Terrain) give cover",
-                "road": "an overturned wagon offers Half Cover", "dungeon": "a pillar-lined hall with a collapsed "
-                "section of floor", "hill": "a rocky rise gives the high ground", "urban": "crates and an alley"}
-    game.log.gm("encounter", f"Generated {difficulty} {terrain} encounter: {', '.join(m.title() for m in chosen)} "
-                f"({budget - left}/{budget} XP); terrain: {features.get(norm(terrain), 'broken ground')}", page=202)
+    features = {
+        "forest": "a fallen log and thick undergrowth (Difficult Terrain) give cover",
+        "road": "an overturned wagon offers Half Cover",
+        "dungeon": "a pillar-lined hall with a collapsed section of floor",
+        "hill": "a rocky rise gives the high ground",
+        "urban": "crates and an alley",
+    }
+    game.log.gm(
+        "encounter",
+        f"Generated {difficulty} {terrain} encounter: {', '.join(m.title() for m in chosen)} "
+        f"({budget - left}/{budget} XP); terrain: {features.get(norm(terrain), 'broken ground')}",
+        page=202,
+    )
     return chosen
 
 
@@ -118,8 +140,9 @@ def award_xp(game, monsters, pcs, reason="defeated foes"):
     Defeated or neutralized (fled, surrendered, pacified) foes count (p.255)."""
     total = encounter_xp(monsters)
     share = total // max(1, len(pcs))
-    game.log.player("xp", f"{total} XP for {reason}, divided among {len(pcs)} PCs: {share} each", page=255,
-                    ruling="R-02")
+    game.log.player(
+        "xp", f"{total} XP for {reason}, divided among {len(pcs)} PCs: {share} each", page=255, ruling="R-02"
+    )
     for pc in pcs:
         pc.award_xp(share, reason, ruling="R-02")
     return share

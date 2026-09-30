@@ -1,9 +1,10 @@
 """Hazards (glossary: Burning, Dehydration, Falling, Malnutrition, Suffocation)
 and poisons (Gameplay Toolbox p.197-198)."""
+
 from __future__ import annotations
 
 from .effects import Effect
-from .rules import MINUTE, ROUND, Refusal, div
+from .rules import MINUTE, Refusal, div
 
 
 # -- Falling (p.182) ---------------------------------------------------------------
@@ -12,20 +13,26 @@ def fall(game, c, feet: int, into_water=False, use_reaction=True):
     if n == 0:
         return 0
     halve = False
-    if into_water and use_reaction and c.can_act():
-        if game.combat is None or game.combat.has_reaction(c):
-            if game.combat is not None:
-                game.combat.spend(c, "reaction")
-            skill = "athletics" if c.skill_total("athletics") >= c.skill_total("acrobatics") else "acrobatics"
-            r = c.check(skill, dc=15, label=f"{skill.title()} check to hit the water feet or head first (DC 15)",
-                        page=182)
-            halve = r.success
+    if into_water and use_reaction and c.can_act() and (game.combat is None or game.combat.has_reaction(c)):
+        if game.combat is not None:
+            game.combat.spend(c, "reaction")
+        skill = "athletics" if c.skill_total("athletics") >= c.skill_total("acrobatics") else "acrobatics"
+        r = c.check(
+            skill,
+            dc=15,
+            label=f"{skill.title()} check to hit the water feet or head first (DC 15)",
+            page=182,
+        )
+        halve = r.success
     rolls = game.dice.roll_many(n, 6)
     dmg = sum(rolls)
     if halve:
         dmg = div(dmg, 2)
-    game.log.player("fall", f"{c.name} falls {feet} ft: {n}d6={rolls}" + (" halved (good water entry)" if halve else ""),
-                    page=182)
+    game.log.player(
+        "fall",
+        f"{c.name} falls {feet} ft: {n}d6={rolls}" + (" halved (good water entry)" if halve else ""),
+        page=182,
+    )
     dealt = c.take_damage(dmg, "bludgeoning", source="falling")
     if dealt > 0 and not c.dead:
         c.add_condition("prone", "fell")
@@ -54,8 +61,11 @@ class HoldingBreath(Effect):
 def start_holding_breath(game, c):
     e = HoldingBreath(game.clock)
     c.add_effect(e)
-    game.log.player("hazard", f"{c.name} holds their breath: {breath_seconds(c) // 60} minutes before suffocating",
-                    page=189)
+    game.log.player(
+        "hazard",
+        f"{c.name} holds their breath: {breath_seconds(c) // 60} minutes before suffocating",
+        page=189,
+    )
     return e
 
 
@@ -75,7 +85,7 @@ def end_of_day_food(game, c, food_fraction: float):
     if food_fraction >= 1:
         c.food_days_without = 0
         locked.discard("malnutrition")
-        n = c.exhaustion_sources.get("malnutrition", 0)
+        c.exhaustion_sources.get("malnutrition", 0)
         return
     locked.add("malnutrition")
     if food_fraction == 0:
@@ -83,7 +93,9 @@ def end_of_day_food(game, c, food_fraction: float):
         if c.food_days_without >= 5:
             c.gain_exhaustion(1, "malnutrition", page=185)
         else:
-            game.log.player("hazard", f"{c.name} has eaten nothing for {c.food_days_without} day(s)", page=185)
+            game.log.player(
+                "hazard", f"{c.name} has eaten nothing for {c.food_days_without} day(s)", page=185
+            )
     elif food_fraction < 0.5:
         r = c.save("con", 10, label="Constitution save vs malnutrition (DC 10)", page=185)
         if not r.success:
@@ -128,7 +140,14 @@ def extinguish_by_rolling(game, c):
 
 # -- Poisons (p.197-198) -----------------------------------------------------------------
 POISONS = {
-    "serpent venom": {"type": "injury", "dc": 11, "damage": "3d6", "half": True, "poisoned": None, "cost": 200},
+    "serpent venom": {
+        "type": "injury",
+        "dc": 11,
+        "damage": "3d6",
+        "half": True,
+        "poisoned": None,
+        "cost": 200,
+    },
     "basic poison": {"type": "injury", "extra": "1d4", "cost": 100},
 }
 
@@ -144,14 +163,21 @@ def apply_poison_to_weapon(game, c, weapon_name: str, poison="serpent venom"):
         game.combat.spend(c, "bonus", f"apply {poison}")
     c.inventory.remove(dose, 1)
     it.props["coating"] = poison
-    warn = "" if it.weapon and it.weapon["dtype"] in ("piercing", "slashing") else \
-        f" (it deals {it.weapon['dtype'].title()} damage, so the poison will never be delivered)"
-    game.log.player("poison", f"{c.name} coats the {it.display} with {poison.title()} (Bonus Action){warn}", page=197)
+    warn = (
+        ""
+        if it.weapon and it.weapon["dtype"] in ("piercing", "slashing")
+        else f" (it deals {it.weapon['dtype'].title()} damage, so the poison will never be delivered)"
+    )
+    game.log.player(
+        "poison", f"{c.name} coats the {it.display} with {poison.title()} (Bonus Action){warn}", page=197
+    )
 
 
 def trigger_coating(game, attacker, target, item):
     poison = item.props.pop("coating")
-    game.log.player("poison", f"The {poison.title()} on the {item.display} enters {target.name}'s wound", page=197)
+    game.log.player(
+        "poison", f"The {poison.title()} on the {item.display} enters {target.name}'s wound", page=197
+    )
     expose(game, target, poison)
 
 
@@ -159,11 +185,18 @@ def expose(game, target, poison):
     p = POISONS[poison]
     if "dc" in p:
         avoid = {"poisoned"} if p.get("poisoned") else set()
-        r = target.save("con", p["dc"], avoid=avoid, label=f"Constitution save vs {poison.title()} (DC {p['dc']})",
-                        page=198)
+        r = target.save(
+            "con",
+            p["dc"],
+            avoid=avoid,
+            label=f"Constitution save vs {poison.title()} (DC {p['dc']})",
+            page=198,
+        )
         total, rolls, _ = game.dice.roll_expr(p["damage"])
         dmg = div(total, 2) if r.success and p.get("half") else (0 if r.success else total)
-        game.log.player("poison", f"{poison.title()}: {p['damage']}={rolls}" + (" halved" if r.success else ""), page=198)
+        game.log.player(
+            "poison", f"{poison.title()}: {p['damage']}={rolls}" + (" halved" if r.success else ""), page=198
+        )
         target.take_damage(dmg, "poison", source=poison.title())
     else:
         total, rolls, _ = game.dice.roll_expr(p["extra"])

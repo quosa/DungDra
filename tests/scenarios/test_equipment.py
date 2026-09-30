@@ -1,9 +1,9 @@
 """EQP (non-combat parts) and FEAT-04."""
+
 import pytest
 
-from dungdra import Refusal
-from dungdra.fixtures import make, party
-from dungdra import gear
+from dungdra import Refusal, gear
+from dungdra.fixtures import party
 from dungdra.items import make_change
 
 
@@ -18,7 +18,7 @@ def test_eqp01_armor_training(pcs, game):
     m.inventory.add("leather armor")
     t0 = game.clock
     gear.don_armor(game, m, "leather armor")
-    assert game.clock - t0 == 60                       # light armor: 1 minute
+    assert game.clock - t0 == 60  # light armor: 1 minute
     game.dice.force_str("d20=[5,15]")
     r = m.check("athletics")
     assert r.mode == "disadvantage"
@@ -30,8 +30,8 @@ def test_eqp01_armor_training(pcs, game):
     m.inventory.add("chain mail")
     t0 = game.clock
     gear.don_armor(game, m, "chain mail")
-    assert game.clock - t0 == 600                      # heavy: 10 minutes
-    assert m.speed() == 20                             # Str 8 < 13
+    assert game.clock - t0 == 600  # heavy: 10 minutes
+    assert m.speed() == 20  # Str 8 < 13
     game.dice.force_str("d20=[5,15]")
     assert b.check("stealth").mode == "disadvantage"
     assert j.trained_in("heavy") and j.score("str") >= 13
@@ -42,7 +42,7 @@ def test_eqp01_armor_training(pcs, game):
     gear.doff_armor(game, m)
     m.inventory.add("shield")
     gear.equip_shield(game, m)
-    assert m.ac() == 11                                # untrained Shield: no AC bonus
+    assert m.ac() == 11  # untrained Shield: no AC bonus
 
 
 def test_eqp01_no_armor_changes_in_combat(pcs, game):
@@ -56,30 +56,30 @@ def test_eqp01_no_armor_changes_in_combat(pcs, game):
 
 # EQP-04 · Coins, carrying capacity and selling
 def test_eqp04(pcs, game):
-    l, b = pcs["LIDDA"], pcs["BROM"]
+    lidda, b = pcs["LIDDA"], pcs["BROM"]
     assert make_change(500, 170) == {"gp": 3, "sp": 3, "cp": 0}
-    for it in list(l.inventory):
-        l.inventory.remove(it, it.qty)
-    l.purse.coins = {k: 0 for k in l.purse.coins}
+    for it in list(lidda.inventory):
+        lidda.inventory.remove(it, it.qty)
+    lidda.purse.coins = {k: 0 for k in lidda.purse.coins}
     with pytest.raises(Refusal, match="180"):
-        gear.pick_up(game, l, "crate", weight=190)
-    gear.drag(game, l, 300)
-    assert l.speed() <= 5
+        gear.pick_up(game, lidda, "crate", weight=190)
+    gear.drag(game, lidda, 300)
+    assert lidda.speed() <= 5
     gp0 = b.purse.total_cp()
     gear.sell(game, b, "longsword")
     assert b.purse.total_cp() - gp0 == 750
-    l.purse.coins["gp"] = 500
-    assert l.purse.weight() == 10
+    lidda.purse.coins["gp"] = 500
+    assert lidda.purse.weight() == 10
 
 
 # EQP-06 · Lifestyle and crafting
 def test_eqp06(pcs, game):
-    j, l = pcs["JOZAN"], pcs["LIDDA"]
+    j, lidda = pcs["JOZAN"], pcs["LIDDA"]
     plan = gear.craft_plan("shortbow")
     assert plan["materials_cp"] == 1200 and plan["days"] == 3
     assert gear.craft_plan("shortbow", helpers=1)["work_days"] == 1.5
     with pytest.raises(Refusal, match="Woodcarver"):
-        gear.craft(game, l, "shortbow")
+        gear.craft(game, lidda, "shortbow")
     cp0, t0 = j.purse.total_cp(), game.clock
     gear.craft(game, j, "shortbow")
     assert cp0 - j.purse.total_cp() == 1200 and game.clock - t0 == 3 * 86400

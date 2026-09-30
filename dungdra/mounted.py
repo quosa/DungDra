@@ -1,4 +1,5 @@
 """Mounted combat (SRD p.15-16)."""
+
 from __future__ import annotations
 
 from .rules import Refusal, size_index
@@ -30,8 +31,12 @@ def mount(game, rider, steed, controlled=True):
         cb.order.insert(idx + 1, (steed.id, ini))
         if cb.index > idx:
             cb.index += 1
-        game.log.player("mount", f"{steed.name} is a controlled mount: it acts on {rider.name}'s Initiative ({ini}) "
-                        f"and can only Dash, Disengage or Dodge", page=16)
+        game.log.player(
+            "mount",
+            f"{steed.name} is a controlled mount: it acts on {rider.name}'s Initiative ({ini}) "
+            f"and can only Dash, Disengage or Dodge",
+            page=16,
+        )
     return cost
 
 
@@ -53,6 +58,7 @@ def mount_action(game, steed, action):
     if steed.notes.get("controlled") and action.lower() not in MOUNT_ACTIONS:
         raise Refusal("A controlled mount can only take the Dash, Disengage or Dodge action", page=16)
     from . import actions
+
     a = action.lower()
     return {"dash": actions.dash, "disengage": actions.disengage, "dodge": actions.dodge}[a](game, steed)
 

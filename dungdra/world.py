@@ -1,4 +1,5 @@
 """Environment rules: light & obscurement, travel pace modifiers, time passing."""
+
 from __future__ import annotations
 
 

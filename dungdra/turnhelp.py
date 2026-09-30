@@ -1,8 +1,8 @@
 """What can a character still do this turn? Used for turn hints and auto-ending turns."""
+
 from __future__ import annotations
 
 from .data.spells import SPELLS
-from .effects import can_see
 
 
 def bonus_options(game, pc) -> list[str]:
@@ -19,8 +19,11 @@ def bonus_options(game, pc) -> list[str]:
     if pc.has_feature("steady aim") and t.moved == 0:
         out.append("Steady Aim")
     if t.attack_action_taken and not t.light_attack_done and t.notes.get("light_weapon") is not None:
-        others = [w for w in pc.inventory if w.weapon and "light" in w.weapon["props"]
-                  and w.uid != t.notes["light_weapon"]]
+        others = [
+            w
+            for w in pc.inventory
+            if w.weapon and "light" in w.weapon["props"] and w.uid != t.notes["light_weapon"]
+        ]
         if others:
             out.append(f"extra attack with {others[0].display} (Light)")
     if hurt and pc.inventory.find("potion of healing"):
@@ -33,7 +36,9 @@ def bonus_options(game, pc) -> list[str]:
             continue
         ways = pc.castable(sp)
         free = any(w.get("free") and pc.free_casts[sp]["available"] for w in ways)
-        slot_ok = any(pc.slots_left(l) > 0 for l in range(max(1, d["level"]), 4)) and not t.slot_spell_cast
+        slot_ok = (
+            any(pc.slots_left(lvl) > 0 for lvl in range(max(1, d["level"]), 4)) and not t.slot_spell_cast
+        )
         if free or slot_ok or d["level"] == 0:
             out.append(f"cast {sp.title()}")
     if any(e.name == "Spiritual Weapon" for e in pc.effects):

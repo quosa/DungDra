@@ -1,4 +1,5 @@
 """Spellcasting (SRD p.104-106) and the 32 subset spells (p.107-175)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,7 +8,7 @@ from .d20 import D20Roll, roll_d20_test
 from .data.spells import SPELLS, spell_level
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
 from .geometry import dist_points
-from .rules import DAY, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm, size_index
+from .rules import HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm
 
 # spells whose text says "that you can see"
 SIGHT_SPELLS = {"sacred flame", "healing word", "command", "hold person", "magic missile", "misty step"}
@@ -19,7 +20,7 @@ FOCUS_FOR = {"cleric": ["holy symbol"], "wizard": ["arcane focus", "spellbook", 
 class Casting:
     spell: str
     caster: object
-    level: int                   # level the spell is cast at (0 for cantrips)
+    level: int  # level the spell is cast at (0 for cantrips)
     ability: str | None
     dc: int
     attack: int
@@ -37,8 +38,21 @@ class Casting:
 # ---------------------------------------------------------------------------
 # entry point
 # ---------------------------------------------------------------------------
-def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual=False, free=False,
-         item=None, scroll=False, point=None, option=None, charges=None, **kw):
+def cast(
+    game,
+    caster,
+    spell: str,
+    targets=None,
+    slot: int | None = None,
+    ritual=False,
+    free=False,
+    item=None,
+    scroll=False,
+    point=None,
+    option=None,
+    charges=None,
+    **kw,
+):
     """Cast a spell. targets: creature(s)/object names; slot: slot level to expend."""
     spell = norm(spell)
     if spell not in SPELLS:
@@ -53,7 +67,7 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
     # --- how is it cast? -----------------------------------------------------
     ability, dc, atk, source = None, 13, 5, ""
     use_slot = None
-    if item is not None:                        # wand or scroll
+    if item is not None:  # wand or scroll
         ability, dc, atk, source = _item_casting(game, caster, spell, item, scroll, charges)
         level = sd["level"] if not charges else sd["level"] + charges - 1
         if scroll:
@@ -68,7 +82,9 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
             if not sd["ritual"]:
                 raise Refusal(f"{spell.title()} doesn't have the Ritual tag")
             if slot is not None and slot != sd["level"]:
-                raise Refusal("A Ritual doesn't expend a spell slot, so it can't be cast at a higher level", page=187)
+                raise Refusal(
+                    "A Ritual doesn't expend a spell slot, so it can't be cast at a higher level", page=187
+                )
         elif sd["level"] > 0 and not way.get("free"):
             use_slot = slot or sd["level"]
             if use_slot < sd["level"]:
@@ -81,24 +97,31 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
                 raise Refusal("The free casting is at the spell's base level; use a slot to cast it higher")
     # --- restrictions ----------------------------------------------------------
     if getattr(caster, "armor", None) is not None and not caster.trained_in(caster.armor_category()):
-        raise Refusal(f"{caster.name} lacks training with {caster.armor.display} and can't cast spells in it",
-                      page=104)
+        raise Refusal(
+            f"{caster.name} lacks training with {caster.armor.display} and can't cast spells in it", page=104
+        )
     cb = game.combat
     if cb is not None and cb.is_turn(caster) and use_slot and cb.turn.slot_spell_cast:
         raise Refusal("Only one spell slot can be expended to cast a spell on a turn", page=105)
     if ritual and cb is not None:
-        raise Refusal("A Ritual takes 10 minutes longer than normal; it can't be completed in the middle of combat "
-                      "(you'd have to take the Magic action every turn while keeping Concentration)", page=105)
+        raise Refusal(
+            "A Ritual takes 10 minutes longer than normal; it can't be completed in the middle of combat "
+            "(you'd have to take the Magic action every turn while keeping Concentration)",
+            page=105,
+        )
     # targets behind Total Cover can't be targeted (p.106)
-    for t in ([] if sd.get("area") else targets):
+    for t in [] if sd.get("area") else targets:
         if hasattr(t, "id") and t is not caster and game.cover_between(caster, t) == "total":
             raise Refusal(f"{t.name} is behind Total Cover and can't be targeted", page=106)
     _range_check(game, caster, spell, sd, targets)
     if spell in SIGHT_SPELLS:
         for t in targets:
             if hasattr(t, "id") and t is not caster and not can_see(caster, t):
-                raise Refusal(f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
-                              f"(try the Search action to find hidden creatures)", page=sd["page"])
+                raise Refusal(
+                    f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
+                    f"(try the Search action to find hidden creatures)",
+                    page=sd["page"],
+                )
     _components(game, caster, spell, sd, scroll or item is not None)
     # --- action economy ----------------------------------------------------------
     time = sd["time"]
@@ -121,10 +144,25 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
     # casting a spell reveals a hidden caster (V) and ends Invisibility / Sanctuary on the caster
     _on_cast_side_effects(game, caster, sd)
     c = Casting(spell, caster, level, ability, dc, atk, use_slot, ritual, source, item)
-    how = ("as a Ritual (+10 minutes, no slot)" if ritual else f"with a level {use_slot} slot" if use_slot
-           else f"from {item.display}" if item is not None else "(no slot)")
-    g.log.player("cast", f"{caster.name} casts {spell.title()}" + (f" at level {level}" if level > sd["level"] else "")
-                 + f" {how}" + (f" [{source}]" if source else ""), page=sd["page"], spell=spell, level=level)
+    how = (
+        "as a Ritual (+10 minutes, no slot)"
+        if ritual
+        else f"with a level {use_slot} slot"
+        if use_slot
+        else f"from {item.display}"
+        if item is not None
+        else "(no slot)"
+    )
+    g.log.player(
+        "cast",
+        f"{caster.name} casts {spell.title()}"
+        + (f" at level {level}" if level > sd["level"] else "")
+        + f" {how}"
+        + (f" [{source}]" if source else ""),
+        page=sd["page"],
+        spell=spell,
+        level=level,
+    )
     if ritual:
         game.advance(10 * MINUTE + (ROUND if time == "action" else 0), f"ritual casting of {spell.title()}")
     if sd["concentration"]:
@@ -135,7 +173,7 @@ def cast(game, caster, spell: str, targets=None, slot: int | None = None, ritual
     fn(game, c, targets, point=point, option=option, **kw)
     if item is not None and scroll:
         caster.inventory.remove(item, 1)
-        g.log.player("item", f"The Spell Scroll crumbles to dust", page=244)
+        g.log.player("item", "The Spell Scroll crumbles to dust", page=244)
     return c
 
 
@@ -169,7 +207,9 @@ def _way(caster, spell, ritual, free, slot):
     if ritual:
         w = next((w for w in ways if w["slot"]), None)
         if w is None:
-            raise Refusal(f"To cast {spell.title()} as a Ritual, {caster.name} must have it prepared", page=104)
+            raise Refusal(
+                f"To cast {spell.title()} as a Ritual, {caster.name} must have it prepared", page=104
+            )
         return w
     if sd["level"] == 0:
         return ways[0]
@@ -204,8 +244,10 @@ def _monster_way(caster, spell):
 def _item_casting(game, caster, spell, item, scroll, charges):
     if scroll:
         from .magic_items import scroll_casting
+
         return scroll_casting(game, caster, spell, item)
     from .magic_items import wand_casting
+
     return wand_casting(game, caster, spell, item, charges)
 
 
@@ -215,11 +257,13 @@ def _components(game, caster, spell, sd, from_item):
         if caster.notes.get("gagged"):
             raise Refusal(f"{caster.name} is gagged and can't provide the Verbal component", page=105)
         if game.scene.silence:
-            raise Refusal(f"{caster.name} is in an area of magical Silence; Verbal components are impossible",
-                          page=105)
+            raise Refusal(
+                f"{caster.name} is in an area of magical Silence; Verbal components are impossible", page=105
+            )
     if not caster.is_pc() or from_item:
         return
     from .combat import hands_free
+
     focus = _held_focus(caster)
     if "S" in comp and hands_free(caster) < 1 and not ("M" in comp and focus):
         _free_a_hand(game, caster)
@@ -229,10 +273,16 @@ def _components(game, caster, spell, sd, from_item):
             if caster.inventory.find("holy symbol") is None:
                 raise Refusal(f"{spell.title()} needs {sd['material']}", page=105)
             return
-        if caster.inventory.find("component pouch") or focus or caster.inventory.find("holy symbol") \
-                and "holy symbol" in FOCUS_FOR.get(caster.cls, []):
+        if (
+            caster.inventory.find("component pouch")
+            or focus
+            or caster.inventory.find("holy symbol")
+            and "holy symbol" in FOCUS_FOR.get(caster.cls, [])
+        ):
             return
-        raise Refusal(f"{caster.name} needs {sd['material']}, a Component Pouch or a Spellcasting Focus", page=105)
+        raise Refusal(
+            f"{caster.name} needs {sd['material']}, a Component Pouch or a Spellcasting Focus", page=105
+        )
 
 
 def _free_a_hand(game, caster):
@@ -244,12 +294,16 @@ def _free_a_hand(game, caster):
     w = caster.wielded[-1]
     if cb is not None and cb.is_turn(caster):
         if cb.turn.free_interaction:
-            raise Refusal(f"{caster.name} needs a free hand for the Somatic component and has already used the "
-                          f"free object interaction this turn", page=105)
+            raise Refusal(
+                f"{caster.name} needs a free hand for the Somatic component and has already used the "
+                f"free object interaction this turn",
+                page=105,
+            )
         cb.turn.free_interaction = True
     caster.wielded.remove(w)
-    game.log.player("interact", f"{caster.name} stows the {w.display} to free a hand for the spell's gestures",
-                    page=13)
+    game.log.player(
+        "interact", f"{caster.name} stows the {w.display} to free a hand for the spell's gestures", page=13
+    )
 
 
 def _held_focus(caster):
@@ -274,12 +328,15 @@ def _range_check(game, caster, spell, sd, targets):
             if spell == "spare the dying":
                 limit = rng * (2 if caster_level(caster) >= 5 else 1)
             if d > limit:
-                raise Refusal(f"{t.name} is {d} ft away, beyond {spell.title()}'s range of {limit} ft", page=105)
+                raise Refusal(
+                    f"{t.name} is {d} ft away, beyond {spell.title()}'s range of {limit} ft", page=105
+                )
 
 
 def _on_cast_side_effects(game, caster, sd):
     if "V" in sd["components"] and caster.hidden_total is not None:
         from .actions import end_hiding
+
         end_hiding(game, caster, "cast a spell with a Verbal component")
     for e in list(caster.effects):
         if getattr(e, "ends_on_cast", False):
@@ -308,8 +365,13 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
     roll.adv, roll.dis = list(acc.adv), list(acc.dis)
     if not melee:
         for e in game.creatures.values():
-            if e.team not in (caster.team, "neutral") and not e.dead and dist_points(e.position, caster.position) <= 5 \
-                    and not e.has("incapacitated") and can_see(e, caster):
+            if (
+                e.team not in (caster.team, "neutral")
+                and not e.dead
+                and dist_points(e.position, caster.position) <= 5
+                and not e.has("incapacitated")
+                and can_see(e, caster)
+            ):
                 roll.dis.append(f"ranged attack with {e.name} within 5 ft")
                 break
     if not can_see(caster, target):
@@ -325,7 +387,8 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
         parts.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
     roll.target = sum(v for v, _ in parts)
     roll_d20_test(game, caster, roll, bonus_dice=acc.bonus_dice, page=106)
-    from .combat import _reveal_attacker, _sanctuary
+    from .combat import _reveal_attacker
+
     _reveal_attacker(game, caster)
     for e in list(caster.effects):
         e.on_attack_roll(game, roll, None)
@@ -344,12 +407,20 @@ def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), 
         cover = game.cover_between(c.caster, target)
         if cover in ("half", "three-quarters"):
             bonus.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
-    return target.save(ability, c.dc, bonus=bonus, avoid=avoid, source=c.caster,
-                       label=label or f"{ability.title()} save vs {c.spell.title()} (DC {c.dc})", page=c.data["page"])
+    return target.save(
+        ability,
+        c.dc,
+        bonus=bonus,
+        avoid=avoid,
+        source=c.caster,
+        label=label or f"{ability.title()} save vs {c.spell.title()} (DC {c.dc})",
+        page=c.data["page"],
+    )
 
 
 def roll_dice(game, expr, crit=False, actor=None):
     from .combat import roll_damage_dice
+
     return roll_damage_dice(game, actor, expr, crit)
 
 
@@ -358,6 +429,7 @@ def deal(game, c, target, amount, dtype, crit=False):
         return 0
     dealt = target.take_damage(amount, dtype, attacker=c.caster, crit=crit, source=c.spell.title())
     from .combat import _post_damage_hooks
+
     _post_damage_hooks(game, c.caster, target, dealt)
     return dealt
 
@@ -378,8 +450,13 @@ def heal(game, c, target, dice_expr, extra_label=""):
     mod = c.caster.mod(c.ability) if c.ability else 0
     bonus = disciple_bonus(c)
     amount = total + mod + bonus
-    game.log.player("spell", f"{c.spell.title()} heals {dice_expr}={rolls} + {mod} ({c.ability.title()})"
-                    + (f" + {bonus} Disciple of Life" if bonus else "") + f" = {amount}", page=c.data["page"])
+    game.log.player(
+        "spell",
+        f"{c.spell.title()} heals {dice_expr}={rolls} + {mod} ({c.ability.title()})"
+        + (f" + {bonus} Disciple of Life" if bonus else "")
+        + f" = {amount}",
+        page=c.data["page"],
+    )
     return target.heal(amount, c.spell.title(), page=c.data["page"])
 
 
@@ -387,23 +464,33 @@ def offer_shield(game, target, roll, trigger="attack") -> bool:
     """Shield (p.161): Reaction when hit by an attack roll; +5 AC including against that attack."""
     if not target.is_pc() or "shield" not in [s for s in target.all_known_spells()]:
         return False
-    if target.slots_left(1) <= 0 and not any(target.slots_left(l) > 0 for l in (2, 3)):
+    if target.slots_left(1) <= 0 and not any(target.slots_left(lvl) > 0 for lvl in (2, 3)):
         return False
     if game.combat is not None and not game.combat.has_reaction(target):
         return False
     if target.has("incapacitated"):
         return False
     if trigger == "magic missile":
-        want = game.decide(target, "shield", [True, False], default=True,
-                           prompt=f"REACTION: {target.name} is targeted by Magic Missile. Cast Shield (no damage from "
-                                  f"Magic Missile, +5 AC until your next turn)?")
+        want = game.decide(
+            target,
+            "shield",
+            [True, False],
+            default=True,
+            prompt=f"REACTION: {target.name} is targeted by Magic Missile. Cast Shield (no damage from "
+            f"Magic Missile, +5 AC until your next turn)?",
+        )
         if want:
             cast(game, target, "shield")
         return bool(want)
     new_ac = roll.target + 5
-    want = game.decide(target, "shield", [True, False], default=roll.total < new_ac,
-                       prompt=f"REACTION: {target.name} is hit (attack total {roll.total} vs AC {roll.target}). "
-                              f"Cast Shield for +5 AC (AC {new_ac}), including against this attack?")
+    want = game.decide(
+        target,
+        "shield",
+        [True, False],
+        default=roll.total < new_ac,
+        prompt=f"REACTION: {target.name} is hit (attack total {roll.total} vs AC {roll.target}). "
+        f"Cast Shield for +5 AC (AC {new_ac}), including against this attack?",
+    )
     if not want:
         return False
     cast(game, target, "shield")
@@ -420,7 +507,7 @@ class Bless(Effect):
     def d20(self, ctx, acc):
         if ctx.kind in ("attack", "save"):
             first = next(e for e in self.owner.effects if isinstance(e, Bless))
-            if first is self:                     # same spell twice doesn't combine (p.106)
+            if first is self:  # same spell twice doesn't combine (p.106)
                 acc.dice("1d4", "Bless")
 
 
@@ -479,7 +566,9 @@ class RepeatSave(Condition):
 
     def on_turn_end(self, game):
         o = self.owner
-        r = o.save(self.ability, self.dc, label=f"{self.ability.title()} save to end {self.spell} (DC {self.dc})")
+        r = o.save(
+            self.ability, self.dc, label=f"{self.ability.title()} save to end {self.spell} (DC {self.dc})"
+        )
         if r.success:
             o.remove_effect(self, f"succeeded on the save against {self.spell}")
 
@@ -488,7 +577,7 @@ class SleepEffect(Condition):
     """Sleep (p.163): Incapacitated until the end of its next turn, then a second save or Unconscious."""
 
     def __init__(self, dc, stage="incapacitated", **kw):
-        super().__init__(stage, source=f"Sleep", **kw)
+        super().__init__(stage, source="Sleep", **kw)
         self.dc = dc
         self.stage = stage
 
@@ -499,7 +588,9 @@ class SleepEffect(Condition):
         r = o.save("wis", self.dc, label=f"Wisdom save vs Sleep, second save (DC {self.dc})", page=163)
         o.effects.remove(self)
         if not r.success:
-            u = SleepEffect(self.dc, "unconscious", caster=self.caster_id, concentration=True, until=self.until)
+            u = SleepEffect(
+                self.dc, "unconscious", caster=self.caster_id, concentration=True, until=self.until
+            )
             o.add_effect(u)
             game.log.player("condition", f"{o.name} falls Unconscious (Sleep)", page=163)
             game.on_incapacitated(o)
@@ -621,8 +712,11 @@ def _ray_of_frost(game, c, targets, **kw):
         deal(game, c, t, total, "cold", crit)
         if not t.dead:
             t.add_effect(SpeedPenalty("Ray of Frost", 10, ends=[("start", c.caster.id)]))
-            game.log.player("spell", f"{t.name}'s Speed drops by 10 ft until the start of {c.caster.name}'s next turn",
-                            page=157)
+            game.log.player(
+                "spell",
+                f"{t.name}'s Speed drops by 10 ft until the start of {c.caster.name}'s next turn",
+                page=157,
+            )
     elif potent(c):
         total, _ = roll_dice(game, f"{n}d8", False, c.caster)
         game.log.player("spell", "Potent Cantrip: half damage on the miss, no Speed reduction", page=82)
@@ -657,17 +751,27 @@ def _light(game, c, targets, **kw):
             obj.pop("light", None)
             obj.pop("light_spell", None)
     game.scene.objects.setdefault(name, {})
-    game.scene.objects[name].update(light=[20, 20], light_spell=c.caster.id, position=c.caster.position,
-                                    until=game.clock + HOUR)
-    game.log.player("spell", f"The {name} sheds Bright Light 20 ft and Dim Light 20 ft more for 1 hour", page=144)
+    game.scene.objects[name].update(
+        light=[20, 20], light_spell=c.caster.id, position=c.caster.position, until=game.clock + HOUR
+    )
+    game.log.player(
+        "spell", f"The {name} sheds Bright Light 20 ft and Dim Light 20 ft more for 1 hour", page=144
+    )
 
 
 def _flavor(text):
     def fn(game, c, targets, option=None, **kw):
         game.log.player("spell", text.format(caster=c.caster.name, option=option or ""), page=c.data["page"])
         if c.spell == "thaumaturgy" and option and "boom" in option.lower():
-            c.caster.add_effect(AdvNext("Thaumaturgy (Booming Voice)", kinds=("check",), skill="intimidation",
-                                        until=game.clock + MINUTE))
+            c.caster.add_effect(
+                AdvNext(
+                    "Thaumaturgy (Booming Voice)",
+                    kinds=("check",),
+                    skill="intimidation",
+                    until=game.clock + MINUTE,
+                )
+            )
+
     return fn
 
 
@@ -676,6 +780,7 @@ def _spare_the_dying(game, c, targets, **kw):
     if t.dead or t.hp > 0:
         raise Refusal("Spare the Dying targets a creature with 0 Hit Points that isn't dead", page=163)
     from .damage import make_stable
+
     make_stable(game, t, f"Spare the Dying from {c.caster.name}")
 
 
@@ -684,10 +789,12 @@ def _bless(game, c, targets, **kw):
     if len(targets) > n:
         raise Refusal(f"Bless at level {c.level} targets up to {n} creatures")
     for t in targets:
-        t.add_effect(Bless(f"Bless ({c.caster.name})", caster=c.caster, concentration=True,
-                           until=game.clock + MINUTE))
-    game.log.player("spell", f"Blessed: {', '.join(t.name for t in targets)} (+1d4 to attack rolls and saves)",
-                    page=113)
+        t.add_effect(
+            Bless(f"Bless ({c.caster.name})", caster=c.caster, concentration=True, until=game.clock + MINUTE)
+        )
+    game.log.player(
+        "spell", f"Blessed: {', '.join(t.name for t in targets)} (+1d4 to attack rolls and saves)", page=113
+    )
 
 
 def _area_targets(game, c, targets, shape, size):
@@ -709,8 +816,9 @@ def _area_targets(game, c, targets, shape, size):
 
 def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
     total, rolls = roll_dice(game, dice, False, c.caster)
-    game.log.player("spell", f"{c.spell.title()} damage rolled once for all targets: {dice}={rolls} = {total}",
-                    page=16)
+    game.log.player(
+        "spell", f"{c.spell.title()} damage rolled once for all targets: {dice}={rolls} = {total}", page=16
+    )
     for t in targets:
         r = spell_save(game, c, t, ability)
         dmg = div(total, 2) if r.success else total
@@ -734,7 +842,9 @@ def _thunderwave(game, c, targets, **kw):
 
     def push(t):
         from .combat import move
+
         move(game, t, away_from=c.caster, feet=10, forced=True)
+
     _save_for_half(game, c, ts, "con", f"{2 + c.level - 1}d8", "thunder", on_fail=push)
     game.log.player("spell", "A thunderous boom is audible within 300 feet", page=168)
 
@@ -751,8 +861,9 @@ def _command(game, c, targets, option="grovel", **kw):
         if not r.success:
             if game.combat is not None and not game.combat.is_turn(t):
                 t.add_effect(CommandEffect(word, c.caster))
-                game.log.player("spell", f"{t.name} must follow the command '{word.title()}' on its next turn",
-                                page=116)
+                game.log.player(
+                    "spell", f"{t.name} must follow the command '{word.title()}' on its next turn", page=116
+                )
             else:
                 apply_command(game, t, word, c.caster)
 
@@ -779,9 +890,14 @@ def _detect_magic(game, c, targets, **kw):
     for name, obj in game.scene.objects.items():
         if obj.get("magic"):
             found.append(name)
-    c.caster.add_effect(Effect("Detect Magic", caster=c.caster, concentration=True, until=game.clock + 10 * MINUTE))
-    game.log.player("spell", f"{c.caster.name} senses magic: " + (", ".join(found) if found else "nothing within 30 ft"),
-                    page=125)
+    c.caster.add_effect(
+        Effect("Detect Magic", caster=c.caster, concentration=True, until=game.clock + 10 * MINUTE)
+    )
+    game.log.player(
+        "spell",
+        f"{c.caster.name} senses magic: " + (", ".join(found) if found else "nothing within 30 ft"),
+        page=125,
+    )
 
 
 def _guiding_bolt(game, c, targets, **kw):
@@ -826,12 +942,14 @@ def _magic_missile(game, c, targets, option=None, **kw):
     if sum(counts) != darts:
         raise Refusal(f"Magic Missile at level {c.level} creates {darts} darts")
     game.log.player("spell", f"{darts} darts of magical force strike automatically", page=146)
-    for t, n in zip(targets, counts):
+    for t, n in zip(targets, counts, strict=False):
         # Shield: the target may react when targeted
         if t.is_pc() and not t.find_effects(cls=ShieldSpell):
             offer_shield(game, t, None, trigger="magic missile")
         if t.find_effects(cls=ShieldSpell):
-            game.log.player("spell", f"{t.name}'s Shield absorbs the darts: no damage from Magic Missile", page=161)
+            game.log.player(
+                "spell", f"{t.name}'s Shield absorbs the darts: no damage from Magic Missile", page=161
+            )
             continue
         total = 0
         for _ in range(n):
@@ -850,30 +968,43 @@ def _shield(game, c, targets, **kw):
     t = c.caster
     eff = ShieldSpell("Shield", 5, ends=[("start", t.id)])
     t.add_effect(eff)
-    game.log.player("spell", f"{t.name} raises Shield: +5 AC until the start of their next turn (AC {t.ac()})",
-                    page=161)
+    game.log.player(
+        "spell", f"{t.name} raises Shield: +5 AC until the start of their next turn (AC {t.ac()})", page=161
+    )
 
 
 def _shield_of_faith(game, c, targets, **kw):
     t = targets[0] if targets else c.caster
-    t.add_effect(ACBonus("Shield of Faith", 2, caster=c.caster, concentration=True, until=game.clock + 10 * MINUTE))
+    t.add_effect(
+        ACBonus("Shield of Faith", 2, caster=c.caster, concentration=True, until=game.clock + 10 * MINUTE)
+    )
     game.log.player("spell", f"{t.name} gains +2 AC (Shield of Faith)", page=161)
 
 
 def _sleep(game, c, targets, **kw):
     for t in targets:
         if "trance" in t.traits or "exhaustion" in t.cond_immune or t.notes.get("doesnt_sleep"):
-            game.log.player("save", f"{t.name} automatically succeeds on the save against Sleep "
-                            f"({'doesn’t sleep' if 'trance' in t.traits or t.notes.get('doesnt_sleep') else 'Immune to Exhaustion'})",
-                            page=163)
+            game.log.player(
+                "save",
+                f"{t.name} automatically succeeds on the save against Sleep "
+                + (
+                    "(doesn’t sleep)"
+                    if "trance" in t.traits or t.notes.get("doesnt_sleep")
+                    else "(Immune to Exhaustion)"
+                ),
+                page=163,
+            )
             continue
         r = spell_save(game, c, t, "wis")
         if not r.success:
             e = SleepEffect(c.dc, caster=c.caster, concentration=True, until=game.clock + MINUTE)
             e.ends = []
             t.add_effect(e)
-            game.log.player("condition", f"{t.name} has the Incapacitated condition until the end of its next turn "
-                            f"(Sleep)", page=163)
+            game.log.player(
+                "condition",
+                f"{t.name} has the Incapacitated condition until the end of its next turn (Sleep)",
+                page=163,
+            )
             game.on_incapacitated(t)
 
 
@@ -898,8 +1029,11 @@ def _aid(game, c, targets, **kw):
         t.max_hp_bonus += amount
         t.hp += amount
         t.add_effect(AidEffect(amount, caster=c.caster, until=game.clock + 8 * HOUR))
-        game.log.player("spell", f"{t.name}'s HP maximum and current HP increase by {amount} for 8 hours "
-                        f"({t.hp}/{t.max_hp})", page=107)
+        game.log.player(
+            "spell",
+            f"{t.name}'s HP maximum and current HP increase by {amount} for 8 hours ({t.hp}/{t.max_hp})",
+            page=107,
+        )
 
 
 def _hold_person(game, c, targets, **kw):
@@ -909,14 +1043,28 @@ def _hold_person(game, c, targets, **kw):
     for t in targets:
         if t.ctype != "humanoid":
             # p.106 invalid target: slot spent; the target appears to succeed
-            game.log.player("save", f"{t.name} succeeds on its Wisdom saving throw against Hold Person", page=106)
-            game.log.gm("invalid_target", f"{t.name} is a {t.ctype.title()}, not a Humanoid: invalid target for Hold "
-                        f"Person; the slot is spent and it only appears to save", page=106)
+            game.log.player(
+                "save", f"{t.name} succeeds on its Wisdom saving throw against Hold Person", page=106
+            )
+            game.log.gm(
+                "invalid_target",
+                f"{t.name} is a {t.ctype.title()}, not a Humanoid: invalid target for Hold "
+                f"Person; the slot is spent and it only appears to save",
+                page=106,
+            )
             continue
         r = spell_save(game, c, t, "wis", avoid={"paralyzed"})
         if not r.success:
-            e = RepeatSave("paralyzed", "wis", c.dc, "Hold Person", source="Hold Person", caster=c.caster,
-                           concentration=True, until=game.clock + MINUTE)
+            e = RepeatSave(
+                "paralyzed",
+                "wis",
+                c.dc,
+                "Hold Person",
+                source="Hold Person",
+                caster=c.caster,
+                concentration=True,
+                until=game.clock + MINUTE,
+            )
             t.add_effect(e)
             game.log.player("condition", f"{t.name} has the Paralyzed condition (Hold Person)", page=141)
             game.on_incapacitated(t)
@@ -927,15 +1075,21 @@ def _invisibility(game, c, targets, **kw):
     if len(targets) > n:
         raise Refusal(f"Invisibility at level {c.level} targets up to {n} creatures")
     for t in targets:
-        t.add_effect(InvisibilitySpell("Invisibility", caster=c.caster, concentration=True,
-                                       until=game.clock + HOUR))
-        t.add_condition("invisible", "Invisibility", caster=c.caster, concentration=True, until=game.clock + HOUR)
+        t.add_effect(
+            InvisibilitySpell("Invisibility", caster=c.caster, concentration=True, until=game.clock + HOUR)
+        )
+        t.add_condition(
+            "invisible", "Invisibility", caster=c.caster, concentration=True, until=game.clock + HOUR
+        )
 
 
 def _lesser_restoration(game, c, targets, option=None, **kw):
     t = targets[0]
-    cond = norm(option) if option else next((x for x in ("poisoned", "paralyzed", "blinded", "deafened")
-                                            if t.has(x)), None)
+    cond = (
+        norm(option)
+        if option
+        else next((x for x in ("poisoned", "paralyzed", "blinded", "deafened") if t.has(x)), None)
+    )
     if cond not in ("blinded", "deafened", "paralyzed", "poisoned"):
         raise Refusal("Lesser Restoration ends Blinded, Deafened, Paralyzed or Poisoned")
     for e in list(t.effects):
@@ -949,6 +1103,7 @@ def _misty_step(game, c, targets, point=None, **kw):
     if dist_points(c.caster.position, point) > 30:
         raise Refusal("Misty Step teleports up to 30 feet")
     from .combat import move
+
     move(game, c.caster, to=point, teleport=True)
 
 
@@ -969,8 +1124,16 @@ def _scorching_ray(game, c, targets, **kw):
 def _spiritual_weapon(game, c, targets, point=None, **kw):
     caster = c.caster
     pos = point or (targets[0].position if targets else caster.position)
-    caster.add_effect(SpiritualWeaponEffect("Spiritual Weapon", caster=caster, concentration=True,
-                                            until=game.clock + MINUTE, position=pos, level=c.level))
+    caster.add_effect(
+        SpiritualWeaponEffect(
+            "Spiritual Weapon",
+            caster=caster,
+            concentration=True,
+            until=game.clock + MINUTE,
+            position=pos,
+            level=c.level,
+        )
+    )
     game.log.player("spell", "A spectral weapon appears (Concentration, up to 1 minute)", page=165)
     if targets:
         spiritual_weapon_attack(game, caster, targets[0], first=True)
@@ -984,7 +1147,14 @@ def spiritual_weapon_attack(game, caster, target, first=False):
         game.combat.spend(caster, "bonus", "Spiritual Weapon")
         eff.data["position"] = target.position
     level = eff.data.get("level", 2)
-    c = Casting("spiritual weapon", caster, level, caster.spell_ability, caster.spell_dc(), caster.spell_attack_bonus())
+    c = Casting(
+        "spiritual weapon",
+        caster,
+        level,
+        caster.spell_ability,
+        caster.spell_dc(),
+        caster.spell_attack_bonus(),
+    )
     roll, hit, crit = spell_attack(game, c, target, melee=True, dist=5)
     if hit:
         total, rolls = roll_dice(game, f"{1 + level - 2}d8", crit, caster)
@@ -995,10 +1165,19 @@ def spiritual_weapon_attack(game, caster, target, first=False):
 def _web(game, c, targets, point=None, option=None, **kw):
     anchored = option != "unanchored"
     name = f"web ({c.caster.name})"
-    game.scene.objects[name] = {"web": True, "dc": c.dc, "concentration": c.caster.id, "flammable": True,
-                                "anchored": anchored, "difficult": True, "lightly_obscured": True,
-                                "caught": [t.id for t in targets if hasattr(t, "id")]}
-    game.log.player("spell", "Sticky webbing fills a 20-foot Cube: Difficult Terrain and Lightly Obscured", page=174)
+    game.scene.objects[name] = {
+        "web": True,
+        "dc": c.dc,
+        "concentration": c.caster.id,
+        "flammable": True,
+        "anchored": anchored,
+        "difficult": True,
+        "lightly_obscured": True,
+        "caught": [t.id for t in targets if hasattr(t, "id")],
+    }
+    game.log.player(
+        "spell", "Sticky webbing fills a 20-foot Cube: Difficult Terrain and Lightly Obscured", page=174
+    )
     for t in targets:
         web_save(game, t, name)
 
@@ -1018,8 +1197,13 @@ def break_web(game, t):
     if game.combat is not None:
         game.combat.spend(t, "action", "break free of the web")
     web = game.scene.objects[eff.data["web"]]
-    r = t.check("athletics", ability="str", dc=web["dc"], label=f"Strength (Athletics) check to break free "
-                f"(DC {web['dc']})", page=174)
+    r = t.check(
+        "athletics",
+        ability="str",
+        dc=web["dc"],
+        label=f"Strength (Athletics) check to break free (DC {web['dc']})",
+        page=174,
+    )
     if r.success:
         t.remove_effect(eff, "broke free")
     return r
@@ -1039,16 +1223,36 @@ def burn_web(game, web_name, creatures_in_fire=()):
 
 
 IMPL = {
-    "fire bolt": _fire_bolt, "ray of frost": _ray_of_frost, "sacred flame": _sacred_flame, "guidance": _guidance,
-    "light": _light, "mage hand": _flavor("A spectral hand appears near {caster}"),
+    "fire bolt": _fire_bolt,
+    "ray of frost": _ray_of_frost,
+    "sacred flame": _sacred_flame,
+    "guidance": _guidance,
+    "light": _light,
+    "mage hand": _flavor("A spectral hand appears near {caster}"),
     "minor illusion": _flavor("{caster} creates an illusion {option}"),
     "prestidigitation": _flavor("{caster} creates a minor magical effect {option}"),
     "thaumaturgy": _flavor("{caster} manifests a minor wonder {option}"),
-    "spare the dying": _spare_the_dying, "bless": _bless, "burning hands": _burning_hands, "command": _command,
-    "cure wounds": _cure_wounds, "detect magic": _detect_magic, "guiding bolt": _guiding_bolt,
-    "healing word": _healing_word, "mage armor": _mage_armor, "magic missile": _magic_missile,
-    "sanctuary": _sanctuary, "shield": _shield, "shield of faith": _shield_of_faith, "sleep": _sleep,
-    "thunderwave": _thunderwave, "aid": _aid, "hold person": _hold_person, "invisibility": _invisibility,
-    "lesser restoration": _lesser_restoration, "misty step": _misty_step, "scorching ray": _scorching_ray,
-    "spiritual weapon": _spiritual_weapon, "web": _web,
+    "spare the dying": _spare_the_dying,
+    "bless": _bless,
+    "burning hands": _burning_hands,
+    "command": _command,
+    "cure wounds": _cure_wounds,
+    "detect magic": _detect_magic,
+    "guiding bolt": _guiding_bolt,
+    "healing word": _healing_word,
+    "mage armor": _mage_armor,
+    "magic missile": _magic_missile,
+    "sanctuary": _sanctuary,
+    "shield": _shield,
+    "shield of faith": _shield_of_faith,
+    "sleep": _sleep,
+    "thunderwave": _thunderwave,
+    "aid": _aid,
+    "hold person": _hold_person,
+    "invisibility": _invisibility,
+    "lesser restoration": _lesser_restoration,
+    "misty step": _misty_step,
+    "scorching ray": _scorching_ray,
+    "spiritual weapon": _spiritual_weapon,
+    "web": _web,
 }

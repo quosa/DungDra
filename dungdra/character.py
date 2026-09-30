@@ -3,26 +3,53 @@
 SRD p.19-24 (creation/advancement), p.36-82 (classes), p.83-88 (origins, feats),
 p.89-103 (equipment).
 """
+
 from __future__ import annotations
 
 from .creature import Creature
-from .data.classes import CLASSES, LIFE_DOMAIN_SPELLS, SUBCLASS_NAMES
-from .data.equipment import ARMOR, DON_DOFF, WEAPONS, canonical
-from .data.spells import SPELLS
+from .data.classes import CLASSES
+from .data.equipment import WEAPONS, canonical
 from .effects import Acc, Ctx
 from .items import Inventory, Purse, carrying_capacity
-from .rules import (ABILITY_NAMES, MAX_LEVEL_IN_SCOPE, OutOfScope, Refusal, div_up, level_for_xp,
-                    proficiency_bonus)
+from .rules import (
+    ABILITY_NAMES,
+    MAX_LEVEL_IN_SCOPE,
+    OutOfScope,
+    Refusal,
+    level_for_xp,
+    proficiency_bonus,
+)
 
 FEATURE_PAGES = {
-    "fighting style": 47, "second wind": 48, "weapon mastery": 48, "action surge": 48, "tactical mind": 48,
-    "fighter subclass": 48, "improved critical": 49, "remarkable athlete": 49,
-    "expertise": 61, "sneak attack": 61, "thieves' cant": 62, "cunning action": 62, "rogue subclass": 62,
-    "steady aim": 62, "fast hands": 64, "second-story work": 64,
-    "spellcasting": 36, "divine order": 37, "channel divinity": 37, "cleric subclass": 37,
-    "disciple of life": 40, "life domain spells": 40, "preserve life": 40,
-    "ritual adept": 78, "arcane recovery": 78, "scholar": 78, "wizard subclass": 78,
-    "evocation savant": 82, "potent cantrip": 82,
+    "fighting style": 47,
+    "second wind": 48,
+    "weapon mastery": 48,
+    "action surge": 48,
+    "tactical mind": 48,
+    "fighter subclass": 48,
+    "improved critical": 49,
+    "remarkable athlete": 49,
+    "expertise": 61,
+    "sneak attack": 61,
+    "thieves' cant": 62,
+    "cunning action": 62,
+    "rogue subclass": 62,
+    "steady aim": 62,
+    "fast hands": 64,
+    "second-story work": 64,
+    "spellcasting": 36,
+    "divine order": 37,
+    "channel divinity": 37,
+    "cleric subclass": 37,
+    "disciple of life": 40,
+    "life domain spells": 40,
+    "preserve life": 40,
+    "ritual adept": 78,
+    "arcane recovery": 78,
+    "scholar": 78,
+    "wizard subclass": 78,
+    "evocation savant": 82,
+    "potent cantrip": 82,
 }
 
 
@@ -53,18 +80,18 @@ class Character(Creature):
         self.hit_dice_spent = 0
         self.inventory = Inventory()
         self.purse = Purse()
-        self.armor = None              # Item worn
-        self.shield = None             # Item held (Shield)
-        self.wielded: list = []        # Items in hand (weapons, focus ...)
+        self.armor = None  # Item worn
+        self.shield = None  # Item held (Shield)
+        self.wielded: list = []  # Items in hand (weapons, focus ...)
         self.attuned: list = []
         self.resources: dict[str, dict] = {}
         # spellcasting
         self.spell_ability: str | None = self.cdata.get("spellcasting", {}).get("ability")
-        self.cantrips: list[tuple[str, str, str]] = []     # (spell, ability, source)
+        self.cantrips: list[tuple[str, str, str]] = []  # (spell, ability, source)
         self.prepared: list[str] = []
         self.spellbook: list[str] = []
-        self.always_prepared: dict[str, tuple[str, str]] = {}   # spell -> (ability, source)
-        self.free_casts: dict[str, dict] = {}                    # spell -> {available, ability, source}
+        self.always_prepared: dict[str, tuple[str, str]] = {}  # spell -> (ability, source)
+        self.free_casts: dict[str, dict] = {}  # spell -> {available, ability, source}
         self.slots_used: dict[int, int] = {}
         self.pending_choices: list[str] = []
         self.long_rest_finished_at: int | None = None
@@ -177,11 +204,18 @@ class Character(Creature):
     # -- D20 modifiers from features & gear -----------------------------------
     def extra_gather(self, ctx: Ctx, acc: Acc):
         # Armor training (p.92/177): untrained armor -> Disadvantage on Str/Dex D20 Tests
-        if self.armor is not None and not self.trained_in(self.armor_category()):
-            if ctx.ability in ("str", "dex"):
-                acc.disadvantage(f"untrained in {self.armor_category()} armor ({self.armor.display})")
-        if ctx.kind == "check" and ctx.skill == "stealth" and self.armor is not None \
-                and self.armor.armor["stealth_dis"]:
+        if (
+            self.armor is not None
+            and not self.trained_in(self.armor_category())
+            and ctx.ability in ("str", "dex")
+        ):
+            acc.disadvantage(f"untrained in {self.armor_category()} armor ({self.armor.display})")
+        if (
+            ctx.kind == "check"
+            and ctx.skill == "stealth"
+            and self.armor is not None
+            and self.armor.armor["stealth_dis"]
+        ):
             acc.disadvantage(f"{self.armor.display} (Stealth Disadvantage)")
         t = self.traits
         if ctx.kind == "save":
@@ -199,7 +233,11 @@ class Character(Creature):
         if ctx.kind == "check":
             if self.has_feature("remarkable athlete") and ctx.skill == "athletics":
                 acc.advantage("Remarkable Athlete")
-            if self.divine_order == "thaumaturge" and ctx.ability == "int" and ctx.skill in ("arcana", "religion"):
+            if (
+                self.divine_order == "thaumaturge"
+                and ctx.ability == "int"
+                and ctx.skill in ("arcana", "religion")
+            ):
                 acc.bonus(max(1, self.mod("wis")), "Thaumaturge (Wis)")
 
     # -- weapons ---------------------------------------------------------------
@@ -244,7 +282,7 @@ class Character(Creature):
     def castable(self, spell: str) -> list[dict]:
         """All the ways this character can cast `spell` (with the ability used)."""
         out = []
-        sc = self.cdata.get("spellcasting")
+        self.cdata.get("spellcasting")
         for name, ab, src in self.cantrips:
             if name == spell:
                 out.append({"source": src, "ability": ab, "slot": False})
@@ -257,7 +295,12 @@ class Character(Creature):
         return out
 
     def all_known_spells(self) -> list[str]:
-        s = [c[0] for c in self.cantrips] + list(self.prepared) + list(self.always_prepared) + list(self.free_casts)
+        s = (
+            [c[0] for c in self.cantrips]
+            + list(self.prepared)
+            + list(self.always_prepared)
+            + list(self.free_casts)
+        )
         return list(dict.fromkeys(s))
 
     # -- light sources carried (torches etc.) -------------------------------------
@@ -270,16 +313,22 @@ class Character(Creature):
 
     def _drop_to_zero(self, remainder, attacker, melee, dtype, crit, dealt):
         from .damage import pc_drop_to_zero
+
         pc_drop_to_zero(self, remainder, crit)
 
     def _damage_at_zero(self, amount, crit):
         from .damage import pc_damage_at_zero
+
         pc_damage_at_zero(self, amount, crit)
 
     def on_time_passed(self, start, end):
         super().on_time_passed(start, end)
         for it in list(self.inventory):
-            if it.props.get("lit") and it.props.get("burns_until") is not None and end >= it.props["burns_until"]:
+            if (
+                it.props.get("lit")
+                and it.props.get("burns_until") is not None
+                and end >= it.props["burns_until"]
+            ):
                 it.props["lit"] = False
                 if it.name == "torch":
                     self.inventory.remove(it, 1) if it.qty == 1 else None
@@ -291,17 +340,26 @@ class Character(Creature):
         g = self.game
         self.xp += amount
         if g:
-            g.log.player("xp", f"{self.name} gains {amount} XP (total {self.xp})" + (f" — {reason}" if reason else ""),
-                         page=23, ruling=ruling)
+            g.log.player(
+                "xp",
+                f"{self.name} gains {amount} XP (total {self.xp})" + (f" — {reason}" if reason else ""),
+                page=23,
+                ruling=ruling,
+            )
         target = level_for_xp(self.xp)
         while self.level < min(target, MAX_LEVEL_IN_SCOPE):
             self.gain_level()
         if target > MAX_LEVEL_IN_SCOPE and g:
-            g.log.player("scope", f"{self.name} has {self.xp} XP, enough for level {target}, but level 4+ is "
-                         f"out of scope; {self.name} stays at level {MAX_LEVEL_IN_SCOPE}.", page=23)
+            g.log.player(
+                "scope",
+                f"{self.name} has {self.xp} XP, enough for level {target}, but level 4+ is "
+                f"out of scope; {self.name} stays at level {MAX_LEVEL_IN_SCOPE}.",
+                page=23,
+            )
 
     def gain_level(self, rolled: bool = False):
         from . import features
+
         if self.level >= MAX_LEVEL_IN_SCOPE:
             raise OutOfScope("Level 4+ is out of scope")
         g = self.game
@@ -321,62 +379,101 @@ class Character(Creature):
         self.base_max_hp += gain
         self.hp += gain
         if g:
-            g.log.player("level", f"{self.name} reaches level {self.level}: +{gain} HP ({how}) → max "
-                         f"{self.max_hp}; Proficiency Bonus +{self.pb}", page=23)
+            g.log.player(
+                "level",
+                f"{self.name} reaches level {self.level}: +{gain} HP ({how}) → max "
+                f"{self.max_hp}; Proficiency Bonus +{self.pb}",
+                page=23,
+            )
         features.on_level_up(self)
 
     # -- state ----------------------------------------------------------------------
     def state_extra(self) -> dict:
         return {
-            "class": self.cls, "subclass": self.subclass, "level": self.level, "xp": self.xp,
-            "species": self.species, "lineage": self.lineage, "background": self.background, "pb": self.pb,
+            "class": self.cls,
+            "subclass": self.subclass,
+            "level": self.level,
+            "xp": self.xp,
+            "species": self.species,
+            "lineage": self.lineage,
+            "background": self.background,
+            "pb": self.pb,
             "hit_dice": {"die": f"d{self.hit_die}", "max": self.level, "spent": self.hit_dice_spent},
-            "slots": {lvl: {"max": m, "used": self.slots_used.get(lvl, 0)} for lvl, m in self.slots_max().items()},
+            "slots": {
+                lvl: {"max": m, "used": self.slots_used.get(lvl, 0)} for lvl, m in self.slots_max().items()
+            },
             "resources": {k: dict(v) for k, v in self.resources.items()},
             "free_casts": {k: v["available"] for k, v in self.free_casts.items()},
             "inventory": [it.to_dict() for it in self.inventory],
-            "coins": dict(self.purse.coins), "gp_total": self.purse.gp,
+            "coins": dict(self.purse.coins),
+            "gp_total": self.purse.gp,
             "armor": self.armor.display if self.armor else None,
-            "shield": bool(self.shield), "attuned": [i.display for i in self.attuned],
-            "prepared": list(self.prepared), "spellbook": list(self.spellbook),
-            "cantrips": [c[0] for c in self.cantrips], "features": list(self.features),
+            "shield": bool(self.shield),
+            "attuned": [i.display for i in self.attuned],
+            "prepared": list(self.prepared),
+            "spellbook": list(self.spellbook),
+            "cantrips": [c[0] for c in self.cantrips],
+            "features": list(self.features),
             "feats": [f["name"] for f in self.feats] + ([self.fighting_style] if self.fighting_style else []),
-            "skills": {k: v for k, v in self.skills.items()}, "tools": sorted(self.tools),
-            "languages": list(self.languages), "masteries": list(self.weapon_masteries),
+            "skills": {k: v for k, v in self.skills.items()},
+            "tools": sorted(self.tools),
+            "languages": list(self.languages),
+            "masteries": list(self.weapon_masteries),
         }
 
     def sheet(self) -> str:
-        from .rules import SKILLS, fmt_mod
-        lines = [f"{self.name} — {self.species.title()}{' (' + self.lineage.title() + ')' if self.lineage else ''} "
-                 f"{self.cls.title()} {self.level}{' (' + self.subclass.title() + ')' if self.subclass else ''}, "
-                 f"{self.background.title()}, {self.alignment.title()}",
-                 f"HP {self.hp}/{self.max_hp}  AC {self.ac()}  Speed {self.speed()} ft  Initiative "
-                 f"{fmt_mod(self.initiative_bonus())}  PB +{self.pb}  XP {self.xp}",
-                 "  ".join(f"{ABILITY_NAMES[a][:3]} {s} ({fmt_mod(self.mod(a))})" for a, s in self.abilities.items()),
-                 "Saves: " + ", ".join(f"{a.title()} {fmt_mod(self.save_bonus_total(a))}" for a in self.abilities),
-                 "Skills: " + ", ".join(f"{s.title()} {fmt_mod(self.skill_total(s))}{'*' if v == 2 else ''}"
-                                        for s, v in sorted(self.skills.items())),
-                 f"Passive Perception {self.passive('perception')}",
-                 f"Tools: {', '.join(sorted(self.tools)) or '-'}   Languages: {', '.join(self.languages)}",
-                 f"Features: {', '.join(self.features)}",
-                 f"Feats: {', '.join(f['name'].title() for f in self.feats)}"
-                 + (f", {self.fighting_style.title()}" if self.fighting_style else ""),
-                 ]
+        from .rules import fmt_mod
+
+        lines = [
+            f"{self.name} — {self.species.title()}"
+            f"{' (' + self.lineage.title() + ')' if self.lineage else ''} "
+            f"{self.cls.title()} {self.level}{' (' + self.subclass.title() + ')' if self.subclass else ''}, "
+            f"{self.background.title()}, {self.alignment.title()}",
+            f"HP {self.hp}/{self.max_hp}  AC {self.ac()}  Speed {self.speed()} ft  Initiative "
+            f"{fmt_mod(self.initiative_bonus())}  PB +{self.pb}  XP {self.xp}",
+            "  ".join(
+                f"{ABILITY_NAMES[a][:3]} {s} ({fmt_mod(self.mod(a))})" for a, s in self.abilities.items()
+            ),
+            "Saves: " + ", ".join(f"{a.title()} {fmt_mod(self.save_bonus_total(a))}" for a in self.abilities),
+            "Skills: "
+            + ", ".join(
+                f"{s.title()} {fmt_mod(self.skill_total(s))}{'*' if v == 2 else ''}"
+                for s, v in sorted(self.skills.items())
+            ),
+            f"Passive Perception {self.passive('perception')}",
+            f"Tools: {', '.join(sorted(self.tools)) or '-'}   Languages: {', '.join(self.languages)}",
+            f"Features: {', '.join(self.features)}",
+            f"Feats: {', '.join(f['name'].title() for f in self.feats)}"
+            + (f", {self.fighting_style.title()}" if self.fighting_style else ""),
+        ]
         if self.weapon_masteries:
             lines.append(f"Weapon Mastery: {', '.join(m.title() for m in self.weapon_masteries)}")
         if self.cdata.get("spellcasting") or self.cantrips:
             if self.spell_ability:
-                lines.append(f"Spell save DC {self.spell_dc()}, spell attack {fmt_mod(self.spell_attack_bonus())}; "
-                             f"slots " + ", ".join(f"L{l}: {self.slots_left(l)}/{m}" for l, m in self.slots_max().items()))
+                lines.append(
+                    f"Spell save DC {self.spell_dc()}, spell attack {fmt_mod(self.spell_attack_bonus())}; "
+                    f"slots "
+                    + ", ".join(f"L{lvl}: {self.slots_left(lvl)}/{m}" for lvl, m in self.slots_max().items())
+                )
             lines.append(f"Cantrips: {', '.join(c[0].title() for c in self.cantrips)}")
             if self.prepared or self.always_prepared:
-                lines.append(f"Prepared: {', '.join(s.title() for s in self.prepared)}"
-                             + (f" (always: {', '.join(s.title() for s in self.always_prepared)})" if self.always_prepared else ""))
+                lines.append(
+                    f"Prepared: {', '.join(s.title() for s in self.prepared)}"
+                    + (
+                        f" (always: {', '.join(s.title() for s in self.always_prepared)})"
+                        if self.always_prepared
+                        else ""
+                    )
+                )
             if self.spellbook:
                 lines.append(f"Spellbook: {', '.join(s.title() for s in self.spellbook)}")
         if self.resources:
-            lines.append("Resources: " + ", ".join(f"{k.title()} {v['max'] - v['used']}/{v['max']}"
-                                                   for k, v in self.resources.items()))
+            lines.append(
+                "Resources: "
+                + ", ".join(
+                    f"{k.title()} {v['max'] - v['used']}/{v['max']}" for k, v in self.resources.items()
+                )
+            )
         lines.append(f"Equipment: {', '.join(str(i) for i in self.inventory)}")
         lines.append(f"Coins: {self.purse}")
         return "\n".join(lines)

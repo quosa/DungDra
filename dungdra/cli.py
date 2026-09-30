@@ -1,8 +1,8 @@
 """Interactive command-line play: `python -m dungdra` (or `dungdra`)."""
+
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 
 from .play import Play
@@ -33,15 +33,20 @@ def interactive_decider(game, who, key, options, default, prompt):
 def main(argv=None):
     ap = argparse.ArgumentParser(description="DungDra: a fifth-edition-compatible solo adventure")
     ap.add_argument("--seed", type=int, default=None)
-    ap.add_argument("--llm", action="store_true", help="use Claude to interpret free-form input "
-                    "(needs ANTHROPIC_API_KEY)")
-    ap.add_argument("--manual-turns", action="store_true",
-                    help="don't end a combat turn automatically when the character has nothing left to do")
+    ap.add_argument(
+        "--llm", action="store_true", help="use Claude to interpret free-form input (needs ANTHROPIC_API_KEY)"
+    )
+    ap.add_argument(
+        "--manual-turns",
+        action="store_true",
+        help="don't end a combat turn automatically when the character has nothing left to do",
+    )
     ap.add_argument("--gm-log", action="store_true", help="also print GM-only log entries")
     args = ap.parse_args(argv)
     llm = None
     if args.llm:
         from .llm import ClaudeInterpreter
+
         llm = ClaudeInterpreter()
     p = Play(seed=args.seed, decider=interactive_decider, llm=llm, auto_end_turn=not args.manual_turns)
     if args.gm_log:
@@ -69,7 +74,8 @@ HELP = """Examples:
   BROM attacks the goblin with his longsword        LIDDA throws a dagger at goblin 2
   MIALEE casts magic missile at goblin 3            JOZAN casts healing word on MIALEE
   LIDDA uses cunning action to hide                 BROM uses second wind
-  end turn      continue      short rest      long rest      travel 6 miles at normal pace through forest on the road
+  end turn      continue      short rest      long rest
+  travel 6 miles at normal pace through forest on the road
   LIDDA picks the lock      MIALEE examines the floor      BROM wedges a spike into the pit lid
 """
 

@@ -1,10 +1,10 @@
 """CC, ORIG and the proficiency-dependent CORE scenarios."""
+
 import pytest
 
-from dungdra import Game, Refusal, OutOfScope
+from dungdra import OutOfScope, Refusal, actions
 from dungdra.creation import CharacterBuilder
 from dungdra.fixtures import FIXTURES, make, party
-from dungdra import actions
 
 
 @pytest.fixture
@@ -24,12 +24,12 @@ def test_brom_oracle(pcs):
 
 
 def test_lidda_oracle(pcs):
-    l = pcs["LIDDA"]
-    assert (l.hp, l.ac(), l.size, l.speed()) == (10, 14, "small", 30)
-    assert l.initiative_bonus() == 5
-    assert l.skill_total("stealth") == 7 and l.skill_total("sleight of hand") == 7
-    assert l.passive() == 12
-    assert l.capacity() == (180, 360)
+    lidda = pcs["LIDDA"]
+    assert (lidda.hp, lidda.ac(), lidda.size, lidda.speed()) == (10, 14, "small", 30)
+    assert lidda.initiative_bonus() == 5
+    assert lidda.skill_total("stealth") == 7 and lidda.skill_total("sleight of hand") == 7
+    assert lidda.passive() == 12
+    assert lidda.capacity() == (180, 360)
 
 
 def test_mialee_oracle(pcs):
@@ -53,14 +53,20 @@ def test_jozan_oracle(pcs):
 # ---- CC-01 · builder side: missing choices, purchases --------------------
 def test_cc01_gold_option_purchases_and_missing(game):
     b = CharacterBuilder(game)
-    b.update(name="BROM", cls="fighter", species="dwarf", background="soldier",
-             scores=FIXTURES["BROM"]["scores"], background_bonus={"str": 2, "con": 1})
+    b.update(
+        name="BROM",
+        cls="fighter",
+        species="dwarf",
+        background="soldier",
+        scores=FIXTURES["BROM"]["scores"],
+        background_bonus={"str": 2, "con": 1},
+    )
     missing = {k for k, _ in b.missing()}
     assert {"languages", "class_skills", "masteries", "gaming_set"} <= missing
     with pytest.raises(Refusal):
         b.build()
     b.set("class_equipment", "C")
-    with pytest.raises(Refusal):   # exceeds 155 GP
+    with pytest.raises(Refusal):  # exceeds 155 GP
         b.set("purchases", [("plate armor", 1)])
     fx = dict(FIXTURES["BROM"])
     b2 = CharacterBuilder(game).update(**fx)
@@ -95,7 +101,7 @@ def test_cc02_background_adjustments(game):
     b = CharacterBuilder(game).set("background", "soldier")
     with pytest.raises(Refusal, match="Strength, Dexterity, Constitution|Str"):
         b.set("background_bonus", {"wis": 2, "str": 1})
-    b.set("background_bonus", {"str": 1, "dex": 1, "con": 1})   # accepted
+    b.set("background_bonus", {"str": 1, "dex": 1, "con": 1})  # accepted
     # (f) capped at 20 — use Random Generation with an 19
     fx = dict(FIXTURES["BROM"])
     fx.update(ability_method="random")
@@ -116,10 +122,15 @@ def test_cc03_advancement(pcs, game):
         assert pc.level == 2 and pc.max_hp == h2 and pc.pb == 2
         pc.award_xp(600)
         assert pc.level == 3 and pc.max_hp == h3 and pc.pb == 2
-    b, l, m, j = (pcs[n] for n in ("BROM", "LIDDA", "MIALEE", "JOZAN"))
+    b, lidda, m, j = (pcs[n] for n in ("BROM", "LIDDA", "MIALEE", "JOZAN"))
     assert {"action surge", "tactical mind"} <= set(b.features)
-    assert "cunning action" in l.features and "channel divinity" in j.features and "scholar" in m.features
-    assert b.subclass == "champion" and l.subclass == "thief" and j.subclass == "life domain" and m.subclass == "evoker"
+    assert "cunning action" in lidda.features and "channel divinity" in j.features and "scholar" in m.features
+    assert (
+        b.subclass == "champion"
+        and lidda.subclass == "thief"
+        and j.subclass == "life domain"
+        and m.subclass == "evoker"
+    )
     assert any("subclass" in e.text for e in game.log.of_kind("offer"))
     # Wizard: 6 + 2 (L2) + 2 (L3) + 2 Evocation Savant
     assert len(m.spellbook) == 12
@@ -145,12 +156,15 @@ def test_cc04_languages(pcs, game):
 
 # ---- ORIG-01 · species traits ------------------------------------------------
 def test_orig01_species(pcs):
-    b, l, m, j = (pcs[n] for n in ("BROM", "LIDDA", "MIALEE", "JOZAN"))
+    b, lidda, m, j = (pcs[n] for n in ("BROM", "LIDDA", "MIALEE", "JOZAN"))
     assert b.speed() in (30,) and b.senses["darkvision"] == 120 and "poison" in b.resist
     assert {"stonecunning", "dwarven resilience", "dwarven toughness"} <= b.traits
     assert b.resources["stonecunning"]["max"] == 2
     assert m.senses["darkvision"] == 60 and {"fey ancestry", "trance", "keen senses"} <= m.traits
-    assert l.size == "small" and {"brave", "halfling nimbleness", "luck", "naturally stealthy"} <= l.traits
+    assert (
+        lidda.size == "small"
+        and {"brave", "halfling nimbleness", "luck", "naturally stealthy"} <= lidda.traits
+    )
     assert {"resourceful", "skillful", "versatile"} <= j.traits and len(j.feats) == 2
 
 
@@ -179,7 +193,13 @@ def test_orig04_background_packages(game):
     assert pc.purse.gp == 7 + 50
     fx = dict(FIXTURES["LIDDA"], name="CRIM", class_equipment="B")
     pc = CharacterBuilder(game).update(**fx).build()
-    for item, n in [("dagger", 2), ("thieves' tools", 1), ("crowbar", 1), ("pouch", 2), ("traveler's clothes", 1)]:
+    for item, n in [
+        ("dagger", 2),
+        ("thieves' tools", 1),
+        ("crowbar", 1),
+        ("pouch", 2),
+        ("traveler's clothes", 1),
+    ]:
         assert pc.inventory.count(item) == n
     assert pc.purse.gp == 100 + 16
     assert {"sleight of hand", "stealth"} <= set(pc.skills) and pc.has_feat("alert")
@@ -201,20 +221,20 @@ def test_subset_guard(game):
 
 # ---- CORE-03 · checks, Expertise, tools ------------------------------------
 def test_core03_checks(pcs, game):
-    b, l, m = pcs["BROM"], pcs["LIDDA"], pcs["MIALEE"]
+    b, lidda, m = pcs["BROM"], pcs["LIDDA"], pcs["MIALEE"]
     game.dice.force_str("d20=[10]")
     assert b.check("athletics").total == 15
     game.dice.force_str("d20=[10]")
-    assert l.check("stealth").total == 17
+    assert lidda.check("stealth").total == 17
     game.dice.force_str("d20=[10]")
     assert m.check("athletics").total == 9
     game.dice.force_str("d20=[10,4]")
-    r = actions.use_tool(game, l, "pick a lock", dc=15)
+    r = actions.use_tool(game, lidda, "pick a lock", dc=15)
     assert r.mode == "advantage" and r.total == 17
     assert sum(1 for _, s in r.mods if "PB" in s) == 1
-    l.inventory.remove("thieves' tools", l.inventory.count("thieves' tools"))
+    lidda.inventory.remove("thieves' tools", lidda.inventory.count("thieves' tools"))
     with pytest.raises(Refusal):
-        actions.use_tool(game, l, "pick a lock", dc=15)
+        actions.use_tool(game, lidda, "pick a lock", dc=15)
 
 
 # ---- CORE-04 · Passive Perception ---------------------------------------------
@@ -233,19 +253,20 @@ def test_core05_brom_saves(pcs):
 
 # ---- CORE-06 · Help (checks) ---------------------------------------------------
 def test_core06_help_checks(pcs, game):
-    b, l = pcs["BROM"], pcs["LIDDA"]
-    actions.help_check(game, b, l, skill="athletics")
+    b, lidda = pcs["BROM"], pcs["LIDDA"]
+    actions.help_check(game, b, lidda, skill="athletics")
     game.dice.force_str("d20=[4,17]")
-    r = l.check("athletics")
+    r = lidda.check("athletics")
     assert r.mode == "advantage"
     game.dice.force_str("d20=[4]")
-    assert l.check("athletics").mode == "normal"        # used up
+    assert lidda.check("athletics").mode == "normal"  # used up
     with pytest.raises(Refusal, match="proficient"):
-        actions.help_check(game, b, l, tool="thieves' tools")
+        actions.help_check(game, b, lidda, tool="thieves' tools")
 
 
 def test_core06_help_attack_range(pcs, game):
     from dungdra.creature import Creature
+
     j = pcs["JOZAN"]
     gob = game.add(Creature("Goblin", team="enemy"), position=(10, 0))
     j.position = (0, 0)

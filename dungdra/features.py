@@ -1,4 +1,5 @@
 """Class and species features granted at each level (levels 1-3)."""
+
 from __future__ import annotations
 
 from .data.classes import CLASSES, LIFE_DOMAIN_SPELLS, SCHOLAR_SKILLS, SUBCLASS_NAMES
@@ -44,18 +45,28 @@ def on_level_up(pc):
     grant_features(pc, lvl)
     if lvl == 3 and pc.subclass is None:
         opts = [SUBCLASS_NAMES[pc.cls]]
-        choice = g.decide(pc, "subclass", opts, default=opts[0],
-                          prompt=f"{pc.name} reached level 3: choose a {pc.cls.title()} subclass {opts}")
+        choice = g.decide(
+            pc,
+            "subclass",
+            opts,
+            default=opts[0],
+            prompt=f"{pc.name} reached level 3: choose a {pc.cls.title()} subclass {opts}",
+        )
         choose_subclass(pc, choice)
         new += CLASSES[pc.cls]["subclasses"][pc.subclass].get(3, [])
     if g and new:
-        g.log.player("features", f"{pc.name} gains: {', '.join(f.title() for f in new)}",
-                     page=CLASSES[pc.cls]["page"])
+        g.log.player(
+            "features", f"{pc.name} gains: {', '.join(f.title() for f in new)}", page=CLASSES[pc.cls]["page"]
+        )
     # Fighting Style may be swapped whenever you gain a Fighter level (p.47)
     if pc.cls == "fighter" and g:
-        swap = g.decide(pc, "fighting_style_swap", [None, "archery", "defense", "great weapon fighting",
-                                                   "two-weapon fighting"], default=None,
-                        prompt=f"{pc.name} may replace the {pc.fighting_style} Fighting Style feat")
+        swap = g.decide(
+            pc,
+            "fighting_style_swap",
+            [None, "archery", "defense", "great weapon fighting", "two-weapon fighting"],
+            default=None,
+            prompt=f"{pc.name} may replace the {pc.fighting_style} Fighting Style feat",
+        )
         if swap and swap != pc.fighting_style:
             old = pc.fighting_style
             pc.fighting_style = swap
@@ -63,10 +74,23 @@ def on_level_up(pc):
     # Wizard: two new spellbook spells per level (p.78); Scholar at 2
     if pc.cls == "wizard":
         max_lvl = max(pc.slots_max())
-        options = [s for s in CLASS_LISTS["wizard"] if 1 <= SPELLS[s]["level"] <= max_lvl and s not in pc.spellbook]
-        options += [s for l in range(1, max_lvl + 1) for s in OTHER_WIZARD_SPELLS[l] if s not in pc.spellbook]
-        picks = g.decide(pc, "spellbook_add", options, default=options[:2],
-                         prompt=f"{pc.name}: add two Wizard spells to the spellbook") if g else options[:2]
+        options = [
+            s for s in CLASS_LISTS["wizard"] if 1 <= SPELLS[s]["level"] <= max_lvl and s not in pc.spellbook
+        ]
+        options += [
+            s for lvl in range(1, max_lvl + 1) for s in OTHER_WIZARD_SPELLS[lvl] if s not in pc.spellbook
+        ]
+        picks = (
+            g.decide(
+                pc,
+                "spellbook_add",
+                options,
+                default=options[:2],
+                prompt=f"{pc.name}: add two Wizard spells to the spellbook",
+            )
+            if g
+            else options[:2]
+        )
         for p in picks[:2]:
             lv = spell_level(p)
             if lv is None or lv > max_lvl or lv < 1:
@@ -75,8 +99,17 @@ def on_level_up(pc):
         if lvl == 2:
             opts = [s for s in SCHOLAR_SKILLS if s in pc.skills]
             if opts:
-                sk = g.decide(pc, "scholar", opts, default=opts[0],
-                              prompt=f"{pc.name}: choose a skill for Scholar (Expertise) {opts}") if g else opts[0]
+                sk = (
+                    g.decide(
+                        pc,
+                        "scholar",
+                        opts,
+                        default=opts[0],
+                        prompt=f"{pc.name}: choose a skill for Scholar (Expertise) {opts}",
+                    )
+                    if g
+                    else opts[0]
+                )
                 if sk not in opts:
                     raise Refusal(f"Scholar must be one of {opts} that you are proficient in")
                 pc.scholar_skill = sk
@@ -97,18 +130,37 @@ def on_level_up(pc):
         # p.37/78: whenever the number of prepared spells increases, choose additional spells
         max_lvl = max(pc.slots_max())
         pool = pc.spellbook if pc.cls == "wizard" else CLASS_LISTS[pc.cls]
-        opts = [x for x in pool if x in SPELLS and 1 <= SPELLS[x]["level"] <= max_lvl
-                and x not in pc.prepared and x not in pc.always_prepared]
+        opts = [
+            x
+            for x in pool
+            if x in SPELLS
+            and 1 <= SPELLS[x]["level"] <= max_lvl
+            and x not in pc.prepared
+            and x not in pc.always_prepared
+        ]
         need = pc.prepared_limit() - len(pc.prepared)
         if need > 0 and opts:
             opts.sort(key=lambda x: -SPELLS[x]["level"])
-            picks = g.decide(pc, "prepare_more", opts, default=opts[:need],
-                             prompt=f"{pc.name} can prepare {need} more spell(s): choose from "
-                                    f"{', '.join(o.title() for o in opts)}") if g else opts[:need]
+            picks = (
+                g.decide(
+                    pc,
+                    "prepare_more",
+                    opts,
+                    default=opts[:need],
+                    prompt=f"{pc.name} can prepare {need} more spell(s): choose from "
+                    f"{', '.join(o.title() for o in opts)}",
+                )
+                if g
+                else opts[:need]
+            )
             pc.prepared += [x for x in picks[:need] if x in opts]
     if g and pc.cdata.get("spellcasting"):
-        g.log.player("spells", f"{pc.name} can now prepare {pc.prepared_limit()} spells; slots "
-                     + ", ".join(f"level {l}: {m}" for l, m in pc.slots_max().items()), page=pc.cdata["page"])
+        g.log.player(
+            "spells",
+            f"{pc.name} can now prepare {pc.prepared_limit()} spells; slots "
+            + ", ".join(f"level {lvl}: {m}" for lvl, m in pc.slots_max().items()),
+            page=pc.cdata["page"],
+        )
 
 
 def add_to_spellbook(pc, spells, how=""):
@@ -117,10 +169,17 @@ def add_to_spellbook(pc, spells, how=""):
             pc.spellbook.append(s)
     if pc.game and spells:
         oos = [s for s in spells if s not in SPELLS]
-        pc.game.log.player("spellbook", f"{pc.name} adds {', '.join(s.title() for s in spells)} to the spellbook"
-                           + (f" ({how})" if how else "")
-                           + (f"; note: {', '.join(s.title() for s in oos)} can't be cast in this game "
-                              f"(out of scope)" if oos else ""), page=78)
+        pc.game.log.player(
+            "spellbook",
+            f"{pc.name} adds {', '.join(s.title() for s in spells)} to the spellbook"
+            + (f" ({how})" if how else "")
+            + (
+                f"; note: {', '.join(s.title() for s in oos)} can't be cast in this game (out of scope)"
+                if oos
+                else ""
+            ),
+            page=78,
+        )
 
 
 def choose_subclass(pc, name: str):
@@ -128,6 +187,7 @@ def choose_subclass(pc, name: str):
     want = SUBCLASS_NAMES[pc.cls]
     if name != want:
         from .rules import OutOfScope
+
         raise OutOfScope(f"Only the {want.title()} subclass is in scope for {pc.cls.title()}s")
     pc.subclass = name
     grant_features(pc, 3)
@@ -135,22 +195,34 @@ def choose_subclass(pc, name: str):
     if name == "champion":
         pass
     elif name == "thief":
-        pc.speeds["climb"] = pc.speeds["walk"]           # Second-Story Work: Climber
+        pc.speeds["climb"] = pc.speeds["walk"]  # Second-Story Work: Climber
     elif name == "life domain":
         for s in LIFE_DOMAIN_SPELLS[3]:
             pc.always_prepared[s] = ("wis", "Life Domain")
             if s in pc.prepared:
-                pc.prepared.remove(s)                   # domain spells don't count against the limit
+                pc.prepared.remove(s)  # domain spells don't count against the limit
     elif name == "evoker":
-        opts = [s for s in CLASS_LISTS["wizard"] if SPELLS[s]["school"] == "evocation"
-                and 1 <= SPELLS[s]["level"] <= 2 and s not in pc.spellbook]
+        opts = [
+            s
+            for s in CLASS_LISTS["wizard"]
+            if SPELLS[s]["school"] == "evocation" and 1 <= SPELLS[s]["level"] <= 2 and s not in pc.spellbook
+        ]
         opts += [s for s in OTHER_EVOCATION if s not in pc.spellbook]
-        picks = g.decide(pc, "evocation_savant", opts, default=opts[:2],
-                         prompt=f"{pc.name}: Evocation Savant — choose two Evocation spells (level 2 or lower)") \
-            if g else opts[:2]
+        picks = (
+            g.decide(
+                pc,
+                "evocation_savant",
+                opts,
+                default=opts[:2],
+                prompt=f"{pc.name}: Evocation Savant — choose two Evocation spells (level 2 or lower)",
+            )
+            if g
+            else opts[:2]
+        )
         for p in picks[:2]:
-            if (p in SPELLS and (SPELLS[p]["school"] != "evocation" or SPELLS[p]["level"] > 2)) or \
-                    (p not in SPELLS and p not in OTHER_EVOCATION):
+            if (p in SPELLS and (SPELLS[p]["school"] != "evocation" or SPELLS[p]["level"] > 2)) or (
+                p not in SPELLS and p not in OTHER_EVOCATION
+            ):
                 raise Refusal("Evocation Savant spells must be Evocation spells of level 2 or lower")
         add_to_spellbook(pc, picks[:2], "Evocation Savant")
     if g:

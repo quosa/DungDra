@@ -1,11 +1,32 @@
 """EXPL, SOC, HAZ, MON, ENC, TRAP, POIS, CLS-ROG-02."""
+
 import pytest
 
-from dungdra import Refusal
-from dungdra import actions, combat as C, class_actions as CA, encounters as E, explore as X, hazards as H, traps as T
+from dungdra import (
+    Refusal,
+    actions,
+)
+from dungdra import (
+    class_actions as CA,
+)
+from dungdra import (
+    combat as C,
+)
+from dungdra import (
+    encounters as E,
+)
+from dungdra import (
+    explore as X,
+)
+from dungdra import (
+    hazards as H,
+)
+from dungdra import (
+    traps as T,
+)
 from dungdra.monster import Monster
-from tests.support.helpers import pc, mon
-from tests.scenarios.test_combat import start, set_turn
+from tests.scenarios.test_combat import set_turn, start
+from tests.support.helpers import mon, pc
 
 
 # ---------------- EXPL-01 ----------------
@@ -15,7 +36,7 @@ def test_expl01_travel(game):
     assert X.travel(game, [b, m], miles=24, pace="normal", terrain="forest") == 8
     assert game.clock - t0 == 8 * 3600
     game.dice.force_str("d20=[5,5]")
-    assert b.check("stealth").mode == "disadvantage"          # Normal pace + chain mail anyway
+    assert b.check("stealth").mode == "disadvantage"  # Normal pace + chain mail anyway
     game.dice.force_str("d20=[5,5]")
     assert m.check("stealth").mode == "disadvantage"
     with pytest.raises(Refusal, match="Normal"):
@@ -44,11 +65,11 @@ def test_expl01_extended(game):
 
 # ---------------- EXPL-02 ----------------
 def test_expl02_vision(game):
-    j, b, l = pc(game, "JOZAN"), pc(game, "BROM", (5, 0)), pc(game, "LIDDA", (10, 0))
+    j, b, _l = pc(game, "JOZAN"), pc(game, "BROM", (5, 0)), pc(game, "LIDDA", (10, 0))
     game.scene.light = "dark"
-    assert j.check("perception").success is False           # effectively Blinded
+    assert j.check("perception").success is False  # effectively Blinded
     game.dice.force_str("d20=[5,5]")
-    assert b.check("perception").mode == "disadvantage"      # Darkness -> Dim for Darkvision
+    assert b.check("perception").mode == "disadvantage"  # Darkness -> Dim for Darkvision
     X.light_torch(game, b)
     game.dice.force_str("d20=[5]")
     assert j.check("perception").mode == "normal"
@@ -60,24 +81,24 @@ def test_expl02_vision(game):
 
 # ---------------- EXPL-03 ----------------
 def test_expl03_hide(game):
-    l = pc(game, "LIDDA", (0, 0))
+    lidda = pc(game, "LIDDA", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
     with pytest.raises(Refusal, match="plain view"):
-        actions.hide(game, l)
+        actions.hide(game, lidda)
     game.dice.force_str("d20=[9]")
-    r = actions.hide(game, l, cover="three-quarters")
-    assert r.total == 16 and r.target == 15 and l.has("invisible") and l.hidden_total == 16
-    assert not actions.notices(game, gob, l)
-    actions.make_sound(game, l, "whisper")
-    assert l.has("invisible")
+    r = actions.hide(game, lidda, cover="three-quarters")
+    assert r.total == 16 and r.target == 15 and lidda.has("invisible") and lidda.hidden_total == 16
+    assert not actions.notices(game, gob, lidda)
+    actions.make_sound(game, lidda, "whisper")
+    assert lidda.has("invisible")
     game.dice.force_str("d20=[5,15]; d6=[1,1]")
-    res = C.attack(game, l, gob, weapon="shortbow")
+    res = C.attack(game, lidda, gob, weapon="shortbow")
     assert any("can't see" in s for s in res.roll.adv)
-    assert not l.has("invisible")
+    assert not lidda.has("invisible")
     game.dice.force_str("d20=[9]")
-    actions.hide(game, l, cover="three-quarters")
-    actions.make_sound(game, l, "shout")
-    assert not l.has("invisible")
+    actions.hide(game, lidda, cover="three-quarters")
+    actions.make_sound(game, lidda, "shout")
+    assert not lidda.has("invisible")
 
 
 # ---------------- EXPL-04 ----------------
@@ -100,41 +121,41 @@ def test_expl04_jump_climb_search(game):
 
 # ---------------- CLS-ROG-02 ----------------
 def test_rog02(game):
-    l = pc(game, "LIDDA", (0, 0))
-    l.award_xp(900)
+    lidda = pc(game, "LIDDA", (0, 0))
+    lidda.award_xp(900)
     gob = mon(game, "goblin warrior", (40, 0))
     gob.base_max_hp = gob.hp = 100
     game.dice.force_str("d20=[20, 1]")
-    start(game, l, gob)
-    set_turn(game, l)
-    CA.steady_aim(game, l)
-    assert l.speed() == 0
+    start(game, lidda, gob)
+    set_turn(game, lidda)
+    CA.steady_aim(game, lidda)
+    assert lidda.speed() == 0
     game.dice.force_str("d20=[5,15]; d6=[1,1,1]")
-    r = C.attack(game, l, gob, weapon="shortbow")
+    r = C.attack(game, lidda, gob, weapon="shortbow")
     assert r.roll.mode == "advantage"
-    set_turn(game, l)
-    C.move(game, l, to=(5, 0))
+    set_turn(game, lidda)
+    C.move(game, lidda, to=(5, 0))
     with pytest.raises(Refusal, match="moved"):
-        CA.steady_aim(game, l)
+        CA.steady_aim(game, lidda)
     with pytest.raises(Refusal, match="Dash, Disengage or Hide"):
-        CA.cunning_action(game, l, "dodge")
+        CA.cunning_action(game, lidda, "dodge")
     game.dice.force_str("d20=[15]")
-    actions.hide(game, l, cover="three-quarters", bonus=True, source="Cunning Action (Hide)")
+    actions.hide(game, lidda, cover="three-quarters", bonus=True, source="Cunning Action (Hide)")
     assert game.combat.turn.bonus_used
-    set_turn(game, l)
+    set_turn(game, lidda)
     trap = T.place(game, "poisoned needle")
     trap.detected = True
     game.dice.force_str("d20=[15,15]")
-    T.disarm(game, l, trap, bonus_action=True)
+    T.disarm(game, lidda, trap, bonus_action=True)
     assert trap.disabled and game.combat.turn.bonus_used and game.combat.turn.action_available()
-    assert l.speed("climb") == 30
-    assert X.long_jump_distance(l) == 17
+    assert lidda.speed("climb") == 30
+    assert X.long_jump_distance(lidda) == 17
 
 
 # ---------------- SOC-01 / SOC-02 ----------------
 def test_soc01_influence(game):
     j = pc(game, "JOZAN")
-    guard = mon(game, "guard", team_attitude := None) if False else Monster("guard")
+    guard = mon(game, "guard", _team_attitude := None) if False else Monster("guard")
     game.add(guard, team="neutral")
     guard.attitude = "indifferent"
     game.dice.force_str("d20=[5]")
@@ -144,10 +165,13 @@ def test_soc01_influence(game):
     assert dc_ev.visibility == "gm" and "15" in dc_ev.text
     with pytest.raises(Refusal, match="24"):
         actions.influence(game, j, guard, "open the gate after dark", "hesitant")
-    boss = Monster("goblin boss"); game.add(boss)
+    boss = Monster("goblin boss")
+    game.add(boss)
     n = len(game.log.of_kind("check"))
     assert actions.influence(game, j, boss, "hand over the treasure", "unwilling") is False
-    priest = Monster("priest acolyte"); game.add(priest, team="neutral"); priest.attitude = "friendly"
+    priest = Monster("priest acolyte")
+    game.add(priest, team="neutral")
+    priest.attitude = "friendly"
     assert actions.influence(game, j, priest, "a blessing", "willing") is True
     assert len(game.log.of_kind("check")) == n
     game.dice.force_str("d20=[5,15]")
@@ -188,6 +212,7 @@ def test_haz01_exhaustion(game):
     b = pc(game, "BROM")
     b.gain_exhaustion(3)
     from dungdra import rest as R
+
     R.long_rest(game, [b])
     assert b.exhaustion == 2
 
@@ -220,22 +245,23 @@ def test_haz02_suffocation(game):
 
 
 def test_haz02_food_water(game):
-    b, j, l = pc(game, "BROM"), pc(game, "JOZAN"), pc(game, "LIDDA")
+    b, j, lidda = pc(game, "BROM"), pc(game, "JOZAN"), pc(game, "LIDDA")
     for day in range(1, 7):
         H.end_of_day_food(game, b, 0)
         assert b.exhaustion == max(0, day - 4)
     game.dice.force_str("d20=[7]")
     H.end_of_day_food(game, j, 0.25)
     assert j.exhaustion == 1
-    H.end_of_day_water(game, l, 0.25)
-    assert l.exhaustion == 1
+    H.end_of_day_water(game, lidda, 0.25)
+    assert lidda.exhaustion == 1
     from dungdra import rest as R
-    R.long_rest(game, [l])
-    assert l.exhaustion == 1                       # can't be removed until full water
-    H.end_of_day_water(game, l, 1)
+
+    R.long_rest(game, [lidda])
+    assert lidda.exhaustion == 1  # can't be removed until full water
+    H.end_of_day_water(game, lidda, 1)
     game.advance(16 * 3600)
-    R.long_rest(game, [l])
-    assert l.exhaustion == 0
+    R.long_rest(game, [lidda])
+    assert lidda.exhaustion == 0
 
 
 def test_haz02_burning(game):
@@ -252,11 +278,24 @@ def test_haz02_burning(game):
 # ---------------- MON-01 / MON-02 ----------------
 def test_mon01_statblocks(game):
     from dungdra.data.monsters import MONSTERS
+
     assert len(MONSTERS) == 14
-    expected = {"goblin warrior": (15, 10, 50), "goblin boss": (17, 21, 200), "goblin minion": (12, 7, 25),
-                "wolf": (12, 11, 50), "zombie": (8, 15, 50), "skeleton": (14, 13, 50), "kobold warrior": (14, 7, 25),
-                "giant rat": (13, 7, 25), "bandit": (12, 11, 25), "cultist": (12, 9, 25), "guard": (16, 11, 25),
-                "priest acolyte": (13, 11, 50), "ogre": (11, 68, 450), "riding horse": (11, 13, 50)}
+    expected = {
+        "goblin warrior": (15, 10, 50),
+        "goblin boss": (17, 21, 200),
+        "goblin minion": (12, 7, 25),
+        "wolf": (12, 11, 50),
+        "zombie": (8, 15, 50),
+        "skeleton": (14, 13, 50),
+        "kobold warrior": (14, 7, 25),
+        "giant rat": (13, 7, 25),
+        "bandit": (12, 11, 25),
+        "cultist": (12, 9, 25),
+        "guard": (16, 11, 25),
+        "priest acolyte": (13, 11, 50),
+        "ogre": (11, 68, 450),
+        "riding horse": (11, 13, 50),
+    }
     for k, (ac, hp, xp) in expected.items():
         m = Monster(k)
         assert (m.ac(), m.hp, m.xp, m.pb) == (ac, hp, xp, 2), k
@@ -273,16 +312,16 @@ def test_mon01_statblocks(game):
 
 def test_mon02_traits(game):
     b = pc(game, "BROM", (0, 0))
-    l = pc(game, "LIDDA", (0, 20))
+    lidda = pc(game, "LIDDA", (0, 20))
     w1 = mon(game, "wolf", (5, 0), name="Wolf 1")
-    w2 = mon(game, "wolf", (-5, 0), name="Wolf 2")
+    mon(game, "wolf", (-5, 0), name="Wolf 2")
     game.dice.force_str("d20=[3,15]; d6=[1]")
     r = C.attack(game, w1, b, attack_name="bite")
     assert any("Pack Tactics" in s for s in r.roll.adv)
     w1.position = (0, 25)
     game.dice.force_str("d20=[18]; d6=[1]")
-    C.attack(game, w1, l, attack_name="bite")
-    assert l.has("prone")
+    C.attack(game, w1, lidda, attack_name="bite")
+    assert lidda.has("prone")
     gob = mon(game, "goblin warrior", (5, 5), name="Gob")
     game.dice.force_str("d20=[3,15]; d6=[1]; d4=[2]")
     r = C.attack(game, gob, b, attack_name="scimitar", adv=["test"])
@@ -330,8 +369,12 @@ def test_enc01(game):
     assert len(game.log.visible()) == n_player
     assert all("budget" not in e.text.lower() for e in game.log.visible())
     with pytest.raises(Refusal, match="R-03"):
-        E.add_reinforcements(game, lv1, ["goblin boss", "goblin warrior", "goblin warrior"], ["wolf", "wolf", "wolf"])
-    E.add_reinforcements(game, lv1, ["goblin boss"], ["ogre"], justification="the ogre was always in the cave")
+        E.add_reinforcements(
+            game, lv1, ["goblin boss", "goblin warrior", "goblin warrior"], ["wolf", "wolf", "wolf"]
+        )
+    E.add_reinforcements(
+        game, lv1, ["goblin boss"], ["ogre"], justification="the ogre was always in the cave"
+    )
     assert E.budgets([3] * 4) == {"low": 600, "moderate": 900, "high": 1600}
     assert E.rate(game, [3] * 4, ["ogre", "goblin boss", "wolf", "wolf"])["band"] == "moderate"
     for _ in range(20):
@@ -349,7 +392,7 @@ def test_enc02_xp(game):
 # ---------------- TRAP-01 / TRAP-02 ----------------
 def test_trap01_hidden_pit(game):
     party = [pc(game, n) for n in ("BROM", "LIDDA", "MIALEE", "JOZAN")]
-    b, l, m, j = party
+    b, lidda, m, j = party
     pit = T.place(game, "hidden pit")
     assert T.passive_detection(game, party, pit) is None
     game.dice.force_str("d6=[3]")
@@ -362,51 +405,51 @@ def test_trap01_hidden_pit(game):
     b.inventory.add("iron spikes", 10)
     T.wedge_spike(game, b, pit2)
     assert T.trigger(game, j, pit2) is None
-    l.award_xp(900)
-    l.notes["in_pit"] = "hidden pit"
-    assert T.climb_out(game, l)
+    lidda.award_xp(900)
+    lidda.notes["in_pit"] = "hidden pit"
+    assert T.climb_out(game, lidda)
     b.notes["in_pit"] = "hidden pit"
     with pytest.raises(Refusal, match="Climb Speed"):
         T.climb_out(game, b)
 
 
 def test_trap02_needle(game):
-    l = pc(game, "LIDDA")
+    lidda = pc(game, "LIDDA")
     t = T.place(game, "poisoned needle")
     game.dice.force_str("d20=[15]")
-    T.detect(game, l, t)
+    T.detect(game, lidda, t)
     game.dice.force_str("d20=[4,9]")
-    r = T.disarm(game, l, t)
+    r = T.disarm(game, lidda, t)
     assert r.total == 16 and t.disabled
     t2 = T.place(game, "poisoned needle", name="needle 2")
     t2.detected = True
     game.dice.force_str("d20=[3,5]; d20=[6]; d10=[8]")
-    r = T.disarm(game, l, t2)
-    assert r.total == 12 and l.hp == 2 and l.has("poisoned")
+    r = T.disarm(game, lidda, t2)
+    assert r.total == 12 and lidda.hp == 2 and lidda.has("poisoned")
     t3 = T.place(game, "poisoned needle", name="needle 3")
     t3.detected = True
-    l.inventory.remove("thieves' tools", l.inventory.count("thieves' tools"))
+    lidda.inventory.remove("thieves' tools", lidda.inventory.count("thieves' tools"))
     game.dice.force_str("d20=[20]")
-    T.disarm(game, l, t3)
+    T.disarm(game, lidda, t3)
     assert "R-04" in game.log.rulings()
 
 
 # ---------------- POIS-01 ----------------
 def test_pois01(game):
-    l = pc(game, "LIDDA", (0, 0))
+    lidda = pc(game, "LIDDA", (0, 0))
     bandit = mon(game, "bandit", (5, 0))
     bandit.base_max_hp = bandit.hp = 50
-    l.inventory.add("serpent venom", 2)
+    lidda.inventory.add("serpent venom", 2)
     game.dice.force_str("d20=[20, 1]")
-    start(game, l, bandit)
-    set_turn(game, l)
-    H.apply_poison_to_weapon(game, l, "shortsword")
+    start(game, lidda, bandit)
+    set_turn(game, lidda)
+    H.apply_poison_to_weapon(game, lidda, "shortsword")
     assert game.combat.turn.bonus_used
     game.dice.force_str("d20=[15]; d6=[3]; d20=[6]; d6=[2,5,6]")
-    C.attack(game, l, bandit, weapon="shortsword")
+    C.attack(game, lidda, bandit, weapon="shortsword")
     assert bandit.hp == 50 - 6 - 13
-    assert "coating" not in l.inventory.find("shortsword").props
-    l.inventory.add("mace")
-    set_turn(game, l)
-    H.apply_poison_to_weapon(game, l, "mace")
+    assert "coating" not in lidda.inventory.find("shortsword").props
+    lidda.inventory.add("mace")
+    set_turn(game, lidda)
+    H.apply_poison_to_weapon(game, lidda, "mace")
     assert "never be delivered" in game.log.last("poison").text

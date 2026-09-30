@@ -1,4 +1,5 @@
 """Player-facing inventory, weapon and spell listings."""
+
 from __future__ import annotations
 
 from .data.spells import SPELLS
@@ -27,13 +28,17 @@ def _weapon_line(pc, it):
         extra.append(f"mastery: {w['mastery'].title()}")
     held = " [in hand]" if it in pc.wielded else ""
     qty = f" x{it.qty}" if it.qty > 1 else ""
-    return (f"  {it.display}{qty}{held}: {fmt_mod(bonus)} to hit, {dmg} {w['dtype'].title()}"
-            + (f" ({', '.join(extra)})" if extra else ""))
+    return f"  {it.display}{qty}{held}: {fmt_mod(bonus)} to hit, {dmg} {w['dtype'].title()}" + (
+        f" ({', '.join(extra)})" if extra else ""
+    )
 
 
 def inventory_text(pc, section=None) -> str:
     lines = [f"== {pc.name} ({pc.hp}/{pc.max_hp} HP, AC {pc.ac()}) =="]
-    want = lambda s: section in (None, s)
+
+    def want(s):
+        return section in (None, s)
+
     if want("equipment") or want("weapons"):
         worn = []
         if pc.armor:
@@ -56,13 +61,19 @@ def inventory_text(pc, section=None) -> str:
                     note.append(f"{i.props['charges']}/{i.props.get('max_charges', '?')} charges")
                 if i.props.get("attunement"):
                     note.append("attuned" if i in pc.attuned else "requires attunement")
-                lines.append(f"  {i.display}" + (f" x{i.qty}" if i.qty > 1 else "")
-                             + (f" ({', '.join(note)})" if note else ""))
+                lines.append(
+                    f"  {i.display}"
+                    + (f" x{i.qty}" if i.qty > 1 else "")
+                    + (f" ({', '.join(note)})" if note else "")
+                )
         elif section == "potions":
             lines.append("No potions or magic items.")
     if want("equipment"):
-        other = [i for i in pc.inventory if i.kind not in ("weapon", "armor", "shield") and not i.magical
-                 and not i.props.get("in_bag")]
+        other = [
+            i
+            for i in pc.inventory
+            if i.kind not in ("weapon", "armor", "shield") and not i.magical and not i.props.get("in_bag")
+        ]
         if other:
             lines.append("Gear: " + ", ".join(str(i) for i in other))
         lines.append(f"Coins: {pc.purse}   Load: {pc.load():g}/{pc.capacity()[0]:g} lb")
@@ -70,10 +81,14 @@ def inventory_text(pc, section=None) -> str:
         known = pc.all_known_spells()
         if known:
             if pc.slots_max():
-                lines.append("Spell slots: " + ", ".join(f"level {l}: {pc.slots_left(l)}/{m}"
-                                                       for l, m in pc.slots_max().items()))
+                lines.append(
+                    "Spell slots: "
+                    + ", ".join(f"level {lvl}: {pc.slots_left(lvl)}/{m}" for lvl, m in pc.slots_max().items())
+                )
             if pc.spell_ability:
-                lines.append(f"Spell save DC {pc.spell_dc()}, spell attack {fmt_mod(pc.spell_attack_bonus())}")
+                lines.append(
+                    f"Spell save DC {pc.spell_dc()}, spell attack {fmt_mod(pc.spell_attack_bonus())}"
+                )
             cants = [c[0].title() for c in pc.cantrips]
             lines.append("Cantrips: " + ", ".join(cants))
             lvl = [s for s in known if SPELLS.get(s, {}).get("level", 0) > 0]
@@ -92,6 +107,8 @@ def inventory_text(pc, section=None) -> str:
         elif section == "spells":
             lines.append(f"{pc.name} doesn't cast spells.")
     if section is None and pc.resources:
-        lines.append("Features: " + ", ".join(f"{k.title()} {v['max'] - v['used']}/{v['max']}"
-                                              for k, v in pc.resources.items()))
+        lines.append(
+            "Features: "
+            + ", ".join(f"{k.title()} {v['max'] - v['used']}/{v['max']}" for k, v in pc.resources.items())
+        )
     return "\n".join(lines)

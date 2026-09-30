@@ -1,12 +1,13 @@
 """The 7 subset magic items (SRD p.102-103, 204-253): identification,
 attunement, potions, Spell Scrolls, Wand of Magic Missiles, +1 gear,
 Cloak of Protection, Bag of Holding."""
+
 from __future__ import annotations
 
-from .data.spells import SPELLS, CLASS_LISTS
+from .data.spells import CLASS_LISTS, SPELLS
 from .effects import ACBonus, SaveBonus
 from .items import Item
-from .rules import DAY, HOUR, Refusal, norm
+from .rules import HOUR, Refusal, norm
 
 SCROLL_DC = {0: (13, 5), 1: (13, 5), 2: (13, 5)}
 MAGIC_ITEMS = {
@@ -28,22 +29,58 @@ def make(name: str, base: str | None = None, spell: str | None = None, identifie
         sp = norm(spell or n.replace("scroll of", "").replace("spell scroll", "").strip(" ()"))
         if sp not in SPELLS:
             from .rules import OutOfScope
+
             raise OutOfScope(f"A scroll of {sp} is out of scope")
-        return Item("spell scroll", 1, magic=True, spell=sp, title=f"Spell Scroll ({sp.title()})", identified=True,
-                    kind="scroll", weight=0)
+        return Item(
+            "spell scroll",
+            1,
+            magic=True,
+            spell=sp,
+            title=f"Spell Scroll ({sp.title()})",
+            identified=True,
+            kind="scroll",
+            weight=0,
+        )
     if n == "wand of magic missiles":
-        return Item(n, 1, magic=True, charges=7, max_charges=7, identified=identified, kind="wand", weight=1,
-                    title="Wand of Magic Missiles")
+        return Item(
+            n,
+            1,
+            magic=True,
+            charges=7,
+            max_charges=7,
+            identified=identified,
+            kind="wand",
+            weight=1,
+            title="Wand of Magic Missiles",
+        )
     if n == "cloak of protection":
-        return Item(n, 1, magic=True, attunement=True, identified=identified, kind="wondrous", weight=1,
-                    title="Cloak of Protection", slot="cloak")
+        return Item(
+            n,
+            1,
+            magic=True,
+            attunement=True,
+            identified=identified,
+            kind="wondrous",
+            weight=1,
+            title="Cloak of Protection",
+            slot="cloak",
+        )
     if n == "bag of holding":
-        return Item(n, 1, magic=True, identified=identified, kind="wondrous", weight=5, contents=[],
-                    title="Bag of Holding")
+        return Item(
+            n,
+            1,
+            magic=True,
+            identified=identified,
+            kind="wondrous",
+            weight=5,
+            contents=[],
+            title="Bag of Holding",
+        )
     if n.startswith("+1") or n.endswith("+1"):
         b = base or n.replace("+1", "").strip()
         return Item(b, 1, base=b, magic=True, bonus=1, identified=identified, title=f"+1 {b.title()}")
     from .rules import OutOfScope
+
     raise OutOfScope(f"The magic item {name!r} is out of scope")
 
 
@@ -60,7 +97,9 @@ def drink_potion(game, user, target=None, potion="potion of healing"):
     user.inventory.remove(it, 1)
     total, rolls, _ = game.dice.roll_expr("2d4+2")
     who = "drinks" if target is user else f"administers to {target.name}"
-    game.log.player("item", f"{user.name} {who} a Potion of Healing (Bonus Action): 2d4+2 = {rolls}+2", page=99)
+    game.log.player(
+        "item", f"{user.name} {who} a Potion of Healing (Bonus Action): 2d4+2 = {rolls}+2", page=99
+    )
     return target.heal(total, "Potion of Healing", page=99)
 
 
@@ -75,8 +114,11 @@ def short_rest_focus(game, pc, focus):
     what, item = focus
     if what == "identify":
         item.props["identified"] = True
-        game.log.player("item", f"{pc.name} studies the {item.display} during the Short Rest and learns its "
-                        f"properties", page=102)
+        game.log.player(
+            "item",
+            f"{pc.name} studies the {item.display} during the Short Rest and learns its properties",
+            page=102,
+        )
     elif what == "attune":
         attune(game, pc, item)
     elif what == "end_attunement":
@@ -94,7 +136,9 @@ def attune(game, pc, item):
         raise Refusal(f"{pc.name} can't attune to more than one copy of {item.display}", page=102)
     limit = 3
     if len(pc.attuned) >= limit:
-        raise Refusal(f"{pc.name} is already attuned to {limit} magic items; end one Attunement first", page=102)
+        raise Refusal(
+            f"{pc.name} is already attuned to {limit} magic items; end one Attunement first", page=102
+        )
     pc.attuned.append(item)
     item.props["attuned_to"] = pc.id
     _apply_item(game, pc, item)
@@ -125,10 +169,13 @@ def wear(game, pc, item):
 
 
 def _apply_item(game, pc, item):
-    if item.name == "cloak of protection" and item.props.get("worn", True):
-        if not any(e.data.get("item") == item.uid for e in pc.effects):
-            pc.add_effect(ACBonus("Cloak of Protection", 1, item=item.uid))
-            pc.add_effect(SaveBonus("Cloak of Protection", 1, item=item.uid))
+    if (
+        item.name == "cloak of protection"
+        and item.props.get("worn", True)
+        and not any(e.data.get("item") == item.uid for e in pc.effects)
+    ):
+        pc.add_effect(ACBonus("Cloak of Protection", 1, item=item.uid))
+        pc.add_effect(SaveBonus("Cloak of Protection", 1, item=item.uid))
 
 
 def check_distance_attunements(game, pc, away_hours: dict):
@@ -145,19 +192,24 @@ def scroll_casting(game, caster, spell, item):
         raise Refusal(f"That scroll holds {sp.title()}, not {spell.title()}")
     cls = getattr(caster, "cls", None)
     lists = [cls] if cls else []
-    if not any(spell in CLASS_LISTS.get(l, []) for l in lists):
-        raise Refusal(f"The scroll is unintelligible to {caster.name}: {spell.title()} isn't on their spell list",
-                      page=244)
+    if not any(spell in CLASS_LISTS.get(name, []) for name in lists):
+        raise Refusal(
+            f"The scroll is unintelligible to {caster.name}: {spell.title()} isn't on their spell list",
+            page=244,
+        )
     lvl = SPELLS[spell]["level"]
     max_lvl = max(caster.slots_max()) if caster.slots_max() else 0
     if lvl > max_lvl:
         dc = 10 + lvl
-        r = caster.check(ability=caster.spell_ability, dc=dc,
-                         label=f"{caster.spell_ability.title()} check to cast {spell.title()} from a scroll (DC {dc})",
-                         page=244)
+        r = caster.check(
+            ability=caster.spell_ability,
+            dc=dc,
+            label=f"{caster.spell_ability.title()} check to cast {spell.title()} from a scroll (DC {dc})",
+            page=244,
+        )
         if not r.success:
             caster.inventory.remove(item, 1)
-            game.log.player("item", f"The spell vanishes from the scroll with no other effect", page=244)
+            game.log.player("item", "The spell vanishes from the scroll with no other effect", page=244)
             raise Refusal(f"{caster.name} fails to cast {spell.title()} from the scroll; it's lost")
     dc, atk = SCROLL_DC[lvl]
     return caster.spell_ability, dc, atk, "Spell Scroll"
@@ -172,22 +224,33 @@ def copy_scroll(game, wizard, item):
     lvl = SPELLS[sp]["level"]
     max_lvl = max(wizard.slots_max())
     if lvl > max_lvl:
-        raise Refusal(f"{sp.title()} is level {lvl}; {wizard.name} can only copy spells of a level they can prepare "
-                      f"(up to {max_lvl})", page=78)
+        raise Refusal(
+            f"{sp.title()} is level {lvl}; {wizard.name} can only copy spells of a level they can prepare "
+            f"(up to {max_lvl})",
+            page=78,
+        )
     if sp in wizard.spellbook:
         raise Refusal(f"{sp.title()} is already in the spellbook")
     cost = 50 * lvl * 100
     wizard.purse.pay(cost)
     game.advance(2 * lvl * HOUR, f"{wizard.name} copies {sp.title()} into the spellbook")
-    r = wizard.check("arcana", dc=10 + lvl, label=f"Intelligence (Arcana) check to copy {sp.title()} (DC {10 + lvl})",
-                     page=244)
+    r = wizard.check(
+        "arcana",
+        dc=10 + lvl,
+        label=f"Intelligence (Arcana) check to copy {sp.title()} (DC {10 + lvl})",
+        page=244,
+    )
     wizard.inventory.remove(item, 1)
     if r.success:
         wizard.spellbook.append(sp)
-        game.log.player("spellbook", f"{wizard.name} copies {sp.title()} into the spellbook (50 GP × {lvl}, "
-                        f"{2 * lvl} hours); the scroll is destroyed", page=78)
+        game.log.player(
+            "spellbook",
+            f"{wizard.name} copies {sp.title()} into the spellbook (50 GP × {lvl}, "
+            f"{2 * lvl} hours); the scroll is destroyed",
+            page=78,
+        )
     else:
-        game.log.player("spellbook", f"The copying fails; the scroll is destroyed", page=244)
+        game.log.player("spellbook", "The copying fails; the scroll is destroyed", page=244)
     return r.success
 
 
@@ -201,8 +264,12 @@ def wand_casting(game, caster, spell, item, charges):
     if item.props["charges"] < charges:
         raise Refusal(f"The wand has only {item.props['charges']} charges")
     item.props["charges"] -= charges
-    game.log.player("item", f"{caster.name} expends {charges} charge(s) from the Wand of Magic Missiles "
-                    f"({item.props['charges']} left); no spell slot is used", page=251)
+    game.log.player(
+        "item",
+        f"{caster.name} expends {charges} charge(s) from the Wand of Magic Missiles "
+        f"({item.props['charges']} left); no spell slot is used",
+        page=251,
+    )
     if item.props["charges"] == 0:
         r = game.dice.roll(20)
         game.log.player("item", f"The wand's last charge is spent: d20={r}", page=251)
@@ -221,8 +288,12 @@ def dawn(game):
                 r = game.dice.roll(6)
                 before = it.props["charges"]
                 it.props["charges"] = min(it.props["max_charges"], before + r + 1)
-                game.log.player("item", f"At dawn the Wand of Magic Missiles regains 1d6+1 = {r + 1} charges "
-                                f"({before} → {it.props['charges']})", page=251)
+                game.log.player(
+                    "item",
+                    f"At dawn the Wand of Magic Missiles regains 1d6+1 = {r + 1} charges "
+                    f"({before} → {it.props['charges']})",
+                    page=251,
+                )
 
 
 # -- Bag of Holding (p.212) -----------------------------------------------------------------
@@ -243,11 +314,20 @@ def bag_put(game, pc, bag, name, qty=1):
 
 
 def bag_take(game, pc, bag, name):
-    it = next((x for x in pc.inventory if x.props.get("in_bag") == bag.uid and (x.name == name or name in x.display.lower())), None)
+    it = next(
+        (
+            x
+            for x in pc.inventory
+            if x.props.get("in_bag") == bag.uid and (x.name == name or name in x.display.lower())
+        ),
+        None,
+    )
     if it is None:
         raise Refusal(f"There's no {name} in the bag")
     if game.combat is not None:
         game.combat.spend(pc, "action", "Utilize (retrieve from Bag of Holding)")
     it.props.pop("in_bag")
-    game.log.player("item", f"{pc.name} takes the {it.display} out of the Bag of Holding (Utilize action)", page=212)
+    game.log.player(
+        "item", f"{pc.name} takes the {it.display} out of the Bag of Holding (Utilize action)", page=212
+    )
     return it

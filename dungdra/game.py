@@ -5,6 +5,7 @@ Reactions, temp HP ...) go through `decide`, which consults queued answers
 (tests, the structured API), then an interactive decider (CLI/LLM), then a
 default.
 """
+
 from __future__ import annotations
 
 from collections import defaultdict, deque
@@ -20,47 +21,55 @@ class Scene:
 
     def __init__(self):
         self.name = "the wilds"
-        self.light = "bright"          # ambient: bright | dim | dark
+        self.light = "bright"  # ambient: bright | dim | dark
         self.sunlight = False
         self.underwater = False
         self.terrain = "open"
         self.difficult = False
-        self.cover: dict[tuple[str, str], str] = {}     # (attacker, target) -> degree
-        self.cover_all: dict[str, str] = {}              # target -> degree vs everyone
-        self.no_los: set[tuple[str, str]] = set()        # blocked line of sight pairs
+        self.cover: dict[tuple[str, str], str] = {}  # (attacker, target) -> degree
+        self.cover_all: dict[str, str] = {}  # target -> degree vs everyone
+        self.no_los: set[tuple[str, str]] = set()  # blocked line of sight pairs
         self.silence = False
-        self.heavily_obscured: set[str] = set()          # creature ids inside heavy obscurement
+        self.heavily_obscured: set[str] = set()  # creature ids inside heavy obscurement
         self.lightly_obscured: set[str] = set()
         self.stone = True
         self.travel_pace: str | None = None
-        self.objects: dict[str, dict] = {}               # named objects (crate, web, door ...)
-        self.hidden: dict[str, dict] = {}                # hidden things (secret door, trap)
+        self.objects: dict[str, dict] = {}  # named objects (crate, web, door ...)
+        self.hidden: dict[str, dict] = {}  # hidden things (secret door, trap)
 
     def to_dict(self):
-        return {k: (list(map(list, v)) if isinstance(v, set) and v and isinstance(next(iter(v)), tuple)
-                    else sorted(v) if isinstance(v, set)
-                    else {"|".join(kk): vv for kk, vv in v.items()} if k == "cover" else v)
-                for k, v in self.__dict__.items()}
+        return {
+            k: (
+                list(map(list, v))
+                if isinstance(v, set) and v and isinstance(next(iter(v)), tuple)
+                else sorted(v)
+                if isinstance(v, set)
+                else {"|".join(kk): vv for kk, vv in v.items()}
+                if k == "cover"
+                else v
+            )
+            for k, v in self.__dict__.items()
+        }
 
 
 class Game:
     def __init__(self, seed: int | None = 1, interactive=None):
         self.dice = Dice(seed)
         self.log = EventLog()
-        self.clock = 0                    # seconds since campaign start
+        self.clock = 0  # seconds since campaign start
         self.log.clock_fn = lambda: self.clock
         self.creatures: dict = {}
         self.party: list[str] = []
         self.combat = None
         self.scene = Scene()
         self.answers: dict = defaultdict(deque)
-        self.decider = interactive        # fn(game, who, key, options, default, prompt)
-        self.rest = None                  # active rest (for interruption)
+        self.decider = interactive  # fn(game, who, key, options, default, prompt)
+        self.rest = None  # active rest (for interruption)
         self.turn_actor = None
         self.influence_cooldowns: dict = {}
         self.xp_log: list = []
         self.gm_mode = False
-        self.fixed_monster_damage = False    # p.189: static damage numbers instead of dice
+        self.fixed_monster_damage = False  # p.189: static damage numbers instead of dice
         self.content = None
 
     # -- decisions --------------------------------------------------------
@@ -76,8 +85,9 @@ class Game:
                 v = self.answers[k].popleft()
                 self._log_offer(who, key, prompt, v)
                 return v
-        if self.decider is not None and (who is None or getattr(who, "team", "party") == "party"
-                                         or self.gm_mode):
+        if self.decider is not None and (
+            who is None or getattr(who, "team", "party") == "party" or self.gm_mode
+        ):
             v = self.decider(self, who, key, options, default, prompt)
             self._log_offer(who, key, prompt, v)
             return v
@@ -86,8 +96,12 @@ class Game:
 
     def _log_offer(self, who, key, prompt, value, defaulted=False):
         if prompt:
-            self.log.player("offer", f"[choice] {prompt} → {value!r}"
-                            + (" (default)" if defaulted else ""), key=key, value=repr(value))
+            self.log.player(
+                "offer",
+                f"[choice] {prompt} → {value!r}" + (" (default)" if defaulted else ""),
+                key=key,
+                value=repr(value),
+            )
 
     # -- creatures --------------------------------------------------------
     def add(self, creature, team: str | None = None, position=None):
@@ -138,13 +152,12 @@ class Game:
     def line_of_sight(self, a, b) -> bool:
         if (a.id, b.id) in self.scene.no_los or (b.id, a.id) in self.scene.no_los:
             return False
-        if self.cover_between(a, b) == "total":
-            return False
-        return True
+        return self.cover_between(a, b) != "total"
 
     def light_at(self, creature) -> str:
         """Illumination at a creature's position: ambient upgraded by light sources."""
         from .geometry import dist_points
+
         order = ["dark", "dim", "bright"]
         best = order.index(self.scene.light)
         for c in self.creatures.values():
@@ -191,9 +204,7 @@ class Game:
             return False
         if target.id in self.scene.heavily_obscured:
             return False
-        if self.perceived_light(viewer, target) == "dark":
-            return False
-        return True
+        return self.perceived_light(viewer, target) != "dark"
 
     def cover_between(self, attacker, target) -> str | None:
         order = [None, "half", "three-quarters", "total"]
@@ -205,6 +216,7 @@ class Game:
     def scene_gather(self, creature, ctx: Ctx, acc: Acc):
         """Environmental modifiers to D20 Tests (light, travel pace, sunlight)."""
         from . import world
+
         world.scene_gather(self, creature, ctx, acc)
 
     # -- time -------------------------------------------------------------
@@ -212,6 +224,7 @@ class Game:
         """Outside combat, a dying character keeps making Death Saving Throws every 6 seconds
         until Stable, healed or dead (p.17-18)."""
         from .damage import death_save
+
         for c in self.pcs():
             guard = 0
             while c.hp == 0 and not c.dead and not c.stable and guard < 50:
@@ -225,10 +238,16 @@ class Game:
         start = self.clock
         self.clock += seconds
         if log and seconds:
-            self.log.player("time", f"{fmt_duration(seconds)} pass" + (f" ({reason})" if reason else "")
-                            + f"; clock {fmt_clock(self.clock)}", seconds=seconds)
+            self.log.player(
+                "time",
+                f"{fmt_duration(seconds)} pass"
+                + (f" ({reason})" if reason else "")
+                + f"; clock {fmt_clock(self.clock)}",
+                seconds=seconds,
+            )
         self.expire_effects()
         from . import world
+
         world.on_time_passed(self, start, self.clock)
 
     def expire_effects(self):
@@ -252,6 +271,7 @@ class Game:
         if self.combat:
             self.combat.on_death(creature)
         from . import world
+
         world.on_death(self, creature)
 
     def on_incapacitated(self, creature):
@@ -287,8 +307,11 @@ class Game:
         if not what:
             return
         caster.concentrating = None
-        self.log.player("concentration", f"{caster.name}'s Concentration on {what} ends"
-                        + (f" ({reason})" if reason else ""), page=179)
+        self.log.player(
+            "concentration",
+            f"{caster.name}'s Concentration on {what} ends" + (f" ({reason})" if reason else ""),
+            page=179,
+        )
         for c, e in self._conc_effects(caster):
             if c is None:
                 name = next(k for k, v in self.scene.objects.items() if v is e)
@@ -309,6 +332,7 @@ class Game:
     # -- snapshot ---------------------------------------------------------
     def snapshot(self) -> dict:
         from .snapshot import snapshot
+
         return snapshot(self)
 
 

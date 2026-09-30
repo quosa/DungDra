@@ -1,10 +1,14 @@
 """The GM automaton: runs monster turns and ends combat. It can't change state
 except through the same engine calls a player uses, and it never invents
 stat-block abilities (MON-03)."""
+
 from __future__ import annotations
 
-from . import actions, combat as C, class_actions as CA
-from .effects import can_see
+import contextlib
+
+from . import actions
+from . import class_actions as CA
+from . import combat as C
 from .rules import Refusal
 
 LOW_INT = 6
@@ -25,13 +29,15 @@ def monster_turn(game, m):
     if not targets:
         return
     # morale: intelligent low-HP monsters flee (neutralized, still worth XP)
-    if m.score("int") > LOW_INT and m.hp <= max(1, m.max_hp // 4) and m.key not in ("goblin boss", "ogre") \
-            and not m.notes.get("fearless"):
+    if (
+        m.score("int") > LOW_INT
+        and m.hp <= max(1, m.max_hp // 4)
+        and m.key not in ("goblin boss", "ogre")
+        and not m.notes.get("fearless")
+    ):
         if "nimble escape" in m.traits:
-            try:
+            with contextlib.suppress(Refusal):
                 CA.nimble_escape(game, m, "disengage")
-            except Refusal:
-                pass
         m.notes["fled"] = True
         game.log.player("flee", f"{m.name} flees the fight!", page=255)
         return
@@ -47,6 +53,7 @@ def monster_turn(game, m):
         if "pack tactics" in m.traits:
             flank = -20 if any(a.distance_to(p) <= 5 for a in game.allies_of(m)) else 0
         return d + flank + (0 if p.conscious else 50)
+
     target = min(targets, key=score)
     attacks = m.multiattack
     for i in range(attacks):
@@ -63,21 +70,21 @@ def monster_turn(game, m):
             _try_attack(game, m, target, ranged["name"])
             continue
         if cb.turn.movement_left > 0 and i == 0:
-            try:
+            with contextlib.suppress(Refusal):
                 C.move(game, m, toward=target, feet=cb.turn.movement_left)
-            except Refusal:
-                pass
             if melee and m.distance_to(target) <= melee["reach"]:
                 _try_attack(game, m, target, melee["name"])
             elif ranged and m.distance_to(target) <= ranged["range"][1]:
                 _try_attack(game, m, target, ranged["name"])
     # goblins: Nimble Escape to hide after shooting, if there's cover about (and not every time)
-    if "nimble escape" in m.traits and not cb.turn.bonus_used and m.notes.get("cover_nearby") \
-            and game.dice.rng.random() < 0.4:
-        try:
+    if (
+        "nimble escape" in m.traits
+        and not cb.turn.bonus_used
+        and m.notes.get("cover_nearby")
+        and game.dice.rng.random() < 0.4
+    ):
+        with contextlib.suppress(Refusal):
             actions.hide(game, m, cover="three-quarters", bonus=True, source="Nimble Escape (Hide)")
-        except Refusal:
-            pass
 
 
 def _try_attack(game, m, target, name):
@@ -104,7 +111,7 @@ def run_until_pc(game, max_steps=200):
                 C.end_turn(game)
                 continue
             return c
-        if c.team == "party":            # controlled mounts / allied creatures: the GM holds them
+        if c.team == "party":  # controlled mounts / allied creatures: the GM holds them
             C.end_turn(game)
             continue
         monster_turn(game, c)
@@ -121,8 +128,11 @@ def combat_over(game) -> bool:
         return True
     ids = cb.participants
     foes = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "enemy"]
-    pcs = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "party"
-           and game.creatures[i].is_pc()]
+    pcs = [
+        game.creatures[i]
+        for i in ids
+        if i in game.creatures and game.creatures[i].team == "party" and game.creatures[i].is_pc()
+    ]
     foes_active = [f for f in foes if not f.dead and not f.notes.get("fled") and f.conscious]
     pcs_active = [p for p in pcs if not p.dead and p.hp > 0]
     return not foes_active or not pcs_active
@@ -130,20 +140,26 @@ def combat_over(game) -> bool:
 
 def finish_combat(game):
     from .encounters import award_xp
+
     cb = game.combat
     if cb is None:
         return
-    ids = [i for i, _ in cb.order if i in cb.participants] + sorted(i for i in cb.participants
-                                                                  if i not in dict(cb.order))
+    ids = [i for i, _ in cb.order if i in cb.participants] + sorted(
+        i for i in cb.participants if i not in dict(cb.order)
+    )
     foes = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "enemy"]
     pcs = [p for p in game.pcs() if p.id in cb.participants]
     if not any(not p.dead and p.hp > 0 for p in pcs):
         C.end_combat(game, "the party has fallen")
         game.defeated = True
-        game.log.player("defeat", "The party has fallen. The adventure ends here... unless you load an earlier game.")
+        game.log.player(
+            "defeat", "The party has fallen. The adventure ends here... unless you load an earlier game."
+        )
         return
     C.end_combat(game, "the fight is over")
-    beaten = [f for f in foes if f.dead or f.notes.get("fled") or not f.conscious or f.notes.get("surrendered")]
+    beaten = [
+        f for f in foes if f.dead or f.notes.get("fled") or not f.conscious or f.notes.get("surrendered")
+    ]
     if beaten and any(not p.dead for p in pcs):
         award_xp(game, beaten, pcs, "defeating or neutralizing foes")
     for f in beaten:

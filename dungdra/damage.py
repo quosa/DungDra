@@ -1,8 +1,8 @@
 """Dropping to 0 HP, Death Saving Throws, stabilizing (SRD p.17-18)."""
+
 from __future__ import annotations
 
 from .d20 import D20Roll, roll_d20_test
-from .data.equipment import canonical
 from .rules import HOUR, Refusal
 
 
@@ -16,8 +16,12 @@ def pc_drop_to_zero(pc, remainder: int, crit: bool):
     pc.death_saves = {"success": 0, "failure": 0}
     pc.notes["dying"] = True
     if g:
-        g.log.player("down", f"{pc.name} drops to 0 HP ({remainder} damage left over, below the HP maximum of "
-                     f"{pc.max_hp}) and is Unconscious", page=17)
+        g.log.player(
+            "down",
+            f"{pc.name} drops to 0 HP ({remainder} damage left over, below the HP maximum of "
+            f"{pc.max_hp}) and is Unconscious",
+            page=17,
+        )
     if not pc.has("unconscious"):
         pc.add_condition("unconscious", "0 Hit Points")
 
@@ -39,8 +43,12 @@ def add_failures(pc, n, why):
     pc.death_saves["failure"] += n
     g = pc.game
     if g:
-        g.log.player("death_save", f"{pc.name} suffers {n} Death Saving Throw failure{'s' if n > 1 else ''} ({why}); "
-                     f"successes {pc.death_saves['success']}, failures {pc.death_saves['failure']}", page=18)
+        g.log.player(
+            "death_save",
+            f"{pc.name} suffers {n} Death Saving Throw failure{'s' if n > 1 else ''} ({why}); "
+            f"successes {pc.death_saves['success']}, failures {pc.death_saves['failure']}",
+            page=18,
+        )
     if pc.death_saves["failure"] >= 3:
         pc.die("three Death Saving Throw failures")
 
@@ -51,7 +59,9 @@ def death_save(game, pc) -> D20Roll:
     roll_d20_test(game, pc, roll, page=17)
     d = roll.chosen + roll.modifier
     if roll.chosen == 20:
-        game.log.player("death_save", f"{pc.name} rolls a 20 on the Death Saving Throw and regains 1 HP", page=18)
+        game.log.player(
+            "death_save", f"{pc.name} rolls a 20 on the Death Saving Throw and regains 1 HP", page=18
+        )
         pc.heal(1, "natural 20 on a Death Saving Throw", page=18)
         return roll
     if roll.chosen == 1:
@@ -59,8 +69,12 @@ def death_save(game, pc) -> D20Roll:
         return roll
     if d >= 10:
         pc.death_saves["success"] += 1
-        game.log.player("death_save", f"{pc.name}: success ({pc.death_saves['success']} successes, "
-                        f"{pc.death_saves['failure']} failures)", page=17)
+        game.log.player(
+            "death_save",
+            f"{pc.name}: success ({pc.death_saves['success']} successes, "
+            f"{pc.death_saves['failure']} failures)",
+            page=17,
+        )
         if pc.death_saves["success"] >= 3:
             make_stable(game, pc, "three successes")
     else:
@@ -78,8 +92,11 @@ def make_stable(game, pc, how: str):
     pc.notes["stable_since"] = game.clock
     wake = game.dice.roll(4)
     pc.notes["stable_wake_at"] = game.clock + wake * HOUR
-    game.log.player("stable", f"{pc.name} is Stable ({how}); still Unconscious, regains 1 HP after 1d4={wake} "
-                    f"hours if not healed", page=18)
+    game.log.player(
+        "stable",
+        f"{pc.name} is Stable ({how}); still Unconscious, regains 1 HP after 1d4={wake} hours if not healed",
+        page=18,
+    )
 
 
 def first_aid(game, helper, patient, dc=10):
@@ -110,7 +127,9 @@ def healers_kit(game, helper, patient):
     if game.combat is not None:
         game.combat.spend(helper, "action", "Utilize (Healer's Kit)")
     kit.props["uses"] -= 1
-    make_stable(game, patient, f"{helper.name}'s Healer's Kit ({kit.props['uses']} uses left), no Medicine check")
+    make_stable(
+        game, patient, f"{helper.name}'s Healer's Kit ({kit.props['uses']} uses left), no Medicine check"
+    )
 
 
 def on_time_passed(game, c, start, end):

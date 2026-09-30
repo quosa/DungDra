@@ -1,39 +1,101 @@
 """Core conventions (SRD p.5-9): ability modifiers, rounding, skills, sizes."""
+
 from __future__ import annotations
 
 import math
 
 ABILITIES = ("str", "dex", "con", "int", "wis", "cha")
-ABILITY_NAMES = {"str": "Strength", "dex": "Dexterity", "con": "Constitution",
-                 "int": "Intelligence", "wis": "Wisdom", "cha": "Charisma"}
+ABILITY_NAMES = {
+    "str": "Strength",
+    "dex": "Dexterity",
+    "con": "Constitution",
+    "int": "Intelligence",
+    "wis": "Wisdom",
+    "cha": "Charisma",
+}
 
 SKILLS = {
-    "acrobatics": "dex", "animal handling": "wis", "arcana": "int",
-    "athletics": "str", "deception": "cha", "history": "int", "insight": "wis",
-    "intimidation": "cha", "investigation": "int", "medicine": "wis",
-    "nature": "int", "perception": "wis", "performance": "cha",
-    "persuasion": "cha", "religion": "int", "sleight of hand": "dex",
-    "stealth": "dex", "survival": "wis",
+    "acrobatics": "dex",
+    "animal handling": "wis",
+    "arcana": "int",
+    "athletics": "str",
+    "deception": "cha",
+    "history": "int",
+    "insight": "wis",
+    "intimidation": "cha",
+    "investigation": "int",
+    "medicine": "wis",
+    "nature": "int",
+    "perception": "wis",
+    "performance": "cha",
+    "persuasion": "cha",
+    "religion": "int",
+    "sleight of hand": "dex",
+    "stealth": "dex",
+    "survival": "wis",
 }
 
 SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"]
 
-DAMAGE_TYPES = ["acid", "bludgeoning", "cold", "fire", "force", "lightning",
-                "necrotic", "piercing", "poison", "psychic", "radiant",
-                "slashing", "thunder"]
+DAMAGE_TYPES = [
+    "acid",
+    "bludgeoning",
+    "cold",
+    "fire",
+    "force",
+    "lightning",
+    "necrotic",
+    "piercing",
+    "poison",
+    "psychic",
+    "radiant",
+    "slashing",
+    "thunder",
+]
 
-CONDITIONS = ["blinded", "charmed", "deafened", "exhaustion", "frightened",
-              "grappled", "incapacitated", "invisible", "paralyzed",
-              "petrified", "poisoned", "prone", "restrained", "stunned",
-              "unconscious"]
+CONDITIONS = [
+    "blinded",
+    "charmed",
+    "deafened",
+    "exhaustion",
+    "frightened",
+    "grappled",
+    "incapacitated",
+    "invisible",
+    "paralyzed",
+    "petrified",
+    "poisoned",
+    "prone",
+    "restrained",
+    "stunned",
+    "unconscious",
+]
 
-XP_BY_LEVEL = {1: 0, 2: 300, 3: 900, 4: 2700, 5: 6500, 6: 14000, 7: 23000,
-               8: 34000, 9: 48000, 10: 64000, 11: 85000, 12: 100000,
-               13: 120000, 14: 140000, 15: 165000, 16: 195000, 17: 225000,
-               18: 265000, 19: 305000, 20: 355000}
+XP_BY_LEVEL = {
+    1: 0,
+    2: 300,
+    3: 900,
+    4: 2700,
+    5: 6500,
+    6: 14000,
+    7: 23000,
+    8: 34000,
+    9: 48000,
+    10: 64000,
+    11: 85000,
+    12: 100000,
+    13: 120000,
+    14: 140000,
+    15: 165000,
+    16: 195000,
+    17: 225000,
+    18: 265000,
+    19: 305000,
+    20: 355000,
+}
 MAX_LEVEL_IN_SCOPE = 3
 
-ROUND = 6            # seconds per combat round
+ROUND = 6  # seconds per combat round
 MINUTE = 60
 HOUR = 3600
 DAY = 86400

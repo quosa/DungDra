@@ -43,11 +43,41 @@ skip_covered = true
 [tool.ruff]
 line-length = 110
 target-version = "py310"
+extend-exclude = ["docs/loop-example"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "B", "UP", "SIM", "C90"]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C90", "RUF100"]
 
 [tool.ruff.lint.mccabe]
 # Starts at today's worst function; the dev loop ratchets it down to 10.
 max-complexity = 84
 
+[tool.importlinter]
+root_package = "dungdra"
+
+[[tool.importlinter.contracts]]
+name = "Engine layers (interfaces on top, rules kernel at the bottom)"
+type = "layers"
+containers = ["dungdra"]
+layers = [
+  "__main__",
+  "cli",
+  "play",
+  "api : audit",
+  "adventure",
+  "gm : nl : fixtures : inventory_view",
+  "turnhelp : creation : encounters : class_actions",
+  "spells",
+  "combat",
+  "actions : traps : mounted : magic_items : rest : explore : hazards : gear : spellcasting",
+  "character : monster",
+  "creature : game : snapshot",
+  "features : items : d20 : damage",
+  "data",
+  "rules : effects : events : geometry : dice : world",
+]
+# Baseline of today's layer violations. This list may only shrink; each entry is a refactor ticket.
+ignore_imports = [
+  "dungdra.combat -> dungdra.spells",
+  "dungdra.creature -> dungdra.combat",
+]

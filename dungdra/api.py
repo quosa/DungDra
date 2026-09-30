@@ -3,15 +3,59 @@
 Every command returns {"ok": bool, "events": [player-visible lines], "error"?: str}.
 The natural-language interface (nl.py) produces exactly these commands.
 """
+
 from __future__ import annotations
 
-from . import (actions, class_actions as CA, combat as C, damage as D, encounters as E, explore as X, gear, gm,
-               hazards as H, magic_items as MI, rest as R, spells as S, traps as T)
+from . import (
+    actions,
+    gear,
+    gm,
+)
+from . import (
+    class_actions as CA,
+)
+from . import (
+    combat as C,
+)
+from . import (
+    damage as D,
+)
+from . import (
+    encounters as E,
+)
+from . import (
+    explore as X,
+)
+from . import (
+    hazards as H,
+)
+from . import (
+    magic_items as MI,
+)
+from . import (
+    rest as R,
+)
+from . import (
+    spells as S,
+)
+from . import (
+    traps as T,
+)
 from .creation import CharacterBuilder, prepare_spells
 from .events import PLAYER
-from .fixtures import FIXTURES, make as make_fixture
+from .fixtures import make as make_fixture
 from .game import Game
 from .rules import OutOfScope, Refusal, norm
+
+
+def _enemy_state(e) -> str:
+    if e.dead:
+        return "dead"
+    if not e.conscious:
+        return "down"
+    if e.notes.get("fled"):
+        return "fled"
+    return "wounded" if e.hp < e.max_hp else "unhurt"
 
 
 class Session:
@@ -19,8 +63,8 @@ class Session:
         self.game = game or Game(seed)
         self.builder: CharacterBuilder | None = None
         self.adventure = None
-        self.active: str | None = None       # default acting PC
-        self.auto_gm = True                   # False: monster turns are driven through the API (tests/GM tools)
+        self.active: str | None = None  # default acting PC
+        self.auto_gm = True  # False: monster turns are driven through the API (tests/GM tools)
 
     # ------------------------------------------------------------------
     def execute(self, cmd: dict) -> dict:
@@ -41,7 +85,7 @@ class Session:
         except Refusal as e:
             out, ok, err = None, False, e.reason
         if not ok:
-            self._restore_turn(snap)          # a refused command costs nothing
+            self._restore_turn(snap)  # a refused command costs nothing
         # after a PC acts in combat, let the GM run monster turns when the PC ends its turn
         events = [str(e) for e in g.log.since(start) if e.visibility == PLAYER]
         res = {"ok": ok, "events": events}
@@ -55,6 +99,7 @@ class Session:
     # -- helpers ---------------------------------------------------------------
     def _snapshot_turn(self):
         import copy
+
         g = self.game
         cb = g.combat
         wield = {c.id: list(c.wielded) for c in g.pcs()}
@@ -68,13 +113,19 @@ class Session:
         for cid, w in wield.items():
             if cid in g.creatures:
                 g.creatures[cid].wielded = w
-        if cb is not None and g.combat is cb and cb.turn is not None and turn is not None \
-                and cb.turn.cid == turn.cid:
+        if (
+            cb is not None
+            and g.combat is cb
+            and cb.turn is not None
+            and turn is not None
+            and cb.turn.cid == turn.cid
+        ):
             cb.turn = turn
             cb.reaction_used = reactions
 
     def cmd_inventory(self, actor=None, section=None):
         from .inventory_view import inventory_text
+
         g = self.game
         if actor is None and self.active is None and g.combat is None:
             return "\n\n".join(inventory_text(p, section) for p in g.pcs())
@@ -133,8 +184,13 @@ class Session:
             cb = g.combat
             lines.append(f"Round {cb.round}; turn: {cb.current.name if cb.current else '-'}")
             lines += [f"  {g.creatures[i].name}: {v}" for i, v in cb.order]
-            lines += ["Enemies: " + ", ".join(f"{e.name} ({'dead' if e.dead else 'down' if not e.conscious else 'fled' if e.notes.get('fled') else 'wounded' if e.hp < e.max_hp else 'unhurt'})"
-                                           for e in (g.creatures[i] for i in cb.participants if g.creatures[i].team == 'enemy'))]
+            lines += [
+                "Enemies: "
+                + ", ".join(
+                    f"{e.name} ({_enemy_state(e)})"
+                    for e in (g.creatures[i] for i in cb.participants if g.creatures[i].team == "enemy")
+                )
+            ]
         return "\n".join(lines)
 
     def cmd_sheet(self, actor=None):
@@ -149,7 +205,10 @@ class Session:
     # -- combat --------------------------------------------------------------------
     def cmd_start_combat(self, enemies=None, surprised=()):
         g = self.game
-        foes = [g.get(e) for e in (enemies or [c.id for c in g.creatures.values() if c.team == "enemy" and not c.dead])]
+        foes = [
+            g.get(e)
+            for e in (enemies or [c.id for c in g.creatures.values() if c.team == "enemy" and not c.dead])
+        ]
         parts = [p for p in g.pcs() if not p.dead] + foes
         C.roll_initiative(g, parts, surprised=[g.get(s) for s in surprised])
         if self.auto_gm:
@@ -165,17 +224,44 @@ class Session:
         elif gm.combat_over(g):
             gm.finish_combat(g)
 
-    def cmd_attack(self, target, actor=None, weapon=None, thrown=False, two_handed=False, light_extra=False,
-                   unarmed=False):
+    def cmd_attack(
+        self,
+        target,
+        actor=None,
+        weapon=None,
+        thrown=False,
+        two_handed=False,
+        light_extra=False,
+        unarmed=False,
+    ):
         a = self._c(actor)
         kw = {"weapon": weapon} if a.is_pc() else {"attack_name": weapon}
-        r = C.attack(self.game, a, self.game.get(target), thrown=thrown, two_handed=two_handed,
-                     light_extra=light_extra, unarmed=unarmed, **kw)
+        r = C.attack(
+            self.game,
+            a,
+            self.game.get(target),
+            thrown=thrown,
+            two_handed=two_handed,
+            light_extra=light_extra,
+            unarmed=unarmed,
+            **kw,
+        )
         self._after_pc_action()
         return {"hit": r.hit, "crit": r.crit, "damage": r.damage}
 
-    def cmd_cast(self, spell, actor=None, targets=None, slot=None, ritual=False, free=False, item=None,
-                 option=None, point=None, charges=None):
+    def cmd_cast(
+        self,
+        spell,
+        actor=None,
+        targets=None,
+        slot=None,
+        ritual=False,
+        free=False,
+        item=None,
+        option=None,
+        point=None,
+        charges=None,
+    ):
         a = self._c(actor)
         it = a.inventory.find(item) if item else None
         if item and it is None:
@@ -183,15 +269,34 @@ class Session:
         scroll = it is not None and it.name == "spell scroll"
         if targets is not None and not isinstance(targets, list):
             targets = [targets]
-        S.cast(self.game, a, spell, targets, slot=slot, ritual=ritual, free=free, item=it, scroll=scroll,
-               option=option, point=tuple(point) if point else None, charges=charges)
+        S.cast(
+            self.game,
+            a,
+            spell,
+            targets,
+            slot=slot,
+            ritual=ritual,
+            free=free,
+            item=it,
+            scroll=scroll,
+            option=option,
+            point=tuple(point) if point else None,
+            charges=charges,
+        )
         self._after_pc_action()
 
     def cmd_move(self, actor=None, to=None, toward=None, feet=None, away_from=None, mode="walk"):
         g = self.game
         a = self._c(actor)
-        C.move(g, a, to=tuple(to) if to else None, toward=g.get(toward) if toward else None, feet=feet,
-               away_from=g.get(away_from) if away_from else None, mode=mode)
+        C.move(
+            g,
+            a,
+            to=tuple(to) if to else None,
+            toward=g.get(toward) if toward else None,
+            feet=feet,
+            away_from=g.get(away_from) if away_from else None,
+            mode=mode,
+        )
 
     def cmd_dash(self, actor=None, bonus=False):
         actions.dash(self.game, self._c(actor), bonus=bonus)
@@ -205,7 +310,9 @@ class Session:
     def cmd_cunning_action(self, what, actor=None, cover=None):
         a = self._c(actor)
         if norm(what) == "hide":
-            actions.hide(self.game, a, cover=cover or "three-quarters", bonus=True, source="Cunning Action (Hide)")
+            actions.hide(
+                self.game, a, cover=cover or "three-quarters", bonus=True, source="Cunning Action (Hide)"
+            )
         else:
             CA.cunning_action(self.game, a, what)
 
@@ -221,12 +328,20 @@ class Session:
             actions.help_check(g, a, g.get(ally), skill=skill, tool=tool)
 
     def cmd_search(self, actor=None, skill="perception", dc=None, target=None, what=""):
-        r = actions.search(self.game, self._c(actor), skill, dc=dc, target=self.game.get(target) if target else None,
-                           what=what)
+        r = actions.search(
+            self.game,
+            self._c(actor),
+            skill,
+            dc=dc,
+            target=self.game.get(target) if target else None,
+            what=what,
+        )
         return {"total": r.total, "success": r.success}
 
     def cmd_study(self, actor=None, skill=None, dc=None, topic="", creature_type=None):
-        r = actions.study(self.game, self._c(actor), skill=skill, dc=dc, topic=topic, creature_type=creature_type)
+        r = actions.study(
+            self.game, self._c(actor), skill=skill, dc=dc, topic=topic, creature_type=creature_type
+        )
         return {"total": r.total, "success": r.success}
 
     def cmd_check(self, skill=None, ability=None, dc=None, actor=None):
@@ -234,7 +349,9 @@ class Session:
         return {"total": r.total, "success": r.success}
 
     def cmd_influence(self, npc, request, disposition="hesitant", approach="persuade", actor=None):
-        return actions.influence(self.game, self._c(actor), self.game.get(npc), request, disposition, approach)
+        return actions.influence(
+            self.game, self._c(actor), self.game.get(npc), request, disposition, approach
+        )
 
     def cmd_use_tool(self, task, actor=None, dc=None, tool=None):
         r = actions.use_tool(self.game, self._c(actor), task, dc=dc, tool=tool)
@@ -295,8 +412,15 @@ class Session:
     # -- exploration & downtime ----------------------------------------------------------
     def cmd_travel(self, miles=None, hours=None, pace="normal", terrain="forest", road=False):
         g = self.game
-        X.travel(g, [p for p in g.pcs() if not p.dead], miles=miles, hours=hours, pace=pace, terrain=terrain,
-                 road=road)
+        X.travel(
+            g,
+            [p for p in g.pcs() if not p.dead],
+            miles=miles,
+            hours=hours,
+            pace=pace,
+            terrain=terrain,
+            road=road,
+        )
 
     def _resters(self):
         g = self.game
@@ -304,8 +428,11 @@ class Session:
         pcs = [p for p in g.pcs() if not p.dead and p.hp >= 1]
         for p in g.pcs():
             if not p.dead and p.hp < 1:
-                g.log.player("rest", f"{p.name} has 0 Hit Points and can't start a rest (needs healing first)",
-                             page=187)
+                g.log.player(
+                    "rest",
+                    f"{p.name} has 0 Hit Points and can't start a rest (needs healing first)",
+                    page=187,
+                )
         if not pcs:
             raise Refusal("Nobody is able to rest")
         return pcs
@@ -328,8 +455,9 @@ class Session:
         self.scheduled_interrupt = None
         hours, keys = sched
         R.begin_rest(g, "long", pcs)
-        g.log.player("rest", "Watches are set: each companion takes a turn standing guard (light activity)",
-                     page=185)
+        g.log.player(
+            "rest", "Watches are set: each companion takes a turn standing guard (light activity)", page=185
+        )
         need = max(4 if "trance" in p.traits else 8 for p in pcs)
         g.advance(int(hours * 3600), "Long Rest")
         g.rest["interrupted"] = "an attack in the night"
@@ -354,8 +482,12 @@ class Session:
         pcs = [g.get(i) for i in pr["members"] if not g.get(i).dead and g.get(i).hp >= 1]
         R.begin_rest(g, "long", pcs)
         remaining = pr["need"] - pr["rested"] + pr["interruptions"]
-        g.log.player("rest", f"The Long Rest resumes: it needs {pr['interruptions']} extra hour(s) per interruption "
-                     f"({remaining:g} hours to go)", page=185)
+        g.log.player(
+            "rest",
+            f"The Long Rest resumes: it needs {pr['interruptions']} extra hour(s) per interruption "
+            f"({remaining:g} hours to go)",
+            page=185,
+        )
         self.paused_rest = None
         g.advance(int(remaining * 3600), "Long Rest (resumed)")
         return R.finish_long_rest(g, pcs)
@@ -364,7 +496,7 @@ class Session:
     def cmd_spawn(self, monsters, positions=None, team="enemy", names=None):
         mons = E.spawn(self.game, monsters, positions, team)
         if names:
-            for m, n in zip(mons, names):
+            for m, n in zip(mons, names, strict=False):
                 m.name = n
         return [m.id for m in mons]
 
@@ -447,9 +579,17 @@ class Session:
         if self.adventure is None:
             raise Refusal("There's nothing to loot here")
         g = self.game
-        needle = next((o["trap"] for o in g.scene.objects.values() if "trap" in o
-                       and o["trap"].kind == "poisoned needle" and not o["trap"].disabled and not o["trap"].triggered),
-                      None)
+        needle = next(
+            (
+                o["trap"]
+                for o in g.scene.objects.values()
+                if "trap" in o
+                and o["trap"].kind == "poisoned needle"
+                and not o["trap"].disabled
+                and not o["trap"].triggered
+            ),
+            None,
+        )
         if needle is not None:
             raise Refusal("The chest is locked. Pick the lock or disarm whatever guards it first")
         self.adventure.take_loot()
@@ -472,8 +612,19 @@ class Session:
                     f = 0
             H.end_of_day_food(g, p, f)
             H.end_of_day_water(g, p, (water or {}).get(p.id, 1))
-            g.log.player("food", f"{p.name} {'eats a day of Rations' if f >= 1 else 'goes hungry' if f == 0 else 'eats a partial ration'}"
-                         f" ({p.inventory.count('rations')} left)", page=185)
+            g.log.player(
+                "food",
+                f"{p.name} "
+                + (
+                    "eats a day of Rations"
+                    if f >= 1
+                    else "goes hungry"
+                    if f == 0
+                    else "eats a partial ration"
+                )
+                + f" ({p.inventory.count('rations')} left)",
+                page=185,
+            )
 
     def cmd_lose_item(self, item, actor=None, qty=1):
         a = self._c(actor)

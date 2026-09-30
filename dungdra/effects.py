@@ -5,6 +5,7 @@ weapon-mastery riders ...). The engine asks effects about D20 Tests the owner
 makes (`d20`), D20 Tests aimed at the owner (`as_target`), AC, Speed, and
 notifies them of turn boundaries and damage.
 """
+
 from __future__ import annotations
 
 import itertools
@@ -17,7 +18,8 @@ _ids = itertools.count(1)
 @dataclass
 class Ctx:
     """Context of a D20 Test."""
-    kind: str                       # 'check' | 'save' | 'attack' | 'initiative' | 'death save'
+
+    kind: str  # 'check' | 'save' | 'attack' | 'initiative' | 'death save'
     actor: Any = None
     ability: str | None = None
     skill: str | None = None
@@ -28,9 +30,9 @@ class Ctx:
     weapon: Any = None
     spell: Any = None
     distance: int | None = None
-    tags: set = field(default_factory=set)    # 'sight', 'hearing', 'social', 'initiative' ...
-    avoid: set = field(default_factory=set)   # conditions a save/check avoids or ends
-    source: Any = None                         # creature that caused the save
+    tags: set = field(default_factory=set)  # 'sight', 'hearing', 'social', 'initiative' ...
+    avoid: set = field(default_factory=set)  # conditions a save/check avoids or ends
+    source: Any = None  # creature that caused the save
 
     @property
     def is_attack(self):
@@ -47,9 +49,9 @@ class Acc:
         self.bonus_dice: list[tuple[str, str]] = []
         self.auto: str | None = None
         self.auto_reason: str = ""
-        self.ac: list[tuple[int, str]] = []        # AC adjustments (attack vs owner)
+        self.ac: list[tuple[int, str]] = []  # AC adjustments (attack vs owner)
         self.auto_crit: list[str] = []
-        self.consumed: list = []                  # effects to remove if the roll happens
+        self.consumed: list = []  # effects to remove if the roll happens
 
     def advantage(self, src):
         if src not in self.adv:
@@ -76,17 +78,16 @@ class Acc:
 
 class Effect:
     name = "effect"
-    condition: str | None = None     # set when this effect *is* a condition
+    condition: str | None = None  # set when this effect *is* a condition
     page = None
 
-    def __init__(self, source: str = "", caster=None, concentration=False,
-                 ends=None, until=None, **data):
+    def __init__(self, source: str = "", caster=None, concentration=False, ends=None, until=None, **data):
         self.id = next(_ids)
         self.source = source or self.name
         self.caster_id = getattr(caster, "id", caster)
         self.concentration = concentration
-        self.ends = list(ends or [])       # [('start'|'end', creature_id)]
-        self.until = until                 # absolute game time (s) at which it expires
+        self.ends = list(ends or [])  # [('start'|'end', creature_id)]
+        self.until = until  # absolute game time (s) at which it expires
         self.owner = None
         self.data = data
 
@@ -207,9 +208,14 @@ class Condition(Effect):
                     acc.advantage(f"target {o.name} is Prone (attacker within 5 ft)")
                 else:
                     acc.disadvantage(f"target {o.name} is Prone (attacker beyond 5 ft)")
-        elif ctx.kind == "check" and n == "charmed" and "social" in ctx.tags:
-            if ctx.actor is not None and ctx.actor.id == self.caster_id:
-                acc.advantage(f"{o.name} is Charmed by {ctx.actor.name}")
+        elif (
+            ctx.kind == "check"
+            and n == "charmed"
+            and "social" in ctx.tags
+            and ctx.actor is not None
+            and ctx.actor.id == self.caster_id
+        ):
+            acc.advantage(f"{o.name} is Charmed by {ctx.actor.name}")
 
     def speed_zero(self, owner):
         return self.condition in ("grappled", "paralyzed", "petrified", "restrained", "unconscious")
@@ -245,16 +251,17 @@ def _sees_by_other_means(viewer, target) -> bool:
 # Generic, reusable effects
 # ---------------------------------------------------------------------------
 
+
 class AdvNext(Effect):
     """Advantage (or Disadvantage) on the owner's next matching D20 Test.
 
     Used by Help (checks), Vex, Steady Aim, Sap (disadvantage) ...
     kinds: which roll kinds it applies to; skill/tool/target filters optional.
     """
+
     name = "next roll"
 
-    def __init__(self, source, kinds=("attack",), mode="adv", skill=None, tool=None,
-                 target=None, **kw):
+    def __init__(self, source, kinds=("attack",), mode="adv", skill=None, tool=None, target=None, **kw):
         super().__init__(source, **kw)
         self.kinds = set(kinds)
         self.mode = mode
@@ -269,9 +276,7 @@ class AdvNext(Effect):
             return False
         if self.tool and not self.skill and ctx.tool != self.tool:
             return False
-        if self.target_id and (ctx.target is None or ctx.target.id != self.target_id):
-            return False
-        return True
+        return not (self.target_id and (ctx.target is None or ctx.target.id != self.target_id))
 
     def d20(self, ctx, acc):
         if self.matches(ctx):
@@ -282,18 +287,25 @@ class AdvNext(Effect):
 class HelpAttack(Effect):
     """Help: Assist an Attack Roll (p.183). Placed on the enemy; the next attack
     roll by one of the helper's allies against it has Advantage."""
+
     name = "Help (attack)"
 
     def as_target(self, ctx, acc):
         helper = self.owner.game.creatures.get(self.caster_id) if self.owner.game else None
-        if ctx.kind == "attack" and ctx.actor is not None and helper is not None \
-                and ctx.actor.id != helper.id and ctx.actor.team == helper.team:
+        if (
+            ctx.kind == "attack"
+            and ctx.actor is not None
+            and helper is not None
+            and ctx.actor.id != helper.id
+            and ctx.actor.team == helper.team
+        ):
             acc.advantage(self.source)
             acc.consumed.append(self)
 
 
 class Dodge(Effect):
     """Dodge action (p.181)."""
+
     name = "Dodge"
 
     def active(self):

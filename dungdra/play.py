@@ -1,4 +1,5 @@
 """The natural-language play loop: text in, narration out."""
+
 from __future__ import annotations
 
 from . import nl
@@ -15,12 +16,16 @@ class Play:
         self.llm = llm
         if adventure:
             from .adventure import Adventure
+
             self.session.adventure = Adventure(self.session)
 
     def begin(self) -> str:
-        return ("Welcome to DungDra, a fifth-edition-compatible adventure.\n"
-                "Create your party: describe a character (e.g. 'A dwarf fighter, ex-soldier, standard array ...'), "
-                "or type 'use the sample party'. Type 'begin the adventure' when everyone is ready.")
+        return (
+            "Welcome to DungDra, a fifth-edition-compatible adventure.\n"
+            "Create your party: describe a character (e.g. 'A dwarf fighter, ex-soldier, standard "
+            "array ...'), "
+            "or type 'use the sample party'. Type 'begin the adventure' when everyone is ready."
+        )
 
     def say(self, text: str) -> str:
         t = text.strip()
@@ -35,10 +40,7 @@ class Play:
             start = len(self.game.log)
             self.session.adventure.start()
             return self._events(start)
-        if self.llm is not None:
-            cmds = self.llm.translate(self, t)
-        else:
-            cmds = nl.parse(self.session, t)
+        cmds = self.llm.translate(self, t) if self.llm is not None else nl.parse(self.session, t)
         if isinstance(cmds, dict) and "create" in cmds:
             return self._create(cmds["create"])
         if isinstance(cmds, dict):
@@ -60,6 +62,7 @@ class Play:
         """After a command in combat: say what the active PC can still do, and end the turn
         automatically once the character has nothing useful left (movement alone doesn't count)."""
         from .turnhelp import turn_summary
+
         out = []
         info_only = all(c.get("cmd") in ("status", "sheet", "look", "inventory", "end_turn") for c in cmds)
         for _ in range(8):

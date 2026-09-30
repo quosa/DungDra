@@ -1,11 +1,16 @@
 """SPL, SPELLS, CLS-CLR, CLS-WIZ, FEAT-03."""
+
 import pytest
 
-from dungdra import Refusal, OutOfScope
-from dungdra import combat as C, class_actions as CA, rest as R, spells as S, magic_items as MI
+from dungdra import Refusal
+from dungdra import class_actions as CA
+from dungdra import combat as C
+from dungdra import magic_items as MI
+from dungdra import rest as R
+from dungdra import spells as S
 from dungdra.creation import prepare_spells
-from tests.support.helpers import pc, mon
-from tests.scenarios.test_combat import start, set_turn
+from tests.scenarios.test_combat import set_turn, start
+from tests.support.helpers import mon, pc
 
 
 # ---------------- SPL-01 ----------------
@@ -45,7 +50,7 @@ def test_spl01_one_slot_per_turn(game):
     with pytest.raises(Refusal, match="one spell slot"):
         S.cast(game, j, "guiding bolt", gob)
     game.dice.force_str("d20=[5]")
-    S.cast(game, j, "sacred flame", gob)             # a cantrip is fine
+    S.cast(game, j, "sacred flame", gob)  # a cantrip is fine
 
 
 # ---------------- FEAT-03 ----------------
@@ -108,9 +113,9 @@ def test_spl02_bless_duration(game):
     S.cast(game, j, "bless", [j])
     for _ in range(19):
         C.end_turn(game)
-    assert j.find_effects("Bless")                    # still round 10
+    assert j.find_effects("Bless")  # still round 10
     C.end_turn(game)
-    assert not j.find_effects("Bless")               # start of round 11: 10 rounds elapsed
+    assert not j.find_effects("Bless")  # start of round 11: 10 rounds elapsed
 
 
 # ---------------- SPL-03 · Rituals ----------------
@@ -123,7 +128,7 @@ def test_spl03_rituals(game):
     S.cast(game, j, "detect magic", ritual=True)
     assert game.clock - t0 >= 600 and j.slots_left(1) == 2
     m.slots_used = {1: 2}
-    S.cast(game, m, "detect magic", ritual=True)      # from the spellbook, unprepared, no slots left
+    S.cast(game, m, "detect magic", ritual=True)  # from the spellbook, unprepared, no slots left
     with pytest.raises(Refusal, match="higher level"):
         S.cast(game, j, "detect magic", ritual=True, slot=2)
     gob = mon(game, "goblin warrior", (60, 0))
@@ -190,7 +195,7 @@ def test_spl06_targeting(game):
     j.award_xp(900)
     j.prepared.append("hold person")
     wolf = mon(game, "wolf", (20, 0))
-    n = len(game.dice.history)
+    len(game.dice.history)
     S.cast(game, j, "hold person", wolf)
     assert j.slots_left(2) == 1 and not wolf.has("paralyzed")
     assert "succeeds" in game.log.last("save").text and game.log.last("invalid_target").visibility == "gm"
@@ -241,6 +246,7 @@ def test_spells02_sleep(game):
     b = mon(game, "goblin warrior", (30, 5), name="B")
     sk = mon(game, "skeleton", (35, 0))
     from dungdra.monster import Monster
+
     elf = game.add(Monster("guard", name="Elf Guard"), team="enemy", position=(35, 5))
     elf.traits.add("trance")
     game.dice.force_str("d20=[20, 1, 1, 1]")
@@ -370,25 +376,25 @@ def test_spells06(game):
     m = pc(game, "MIALEE", (0, 0))
     m.award_xp(900)
     m.prepared = ["misty step", "invisibility", "web", "scorching ray", "magic missile", "shield"]
-    l = pc(game, "LIDDA", (0, 5))
+    lidda = pc(game, "LIDDA", (0, 5))
     j = pc(game, "JOZAN", (5, 0))
     j.award_xp(900)
     j.prepared.append("spiritual weapon")
     gob = mon(game, "goblin warrior", (5, 5))
     gob.base_max_hp = gob.hp = 100
     game.dice.force_str("d20=[20, 15, 10, 1]")
-    start(game, m, l, j, gob)
+    start(game, m, lidda, j, gob)
     set_turn(game, m)
     S.cast(game, m, "misty step", point=(30, 0))
     assert m.position == (30, 0) and not any("makes an Opportunity" in e.text for e in game.log.of_kind("oa"))
     m.position = (0, 0)
     set_turn(game, m)
-    S.cast(game, m, "invisibility", l)
-    assert l.has("invisible")
-    set_turn(game, l)
+    S.cast(game, m, "invisibility", lidda)
+    assert lidda.has("invisible")
+    set_turn(game, lidda)
     game.dice.force_str("d20=[15,5]; d6=[1,1]")
-    C.attack(game, l, gob, weapon="shortsword")
-    assert not l.has("invisible")
+    C.attack(game, lidda, gob, weapon="shortsword")
+    assert not lidda.has("invisible")
     set_turn(game, m)
     m.slots_used = {}
     game.dice.force_str("d20=[5]")
@@ -431,8 +437,13 @@ def test_cls_clr01(game):
     assert "martial" in j.weapon_profs and "heavy" in j.armor_training
     from dungdra.creation import CharacterBuilder
     from dungdra.fixtures import FIXTURES
-    fx = dict(FIXTURES["JOZAN"], name="THAUM", divine_order="thaumaturge",
-              cantrips=["sacred flame", "guidance", "spare the dying", "thaumaturgy"])
+
+    fx = dict(
+        FIXTURES["JOZAN"],
+        name="THAUM",
+        divine_order="thaumaturge",
+        cantrips=["sacred flame", "guidance", "spare the dying", "thaumaturgy"],
+    )
     t = CharacterBuilder(game).update(**fx).build()
     game.dice.force_str("d20=[10]")
     r = t.check("religion")
@@ -489,15 +500,18 @@ def test_cls_clr03(game):
     game.dice.force_str("d8=[1,1]")
     S.cast(game, j, "cure wounds", b, item=scroll, scroll=True)
     assert b.hp == 1 + 2 + 3
-    l = pc(game, "LIDDA", (10, 0)); l.award_xp(900)
-    m = pc(game, "MIALEE", (10, 5)); m.award_xp(900)
-    b.hp, l.hp, m.hp = 5, 3, 2
-    res = CA.preserve_life(game, j, {"brom": 5, "lidda": 5, "mialee": 5})
-    assert b.hp == 10 and l.hp == 8 and m.hp == 7
+    lidda = pc(game, "LIDDA", (10, 0))
+    lidda.award_xp(900)
+    m = pc(game, "MIALEE", (10, 5))
+    m.award_xp(900)
+    b.hp, lidda.hp, m.hp = 5, 3, 2
+    CA.preserve_life(game, j, {"brom": 5, "lidda": 5, "mialee": 5})
+    assert b.hp == 10 and lidda.hp == 8 and m.hp == 7
     assert set(j.always_prepared) >= {"aid", "bless", "cure wounds", "lesser restoration"}
     R.long_rest(game, [j])
-    prepare_spells(j, ["guiding bolt", "healing word", "sanctuary", "shield of faith", "hold person",
-                       "spiritual weapon"])
+    prepare_spells(
+        j, ["guiding bolt", "healing word", "sanctuary", "shield of faith", "hold person", "spiritual weapon"]
+    )
     assert len(j.prepared) == 6 and "bless" not in j.prepared and j.castable("bless")
 
 
@@ -527,6 +541,7 @@ def test_cls_wiz01(game):
     assert m.slots_left(2) == 1
     with pytest.raises(Refusal):
         from dungdra.spellcasting import arcane_recovery
+
         arcane_recovery(game, m, [1, 1, 1])
 
 
@@ -537,7 +552,8 @@ def test_cls_wiz02(game):
     m.award_xp(900)
     assert m.skill_total("arcana") == 7
     m.prepared = [s for s in m.prepared if s != "detect magic"]
-    m.always_prepared.pop("detect magic", None); m.free_casts.pop("detect magic", None)
+    m.always_prepared.pop("detect magic", None)
+    m.free_casts.pop("detect magic", None)
     S.cast(game, m, "detect magic", ritual=True)
     assert m.subclass == "evoker"
     gob = mon(game, "goblin warrior", (30, 0))
@@ -551,7 +567,8 @@ def test_cls_wiz03(game):
     m = pc(game, "MIALEE")
     web = MI.make("spell scroll", spell="web")
     misty = MI.make("spell scroll", spell="misty step")
-    m.inventory.add(web); m.inventory.add(misty)
+    m.inventory.add(web)
+    m.inventory.add(misty)
     with pytest.raises(Refusal, match="level"):
         MI.copy_scroll(game, m, web)
     with pytest.raises(Refusal, match="level"):

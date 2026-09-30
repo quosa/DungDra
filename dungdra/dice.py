@@ -3,6 +3,7 @@
 Forced results are queued per die type and consumed in order; once a queue is
 empty the seeded RNG takes over.
 """
+
 from __future__ import annotations
 
 import random
@@ -69,13 +70,17 @@ class Dice:
 
     # -- persistence -----------------------------------------------------
     def to_dict(self) -> dict:
-        return {"seed": self.seed, "state": repr(self.rng.getstate()),
-                "forced": {str(k): list(v) for k, v in self.forced.items() if v}}
+        return {
+            "seed": self.seed,
+            "state": repr(self.rng.getstate()),
+            "forced": {str(k): list(v) for k, v in self.forced.items() if v},
+        }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "Dice":
+    def from_dict(cls, d: dict) -> Dice:
         dice = cls(d.get("seed"))
         import ast
+
         st = ast.literal_eval(d["state"])
         dice.rng.setstate(st)
         for k, v in d.get("forced", {}).items():

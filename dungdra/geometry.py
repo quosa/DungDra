@@ -1,5 +1,6 @@
 """Positions and distances (feet). The grid uses the SRD's 5-ft squares with
 diagonals counting 5 ft (Chebyshev distance), plus elevation."""
+
 from __future__ import annotations
 
 

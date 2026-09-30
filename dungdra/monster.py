@@ -1,4 +1,5 @@
 """Monsters built from stat blocks (SRD p.254-255, glossary "Stat Block" p.188-189)."""
+
 from __future__ import annotations
 
 import itertools
@@ -14,13 +15,18 @@ _counter = itertools.count(1)
 
 class UndeadFortitude(Effect):
     """p.343: DC 5 + damage Con save to drop to 1 HP instead (not vs Radiant or crits)."""
+
     name = "Undead Fortitude"
 
     def at_zero_hp(self, game, dealt, dtype, crit):
         o = self.owner
         if dtype == "radiant" or crit:
-            game.log.player("trait", f"{o.name}'s Undead Fortitude doesn't apply "
-                            f"({'Radiant damage' if dtype == 'radiant' else 'Critical Hit'})", page=343)
+            game.log.player(
+                "trait",
+                f"{o.name}'s Undead Fortitude doesn't apply "
+                f"({'Radiant damage' if dtype == 'radiant' else 'Critical Hit'})",
+                page=343,
+            )
             return False
         dc = 5 + dealt
         r = o.save("con", dc, label=f"Undead Fortitude Con save (DC {dc})", page=343)
@@ -42,9 +48,17 @@ class Monster(Creature):
         self.key = key
         self.data = d
         nm = name or key.title()
-        super().__init__(nm, d["abilities"], size=d["size"], ctype=d["type"], tags=d["tags"],
-                         pb=proficiency_bonus(max(d["cr"], 1)), max_hp=d["hp"], speed=dict(d["speed"]),
-                         team="enemy")
+        super().__init__(
+            nm,
+            d["abilities"],
+            size=d["size"],
+            ctype=d["type"],
+            tags=d["tags"],
+            pb=proficiency_bonus(max(d["cr"], 1)),
+            max_hp=d["hp"],
+            speed=dict(d["speed"]),
+            team="enemy",
+        )
         self.save_bonus = dict(d["saves"])
         self.skill_bonus_fixed = dict(d["skills"])
         self.skills = {k: 1 for k in d["skills"]}
@@ -84,8 +98,11 @@ class Monster(Creature):
             if norm(a["name"]) == n or (a.get("weapon") and a["weapon"] == n):
                 return a
         from .rules import Refusal
-        raise Refusal(f"{self.name} has no attack called {name!r}; it has "
-                      f"{', '.join(a['name'] for a in self.attacks)} (the GM can't invent stat-block abilities)")
+
+        raise Refusal(
+            f"{self.name} has no attack called {name!r}; it has "
+            f"{', '.join(a['name'] for a in self.attacks)} (the GM can't invent stat-block abilities)"
+        )
 
     def check_modifier_parts(self, ability, skill=None, tool=None):
         if skill and skill in self.skill_bonus_fixed:
@@ -98,8 +115,12 @@ class Monster(Creature):
         return super().passive(skill, tags)
 
     def extra_gather(self, ctx, acc):
-        if "sunlight sensitivity" in self.traits and self.game and self.game.scene.sunlight \
-                and ctx.kind in ("attack", "check"):
+        if (
+            "sunlight sensitivity" in self.traits
+            and self.game
+            and self.game.scene.sunlight
+            and ctx.kind in ("attack", "check")
+        ):
             acc.disadvantage("Sunlight Sensitivity")
         if ctx.kind == "initiative":
             pass

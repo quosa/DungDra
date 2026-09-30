@@ -3,14 +3,24 @@
 Every required choice must be made before the sheet can be finalized; the
 builder reports which ones are still missing so the game can ask for them.
 """
+
 from __future__ import annotations
 
 from .character import Character
 from .data.classes import CLASSES, OUT_OF_SCOPE_CLASSES
-from .data.equipment import (AMMO_BUNDLE, ARMOR, GAMING_SETS, GEAR, PACKS, TOOLS, WEAPONS, canonical,
-                             item_cost)
-from .data.origins import (BACKGROUNDS, FIGHTING_STYLES, ORIGIN_FEATS, OUT_OF_SCOPE_SPECIES, POINT_COST,
-                           RARE_LANGUAGES, SPECIES, STANDARD_ARRAY, STANDARD_LANGUAGES, ALIGNMENTS)
+from .data.equipment import AMMO_BUNDLE, GAMING_SETS, TOOLS, WEAPONS, canonical, item_cost
+from .data.origins import (
+    ALIGNMENTS,
+    BACKGROUNDS,
+    FIGHTING_STYLES,
+    ORIGIN_FEATS,
+    OUT_OF_SCOPE_SPECIES,
+    POINT_COST,
+    RARE_LANGUAGES,
+    SPECIES,
+    STANDARD_ARRAY,
+    STANDARD_LANGUAGES,
+)
 from .data.spells import CLASS_LISTS, SPELLS
 from .features import grant_features
 from .items import fmt_cp
@@ -34,8 +44,17 @@ class CharacterBuilder:
         return self
 
     def update(self, **kw):
-        order = ["name", "cls", "species", "lineage", "size", "background", "ability_method", "scores",
-                 "background_bonus"]
+        order = [
+            "name",
+            "cls",
+            "species",
+            "lineage",
+            "size",
+            "background",
+            "ability_method",
+            "scores",
+            "background_bonus",
+        ]
         for k in order:
             if k in kw:
                 self.set(k, kw.pop(k))
@@ -50,7 +69,9 @@ class CharacterBuilder:
     def _set_cls(self, v):
         v = norm(v)
         if v in OUT_OF_SCOPE_CLASSES:
-            raise OutOfScope(f"The {v.title()} class is out of scope; choose Fighter, Rogue, Cleric or Wizard.")
+            raise OutOfScope(
+                f"The {v.title()} class is out of scope; choose Fighter, Rogue, Cleric or Wizard."
+            )
         if v not in CLASSES:
             raise Refusal(f"Unknown class {v!r}")
         self.c["cls"] = v
@@ -137,8 +158,10 @@ class CharacterBuilder:
         vals = sorted(v.values())
         if method == "standard":
             if vals != sorted(STANDARD_ARRAY):
-                raise Refusal(f"The Standard Array is 15, 14, 13, 12, 10, 8 — each used exactly once "
-                              f"(got {sorted(v.values(), reverse=True)})")
+                raise Refusal(
+                    f"The Standard Array is 15, 14, 13, 12, 10, 8 — each used exactly once "
+                    f"(got {sorted(v.values(), reverse=True)})"
+                )
         elif method == "point":
             if any(s < 8 or s > 15 for s in vals):
                 raise Refusal("Point Cost scores must be between 8 and 15")
@@ -170,7 +193,9 @@ class CharacterBuilder:
         langs = [x for x in langs if x != "common"]
         for x in langs:
             if x in RARE_LANGUAGES:
-                raise Refusal(f"{x.title()} is a rare language; it can't be picked without a feature that grants it")
+                raise Refusal(
+                    f"{x.title()} is a rare language; it can't be picked without a feature that grants it"
+                )
             if x not in STANDARD_LANGUAGES:
                 raise Refusal(f"Unknown language {x!r}")
         if len(langs) != 2 or len(set(langs)) != 2:
@@ -334,8 +359,10 @@ class CharacterBuilder:
         cls = self._need("cls")
         eq = CLASSES[cls]["equipment"]
         if v not in ("A", "B", "C") or (v != "C" and f"{v}_gp" not in eq) or (v == "C" and "C_gp" not in eq):
-            raise Refusal(f"{cls.title()} starting equipment options: "
-                          f"{', '.join(k[0] for k in eq if k.endswith('_gp'))}")
+            raise Refusal(
+                f"{cls.title()} starting equipment options: "
+                f"{', '.join(k[0] for k in eq if k.endswith('_gp'))}"
+            )
         self.c["class_equipment"] = v
         if isinstance(eq.get(v), list):
             self.c.pop("purchases", None)
@@ -362,8 +389,10 @@ class CharacterBuilder:
             if n in AMMO_BUNDLE:
                 price = round(cost * qty)
             if total + price > budget:
-                raise Refusal(f"Can't afford {qty} × {n.title()} ({fmt_cp(int(price))}); "
-                              f"{fmt_cp(int(budget - total))} left")
+                raise Refusal(
+                    f"Can't afford {qty} × {n.title()} ({fmt_cp(int(price))}); "
+                    f"{fmt_cp(int(budget - total))} left"
+                )
             total += price
             bought.append((n, qty))
         self.c["purchases"] = bought
@@ -412,14 +441,24 @@ class CharacterBuilder:
         need("scores", "Assign ability scores (Standard Array 15, 14, 13, 12, 10, 8; Point Cost; or Random).")
         need("background_bonus", "Which background abilities get +2/+1 (or +1/+1/+1)?")
         need("alignment", "What is your alignment?")
-        need("languages", f"Choose two standard languages: {', '.join(l.title() for l in STANDARD_LANGUAGES)}.")
+        need(
+            "languages",
+            f"Choose two standard languages: {', '.join(lang.title() for lang in STANDARD_LANGUAGES)}.",
+        )
         cls, sp, bg = c.get("cls"), c.get("species"), c.get("background")
         if cls:
             cd = CLASSES[cls]
-            need("class_skills", f"Choose {cd['skill_count']} {cls.title()} skills from "
-                                 f"{', '.join(s.title() for s in cd['skill_choices'])}.")
-            need("class_equipment", "Starting equipment: option " +
-                 " / ".join(k[0] for k in cd["equipment"] if k.endswith("_gp")) + "?")
+            need(
+                "class_skills",
+                f"Choose {cd['skill_count']} {cls.title()} skills from "
+                f"{', '.join(s.title() for s in cd['skill_choices'])}.",
+            )
+            need(
+                "class_equipment",
+                "Starting equipment: option "
+                + " / ".join(k[0] for k in cd["equipment"] if k.endswith("_gp"))
+                + "?",
+            )
             if cls == "fighter":
                 need("fighting_style", "Choose a Fighting Style (Defense is recommended).")
             if cls in ("fighter", "rogue"):
@@ -430,7 +469,10 @@ class CharacterBuilder:
             if cls == "cleric":
                 need("divine_order", "Divine Order: Protector or Thaumaturge?")
             if cd.get("spellcasting"):
-                need("cantrips", f"Choose {CLASSES[cls]['spellcasting']['cantrips'][1] + (1 if c.get('divine_order') == 'thaumaturge' else 0)} cantrips.")
+                n_cantrips = CLASSES[cls]["spellcasting"]["cantrips"][1]
+                if c.get("divine_order") == "thaumaturge":
+                    n_cantrips += 1
+                need("cantrips", f"Choose {n_cantrips} cantrips.")
                 need("prepared", "Choose 4 level 1 spells to prepare.")
             if cls == "wizard":
                 need("spellbook", "Choose six level 1 Wizard spells for your spellbook.")
@@ -450,8 +492,13 @@ class CharacterBuilder:
             if BACKGROUNDS[bg]["tool"] == "@gaming set":
                 need("gaming_set", "Soldier: choose a kind of gaming set.")
         if self.duplicate_tools() and "replacement_tool" not in c:
-            out.append(("replacement_tool", f"You'd gain {', '.join(self.duplicate_tools())} twice; "
-                        "choose a different tool proficiency instead (ruling R-01)."))
+            out.append(
+                (
+                    "replacement_tool",
+                    f"You'd gain {', '.join(self.duplicate_tools())} twice; "
+                    "choose a different tool proficiency instead (ruling R-01).",
+                )
+            )
         return out
 
     # ------------------------------------------------------------------
@@ -459,8 +506,9 @@ class CharacterBuilder:
         g = game or self.game
         miss = self.missing()
         if miss:
-            raise Refusal("The character sheet can't be finalized yet. Still needed: "
-                          + "; ".join(q for _, q in miss))
+            raise Refusal(
+                "The character sheet can't be finalized yet. Still needed: " + "; ".join(q for _, q in miss)
+            )
         c = self.c
         cls, spn, bgn = c["cls"], c["species"], c["background"]
         cd, sp, bg = CLASSES[cls], SPECIES[spn], BACKGROUNDS[bgn]
@@ -519,8 +567,12 @@ class CharacterBuilder:
         if dup:
             tools.append(c["replacement_tool"])
             if g:
-                g.log.player("ruling", f"{pc.name} would gain {', '.join(dup)} proficiency twice; takes "
-                             f"{c['replacement_tool'].title()} instead", ruling="R-01")
+                g.log.player(
+                    "ruling",
+                    f"{pc.name} would gain {', '.join(dup)} proficiency twice; takes "
+                    f"{c['replacement_tool'].title()} instead",
+                    ruling="R-01",
+                )
         pc.tools = set(tools)
         pc.hp = pc.base_max_hp = cd["hp1"] + pc.mod("con") + (1 if "dwarven toughness" in pc.traits else 0)
         # feats
@@ -569,8 +621,12 @@ class CharacterBuilder:
         # equipment
         self._equip(pc, g, notes)
         if g:
-            g.log.player("create", f"{pc.name} is created: {spn.title()} {cls.title()} 1 ({bgn.title()})"
-                         + (f"; {'; '.join(notes)}" if notes else ""), page="19-23")
+            g.log.player(
+                "create",
+                f"{pc.name} is created: {spn.title()} {cls.title()} 1 ({bgn.title()})"
+                + (f"; {'; '.join(notes)}" if notes else ""),
+                page="19-23",
+            )
         return pc
 
     def _equip(self, pc, g, notes):
@@ -586,7 +642,9 @@ class CharacterBuilder:
             for n, q in c["purchases"]:
                 pc.inventory.add(n, q)
             pc.purse.pay(c["purchase_total"])
-            notes.append(f"bought {', '.join(f'{q} {n}' for n, q in c['purchases'])} for {fmt_cp(c['purchase_total'])}")
+            notes.append(
+                f"bought {', '.join(f'{q} {n}' for n, q in c['purchases'])} for {fmt_cp(c['purchase_total'])}"
+            )
         if c["bg_equipment"] == "A":
             for n, q in bg["equipment"]["A"]:
                 pc.inventory.add(c["gaming_set"] if n == "@gaming set" else n, q)
@@ -607,8 +665,15 @@ def auto_equip(pc):
         pc.shield = sh
     weapons = [it for it in pc.inventory if it.kind == "weapon"]
     if weapons:
-        main = max(weapons, key=lambda w: (pc.proficient_with(w), "two-handed" not in w.weapon["props"] or not pc.shield,
-                                           w.weapon["kind"] == "melee", w.weapon["cost"]))
+        main = max(
+            weapons,
+            key=lambda w: (
+                pc.proficient_with(w),
+                "two-handed" not in w.weapon["props"] or not pc.shield,
+                w.weapon["kind"] == "melee",
+                w.weapon["cost"],
+            ),
+        )
         pc.wielded = [main]
 
 
@@ -632,15 +697,14 @@ def prepare_spells(pc, spells, at_creation=False):
             raise Refusal(f"{s.title()} isn't in {pc.name}'s spellbook")
         if pc.cls == "cleric" and s not in CLASS_LISTS["cleric"]:
             raise Refusal(f"{s.title()} isn't a Cleric spell")
-    if not at_creation and g:
-        last = pc.long_rest_finished_at
-        if not pc.notes.get("may_change_prepared"):
-            raise Refusal("Prepared spells can be changed only after finishing a Long Rest")
+    if not at_creation and g and not pc.notes.get("may_change_prepared"):
+        raise Refusal("Prepared spells can be changed only after finishing a Long Rest")
     pc.prepared = counted
     pc.notes.pop("may_change_prepared", None)
     if g:
-        g.log.player("prepare", f"{pc.name} prepares {', '.join(s.title() for s in counted)}",
-                     page=pc.cdata["page"])
+        g.log.player(
+            "prepare", f"{pc.name} prepares {', '.join(s.title() for s in counted)}", page=pc.cdata["page"]
+        )
 
 
 def _ab(v) -> str:

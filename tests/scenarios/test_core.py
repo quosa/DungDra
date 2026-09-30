@@ -1,5 +1,4 @@
 """CORE: D20 Tests and core conventions (SRD p.5-9)."""
-import pytest
 
 from dungdra.creature import Creature
 from dungdra.rules import ability_mod, div, mul
@@ -55,7 +54,7 @@ def test_core02d_heroic_inspiration_reroll_one_die(game):
     jozan = _bob(game)
     jozan.heroic_inspiration = True
     game.dice.force_str("d20=[3,18,11]")
-    game.answer("inspiration", 0)            # player chooses to reroll the die showing 3
+    game.answer("inspiration", 0)  # player chooses to reroll the die showing 3
     r = jozan.check(ability="wis", adv=["Help"])
     assert r.dice == [11, 18] and r.chosen == 18
     assert jozan.heroic_inspiration is False
@@ -64,13 +63,14 @@ def test_core02d_heroic_inspiration_reroll_one_die(game):
 
 def test_core02d_inspiration_cannot_hold_two(game):
     from dungdra.rest import grant_heroic_inspiration
+
     a = _bob(game)
     b = game.add(Creature("Cy"), team="party")
     a.heroic_inspiration = True
     game.answer("give_inspiration", "cy")
     grant_heroic_inspiration(game, a)
     assert a.heroic_inspiration and b.heroic_inspiration
-    grant_heroic_inspiration(game, a)          # nobody lacks it -> lost
+    grant_heroic_inspiration(game, a)  # nobody lacks it -> lost
     assert "lost" in game.log.last("inspiration").text
 
 
@@ -78,7 +78,7 @@ def test_core02e_halfling_luck_offered_not_automatic(game):
     lidda = _bob(game)
     lidda.traits.add("luck")
     game.dice.force_str("d20=[1,12]")
-    r = lidda.check(ability="dex", dis=["Poisoned"])     # declines by default
+    r = lidda.check(ability="dex", dis=["Poisoned"])  # declines by default
     assert r.chosen == 1 and not r.rerolls
     game.dice.force_str("d20=[1,12,9]")
     game.answer("luck", True)
@@ -93,11 +93,11 @@ def test_core05_save_rules(game):
     c.abilities["con"] = 14
     game.dice.force_str("d20=[20]")
     r = c.save("con", 30)
-    assert r.chosen == 20 and r.success is False       # no automatic success on saves
+    assert r.chosen == 20 and r.success is False  # no automatic success on saves
     game.dice.force_str("d20=[1]")
     r = c.save("con", 5)
-    assert r.success is True                           # no automatic failure on saves
+    assert r.success is True  # no automatic failure on saves
     r = c.save("dex", 5, choose_to_fail=True)
     assert r.success is False and r.dice == []
     c.abilities["str"] = None
-    assert c.save("str", 1).success is False            # lacks the ability -> auto fail
+    assert c.save("str", 1).success is False  # lacks the ability -> auto fail
