@@ -42,7 +42,7 @@
       "summary": "I checked 29 tests: 27 kept, 2 refuted. Mutations ran in scratch copies; no files changed.\n\nRefuted:\n- **`test_dragging_tiny_costs_nothing_extra`**: still passes with the Tiny exemption deleted (combat.py:402). A Medium creature dragging a Tiny one is two sizes apart, so the size rule already exempt"
     }
   },
-  "status": "blocked",
+  "status": "green",
   "tests": [
     "tests/srd/test_glossary.py::test_grappled_speed_is_zero",
     "tests/srd/test_glossary.py::test_grappled_special_speed_is_zero_too",

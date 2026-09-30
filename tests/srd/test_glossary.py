@@ -54,7 +54,7 @@ def test_grappled_speed_is_zero(game):
     assert gob.speed() == 0
 
 
-@pytest.mark.srd(U, clause=f"{U}#1", kind="positive", ruling="P-3")
+@pytest.mark.srd(U, clause=f"{U}#1", kind="positive", ruling="R-07")
 def test_grappled_special_speed_is_zero_too(game):
     brom = brom_free_hand(game)
     rat = mon(game, "giant rat", (5, 0))
@@ -82,7 +82,7 @@ def test_grappled_turn_starts_with_no_movement(game):
     assert game.combat.turn.movement_left == 0
 
 
-@pytest.mark.srd(U, clause=f"{U}#1", kind="boundary", ruling="P-3")
+@pytest.mark.srd(U, clause=f"{U}#1", kind="boundary", ruling="R-07")
 def test_grappled_speed_cant_increase_with_a_bonus(game):
     brom = brom_free_hand(game)
     gob = mon(game, "goblin warrior", (5, 0))
