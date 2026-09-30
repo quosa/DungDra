@@ -183,10 +183,6 @@ def test_disadvantage_ends_with_the_grapple(game):
 
 
 @pytest.mark.srd(U, clause=f"{U}#2", kind="boundary", ruling="proposed: any current grappler")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-1: with two grapplers, attacking one still has Disadvantage from the other grapple",
-)
 def test_two_grapplers_neither_attack_has_disadvantage(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (5, 0))

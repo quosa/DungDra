@@ -1,0 +1,10 @@
+{
+  "id": "T-5",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "Pull the grappler lookup (`e.condition == \"grappled\" and e.data.get(\"grappler\")`) into one helper, such as `grapplers_of(creature)`. The same scan appears in effects.py, combat.py (move-out-of-reach and release) and game.py (incapacitation).",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

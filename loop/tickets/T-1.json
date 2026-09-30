@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "failed",
@@ -18,6 +18,10 @@
     {
       "event": "attempt voided",
       "reason": "harness bug: a multi-line xfail marker wasn't removed, so the passing fix was counted as a failure (fixed in 1c14e50); the attempt's changes are in git stash"
+    },
+    {
+      "event": "fixed",
+      "summary": "Fixed T-1. The Grappled condition's attack rule in `dungdra/effects.py` (`Condition.d20`) only compared the attack's target with its own grappler. With two grapples on a creature, each Grappled effect imposed Disadvantage on attacks against the other grappler. The fix builds the set of every creature currently grappling the owner and imposes Disadvantage only when the target is outside that set. `Acc` already removes duplicate sources, so attacking a third creature still gives a single Disadvantage. The rule is tagged `SRD[GLOSS.grappled#2]`. I added `tests/unit/test_effects.py` with five behaviour tests covering one grappler, two grapplers, a third target and saves.\n\nResults:\n- Unit tests: 149 passed.\n- The ticket's test with `--runxfail`: passes.\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS.\n- Full SRD suite without `--runxfail`: 24 passed, 2 xfailed, 1 failed. The failure is the T-1 test passing while still marked strict xfail; it clears when the harness removes the marker.\n- Full SRD suite with `--runxfail`: 25 passed, 2 failed. The failures are `test_cant_drag_a_creature_you_arent_grappling` and `test_cant_drag_a_creature_someone_else_grapples`, which are still marked xfail for tickets T-2 and T-3.\n\nI didn't check those two against the code without my change, because the stash command was denied. They test drag refusals in `move(drag=...)`, which this change doesn't touch."
     }
   ]
 }

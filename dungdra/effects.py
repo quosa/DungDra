@@ -168,8 +168,10 @@ class Condition(Effect):
             if ctx.kind in ("check", "attack") and _source_in_sight(o, self):
                 acc.disadvantage("Frightened")
         elif n == "grappled":
-            grappler = self.data.get("grappler")
-            if ctx.kind == "attack" and ctx.target is not None and ctx.target.id != grappler:
+            # SRD[GLOSS.grappled#2] "the grappler" is any creature currently grappling the owner
+            grapplers = {e.data.get("grappler") for e in o.effects if e.condition == "grappled"}
+            grapplers.add(self.data.get("grappler"))
+            if ctx.kind == "attack" and ctx.target is not None and ctx.target.id not in grapplers:
                 acc.disadvantage("Grappled (attacking someone other than the grappler)")
         elif n == "incapacitated":
             if ctx.kind == "initiative":
