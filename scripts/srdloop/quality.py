@@ -143,6 +143,26 @@ def unit_test_hygiene(paths: list[Path]) -> list[str]:
     return out
 
 
+RULE_REF = re.compile(r"""\brule\s*=\s*["']([^"']+)["']|SRD\[([^\]]+)\]""")
+
+
+def rule_references(root: Path = Path("dungdra"), units: set[str] | None = None) -> list[str]:
+    """Every rule="<unit id>#<n>" and SRD[<unit id>#<n>] in the engine names a real SRD unit."""
+    if units is None:
+        from .units import load
+
+        units = {u["id"] for u in load(require_approval=False)}
+    out = []
+    for f in sorted(root.rglob("*.py")):
+        for no, line in enumerate(f.read_text().splitlines(), 1):
+            for m in RULE_REF.finditer(line):
+                ref = m.group(1) or m.group(2)
+                uid, _, clause = ref.partition("#")
+                if uid not in units or (clause and not clause.isdigit()):
+                    out.append(f"{f}:{no}: {ref!r} is not <unit id>[#<clause number>] of a real SRD unit")
+    return out
+
+
 # ---------------------------------------------------------------- the ratchet
 def measure() -> dict:
     cov = unit_coverage()
@@ -184,7 +204,7 @@ def dev_gate(
     """Everything a dev-loop change must pass. Returns (problems, metrics); metrics["_waived"]
     lists the checks a person waived for this ticket that would otherwise have failed."""
     waive = {k: v for k, v in (waive or {}).items() if k in WAIVABLE}
-    problems = ruff() + suppressions(ref)
+    problems = ruff() + suppressions(ref) + rule_references()
     metrics = measure()
     metrics["_waived"] = []
     problems += ratchet(metrics, json.loads(baseline_path.read_text()))

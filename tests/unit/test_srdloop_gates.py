@@ -307,6 +307,7 @@ def test_a_waiver_turns_only_diff_coverage_into_a_note(tmp_path, monkeypatch):
     monkeypatch.setattr(Q, "ruff", lambda: [])
     monkeypatch.setattr(Q, "suppressions", lambda ref="HEAD": [])
     monkeypatch.setattr(Q, "unit_test_hygiene", lambda paths: [])
+    monkeypatch.setattr(Q, "rule_references", lambda: [])
     metrics = {
         "unit_branch_pct": 50.0,
         "duplication": 0,
@@ -334,3 +335,15 @@ def test_a_waiver_turns_only_diff_coverage_into_a_note(tmp_path, monkeypatch):
         baseline_path=base, waive={"diff_coverage": "a cross-cutting change", "ruff": "no"}
     )
     assert problems == [] and m["_waived"] == ["diff_coverage (40%): a cross-cutting change"]
+
+
+def test_rule_references_must_name_real_units(tmp_path):
+    (tmp_path / "a.py").write_text(
+        'log(kind, text, page=182, rule="GLOSS.grappled#2")  # SRD[GLOSS.grappled#3]\n'
+        "raise Refusal('no', rule='GLOSS.invented#1')\n"
+        "x = 1  # SRD[GLOSS.grappled#two]\n"
+    )
+    assert Q.rule_references(tmp_path, {"GLOSS.grappled"}) == [
+        f"{tmp_path / 'a.py'}:2: 'GLOSS.invented#1' is not <unit id>[#<clause number>] of a real SRD unit",
+        f"{tmp_path / 'a.py'}:3: 'GLOSS.grappled#two' is not <unit id>[#<clause number>] of a real SRD unit",
+    ]
