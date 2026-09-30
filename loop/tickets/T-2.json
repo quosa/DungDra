@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling"
   ],
-  "status": "open",
+  "status": "dispute",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "dispute",
+      "reason": "This fix also makes tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples (T-3) pass, and it now fails as a strict XPASS. Please remove its xfail marker too and close T-3 as fixed by this change, since the rule is the same: only the grappler can drag."
+    }
+  ]
 }
