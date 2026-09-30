@@ -131,7 +131,8 @@ The existing tests move once, in groundwork, with no assertion changes:
 | Suite | Path | Purpose | Writer |
 |---|---|---|---|
 | **Unit** | `tests/unit/test_<module>.py` | Per-component behaviour of `dungdra/*`. Fast and isolated. | **Dev loop** (fixer, unit-test writer) |
-| **Scenario** | `tests/scenarios/` (today's tests plus helpers, agent, conversations) | Golden scenarios, journeys J1–J6 | **test-designer**, only on a scenario-auditor verdict, with a `scenario-notes.md` row |
+| **Support** | `tests/support/` (helpers, scripted player agent, NL conversations) | Shared builders used by the scenario and SRD suites | **test-designer** |
+| **Scenario** | `tests/scenarios/` (today's `test_*.py`) | Golden scenarios, journeys J1–J6 | **test-designer**, only on a scenario-auditor verdict, with a `scenario-notes.md` row |
 | **SRD rule** | `tests/srd/test_<chapter>.py` | Per-clause rule, interaction and abuse tests, `@pytest.mark.srd("<unit-id>", clause=..., kind=positive\|negative\|boundary\|abuse)` | **test-designer** |
 | **SRD journeys** | `tests/srd/journeys/test_<topic>.py` | Long multi-step chains ("if this, and this, and that, then…") through `Play.say` / `Session.execute`, with checkpoint assertions after each step | **test-designer** |
 
@@ -335,7 +336,7 @@ The harness removes refuted tests and logs them. Low-confidence refutations go t
 
 **Gates for a dev-loop commit** (`srdloop.py dev-gate`):
 1. The target test xpasses, or the metric improved. All suites are green, and plain `pytest` works.
-2. **Clean lint.** `ruff check` and `ruff format --check` report **0 violations** on the configured rule set, `E,F,W,I,B,UP,SIM,C90`. The line length is set once in groundwork, e.g. 110 with `ruff format`. The C901 limit starts at the current worst function and is ratcheted down to 10 by refactor tickets. Changing that limit is config, not a suppression.
+2. **Clean lint.** `ruff check` and `ruff format --check` report **0 violations** on the configured rule set, `E,F,W,I,B,UP,SIM,C90`. The line length is set once in groundwork, e.g. 110 with `ruff format`. The C901 limit starts at the current worst function (84 today) and is ratcheted down to 10 by refactor tickets. Changing that limit is config, not a suppression.
 3. **No suppressions.** The diff must not add any of:
    - `noqa`, `type: ignore`, `pragma: no cover`, `pylint: disable`;
    - `per-file-ignores`, `extend-ignore`, `ignore_imports`;

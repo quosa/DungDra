@@ -5,8 +5,8 @@ from dungdra import Game
 from dungdra.audit import reconcile
 from dungdra.fixtures import make
 from dungdra.play import Play
-from tests.agent import fight
-from tests.conversations import create_party
+from tests.support.agent import fight
+from tests.support.conversations import create_party
 
 KEYS = ["hp", "max_hp", "ac", "speed", "abilities", "skills", "tools", "languages", "cantrips", "prepared",
         "spellbook", "feats", "masteries", "coins", "slots", "resources", "features"]

@@ -4,9 +4,50 @@ version = "0.1.0"
 description = "A rules-faithful single-player fifth-edition-compatible (SRD 5.2.1) game engine"
 requires-python = ">=3.10"
 
+[project.optional-dependencies]
+# SRD extraction for the rule-audit loop (per-character fontname/size for heading detection).
+srd = ["pdfplumber>=0.11"]
+# Tests and the quality gates the dev loop enforces (see docs/srd-rule-loop-plan.md).
+dev = [
+  "pytest>=8",
+  "pytest-cov>=6",
+  "hypothesis>=6",
+  "ruff>=0.14",
+  "import-linter>=2",
+  "pylint>=3",       # used only for duplicate-code (R0801)
+  "vulture>=2.11",
+  "mutmut>=3",
+]
+
 [project.scripts]
 dungdra = "dungdra.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["dungdra*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+markers = [
+  "srd(unit_id, clause=None, kind=None, ruling=None): SRD-derived rule test (kind: positive|negative|boundary|abuse)",
+]
+
+[tool.coverage.run]
+source = ["dungdra"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C90"]
+
+[tool.ruff.lint.mccabe]
+# Starts at today's worst function; the dev loop ratchets it down to 10.
+max-complexity = 84
+

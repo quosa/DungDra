@@ -4,8 +4,8 @@ import pytest
 from dungdra import Refusal
 from dungdra import actions, combat as C, class_actions as CA, encounters as E, explore as X, hazards as H, traps as T
 from dungdra.monster import Monster
-from tests.helpers import pc, mon
-from tests.test_combat import start, set_turn
+from tests.support.helpers import pc, mon
+from tests.scenarios.test_combat import start, set_turn
 
 
 # ---------------- EXPL-01 ----------------

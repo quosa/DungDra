@@ -4,8 +4,8 @@ import pytest
 from dungdra import Refusal, OutOfScope
 from dungdra import combat as C, class_actions as CA, rest as R, spells as S, magic_items as MI
 from dungdra.creation import prepare_spells
-from tests.helpers import pc, mon
-from tests.test_combat import start, set_turn
+from tests.support.helpers import pc, mon
+from tests.scenarios.test_combat import start, set_turn
 
 
 # ---------------- SPL-01 ----------------

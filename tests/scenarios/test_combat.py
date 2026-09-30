@@ -4,7 +4,7 @@ import pytest
 from dungdra import Refusal
 from dungdra import actions, combat as C, class_actions as CA, mounted
 from dungdra.effects import Flag
-from tests.helpers import pc, mon
+from tests.support.helpers import pc, mon
 
 
 def start(game, *cs, surprised=()):

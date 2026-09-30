@@ -4,8 +4,8 @@ import pytest
 from dungdra import Refusal
 from dungdra import actions, combat as C, class_actions as CA, damage as D, rest as R, hazards as H
 from dungdra.effects import Condition
-from tests.helpers import pc, mon
-from tests.test_combat import start, set_turn
+from tests.support.helpers import pc, mon
+from tests.scenarios.test_combat import start, set_turn
 
 
 # ---------------- DMG-01 ----------------

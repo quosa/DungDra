@@ -3,8 +3,8 @@ import pytest
 
 from dungdra import Refusal
 from dungdra import combat as C, magic_items as MI, rest as R, spells as S, explore as X
-from tests.helpers import pc, mon
-from tests.test_combat import start, set_turn
+from tests.support.helpers import pc, mon
+from tests.scenarios.test_combat import start, set_turn
 
 
 def test_mi01_attunement(game):
