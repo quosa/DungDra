@@ -294,7 +294,7 @@ def test_dragging_exactly_one_size_smaller_for_large_costs_double(game):
     assert C.move(game, ogre, to=(-10, 0), drag=bandit) == 20
 
 
-@pytest.mark.srd(U, clause=f"{U}#4", kind="boundary", ruling="P-1")
+@pytest.mark.srd(U, clause=f"{U}#4", kind="boundary", ruling="R-05")
 def test_tiny_dragging_tiny_costs_nothing_extra(game):
     gob = mon(game, "goblin warrior", (0, 0))
     gob.size = "tiny"

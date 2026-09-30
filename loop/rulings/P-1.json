@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_tiny_dragging_tiny_costs_nothing_extra"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-05",
+  "note": "As the reviewer reads the rule.",
   "reason": ""
 }
