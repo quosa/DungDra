@@ -7,13 +7,17 @@
     "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
   ],
   "status": "open",
-  "attempts": 1,
+  "attempts": 0,
   "history": [
     {
       "event": "failed",
       "problems": [
         "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage: xpassed"
       ]
+    },
+    {
+      "event": "attempt voided",
+      "reason": "harness bug: a multi-line xfail marker wasn't removed, so the passing fix was counted as a failure (fixed in 1c14e50); the attempt's changes are in git stash"
     }
   ]
 }
