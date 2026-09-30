@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-06",
+  "note": "The rule's intent; the reviewer doesn't fully agree with the rule itself.",
   "reason": ""
 }
