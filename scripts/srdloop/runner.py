@@ -173,20 +173,22 @@ def set_ticket(nodeid: str, tid: str) -> None:
         tidy(path)
 
 
-def drop_xfail(nodeid: str, tid: str) -> None:
-    """After a fix: remove the xfail marker that names the ticket."""
+def drop_xfail(nodeid: str, tid: str) -> bool:
+    """After a fix: remove the xfail decorator that names the ticket, however many lines it
+    spans. Returns whether one was removed."""
     path, _, name = nodeid.partition("::")
     src = Path(path).read_text()
-    span = _function_span(src, name.split("[")[0])
-    if span:
-        lines = src.splitlines(keepends=True)
-        keep = [
-            ln
-            for i, ln in enumerate(lines)
-            if not (span[0] - 1 <= i < span[1] and "xfail" in ln and tid in ln)
-        ]
-        Path(path).write_text("".join(keep))
-        tidy(path)
+    for node in ast.walk(ast.parse(src)):
+        if isinstance(node, ast.FunctionDef) and node.name == name.split("[")[0]:
+            for d in node.decorator_list:
+                text = ast.get_source_segment(src, d) or ""
+                if "xfail" in text and re.search(rf"\b{re.escape(tid)}\b", text):
+                    lines = src.splitlines(keepends=True)
+                    del lines[d.lineno - 1 : d.end_lineno]
+                    Path(path).write_text("".join(lines))
+                    tidy(path)
+                    return True
+    return False
 
 
 # ---------------------------------------------------------------- working tree

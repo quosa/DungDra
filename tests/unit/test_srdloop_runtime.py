@@ -148,6 +148,23 @@ def test_remove_test_set_ticket_drop_xfail(tmp_path):
     )
 
 
+def test_drop_xfail_removes_a_multi_line_marker_and_only_the_tickets(tmp_path):
+    f = tmp_path / "test_m.py"
+    f.write_text(
+        "import pytest\n\n\n"
+        '@pytest.mark.srd("GLOSS.x", kind="negative")\n'
+        "@pytest.mark.xfail(\n"
+        "    strict=True,\n"
+        '    reason="T-1: attacking one grappler still has Disadvantage from the other grapple",\n'
+        ")\ndef test_a():\n    assert True\n\n\n"
+        '@pytest.mark.xfail(strict=True, reason="T-12: another ticket")\ndef test_b():\n    assert True\n'
+    )
+    assert Run.drop_xfail(f"{f}::test_a", "T-1") is True
+    src = f.read_text()
+    assert "T-1:" not in src and '@pytest.mark.srd("GLOSS.x", kind="negative")\ndef test_a' in src
+    assert Run.drop_xfail(f"{f}::test_b", "T-1") is False and "T-12" in f.read_text()  # T-1 is not T-12
+
+
 # ---------------------------------------------------------------- stage gates
 GRAPPLED = unit(
     "GLOSS.grappled",
@@ -393,7 +410,10 @@ from dungdra.rule import grappled_speed
 
 
 @pytest.mark.srd("GLOSS.grappled", clause="GLOSS.grappled#1", kind="negative")
-@pytest.mark.xfail(strict=True, reason="T-1: a Speed bonus still applies")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-1: a Speed bonus still applies",
+)
 def test_bonus_does_not_raise_grappled_speed():
     assert grappled_speed(10) == 0
 """
