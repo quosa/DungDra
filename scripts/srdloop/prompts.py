@@ -84,8 +84,10 @@ def verification(unit: dict, plan: dict, problems: list[str] = ()) -> str:
 
 def fix(ticket: dict, unit: dict | None, failures: str, problems: list[str] = ()) -> str:
     rule = _unit_block(unit) if unit else "(no unit)"
+    waived = "".join(f"\n- `{k}`: {v}" for k, v in ticket.get("waive", {}).items())
+    waived = f"\n\n## Checks a person waived for this ticket\n{waived}" if waived else ""
     return (
-        f"Fix ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}\n\n"
+        f"Fix ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}{waived}\n\n"
         f"## Acceptance tests that must pass\n\n" + "\n".join(f"- `{t}`" for t in ticket["tests"]) + "\n\n"
         f"## The rule\n\n{rule}\n\n## Current failures\n\n```\n{failures[-6000:]}\n```" + _retry(problems)
     )

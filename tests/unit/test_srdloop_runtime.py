@@ -458,7 +458,7 @@ def fake_dev(fix: bool, review: str = "approve"):
 
 @pytest.fixture
 def no_quality_gate(monkeypatch):
-    monkeypatch.setattr(Run.Q, "dev_gate", lambda ref="HEAD": ([], {"unit_branch_pct": 0.0}))
+    monkeypatch.setattr(Run.Q, "dev_gate", lambda ref="HEAD", waive=None: ([], {"unit_branch_pct": 0.0}))
     monkeypatch.setattr(Run.Q, "update_baseline", lambda metrics: None)
 
 

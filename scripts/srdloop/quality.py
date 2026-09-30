@@ -175,15 +175,27 @@ def ratchet(metrics: dict, baseline: dict) -> list[str]:
     return out
 
 
-def dev_gate(ref: str = "HEAD", baseline_path: Path = BASELINE) -> tuple[list[str], dict]:
-    """Everything a dev-loop change must pass. Returns (problems, metrics)."""
+WAIVABLE = {"diff_coverage"}  # a person may waive only these, per ticket, with a reason
+
+
+def dev_gate(
+    ref: str = "HEAD", baseline_path: Path = BASELINE, waive: dict[str, str] | None = None
+) -> tuple[list[str], dict]:
+    """Everything a dev-loop change must pass. Returns (problems, metrics); metrics["_waived"]
+    lists the checks a person waived for this ticket that would otherwise have failed."""
+    waive = {k: v for k, v in (waive or {}).items() if k in WAIVABLE}
     problems = ruff() + suppressions(ref)
     metrics = measure()
+    metrics["_waived"] = []
     problems += ratchet(metrics, json.loads(baseline_path.read_text()))
     pct, misses = diff_coverage(metrics["_coverage"], ref)
     if pct is not None and pct < DIFF_COVERAGE_MIN:
         floor = f"{DIFF_COVERAGE_MIN:.0f}%"
-        problems.append(f"changed engine lines {pct:.0f}% covered by unit tests (< {floor}): {misses[:8]}")
+        finding = f"changed engine lines {pct:.0f}% covered by unit tests (< {floor}): {misses[:8]}"
+        if "diff_coverage" in waive:
+            metrics["_waived"].append(f"diff_coverage ({pct:.0f}%): {waive['diff_coverage']}")
+        else:
+            problems.append(finding)
     problems += unit_test_hygiene(sorted(Path("tests/unit").glob("test_*.py")))
     return problems, metrics
 

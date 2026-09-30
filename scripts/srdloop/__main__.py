@@ -22,6 +22,11 @@ accept STAGE UNIT FILE
                      gate a stage's JSON output; on success checkpoint it
 finish UNIT          after stage D: remove refuted tests, open tickets, commit the unit
 
+Tickets:
+ticket waive T-n CHECK --reason TEXT
+                     a person waives one gate for one ticket (only diff_coverage can be)
+ticket cap T-n USD   a larger per-call cap for the fixer on a big ticket
+
 Rulings (ambiguities the test designer had to resolve):
 ruling list          proposed, accepted and rejected rulings
 ruling accept P-n [--note TEXT]
@@ -54,6 +59,24 @@ def _verdict(problems: list[str], note: str = "") -> int:
     head = f"FAIL ({len(problems)} problems)" if problems else "PASS"
     print(head + (f"; {note}" if note else ""))
     return 1 if problems else 0
+
+
+def _ticket(a) -> int:
+    t = T.load(a.id)
+    if a.action == "waive":
+        if a.value not in Q.WAIVABLE:
+            print(f"only {sorted(Q.WAIVABLE)} can be waived", file=sys.stderr)
+            return 1
+        if not a.reason.strip():
+            print("a waiver needs --reason", file=sys.stderr)
+            return 1
+        t.setdefault("waive", {})[a.value] = a.reason
+        T.record(t, "waiver", check=a.value, reason=a.reason)
+    else:
+        t["cap_usd"] = float(a.value)
+        T.record(t, "cap", usd=t["cap_usd"])
+    print(f"{t['id']}: waive={t.get('waive', {})} cap={t.get('cap_usd')}")
+    return 0
 
 
 def _ruling(a) -> int:
@@ -114,6 +137,11 @@ def main(argv: list[str] | None = None) -> int:
     acc.add_argument("file")
     fin = sub.add_parser("finish")
     fin.add_argument("unit")
+    tkp = sub.add_parser("ticket")
+    tkp.add_argument("action", choices=["waive", "cap"])
+    tkp.add_argument("id")
+    tkp.add_argument("value")
+    tkp.add_argument("--reason", default="")
     ru = sub.add_parser("ruling")
     ru.add_argument("action", choices=["list", "accept", "reject"])
     ru.add_argument("id", nargs="?")
@@ -122,6 +150,8 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "ruling":
         return _ruling(a)
+    if a.cmd == "ticket":
+        return _ticket(a)
     if a.cmd == "mutate":
         print(M.mutate(a.file, a.line, a.old, a.new, a.nodeid))
         return 0

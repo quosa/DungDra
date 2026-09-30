@@ -532,7 +532,9 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     unit = ctx.by_id.get(tk["unit"])
     failures = "\n".join(f"{n}: {o}" for n, o in Gt.run_pytest(tk["tests"]).items())
     problems: list[str] = []
-    res = invoke("fixer", Pr.fix(tk, unit, failures, problems), budget=budget, about=tk["id"], stage="fix")
+    cap = tk.get("cap_usd") or C.ROLES["fixer"].cap_usd
+    prompt = Pr.fix(tk, unit, failures, problems)
+    res = invoke("fixer", prompt, budget=budget, about=tk["id"], stage="fix", cap=cap)
     out = res.output or {}
     if out.get("dispute") or out.get("test_change_request"):
         tk["status"] = "dispute"
@@ -549,7 +551,7 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
     problems += co_problems
     red = [n for n in suite_red() if n not in tk["tests"]]
     problems += [f"now failing: {n}" for n in red]
-    gate_problems, metrics = Q.dev_gate()
+    gate_problems, metrics = Q.dev_gate(waive=tk.get("waive", {}))
     problems += gate_problems
     verdict = None
     if not problems:
@@ -583,6 +585,9 @@ def run_ticket(ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.in
             S.save(st)
     Q.update_baseline(metrics)
     also = f" (also fixes {', '.join(o['id'] for o in co_fixed)})" if co_fixed else ""
+    if metrics.get("_waived"):
+        T.record(tk, "waived", checks=metrics["_waived"])
+        also += "\n\nWaived by a person for this ticket: " + "; ".join(metrics["_waived"])
     sha = commit(
         f"fix: {tk['id']} {tk['title']}{also}",
         DEV_ZONES + ("tests/srd", "loop/quality-baseline.json") + Gt.HARNESS,

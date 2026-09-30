@@ -301,3 +301,36 @@ def test_srd_conftest_fails_a_passing_test_that_left_forced_dice_unrolled(tmp_pa
     )
     assert "1 failed, 1 passed" in r.stdout, r.stdout
     assert "forced dice were never rolled: {'d20': [5]}" in r.stdout
+
+
+def test_a_waiver_turns_only_diff_coverage_into_a_note(tmp_path, monkeypatch):
+    monkeypatch.setattr(Q, "ruff", lambda: [])
+    monkeypatch.setattr(Q, "suppressions", lambda ref="HEAD": [])
+    monkeypatch.setattr(Q, "unit_test_hygiene", lambda paths: [])
+    metrics = {
+        "unit_branch_pct": 50.0,
+        "duplication": 0,
+        "dead_code": 0,
+        "import_ignored": 0,
+        "import_contract_ok": True,
+        "_coverage": {},
+    }
+    monkeypatch.setattr(Q, "measure", lambda: dict(metrics))
+    monkeypatch.setattr(Q, "diff_coverage", lambda cov, ref="HEAD": (40.0, ["dungdra/a.py:3"]))
+    base = tmp_path / "b.json"
+    base.write_text(
+        json.dumps(
+            {
+                "coverage": {"unit_suite_branch_pct": 10.0},
+                "duplication_blocks": {"dungdra_min6": 1},
+                "vulture_min80": 3,
+                "import_contract_ignored_edges": 2,
+            }
+        )
+    )
+    problems, _ = Q.dev_gate(baseline_path=base)
+    assert problems == ["changed engine lines 40% covered by unit tests (< 90%): ['dungdra/a.py:3']"]
+    problems, m = Q.dev_gate(
+        baseline_path=base, waive={"diff_coverage": "a cross-cutting change", "ruff": "no"}
+    )
+    assert problems == [] and m["_waived"] == ["diff_coverage (40%): a cross-cutting change"]
