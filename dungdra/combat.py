@@ -348,7 +348,8 @@ def move(
 ):
     """Move a creature. Returns feet of movement spent.
 
-    mode: walk | climb | crawl | swim.  forced/teleport never provoke OAs."""
+    mode: walk | climb | crawl | swim | fly.  forced/teleport never provoke OAs.
+    drag: a creature this mover grapples, dragged or carried along in any mode."""
     cb = game.combat
     start = tuple(c.position)
     # SRD[GLOSS.grappled#3] only "the grappler" can drag the Grappled creature
@@ -401,14 +402,20 @@ def move(
             cost += dist * (2 if difficult else 1)
             notes.append("swimming")
             difficult = False
+    # SRD[GLOSS.fly-speed#1] flying needs a Fly Speed
+    if mode == "fly" and c.speeds.get("fly", 0) == 0:
+        raise Refusal(f"{c.name} has no Fly Speed", page=182)
     if difficult or (game.scene.difficult and mode == "walk"):
         cost += dist
         notes.append("Difficult Terrain")
+    # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
     if drag is not None and not (drag.size == "tiny" or size_index(c.size) - size_index(drag.size) >= 2):
         cost += dist
         notes.append(f"dragging {drag.name}")
     speed = c.speed(
-        "climb"
+        "fly"
+        if mode == "fly"
+        else "climb"
         if mode == "climb" and c.speed("climb")
         else "swim"
         if mode == "swim" and c.speed("swim")
@@ -429,6 +436,7 @@ def move(
             return 0
     c.position = dest
     if drag is not None:
+        # SRD[GLOSS.grappled#3] the carried creature ends beside its grappler
         drag.position = step_toward(dest, start, 5) if dist_points(dest, start) >= 5 else start
     if cb is not None and cb.is_turn(c):
         cb.turn.movement_left -= cost

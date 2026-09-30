@@ -1,0 +1,10 @@
+{
+  "id": "T-7",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "move(): replace the nested mode→speed ternary and the per-mode climb/swim/fly branches with a per-mode table (speed kind, fallback-to-walk allowed?, extra cost without the speed)",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

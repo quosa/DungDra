@@ -285,7 +285,7 @@ class Session:
         )
         self._after_pc_action()
 
-    def cmd_move(self, actor=None, to=None, toward=None, feet=None, away_from=None, mode="walk"):
+    def cmd_move(self, actor=None, to=None, toward=None, feet=None, away_from=None, mode="walk", drag=None):
         g = self.game
         a = self._c(actor)
         C.move(
@@ -296,6 +296,7 @@ class Session:
             feet=feet,
             away_from=g.get(away_from) if away_from else None,
             mode=mode,
+            drag=g.get(drag) if drag else None,
         )
 
     def cmd_dash(self, actor=None, bonus=False):

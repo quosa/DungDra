@@ -1,0 +1,10 @@
+{
+  "id": "T-8",
+  "kind": "coverage",
+  "unit": "GLOSS.grappled",
+  "title": "GLOSS.flying: a flying creature whose Fly Speed drops to 0 or who becomes Prone/Incapacitated falls (not modelled yet)",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
