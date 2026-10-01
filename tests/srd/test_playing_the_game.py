@@ -291,7 +291,7 @@ def test_creature_behind_the_target_gives_no_cover(game):
     assert shoot(game, lidda, gob).roll.target == GOBLIN_AC
 
 
-@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="boundary", ruling="P-5")
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="boundary", ruling="R-09")
 def test_creature_and_object_give_only_half(game):
     """A creature never gives more than Half Cover; with an object giving Half too, still +2."""
     lidda, gob = lidda_and_goblin(game, dist=30)
@@ -329,7 +329,7 @@ def test_three_quarters_dex_save_one_short(game):
 
 
 # ---------------- #8 · offered by an object covering three-quarters ----------------
-@pytest.mark.srd(COVER, clause=f"{COVER}#8", kind="negative", ruling="P-5")
+@pytest.mark.srd(COVER, clause=f"{COVER}#8", kind="negative", ruling="R-09")
 @pytest.mark.xfail(strict=True, reason="T-16: a creature between attacker and target gives no Half Cover")
 def test_creature_alone_never_gives_three_quarters(game):
     lidda, gob = lidda_and_goblin(game, dist=30)
@@ -426,7 +426,7 @@ def test_total_cover_target_cant_be_slipped_into_a_multi_target_spell(game):
 
 
 # ---------------- #10 · offered by an object covering the whole target ----------------
-@pytest.mark.srd(COVER, clause=f"{COVER}#10", kind="negative", ruling="P-5")
+@pytest.mark.srd(COVER, clause=f"{COVER}#10", kind="negative", ruling="R-09")
 def test_creature_in_the_way_never_gives_total_cover(game):
     lidda, gob = lidda_and_goblin(game, dist=30)
     mon(game, "goblin warrior", (15, 0), name="Screen")
