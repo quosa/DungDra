@@ -1,0 +1,43 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I moved the consumed-effects removal loop into one helper, `Acc.remove_consumed()` in `dungdra/effects.py`. The four copies now call it: `creature._finish`, the combat attack roll, the spell attack roll and `damage.death_save`. Behaviour is unchanged: the helper ends each effect in `acc.consumed` that still has an owner. I added two unit tests in `tests/unit/test_effects.py`. One checks that only consumed effects are removed. The other checks that an effect with no owner is skipped. The ticket lists no acceptance tests. The full suite passes (547 tests), ruff check and ruff format --check are clean, and dev-gate passes. This changes no SRD rule, so I added no SRD tags.",
+  "files": [
+   "dungdra/effects.py",
+   "dungdra/creature.py",
+   "dungdra/combat.py",
+   "dungdra/spells.py",
+   "dungdra/damage.py",
+   "tests/unit/test_effects.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_remove_consumed_ends_only_the_consumed_effects",
+   "tests/unit/test_effects.py::test_remove_consumed_skips_an_effect_with_no_owner"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [
+   {
+    "kind": "scope",
+    "file": "docs/srd-commands.md",
+    "line": 67,
+    "explanation": "This hunk has nothing to do with T-28. It shortens the example `tickets` output to two rows plus '...'. It is probably an uncommitted docs edit someone made by hand, not the fixer's work. It is harmless, but leave it out of the T-28 commit (stage explicit paths)."
+   },
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_effects.py",
+    "line": 97,
+    "explanation": "test_remove_consumed_skips_an_effect_with_no_owner asserts `owner is None`, which was already true before the call, so it only shows the call doesn't raise. This is a minor weakness, not a blocker: the first test checks the real behaviour."
+   }
+  ],
+  "followups": [],
+  "summary": "This is a clean, behaviour-preserving refactor. The new `Acc.remove_consumed()` in effects.py holds the exact loop it replaces, including the `owner is not None` guard. All four copies of the loop now call it: creature._finish, combat.attack, spells.spell_attack and damage.death_save. A grep confirms no copy is left. The first unit test checks real behaviour: only the consumed effect is removed, and the other effect stays. The second test is weak but harmless. The docs/srd-commands.md hunk is outside the ticket's scope and looks like someone's own uncommitted edit; leave it out of the T-28 commit. Approved."
+ },
+ "problems": [],
+ "cost_usd": 0.3704,
+ "stash": ""
+}

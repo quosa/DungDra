@@ -482,9 +482,7 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
         roll.dis.append(f"{caster.name} can't see {target.name}")
     if not can_see(target, caster):
         roll.adv.append(f"{target.name} can't see {caster.name}")
-    for e in acc.consumed:
-        if e.owner is not None:
-            e.owner.remove_effect(e)
+    acc.remove_consumed()
     parts = target.ac_parts() + game.cover_bonus(caster, target, "AC")
     roll.target = sum(v for v, _ in parts)
     roll_d20_test(

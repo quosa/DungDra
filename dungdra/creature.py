@@ -448,9 +448,7 @@ class Creature:
         return self._finish(roll, acc, visibility, page, list(dice_bonus), rule=rule)
 
     def _finish(self, roll, acc, visibility, page, bonus_dice=(), auto_only=False, rule=None):
-        for e in acc.consumed:
-            if e.owner is not None:
-                e.owner.remove_effect(e)
+        acc.remove_consumed()
         if auto_only:
             return roll_d20_test(
                 self.game, self, roll, page=page, visibility=visibility, rule=rule, rulings=acc.rulings

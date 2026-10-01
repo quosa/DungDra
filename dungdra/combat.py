@@ -818,9 +818,7 @@ def attack(
     if is_pc and attacker.has_feature("improved critical") and (item is not None or unarmed):
         crit_on = 19
     roll.crit_on = crit_on
-    for e in acc.consumed:
-        if e.owner is not None:
-            e.owner.remove_effect(e)
+    acc.remove_consumed()
     ac_parts = target.ac_parts() + game.cover_bonus(attacker, target, "AC")
     roll.target = sum(v for v, _ in ac_parts)
     roll_d20_test(

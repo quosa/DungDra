@@ -62,9 +62,7 @@ def death_save(game, pc) -> D20Roll:
     # A Death Saving Throw is a saving throw and a D20 Test: effects on the creature apply to it
     acc = pc.gather(Ctx("death save", pc))
     roll.mods, roll.adv, roll.dis = list(acc.mods), list(acc.adv), list(acc.dis)
-    for e in acc.consumed:
-        if e.owner is not None:
-            e.owner.remove_effect(e)
+    acc.remove_consumed()
     roll_d20_test(
         game,
         pc,

@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from dungdra.effects import Acc, Condition, Ctx, condition_rule
+from dungdra.effects import Acc, Condition, Ctx, Effect, condition_rule
 from dungdra.rules import CONDITIONS
 from tests.support.helpers import mon, pc
 
@@ -82,6 +82,23 @@ def test_acc_records_each_ruling_once():
     acc.ruling("GLOSS.grappled#2", "R-06", "why")
     acc.ruling("GLOSS.grappled#2", "R-06", "why")
     assert acc.rulings == [("GLOSS.grappled#2", "R-06", "why")]
+
+
+def test_remove_consumed_ends_only_the_consumed_effects(game):
+    brom = pc(game, "BROM", (0, 0))
+    used, kept = brom.add_effect(Effect("used up")), brom.add_effect(Effect("lasting"))
+    acc = Acc()
+    acc.consumed.append(used)
+    acc.remove_consumed()
+    assert used not in brom.effects
+    assert kept in brom.effects
+
+
+def test_remove_consumed_skips_an_effect_with_no_owner():
+    acc = Acc()
+    acc.consumed.append(Effect("never placed"))
+    acc.remove_consumed()
+    assert acc.consumed[0].owner is None
 
 
 def test_a_condition_names_its_glossary_entry():

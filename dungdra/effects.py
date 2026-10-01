@@ -81,6 +81,12 @@ class Acc:
         if (rule, ruling, what) not in self.rulings:
             self.rulings.append((rule, ruling, what))
 
+    def remove_consumed(self):
+        """The roll happens: end each effect that is used up by it, if it is still on a creature."""
+        for e in self.consumed:
+            if e.owner is not None:
+                e.owner.remove_effect(e)
+
 
 class Effect:
     name = "effect"
