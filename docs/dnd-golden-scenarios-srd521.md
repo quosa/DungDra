@@ -937,11 +937,11 @@ Creature types matter: **goblins are Fey (Goblinoid)** in SRD 5.2.1 (p.290), not
 #### SPL-05 · Areas of effect and saving throws
 - **Tests:** SPL (Areas of Effect p.106), Glossary (Cone p.179; Area of Effect p.177), DMG (Damage against Multiple Targets; Half Damage p.16), SPELLS (Burning Hands p.114)
 - **Depends on:** SPL-01, CMB-05
-- **Setup:** Three Goblin Warriors, two of them inside a 15-ft Cone from MIALEE and the third behind Total Cover inside the cone's area. `d6=[3,4,5]`; Dex saves `d20=[12]` and `d20=[9]`.
+- **Setup:** Three Goblin Warriors in a row inside a 15-ft Cone from MIALEE: G1 at 5 ft, G2 at 10 ft (behind G1), and G3 behind Total Cover inside the cone's area. `d6=[3,4,5]`; Dex saves `d20=[9]` and `d20=[9]`.
 - **Pass:**
   - [H] Only the two exposed goblins are affected.
   - [H] Damage is rolled **once** for all targets: 12.
-  - [H] DC 13: 12 + 2 = 14 succeeds and takes 6; 9 + 2 = 11 fails and takes 12, which kills that goblin.
+  - [H] DC 13: G1's 9 + 2 = 11 fails and takes 12, which kills it. G1 stands between MIALEE and G2, so G2 has Half Cover (Cover p.15, R-09: +2 to Dexterity saves): 9 + 2 + 2 = 13 succeeds and takes 6.
   - [H] The cone's point of origin isn't included.
   - [H] Unattended flammable objects in the cone start burning.
 

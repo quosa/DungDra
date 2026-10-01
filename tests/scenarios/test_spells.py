@@ -174,17 +174,18 @@ def test_spl04_components(game):
 
 
 # ---------------- SPL-05 · Areas ----------------
+@pytest.mark.xfail(strict=True, reason="T-16: a creature in the line gives no Half Cover on Dexterity saves")
 def test_spl05_burning_hands(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")
     g1 = mon(game, "goblin warrior", (5, 0), name="G1")
-    g2 = mon(game, "goblin warrior", (10, 0), name="G2")
+    g2 = mon(game, "goblin warrior", (10, 0), name="G2")  # G1 stands in the line: Half Cover (R-09)
     g3 = mon(game, "goblin warrior", (15, 0), name="G3")
     game.scene.cover_all[g3.id] = "total"
     game.scene.objects["dry hay"] = {"flammable": True, "in_cone": True}
-    game.dice.force_str("d6=[3,4,5]; d20=[12]; d20=[9]")
+    game.dice.force_str("d6=[3,4,5]; d20=[9]; d20=[9]")
     S.cast(game, m, "burning hands", [m, g1, g2, g3])
-    assert g1.hp == 10 - 6 and g2.dead and g3.hp == 10
+    assert g1.dead and g2.hp == 10 - 6 and g3.hp == 10
     assert game.scene.objects["dry hay"]["burning"]
     assert len([e for e in game.log.of_kind("save")]) == 2
 
