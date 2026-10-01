@@ -37,3 +37,5 @@
 {"at": 1790863678, "about": "T-21", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.2272, "seconds": 50.3, "session_id": "56b6d04c-16f0-4c99-8e6b-54bf07bc772d", "exit": 0}
 {"at": 1790863729, "about": "T-21", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.631, "seconds": 227.5, "session_id": "5a748724-7121-41fe-b450-3b2ca69920f3", "exit": 0}
 {"at": 1790864102, "about": "T-21", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1787, "seconds": 34.9, "session_id": "82dbb2e2-1e8a-4847-a30f-e470ee323e8e", "exit": 0}
+{"at": 1790864137, "about": "T-22", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.3491, "seconds": 167.2, "session_id": "adb9f37a-b340-45ea-a3d1-41052f893800", "exit": 0}
+{"at": 1790864453, "about": "T-22", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1866, "seconds": 33.6, "session_id": "e518e7c2-7588-4dec-8ded-6cabd4ef8114", "exit": 0}

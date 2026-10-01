@@ -407,17 +407,26 @@ def _range_check(game, caster, spell, sd, targets):
 
 
 def _target_cap(spell, sd, level, targets):
-    """Refuses more targets than the spell allows at the level it's cast, before anything is paid."""
+    """Refuses a non-creature target, or more targets than the spell allows at the level it's cast,
+    before anything is paid. Every spell with a target cap targets creatures."""
     if "max_targets" not in sd:
         return
+    base_clause, upcast_clause = sd.get("target_clauses", (None, None))
+    # SRD[SPELL.bless#6] Bless targets creatures: an object (or anything else) isn't a valid target
+    for t in targets:
+        if not hasattr(t, "id"):
+            raise Refusal(
+                f"{spell.title()} targets creatures, and {getattr(t, 'name', t)!r} isn't one",
+                page=sd["page"],
+                rule=spell_rule(spell) + (f"#{base_clause}" if base_clause else ""),
+            )
     base, per_level = sd["max_targets"]
     # SRD[SPELL.bless#6] up to three creatures; SRD[SPELL.bless#8] one more per slot level above 1
     n = base + per_level * (level - sd["level"])
     if len(targets) <= n:
         return
     rule = spell_rule(spell)
-    if "target_clauses" in sd:
-        base_clause, upcast_clause = sd["target_clauses"]
+    if base_clause:
         rule += f"#{upcast_clause if level > sd['level'] else base_clause}"
     raise Refusal(
         f"{spell.title()} at level {level} targets up to {n} creature{'s' if n != 1 else ''}",

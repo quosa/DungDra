@@ -140,6 +140,26 @@ def test_a_higher_slot_raises_the_cap_and_cites_the_upcast_clause(game):
     assert all(c.find_effects("Bless") for c in party)
 
 
+def test_an_object_among_bless_targets_is_refused_before_anything_is_spent(game):
+    jozan, brom, _, _ = _bless_party(game)
+    game.scene.objects["door"] = {}
+    with pytest.raises(Refusal, match="'door' isn't one") as exc:
+        cast(game, jozan, "bless", [brom, "door"])
+    assert (exc.value.rule, exc.value.page) == ("SPELL.bless#6", 113)
+    assert jozan.slots_left(1) == 2 and jozan.concentrating is None
+    assert not brom.find_effects("Bless")
+    assert game.log.last("cast") is None
+
+
+@pytest.mark.parametrize("spell", ["command", "hold person", "aid", "invisibility"])
+def test_each_capped_spell_refuses_a_non_creature_target_under_its_own_rule(game, spell):
+    from dungdra.spells import _target_cap
+
+    with pytest.raises(Refusal, match="targets creatures") as exc:
+        _target_cap(spell, SPELLS[spell], 4, ["door"])
+    assert (exc.value.rule, exc.value.page) == (spell_rule(spell), SPELLS[spell]["page"])
+
+
 @pytest.mark.parametrize(
     "spell, level, cap",
     [("command", 1, 1), ("command", 3, 3), ("hold person", 2, 1), ("hold person", 4, 3), ("aid", 4, 3)],

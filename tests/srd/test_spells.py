@@ -330,9 +330,6 @@ def test_naming_a_target_twice_gives_only_one_d4(game):
     assert bless_mods(r) == [(3, "Bless (1d4=[3])")]
 
 
-@pytest.mark.xfail(
-    strict=True, reason="T-22: Bless accepts a non-creature target and crashes instead of refusing it"
-)
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="abuse")
 def test_bless_cant_target_an_object(game):
     j, b, _, _ = party(game)

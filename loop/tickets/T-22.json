@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_spells.py::test_bless_cant_target_an_object"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-22 is fixed: Bless now refuses a non-creature target cleanly instead of crashing. The cause was that `_as_list` keeps a name that isn't a creature (here \"door\") as a plain string, and `_bless` then crashed on `t.name`. I added the check to the existing `_target_cap` in `dungdra/spells.py`. It already runs before anything is spent and only applies to spells with a target cap. Every such spell (bless, command, hold person, aid, invisibility) targets creatures, so any target that isn't a creature (no `id`) is now refused, with page=sd[\"page\"] and rule=SPELL.bless#6 for Bless, or the spell's own rule for the others. The code is tagged SRD[SPELL.bless#6].\n\nChecks:\n- `test_bless_cant_target_an_object` passes with `--runxfail`. Without that flag it shows as XPASS(strict), the only failure in tests/srd and tests/scenarios, which goes away once the harness removes the marker.\n- Unit tests: 264 passed.\n- `ruff check .` and `ruff format --check .` are clean, and dev-gate passes.\n\nOne other test in tests/srd/test_spells.py fails under `--runxfail`: `test_bless_adds_1d4_to_a_death_saving_throw`. It belongs to T-23 (death saves don't pick up Bless's 1d4) and is still correctly marked xfail; this change doesn't affect it."
+    }
+  ]
 }
