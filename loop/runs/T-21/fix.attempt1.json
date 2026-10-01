@@ -1,0 +1,58 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "The target cap is now checked before anything is spent, and the refusal cites a page. The check used to sit inside each spell's own function, which runs after the action, the slot and Concentration are already paid for. Each spell's data entry now carries `max_targets=(base, per slot level above the spell's level)`. A new `_target_cap` check in `cast()` runs right after the range check and before components, the action and the slot are paid. It counts distinct creatures and refuses with `page=sd[\"page\"]`. For Bless the rule is `SPELL.bless#6`, or `#8` when cast with a higher slot (from a `target_clauses=(6, 8)` data entry); other spells cite their unit id with no clause. Command, Aid, Hold Person and Invisibility had the same check in the same place and the same bug, so they now use this one check too. Their old per-spell checks are removed. Hold Person's refusal now says \"creatures\" where it used to say \"Humanoids\".\n\nResults: the three ticket tests pass with `--runxfail`, and without it they show as strict XPASS, which is expected before the harness drops the markers. `tests/srd` and `tests/scenarios` otherwise pass, with 2 unrelated xfails left. 255 unit tests pass, ruff check and format are clean, and dev-gate passes.\n\nOne problem I noticed but didn't fix: for a monster, `_monster_way` uses up a Divine Aid charge before any refusal can happen.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_too_many_bless_targets_are_refused_before_the_slot_is_spent",
+   "tests/unit/test_spells.py::test_naming_the_same_creature_twice_counts_it_once",
+   "tests/unit/test_spells.py::test_the_target_cap_grows_with_the_slot_level_and_cites_the_upcast_clause",
+   "tests/unit/test_spells.py::test_a_cap_without_an_upcast_bonus_stays_fixed"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.bless#6]",
+   "SRD[SPELL.bless#8]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "other",
+    "file": "dungdra/spells.py",
+    "line": 417,
+    "explanation": "The cap counts distinct targets (`len({id(t) for t in targets})`), but the spell handlers still loop over the raw list. Before this change, naming the same creature twice was refused whenever the list went over the cap. Now it is accepted and the duplicate is processed twice. With Bless the creature gets two Bless effects and is named twice in the 'Blessed: …' log; the non-combining rule in Bless.d20 only hides this. With Hold Person (`[gob, gob]` on a level 2 slot) and Command, the duplicated target makes two saves and can end up with two Paralyzed or Command effects. This is a regression in spells the ticket didn't cover. It also decides a question the SRD and the register don't settle (can one creature be named twice as 'one of up to N targets'?), which per CLAUDE.md is a ruling to propose, not to invent. Either keep counting `len(targets)`, or dedupe the list once in cast() (for example in _as_list) so every later step sees the same distinct targets, and propose the reading as a ruling."
+   },
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_spells.py",
+    "line": 122,
+    "explanation": "test_naming_the_same_creature_twice_counts_it_once only checks that each creature has some Bless effect. It doesn't check what 'counted once' should mean: one Bless effect on Brom, and Brom named once in the log. As written it passes even though Brom gets two Bless effects. It is also the test that adopts the unapproved duplicate-target reading."
+   }
+  ],
+  "followups": [
+   {
+    "title": "Spell target lists: decide (and propose as a register ruling) whether one creature can be named more than once as a target of an 'up to N creatures' spell. Then normalise the list once in cast() so the cap, range, cover and sight checks and the spell handler all see the same targets.",
+    "kind": "infra"
+   },
+   {
+    "title": "Unit tests for the moved target caps of Command, Aid, Hold Person and Invisibility: too many targets is refused before a slot is spent, and the cap grows with slot level (Command, Hold Person, Invisibility) or stays fixed (Aid).",
+    "kind": "coverage"
+   }
+  ],
+  "summary": "The cap check moving out of _bless into a data-driven _target_cap in cast() is the right fix. It now runs before the slot is spent and Concentration starts, and it cites page=113 and SPELL.bless#6 or #8. Moving Command, Aid, Hold Person and Invisibility to the same mechanism keeps one target-cap mechanism instead of five. But the cap counts distinct targets while the spell handlers still loop over the raw list. Naming a creature twice is now accepted where it used to be refused, and the duplicate is processed twice: a second Bless effect, or two saves against Hold Person or Command. That is a regression and an unapproved reading of the rules, and the new unit test for it doesn't catch the double processing."
+ },
+ "problems": [
+  "review: rejected (The cap check moving out of _bless into a data-driven _target_cap in cast() is the right fix. It now runs before the slot is spent and Concentration starts, and it cites page=113 and SPELL.bless#6 or #8. Moving Command, Aid, Hold Person and Invisibility to the same mechanism keeps one target-cap mechanism instead of five. But the cap counts distinct targets while the spell handlers still loop over the raw list. Naming a creature twice is now accepted where it used to be refused, and the duplicate is processed twice: a second Bless effect, or two saves against Hold Person or Command. That is a regression and an unapproved reading of the rules, and the new unit test for it doesn't catch the double processing.)",
+  "review: other dungdra/spells.py:417 The cap counts distinct targets (`len({id(t) for t in targets})`), but the spell handlers still loop over the raw list. Before this change, naming the same creature twice was refused whenever the list went over the cap. Now it is accepted and the duplicate is processed twice. With Bless the creature gets two Bless effects and is named twice in the 'Blessed: …' log; the non-combining rule in Bless.d20 only hides this. With Hold Person (`[gob, gob]` on a level 2 slot) and Command, the duplicated target makes two saves and can end up with two Paralyzed or Command effects. This is a regression in spells the ticket didn't cover. It also decides a question the SRD and the register don't settle (can one creature be named twice as 'one of up to N targets'?), which per CLAUDE.md is a ruling to propose, not to invent. Either keep counting `len(targets)`, or dedupe the list once in cast() (for example in _as_list) so every later step sees the same distinct targets, and propose the reading as a ruling.",
+  "review: test-meaningfulness tests/unit/test_spells.py:122 test_naming_the_same_creature_twice_counts_it_once only checks that each creature has some Bless effect. It doesn't check what 'counted once' should mean: one Bless effect on Brom, and Brom named once in the log. As written it passes even though Brom gets two Bless effects. It is also the test that adopts the unapproved duplicate-target reading."
+ ],
+ "cost_usd": 0.8323,
+ "stash": "srdloop: T-21 attempt 1"
+}

@@ -9,6 +9,15 @@
     "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly"
   ],
   "status": "open",
-  "attempts": 0,
-  "history": []
+  "attempts": 1,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The cap check moving out of _bless into a data-driven _target_cap in cast() is the right fix. It now runs before the slot is spent and Concentration starts, and it cites page=113 and SPELL.bless#6 or #8. Moving Command, Aid, Hold Person and Invisibility to the same mechanism keeps one target-cap mechanism instead of five. But the cap counts distinct targets while the spell handlers still loop over the raw list. Naming a creature twice is now accepted where it used to be refused, and the duplicate is processed twice: a second Bless effect, or two saves against Hold Person or Command. That is a regression and an unapproved reading of the rules, and the new unit test for it doesn't catch the double processing.)",
+        "review: other dungdra/spells.py:417 The cap counts distinct targets (`len({id(t) for t in targets})`), but the spell handlers still loop over the raw list. Before this change, naming the same creature twice was refused whenever the list went over the cap. Now it is accepted and the duplicate is processed twice. With Bless the creature gets two Bless effects and is named twice in the 'Blessed: …' log; the non-combining rule in Bless.d20 only hides this. With Hold Person (`[gob, gob]` on a level 2 slot) and Command, the duplicated target makes two saves and can end up with two Paralyzed or Command effects. This is a regression in spells the ticket didn't cover. It also decides a question the SRD and the register don't settle (can one creature be named twice as 'one of up to N targets'?), which per CLAUDE.md is a ruling to propose, not to invent. Either keep counting `len(targets)`, or dedupe the list once in cast() (for example in _as_list) so every later step sees the same distinct targets, and propose the reading as a ruling.",
+        "review: test-meaningfulness tests/unit/test_spells.py:122 test_naming_the_same_creature_twice_counts_it_once only checks that each creature has some Bless effect. It doesn't check what 'counted once' should mean: one Bless effect on Brom, and Brom named once in the log. As written it passes even though Brom gets two Bless effects. It is also the test that adopts the unapproved duplicate-target reading."
+      ]
+    }
+  ]
 }
