@@ -18,3 +18,7 @@
 {"at": 1790835739, "about": "GLOSS.tremorsense", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.078, "seconds": 16.5, "session_id": "549924a4-cb6b-4779-95de-934ea8ee6088", "exit": 0}
 {"at": 1790835755, "about": "GLOSS.tremorsense", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.7743, "seconds": 132.6, "session_id": "ce22bf6d-9a8e-4100-b1ef-d97cf36accac", "exit": 0}
 {"at": 1790835889, "about": "GLOSS.tremorsense", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.3077, "seconds": 78.9, "session_id": "c7034d29-64de-4539-8567-978db470705d", "exit": 0}
+{"at": 1790835968, "about": "PLAY.combat.cover", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.1035, "seconds": 36.1, "session_id": "3ee982af-e988-41b2-9c20-19836974e19c", "exit": 0}
+{"at": 1790836004, "about": "PLAY.combat.cover", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1574, "seconds": 35.5, "session_id": "ed17296c-d0d5-4692-af9f-1a9de1e4e7a9", "exit": 0}
+{"at": 1790836040, "about": "PLAY.combat.cover", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.6367, "seconds": 399.5, "session_id": "b7b288cd-f13c-412d-b6a6-4a62ec804a97", "exit": 0}
+{"at": 1790836440, "about": "PLAY.combat.cover", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 1.0674, "seconds": 238.2, "session_id": "59a1393e-5c69-4ffd-a336-5cec24356a6c", "exit": 0}

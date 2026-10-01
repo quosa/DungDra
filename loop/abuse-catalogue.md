@@ -32,6 +32,14 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Using a non-sight sense (Tremorsense, a sense that only pinpoints a location) as "a creature
   you can see": to cast a sight-targeted spell, to cancel the unseen-target Disadvantage, or to
   ignore Blinded.
+- Attacking or casting a single-target spell at a creature behind Total Cover, or slipping it
+  in as one of several targets of a multi-target spell (Magic Missile).
+- Claiming cover against an attacker on the wrong side of it, or stacking two degrees of cover
+  (Half + Half as +4, Half + Three-Quarters as +7).
+- Using an obstruction that only covers a target from one attacker to protect it from all of them.
+- Using a creature as Three-Quarters or Total Cover (a creature gives at most Half Cover).
+- Using the Sacred Flame exception (ignores Half and Three-Quarters Cover) to reach a target
+  behind Total Cover.
 - Using Tremorsense to detect a creature in the air (flying, jumping, falling), on a separate
   surface, or beyond its range.
 

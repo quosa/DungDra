@@ -1,0 +1,12 @@
+{
+  "id": "T-15",
+  "kind": "bug",
+  "unit": "PLAY.combat.cover",
+  "title": "The Half/Three-Quarters Cover AC and save bonus is applied but no event carries rule=PLAY.combat.cover (T-9 traceability)",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_applied_cover_bonus_is_traced_to_the_rule"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

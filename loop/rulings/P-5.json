@@ -1,0 +1,15 @@
+{
+  "id": "P-5",
+  "unit": "PLAY.combat.cover",
+  "ambiguity": "PLAY.combat.cover: “Another creature or an object that covers at least half of the target”: does a creature's size matter, and can creatures give more than Half Cover?",
+  "ruling": "Any other creature in the line between the origin and the target gives Half Cover, whatever its size. A creature never gives Three-Quarters or Total Cover, and several creatures in the line still give only Half.",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters",
+    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover",
+    "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

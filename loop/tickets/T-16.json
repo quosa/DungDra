@@ -1,0 +1,14 @@
+{
+  "id": "T-16",
+  "kind": "bug",
+  "unit": "PLAY.combat.cover",
+  "title": "A creature standing between attacker and target gives no Half Cover: cover comes only from scene.cover/cover_all labels",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover",
+    "tests/srd/test_playing_the_game.py::test_ally_in_the_way_gives_half_cover_to_the_enemy",
+    "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

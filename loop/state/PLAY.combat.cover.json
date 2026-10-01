@@ -1,0 +1,94 @@
+{
+  "fingerprint": "02e44a3800573aea",
+  "for_review": [
+    "tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover",
+    "tests/srd/test_playing_the_game.py::test_creature_behind_the_target_gives_no_cover",
+    "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half",
+    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
+  ],
+  "id": "PLAY.combat.cover",
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_playing_the_game.py::test_cover_counts_against_the_attacker_on_the_far_side",
+    "tests/srd/test_playing_the_game.py::test_sacred_flame_ignores_three_quarters_cover",
+    "tests/srd/test_playing_the_game.py::test_wall_covering_the_whole_target_stops_a_spell_attack"
+  ],
+  "relations": [
+    {
+      "evidence": "If behind more than one degree of cover, a target benefits only from the most protective degree.",
+      "target": "GLOSS.cover",
+      "type": "same_concept_as"
+    },
+    {
+      "evidence": "A target is the creature or object targeted by an attack roll, forced to make a saving throw by an effect, or selected to receive the effects of a spell or another phenomenon.",
+      "target": "GLOSS.target",
+      "type": "requires"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1790836004,
+      "summary": "Cover has three degrees: Half (+2 to AC and Dexterity saving throws, given by any other creature or an object covering at least half the target), Three-Quarters (+5, given by an object covering at least three-quarters) and Total (can't be targeted directly, given by an object covering the whole targ"
+    },
+    "B": {
+      "at": 1790836040,
+      "summary": "Nothing contradicts the SRD. CMB-05 and its test are the core cover items. The test checks the AC bonuses, best-degree-only and the Total Cover refusal, but not the Dexterity-save bonus, creature-as-Half-Cover, or the opposite-side clause, so it under-asserts. SPL-05 and its test depend on the Total"
+    },
+    "C": {
+      "at": 1790836440,
+      "summary": "I wrote 41 tests for PLAY.combat.cover in tests/srd/test_playing_the_game.py: 37 green and 4 strict xfails. They cover the +2/+5 bonus on weapon, melee and spell attacks and on Dex saves (with exact thresholds), cover by direction, best-degree-only and no stacking (attacks, spell attacks and saves),"
+    },
+    "D": {
+      "at": 1790836679,
+      "summary": "I checked all 41 tests. 37 pass and 4 are expected to fail (xfail), as claimed. Each of the 4 red tests fails for the reason it states. For the green tests, I broke the engine in a scratch copy and checked whether each test then failed. The code involved is game.cover_between (game.py:209-214), the "
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_cover_makes_a_hit_harder",
+    "tests/srd/test_playing_the_game.py::test_no_cover_no_bonus",
+    "tests/srd/test_playing_the_game.py::test_applied_cover_bonus_is_traced_to_the_rule",
+    "tests/srd/test_playing_the_game.py::test_each_degree_gives_its_own_ac_bonus[half-2]",
+    "tests/srd/test_playing_the_game.py::test_each_degree_gives_its_own_ac_bonus[three-quarters-5]",
+    "tests/srd/test_playing_the_game.py::test_total_cover_is_not_a_bigger_ac_bonus",
+    "tests/srd/test_playing_the_game.py::test_cover_from_one_attacker_doesnt_protect_against_another",
+    "tests/srd/test_playing_the_game.py::test_cover_is_not_symmetric",
+    "tests/srd/test_playing_the_game.py::test_dex_save_cover_only_against_effect_from_the_far_side",
+    "tests/srd/test_playing_the_game.py::test_total_cover_from_another_side_doesnt_stop_the_attack",
+    "tests/srd/test_playing_the_game.py::test_creature_half_and_tree_three_quarters_give_three_quarters",
+    "tests/srd/test_playing_the_game.py::test_two_half_covers_dont_add_up",
+    "tests/srd/test_playing_the_game.py::test_total_beats_lesser_cover",
+    "tests/srd/test_playing_the_game.py::test_spell_attack_cover_doesnt_stack",
+    "tests/srd/test_playing_the_game.py::test_dex_save_cover_doesnt_stack",
+    "tests/srd/test_playing_the_game.py::test_half_cover_ac_is_exactly_two",
+    "tests/srd/test_playing_the_game.py::test_half_cover_adds_two_to_dex_save",
+    "tests/srd/test_playing_the_game.py::test_no_cover_dex_save_fails",
+    "tests/srd/test_playing_the_game.py::test_cover_doesnt_help_other_saves",
+    "tests/srd/test_playing_the_game.py::test_half_cover_on_a_spell_attack",
+    "tests/srd/test_playing_the_game.py::test_half_cover_on_a_melee_attack",
+    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover",
+    "tests/srd/test_playing_the_game.py::test_ally_in_the_way_gives_half_cover_to_the_enemy",
+    "tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover",
+    "tests/srd/test_playing_the_game.py::test_creature_behind_the_target_gives_no_cover",
+    "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half",
+    "tests/srd/test_playing_the_game.py::test_three_quarters_ac_is_exactly_five",
+    "tests/srd/test_playing_the_game.py::test_three_quarters_adds_five_to_dex_save",
+    "tests/srd/test_playing_the_game.py::test_three_quarters_dex_save_one_short",
+    "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters",
+    "tests/srd/test_playing_the_game.py::test_total_cover_refuses_weapon_attack",
+    "tests/srd/test_playing_the_game.py::test_total_cover_refuses_single_target_spell",
+    "tests/srd/test_playing_the_game.py::test_sacred_flame_still_cant_target_total_cover",
+    "tests/srd/test_playing_the_game.py::test_total_cover_doesnt_refuse_an_area_spell",
+    "tests/srd/test_playing_the_game.py::test_total_cover_refused_through_the_session",
+    "tests/srd/test_playing_the_game.py::test_refused_total_cover_attack_keeps_the_attack_action",
+    "tests/srd/test_playing_the_game.py::test_total_cover_target_cant_be_slipped_into_a_multi_target_spell",
+    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
+  ],
+  "tickets": [
+    "T-15",
+    "T-16",
+    "T-17",
+    "T-18",
+    "T-19"
+  ]
+}

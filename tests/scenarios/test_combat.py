@@ -5,6 +5,7 @@ import pytest
 from dungdra import Refusal, actions, mounted
 from dungdra import class_actions as CA
 from dungdra import combat as C
+from dungdra import spells as S
 from tests.support.helpers import mon, pc
 
 
@@ -215,6 +216,29 @@ def test_cmb05_ranged_cover(game):
     adj.add_condition("incapacitated", "test")
     game.dice.force_str("d20=[10]")
     assert C.attack(game, lidda, gob, weapon="shortbow").roll.mode == "normal"
+    # cover counts only against an attack from the opposite side, and two Half Covers don't add up
+    game.scene.cover[(lidda.id, gob.id)] = "half"
+    other = pc(game, "LIDDA", (50, 30))
+    game.dice.force_str("d20=[10]")
+    assert C.attack(game, other, gob, weapon="shortbow").roll.target == 15
+    game.scene.cover_all[gob.id] = "half"
+    game.dice.force_str("d20=[10]")
+    assert C.attack(game, lidda, gob, weapon="shortbow").roll.target == 17
+    # the same +2 / +5 apply to Dexterity saving throws (DC 13, goblin Dex save +2)
+    mialee = pc(game, "MIALEE", (200, 200))
+    mialee.prepared.append("burning hands")
+    singed = mon(game, "goblin warrior", (205, 200), name="Singed")
+    singed.base_max_hp = singed.hp = 500
+    game.scene.cover_all[singed.id] = "half"
+    game.dice.force_str("d6=[3,4,5]; d20=[9]")
+    S.cast(game, mialee, "burning hands", [mialee, singed])
+    save = game.log.last("save").text
+    assert "+2 Half Cover" in save and "= 13" in save and "success" in save
+    game.scene.cover_all[singed.id] = "three-quarters"
+    game.dice.force_str("d6=[3,4,5]; d20=[6]")
+    S.cast(game, mialee, "burning hands", [mialee, singed])
+    save = game.log.last("save").text
+    assert "+5 Three-Quarters Cover" in save and "= 13" in save and "success" in save
 
 
 # ---------------- CMB-06 · Grapple and Shove ----------------
