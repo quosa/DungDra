@@ -198,6 +198,7 @@ def disarm(game, c, trap: Trap, bonus_action=False, **kw):
             "ruling",
             f"{c.name} tries to disarm without Thieves' Tools: engine ruling R-04 applies the "
             f"general check without the tool (no tool proficiency or Advantage)",
+            page=94,
             rule="EQUIP.tools.other-tools.thieves-tools-25-gp",
             ruling="R-04",
         )

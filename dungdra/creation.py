@@ -571,6 +571,7 @@ class CharacterBuilder:
                     "ruling",
                     f"{pc.name} would gain {', '.join(dup)} proficiency twice; takes "
                     f"{c['replacement_tool'].title()} instead",
+                    page=83,
                     rule="ORIGIN.character-backgrounds.parts-of-a-background.tool-proficiency",
                     ruling="R-01",
                 )
