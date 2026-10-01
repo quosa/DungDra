@@ -50,6 +50,16 @@ Can have --note and --reason options:
 
     python -m scripts.srdloop ruling accept P-9 --note "this was confirmed on a 3d6 reddit thread"
 
+
+## list reviews to decide on
+
+    python -m scripts.srdloop review list
+
+### keep a reviewed test
+
+    python -m scripts.srdloop review keep tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover" --reason "guards creature cover since T-16 (fails under mutation)"
+    kept
+
 ## list all tickets
 
     python -m scripts.srdloop tickets
@@ -80,6 +90,11 @@ Can have --note and --reason options:
 
 These tickets are (currently) found in loop/tickets folder, see below for accepting or rejecting them.
 
+### fix tickets
+
+    python -m scripts.srdloop dev --budget 20 --tickets T-15 T-20 T-21 T-22 T-23
+    ...
+    dev loop: no open tickets
 
 ## report COVERAGE.md
     python -m scripts.srdloop report

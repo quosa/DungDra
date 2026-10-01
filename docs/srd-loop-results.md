@@ -66,3 +66,9 @@ Results so far:
   - T-23: Bless doesn't add to Death Saving Throws;
   - T-15: cover isn't logged with its rule.
 - Cost: about $2.30 per unit on average, against my estimate of $1.50. Longer units like Cover cost twice as much as short glossary entries. I'll recalibrate the estimate once the trial is finished.
+
+## Resist the temptation
+
+I need to resist the temptation to go directly into fixing things, and let the loop do it.
+
+I need to wait for the loop to finish/break so that I don't accidentally trip the verifiers with false positive edits outside teh loop.
