@@ -440,10 +440,7 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
     for e in acc.consumed:
         if e.owner is not None:
             e.owner.remove_effect(e)
-    parts = target.ac_parts()
-    cover = game.cover_between(caster, target)
-    if cover in ("half", "three-quarters"):
-        parts.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
+    parts = target.ac_parts() + game.cover_bonus(caster, target, "AC")
     roll.target = sum(v for v, _ in parts)
     roll_d20_test(
         game,
@@ -471,9 +468,7 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
 def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), label=None):
     bonus = []
     if ability == "dex" and not ignore_cover:
-        cover = game.cover_between(c.caster, target)
-        if cover in ("half", "three-quarters"):
-            bonus.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
+        bonus = game.cover_bonus(c.caster, target, "the Dexterity saving throw")
     return target.save(
         ability,
         c.dc,

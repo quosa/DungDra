@@ -78,7 +78,6 @@ def test_no_cover_no_bonus(game):
 
 
 @pytest.mark.srd(COVER, clause=f"{COVER}#1", kind="positive")
-@pytest.mark.xfail(strict=True, reason="T-15: an applied cover bonus is not traced to rule=PLAY.combat.cover")
 def test_applied_cover_bonus_is_traced_to_the_rule(game):
     lidda, gob = lidda_and_goblin(game)
     game.scene.cover[(lidda.id, gob.id)] = "half"

@@ -821,9 +821,7 @@ def attack(
     for e in acc.consumed:
         if e.owner is not None:
             e.owner.remove_effect(e)
-    ac_parts = target.ac_parts()
-    if cover in ("half", "three-quarters"):
-        ac_parts.append((2 if cover == "half" else 5, f"{cover.title()} Cover"))
+    ac_parts = target.ac_parts() + game.cover_bonus(attacker, target, "AC")
     roll.target = sum(v for v, _ in ac_parts)
     roll_d20_test(
         game,

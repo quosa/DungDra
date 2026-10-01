@@ -216,6 +216,23 @@ class Game:
         # SRD[PLAY.combat.cover#4] only the most protective degree applies; never added together
         return max(c1, c2, c3, key=lambda c: order.index(c))
 
+    def cover_bonus(self, attacker, target, against: str) -> list[tuple[int, str]]:
+        """The Half or Three-Quarters Cover bonus the target gets to its AC or Dexterity save
+        `against` the attacker, as modifier parts ([] without such cover); logs what it applied."""
+        cover = self.cover_between(attacker, target)
+        if cover not in ("half", "three-quarters"):
+            return []
+        # SRD[PLAY.combat.cover#5] Half: +2; SRD[PLAY.combat.cover#7] Three-Quarters: +5
+        value, clause = (2, 5) if cover == "half" else (5, 7)
+        label = f"{cover.title()} Cover"
+        self.log.gm(
+            "cover",
+            f"{target.name} has {label} against {attacker.name}: +{value} to {against}",
+            page=15,
+            rule=f"PLAY.combat.cover#{clause}",
+        )
+        return [(value, label)]
+
     def creatures_in_the_way(self, attacker, target) -> list:
         """Creatures standing on the line between the two (centre of space to centre of space)."""
         from .geometry import segment_crosses_square
