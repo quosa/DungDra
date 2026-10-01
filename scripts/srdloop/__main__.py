@@ -15,6 +15,8 @@ dev --budget USD [--tickets T-n ...]
 dev --budget USD --recheck T-n
                      gates, review and commit for a change already in the working tree
 tickets              list tickets
+review list | keep NODEID --reason R | remove NODEID --reason R
+                     decide on tests the verifier doubted (kept until a person decides)
 mutate FILE LINE OLD NEW NODEID
                      break one engine line in a scratch copy and run a test there
 
@@ -51,6 +53,7 @@ from . import quality as Q
 from . import report as Rep
 from . import rulings as Ru
 from . import runner as Run
+from . import state as S
 from . import tickets as T
 from . import units as U
 
@@ -78,6 +81,20 @@ def _ticket(a) -> int:
         t["cap_usd"] = float(a.value)
         T.record(t, "cap", usd=t["cap_usd"])
     print(f"{t['id']}: waive={t.get('waive', {})} cap={t.get('cap_usd')}")
+    return 0
+
+
+def _review(a) -> int:
+    if a.action == "list":
+        for uid, st in sorted(S.all_states().items()):
+            for n in st.get("for_review", []):
+                print(f"{uid}: {n}")
+        return 0
+    try:
+        print(Run.decide_review(a.nodeid or "", a.action == "keep", a.reason))
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 1
     return 0
 
 
@@ -152,9 +169,15 @@ def main(argv: list[str] | None = None) -> int:
     ru.add_argument("id", nargs="?")
     ru.add_argument("--note", default="")
     ru.add_argument("--reason", default="")
+    rv = sub.add_parser("review")
+    rv.add_argument("action", choices=["list", "keep", "remove"])
+    rv.add_argument("nodeid", nargs="?")
+    rv.add_argument("--reason", default="")
     a = ap.parse_args(argv)
     if a.cmd == "ruling":
         return _ruling(a)
+    if a.cmd == "review":
+        return _review(a)
     if a.cmd == "ticket":
         return _ticket(a)
     if a.cmd == "mutate":

@@ -88,7 +88,8 @@ The plan's estimate is ≈ $5.40 per unit, so far an overestimate.
 | A dispute (the fixer thinks a test or scenario is wrong) | Read the ticket's `why:` and `loop/requests/`. Change the test yourself or reject the dispute, set the ticket `open`, then bring the stashed code back (below) |
 | A `stuck` ticket | Read `loop/runs/T-n/fix.attempt*.json`. Then do one of these: rewrite the ticket, `ticket cap T-n 9` (a bigger fixer budget), or fix it yourself and `dev --recheck T-n` |
 | Waiving a check for one ticket | `ticket waive T-n diff_coverage --reason "…"` (only `diff_coverage` can be waived) |
-| Removing or weakening an acceptance test | By hand, in a commit of its own. Includes the "Tests to review" list in `loop/COVERAGE.md`: tests the verifier doubted, kept until you look |
+| A test the verifier doubted ("Tests to review" in `loop/COVERAGE.md`) | `review list`, then `review keep <node id> --reason "…"` or `review remove <node id> --reason "…"` (the harness removes it and commits). Evidence: `mutate dungdra/<file> <line> <old> <new> <node id>` shows whether the test catches a broken engine |
+| Removing or weakening any other acceptance test | By hand, in a commit of its own |
 | Changing a golden scenario | By hand, together with `docs/dnd-golden-scenarios-srd521.md` |
 | Which infra tickets to build | They are large engine features (geometry, awareness, surfaces); pick them deliberately (see open questions) |
 | Re-extracting or approving the SRD text | `python scripts/srd/extract.py`, review, `--approve` |
@@ -204,8 +205,8 @@ python -m scripts.srdloop run --budget 20 --units GLOSS.ready SPELL.casting-spel
 - **Infra approval:** should infra tickets start as `proposed` and wait for an approval before
   the dev loop builds them? Should the circuit breaker count only open bugs? Without this the
   dev loop will start building geometry and awareness models depth-first.
-- **Tests to review:** three Cover tests the verifier doubted as "vacuous" were written before
-  T-16. They now guard creature cover, so they can come off the list.
+- **Tests to review:** the four Cover tests the verifier doubted were written before T-16. Each
+  now fails when creature cover is broken (checked with `mutate`), so they can be kept.
 - **Edits during a run:** a person's edit made during a run is still treated as the agent's.
   The plan is to snapshot the dirty files at start and leave later non-agent edits alone, or
   just keep the rule "don't edit during a run".

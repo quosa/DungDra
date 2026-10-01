@@ -537,6 +537,28 @@ def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
     return r
 
 
+def decide_review(nodeid: str, keep: bool, reason: str) -> str:
+    """A person's decision on a test the verifier doubted: keep it, or remove it. Either way it
+    leaves the unit's for_review list, with the decision recorded in the unit's state."""
+    if not reason.strip():
+        raise ValueError("a review decision needs a reason")
+    uid = next((u for u, st in S.all_states().items() if nodeid in st.get("for_review", [])), None)
+    if uid is None:
+        raise ValueError(f"{nodeid} isn't waiting for review")
+    if not keep:
+        remove_test(nodeid)
+    st = S.load(uid)
+    st["for_review"].remove(nodeid)
+    decision = "kept" if keep else "removed"
+    st.setdefault("reviewed", []).append({"test": nodeid, "decision": decision, "reason": reason})
+    if not keep:
+        st["tests"] = [n for n in st.get("tests", []) if n != nodeid]
+    S.save(st)
+    name = nodeid.partition("::")[2]
+    commit(f"review: {decision} {name} ({uid}): {reason}", Gt.ACCEPTANCE + Gt.HARNESS)
+    return decision
+
+
 def _attempt_record(tk, fixer, cost, problems, review, result, stashed, runs: Path = RUNS) -> None:
     """Everything a fix attempt produced, as the audit stages keep it: loop/runs/<T-n>/fix.attempt<n>.json."""
     d = runs / tk["id"]

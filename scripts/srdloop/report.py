@@ -63,7 +63,8 @@ def render(ctx: Context, queue: list[dict]) -> str:
             "",
             "## Tests to review",
             "",
-            "The verifier refuted these with low confidence, so they were kept. Remove one only by hand.",
+            "The verifier refuted these with low confidence, so they were kept until a person decides:",
+            "`python -m scripts.srdloop review keep|remove <test> --reason '…'`.",
             "",
         ]
         lines += ["| Test | Verifier's reason |", "|---|---|"]

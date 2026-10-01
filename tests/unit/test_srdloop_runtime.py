@@ -670,3 +670,26 @@ def test_the_report_lists_doubted_tests_and_tickets_waiting_for_a_person(tmp_pat
     text = report.render(ctx, [])
     assert f"| `{nodeid}` | may pass for the wrong \\| reason |" in text
     assert "- T-1 (dispute, `GLOSS.grappled`): speed bonus" in text
+
+
+def test_a_person_keeps_or_removes_a_doubted_test(tmp_path, monkeypatch):
+    git_repo(tmp_path, {"tests/srd/test_g.py": SRC})
+    monkeypatch.chdir(tmp_path)
+    keep, gone = "tests/srd/test_g.py::test_keep", "tests/srd/test_g.py::test_gone"
+    S.save({**S.load("GLOSS.x"), "tests": [keep, gone], "for_review": [keep, gone]})
+    with pytest.raises(ValueError, match="needs a reason"):
+        Run.decide_review(keep, keep=True, reason=" ")
+    assert Run.decide_review(keep, keep=True, reason="guards creature cover since T-16") == "kept"
+    assert Run.decide_review(gone, keep=False, reason="duplicate") == "removed"
+    st = S.load("GLOSS.x")
+    assert st["for_review"] == [] and st["tests"] == [keep]
+    assert [r["decision"] for r in st["reviewed"]] == ["kept", "removed"]
+    src = Path("tests/srd/test_g.py").read_text()
+    assert "def test_keep" in src and "def test_gone" not in src
+    log = subprocess.run(["git", "log", "--format=%s", "-2"], capture_output=True, text=True, check=True)
+    assert log.stdout.splitlines() == [
+        "review: removed test_gone (GLOSS.x): duplicate",
+        "review: kept test_keep (GLOSS.x): guards creature cover since T-16",
+    ]
+    with pytest.raises(ValueError, match="isn't waiting for review"):
+        Run.decide_review(keep, keep=True, reason="again")
