@@ -1,6 +1,7 @@
 # Operating the SRD rule loop
 
-How to run, steer and debug the loop. Its design and rationale are in
+How to run, steer and debug the loop. `docs/srd-loop-overview.pdf` shows it on one page
+(rebuild it with `python -m scripts.docs.loop_overview`). Its design and rationale are in
 `docs/srd-rule-loop-plan.md`, and `docs/srd-commands.md` has command notes. Read this before
 running the loop or changing the harness (`scripts/srdloop/`, `.claude/agents/`, `loop/`).
 
