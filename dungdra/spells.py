@@ -136,6 +136,7 @@ def cast(
                 rule="SPELL.casting-spells.effects.targets",
             )
     _range_check(game, caster, spell, sd, targets)
+    _target_kind(spell, sd, targets)
     _target_cap(spell, sd, level, targets)
     if spell in SIGHT_SPELLS:
         for t in targets:
@@ -408,12 +409,12 @@ def _range_check(game, caster, spell, sd, targets):
                 )
 
 
-def _target_cap(spell, sd, level, targets):
-    """Refuses a non-creature target, or more targets than the spell allows at the level it's cast,
-    before anything is paid. Every spell with a target cap targets creatures."""
-    if "max_targets" not in sd:
+def _target_kind(spell, sd, targets):
+    """Refuses a target of the wrong kind before anything is paid: a spell whose data says
+    targets="creature" can't be aimed at an object (or anything else that isn't a creature)."""
+    if sd["targets"] != "creature":
         return
-    base_clause, upcast_clause = sd.get("target_clauses", (None, None))
+    base_clause = sd.get("target_clauses", (None, None))[0]
     # SRD[SPELL.bless#6] Bless targets creatures: an object (or anything else) isn't a valid target
     for t in targets:
         if not hasattr(t, "id"):
@@ -422,6 +423,13 @@ def _target_cap(spell, sd, level, targets):
                 page=sd["page"],
                 rule=spell_rule(spell) + (f"#{base_clause}" if base_clause else ""),
             )
+
+
+def _target_cap(spell, sd, level, targets):
+    """Refuses more targets than the spell allows at the level it's cast, before anything is paid."""
+    if "max_targets" not in sd:
+        return
+    base_clause, upcast_clause = sd.get("target_clauses", (None, None))
     base, per_level = sd["max_targets"]
     # SRD[SPELL.bless#6] up to three creatures; SRD[SPELL.bless#8] one more per slot level above 1
     n = base + per_level * (level - sd["level"])

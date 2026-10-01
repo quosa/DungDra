@@ -1,0 +1,31 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Each spell's target kind is now part of its data, and cast() checks it in one place. Before, the \"targets creatures\" refusal sat inside _target_cap, so only the five spells with a target limit (bless, command, hold person, aid, invisibility) refused an object. Spells like Cure Wounds and Guiding Bolt accepted one without complaint.\n\nChanges:\n- `dungdra/data/spells.py`: `_s()` takes a new `targets=` field, stored as `sd[\"targets\"]` (None means no restriction). I set `targets=\"creature\"` on the 18 spells whose SRD text names only a creature target: guidance, ray of frost, sacred flame, spare the dying, bless, command, cure wounds, guiding bolt, healing word, mage armor, magic missile, sanctuary, shield of faith, aid, hold person, invisibility, lesser restoration and spiritual weapon. Fire bolt (\"a creature or an object\"), light (an object), scorching ray (says only \"one target\"), the area spells and the self/point spells stay unrestricted.\n- `dungdra/spells.py`: a new `_target_kind(spell, sd, targets)` runs in cast() just before `_target_cap`, so the refusal still comes before anything is paid. It keeps the existing message, `page=sd[\"page\"]`, and the `SRD[SPELL.bless#6]` tag. Its rule is the spell's own unit, plus the clause from `target_clauses` where there is one (bless gives `SPELL.bless#6`). `_target_cap` now only enforces the target limit.\n\nResults: `ruff check` and `ruff format --check` are clean. The full suite passes (582 tests, 316 of them unit tests), and dev-gate passes. The ticket names no acceptance tests, so there were none to run with `--runxfail`.",
+  "files": [
+   "dungdra/data/spells.py",
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_each_creature_only_spell_refuses_a_non_creature_target_under_its_own_rule",
+   "tests/unit/test_spells.py::test_a_spell_that_can_target_an_object_accepts_one",
+   "tests/unit/test_spells.py::test_every_capped_spell_is_creature_only",
+   "tests/unit/test_spells.py::test_an_uncapped_creature_only_spell_refuses_an_object_before_anything_is_spent"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.bless#6] (moved from _target_cap into the new _target_kind check)"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change; I found nothing that needs fixing.\n\n**What it does.** Spell data now has a `targets` field. Every spell that can only target creatures is set to `targets=\"creature\"`. `cast()` checks that field once, in a new `_target_kind()`, which runs before `_target_cap()` and before anything is paid. `_target_cap()` now only counts targets. That is the design the ticket asked for.\n\n**Spell tagging.** I checked which spells were tagged against their SRD target text and every tag is right: guidance, ray of frost, sacred flame, spare the dying, cure wounds, guiding bolt, healing word, mage armor, magic missile, sanctuary, shield of faith, spiritual weapon, plus the five capped spells. The spells left untagged are the ones that can target an object or cover an area: fire bolt, light, mage hand, minor illusion, prestidigitation, thaumaturgy, sleep, scorching ray and web.\n\n**Tests.** They check real behaviour:\n- `cure wounds` has no target cap; aimed at an object, it is now refused before a slot is spent or a held item is stowed. The same cast then works on a creature.\n- A parametrized test covers capped and uncapped creature-only spells.\n- `fire bolt` still accepts an object.\n- A check confirms every capped spell is also marked creature-only.\n\nThe diff stays within the ticket's scope.\n\n**One small note.** The `# SRD[SPELL.bless#6]` comment in `_target_kind` was carried over from the old code. It now sits on a check that applies to every creature-only spell, but it is accurate for bless, and the refusal reports each spell's own rule."
+ },
+ "problems": [],
+ "cost_usd": 0.6989,
+ "stash": ""
+}

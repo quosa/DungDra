@@ -184,13 +184,40 @@ def test_an_object_among_bless_targets_is_refused_before_anything_is_spent(game)
     assert game.log.last("cast") is None
 
 
-@pytest.mark.parametrize("spell", ["command", "hold person", "aid", "invisibility"])
-def test_each_capped_spell_refuses_a_non_creature_target_under_its_own_rule(game, spell):
-    from dungdra.spells import _target_cap
+@pytest.mark.parametrize(
+    "spell", ["command", "hold person", "aid", "invisibility", "cure wounds", "guiding bolt", "sanctuary"]
+)
+def test_each_creature_only_spell_refuses_a_non_creature_target_under_its_own_rule(game, spell):
+    from dungdra.spells import _target_kind
 
     with pytest.raises(Refusal, match="targets creatures") as exc:
-        _target_cap(spell, SPELLS[spell], 4, ["door"])
+        _target_kind(spell, SPELLS[spell], ["door"])
     assert (exc.value.rule, exc.value.page) == (spell_rule(spell), SPELLS[spell]["page"])
+
+
+def test_a_spell_that_can_target_an_object_accepts_one(game):
+    from dungdra.spells import _target_kind
+
+    assert SPELLS["fire bolt"]["targets"] is None  # "a creature or an object" (p.132)
+    _target_kind("fire bolt", SPELLS["fire bolt"], ["door"])
+
+
+def test_every_capped_spell_is_creature_only():
+    assert [n for n, sd in SPELLS.items() if "max_targets" in sd and sd["targets"] != "creature"] == []
+
+
+def test_an_uncapped_creature_only_spell_refuses_an_object_before_anything_is_spent(game):
+    jozan, brom = _jozan_holding_his_mace(game)
+    jozan.wielded.append(jozan.inventory.find("shield"))  # a cast that went ahead would stow the mace
+    game.scene.objects["door"] = {}
+    assert "max_targets" not in SPELLS["cure wounds"]
+    with pytest.raises(Refusal, match="Cure Wounds targets creatures, and 'door' isn't one") as exc:
+        cast(game, jozan, "cure wounds", ["door"])
+    assert (exc.value.rule, exc.value.page) == ("SPELL.cure-wounds", 121)
+    assert jozan.slots_left(1) == 2 and len(jozan.wielded) == 2
+    assert game.log.last("cast") is None
+    cast(game, jozan, "cure wounds", [brom])  # a creature is still a valid target
+    assert game.log.last("cast").rule == "SPELL.cure-wounds"
 
 
 @pytest.mark.parametrize(

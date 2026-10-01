@@ -17,6 +17,7 @@ def _s(
     material_item=None,
     material_cost=0,
     page=None,
+    targets=None,
     **kw,
 ):
     d = {
@@ -33,6 +34,7 @@ def _s(
         "material_item": material_item,  # the costed component's item; material_cost is its GP floor
         "material_cost": material_cost,
         "page": page,
+        "targets": targets,  # "creature": only creatures are valid targets; None: no restriction
     }
     d.update(kw)
     return d
@@ -45,7 +47,18 @@ SPELLS = {
     "fire bolt": _s(
         0, "evocation", W, "action", 120, "VS", 0, page=132, attack="ranged", dice="1d10", dtype="fire"
     ),
-    "guidance": _s(0, "divination", ["cleric", "druid"], "action", "touch", "VS", 60, conc=True, page=138),
+    "guidance": _s(
+        0,
+        "divination",
+        ["cleric", "druid"],
+        "action",
+        "touch",
+        "VS",
+        60,
+        conc=True,
+        page=138,
+        targets="creature",
+    ),
     "light": _s(
         0,
         "evocation",
@@ -61,12 +74,36 @@ SPELLS = {
     "minor illusion": _s(0, "illusion", W, "action", 30, "SM", 60, material="a bit of fleece", page=149),
     "prestidigitation": _s(0, "transmutation", W, "action", 10, "VS", 3600, page=155),
     "ray of frost": _s(
-        0, "evocation", W, "action", 60, "VS", 0, page=157, attack="ranged", dice="1d8", dtype="cold"
+        0,
+        "evocation",
+        W,
+        "action",
+        60,
+        "VS",
+        0,
+        page=157,
+        targets="creature",
+        attack="ranged",
+        dice="1d8",
+        dtype="cold",
     ),
     "sacred flame": _s(
-        0, "evocation", C, "action", 60, "VS", 0, page=159, save="dex", dice="1d8", dtype="radiant"
+        0,
+        "evocation",
+        C,
+        "action",
+        60,
+        "VS",
+        0,
+        page=159,
+        targets="creature",
+        save="dex",
+        dice="1d8",
+        dtype="radiant",
     ),
-    "spare the dying": _s(0, "necromancy", ["cleric", "druid"], "action", 15, "VS", 0, page=163),
+    "spare the dying": _s(
+        0, "necromancy", ["cleric", "druid"], "action", 15, "VS", 0, page=163, targets="creature"
+    ),
     "thaumaturgy": _s(0, "transmutation", C, "action", 30, "V", 60, page=167),
     # Level 1
     "bless": _s(
@@ -82,6 +119,7 @@ SPELLS = {
         material_item="holy symbol",
         material_cost=5,
         page=113,
+        targets="creature",
         max_targets=(3, 1),
         target_clauses=(6, 8),
     ),
@@ -108,6 +146,7 @@ SPELLS = {
         "V",
         0,
         page=116,
+        targets="creature",
         save="wis",
         max_targets=(1, 1),
     ),
@@ -120,6 +159,7 @@ SPELLS = {
         "VS",
         0,
         page=121,
+        targets="creature",
         healing="2d8",
     ),
     "detect magic": _s(
@@ -135,17 +175,57 @@ SPELLS = {
         page=125,
     ),
     "guiding bolt": _s(
-        1, "evocation", C, "action", 120, "VS", 6, page=138, attack="ranged", dice="4d6", dtype="radiant"
+        1,
+        "evocation",
+        C,
+        "action",
+        120,
+        "VS",
+        6,
+        page=138,
+        targets="creature",
+        attack="ranged",
+        dice="4d6",
+        dtype="radiant",
     ),
     "healing word": _s(
-        1, "abjuration", ["bard", "cleric", "druid"], "bonus action", 60, "V", 0, page=139, healing="2d4"
+        1,
+        "abjuration",
+        ["bard", "cleric", "druid"],
+        "bonus action",
+        60,
+        "V",
+        0,
+        page=139,
+        targets="creature",
+        healing="2d4",
     ),
     "mage armor": _s(
-        1, "abjuration", W, "action", "touch", "VSM", 8 * 3600, material="a piece of cured leather", page=145
+        1,
+        "abjuration",
+        W,
+        "action",
+        "touch",
+        "VSM",
+        8 * 3600,
+        material="a piece of cured leather",
+        page=145,
+        targets="creature",
     ),
-    "magic missile": _s(1, "evocation", W, "action", 120, "VS", 0, page=146, dtype="force"),
+    "magic missile": _s(
+        1, "evocation", W, "action", 120, "VS", 0, page=146, targets="creature", dtype="force"
+    ),
     "sanctuary": _s(
-        1, "abjuration", C, "bonus action", 30, "VSM", 60, material="a shard of glass from a mirror", page=159
+        1,
+        "abjuration",
+        C,
+        "bonus action",
+        30,
+        "VSM",
+        60,
+        material="a shard of glass from a mirror",
+        page=159,
+        targets="creature",
     ),
     "shield": _s(1, "abjuration", W, "reaction", "self", "VS", 6, page=161),
     "shield of faith": _s(
@@ -159,6 +239,7 @@ SPELLS = {
         conc=True,
         material="a prayer scroll",
         page=161,
+        targets="creature",
     ),
     "sleep": _s(
         1,
@@ -199,6 +280,7 @@ SPELLS = {
         8 * 3600,
         material="a strip of white cloth",
         page=107,
+        targets="creature",
         max_targets=(3, 0),
     ),
     "hold person": _s(
@@ -212,6 +294,7 @@ SPELLS = {
         conc=True,
         material="a straight piece of iron",
         page=141,
+        targets="creature",
         save="wis",
         max_targets=(1, 1),
     ),
@@ -226,6 +309,7 @@ SPELLS = {
         conc=True,
         material="an eyelash in gum arabic",
         page=143,
+        targets="creature",
         max_targets=(1, 1),
     ),
     "lesser restoration": _s(
@@ -237,6 +321,7 @@ SPELLS = {
         "VS",
         0,
         page=144,
+        targets="creature",
     ),
     "misty step": _s(
         2, "conjuration", ["sorcerer", "warlock", "wizard"], "bonus action", "self", "V", 0, page=150
@@ -264,6 +349,7 @@ SPELLS = {
         60,
         conc=True,
         page=165,
+        targets="creature",
         attack="melee",
         dice="1d8",
         dtype="force",

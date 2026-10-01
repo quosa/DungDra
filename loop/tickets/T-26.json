@@ -4,7 +4,12 @@
   "unit": "SPELL.bless",
   "title": "Spell target kind as data: add a field such as `targets=\"creature\"` to the spell data and check it in one place in cast(). Today the 'targets creatures' refusal sits inside _target_cap, so only spells with max_targets (bless, command, hold person, aid, invisibility) refuse an object. Creature-only spells without a cap accept one silently.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Each spell's target kind is now part of its data, and cast() checks it in one place. Before, the \"targets creatures\" refusal sat inside _target_cap, so only the five spells with a target limit (bless, command, hold person, aid, invisibility) refused an object. Spells like Cure Wounds and Guiding Bolt accepted one without complaint.\n\nChanges:\n- `dungdra/data/spells.py`: `_s()` takes a new `targets=` field, stored as `sd[\"targets\"]` (None means no restriction). I set `targets=\"creature\"` on the 18 spells whose SRD text names only a creature target: guidance, ray of frost, sacred flame, spare the dying, bless, command, cure wounds, guiding bolt, healing word, mage armor, magic missile, sanctuary, shield of faith, aid, hold person, invisibility, lesser restoration and spiritual weapon. Fire bolt (\"a creature or an object\"), light (an object), scorching ray (says only \"one target\"), the area spells and the self/point spells stay unrestricted.\n- `dungdra/spells.py`: a new `_target_kind(spell, sd, targets)` runs in cast() just before `_target_cap`, so the refusal still comes before anything is paid. It keeps the existing message, `page=sd[\"page\"]`, and the `SRD[SPELL.bless#6]` tag. Its rule is the spell's own unit, plus the clause from `target_clauses` where there is one (bless gives `SPELL.bless#6`). `_target_cap` now only enforces the target limit.\n\nResults: `ruff check` and `ruff format --check` are clean. The full suite passes (582 tests, 316 of them unit tests), and dev-gate passes. The ticket names no acceptance tests, so there were none to run with `--runxfail`."
+    }
+  ]
 }
