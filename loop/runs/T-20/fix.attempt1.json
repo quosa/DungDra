@@ -1,0 +1,36 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-20 is fixed. In `dungdra/spells.py`, `_components` freed a hand for the Somatic component (stowing the weapon, using the free object interaction and writing a log entry) before it checked the Material component. So a Bless cast without a Holy Symbol stowed the mace and only then refused.\n\nThe fix splits the work into checks and actions. `_components` now only checks: the Verbal component, then the Material component (moved into a new `_material`), then whether a Somatic hand is available (`_hand_to_free`, which refuses or returns the weapon to stow). It changes nothing and returns that weapon. `cast` stows it with `_stow_for_somatic` only after the action economy is spent, so a cast that is refused for its Material component, range, sight, a spent action or a spent free interaction no longer changes any state. The costed-component check carries `# SRD[SPELL.bless#4]`; the refusals keep their existing `page=105` and rule ids.\n\nChecks run:\n- The ticket's test passes with `--runxfail`. It shows as XPASS(strict) in the normal run until the harness removes its marker.\n- Unit tests: 251 passed.\n- `ruff check .` and `ruff format --check .` are clean.\n- `dev-gate` passes.\n- The only other failures under `--runxfail` are the existing T-21, T-22 and T-23 xfail tests, which are unchanged.\n\nTwo things outside this ticket:\n- Monster spellcasting crashes with `AttributeError: 'Monster' object has no attribute 'spell_dc'` (spells.py:83) before it reaches the component checks, so I left out a unit test for the monster path.\n- Bless's target cap (T-21) is still checked inside `_bless`, after the action and slot are spent, and now also after the weapon is stowed.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_a_bless_refused_for_its_material_keeps_the_weapon_in_hand",
+   "tests/unit/test_spells.py::test_a_somatic_hand_is_freed_only_once_the_cast_goes_ahead",
+   "tests/unit/test_spells.py::test_bless_with_a_holy_symbol_needs_no_free_hand",
+   "tests/unit/test_spells.py::test_a_material_component_without_pouch_or_focus_is_refused",
+   "tests/unit/test_spells.py::test_no_weapon_is_stowed_once_the_free_interaction_is_spent"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.bless#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "_material: any costed material component is checked as `inventory.find(\"holy symbol\")`, whatever the spell's component is. Check the spell's own component item and its GP value from the spell data instead",
+    "kind": "infra"
+   }
+  ],
+  "summary": "I approve this fix. The weapon is no longer stowed before a cast that then gets refused.\n\n**How it works now.** `_components` only checks the components and returns the weapon that needs stowing. The stow itself moved to the new `_stow_for_somatic`, which runs after action economy is spent. It sets `free_interaction` and writes the log entry. The check that refuses a stow once the free object interaction is used up runs early, in `_hand_to_free`. The material check now comes before the Somatic hand check, so a missing Holy Symbol is refused without touching the weapon.\n\n**Later refusals.** Nothing in `cast` between the stow and the spell's own handler can refuse. A refusal inside that handler, such as Bless's target cap, is already covered by T-21.\n\n**Tests.**\n- The acceptance test loses its T-20 xfail marker and now passes.\n- The new unit tests check what the player would see:\n  - the weapon stays in hand on a material refusal, and nothing is logged;\n  - the hand is freed only on a cast that succeeds;\n  - a held Holy Symbol counts as both focus and Somatic hand;\n  - a missing pouch or focus is refused;\n  - with the free interaction already used, nothing is stowed and no action is spent.\n- One weakness: the out-of-range case in `test_a_somatic_hand_is_freed_only_once_the_cast_goes_ahead` is refused before the component code runs, so it doesn't really test the new ordering. The other tests cover that ordering.\n\n**Scope.** The changes stay within the ticket. The only additions are a `SRD[SPELL.bless#4]` tag on a comment that was already there, and the loop's cost log.\n\n**Follow-up filed (older problem, not from this change).** Any costed material component is checked by looking for \"holy symbol\" in the inventory, whatever the spell actually needs. It should use the spell's own component item and its GP value."
+ },
+ "problems": [],
+ "cost_usd": 0.7831,
+ "stash": ""
+}

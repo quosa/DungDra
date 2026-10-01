@@ -191,11 +191,6 @@ def test_holy_water_isnt_the_material_component(game):
     assert_refused_cleanly(game, S.cast, game, j, "bless", [b], match="Holy Symbol")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-20: casting a V,S,M spell without its material component first stows the held weapon "
-    "(free object interaction, log entry), then refuses",
-)
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="abuse")
 def test_a_refused_bless_doesnt_stow_the_casters_weapon(game):
     j, b, _, _ = party(game)

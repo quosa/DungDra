@@ -1,0 +1,10 @@
+{
+  "id": "T-25",
+  "kind": "infra",
+  "unit": "SPELL.bless",
+  "title": "_material: any costed material component is checked as `inventory.find(\"holy symbol\")`, whatever the spell's component is. Check the spell's own component item and its GP value from the spell data instead",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -144,7 +144,7 @@ def cast(
                     page=sd["page"],
                     rule=spell_rule(spell),
                 )
-    _components(game, caster, spell, sd, scroll or item is not None)
+    stow = _components(game, caster, spell, sd, scroll or item is not None)
     # --- action economy ----------------------------------------------------------
     time = sd["time"]
     if cb is not None:
@@ -154,6 +154,8 @@ def cast(
             cb.spend(caster, "bonus", f"cast {spell.title()}")
         elif time == "reaction":
             cb.spend(caster, "reaction")
+    if stow is not None:
+        _stow_for_somatic(game, caster, stow)
     # --- pay ---------------------------------------------------------------------
     if use_slot:
         caster.slots_used[use_slot] = caster.slots_used.get(use_slot, 0) + 1
@@ -285,6 +287,8 @@ def _item_casting(game, caster, spell, item, scroll, charges):
 
 
 def _components(game, caster, spell, sd, from_item):
+    """Checks the components without changing anything; returns the weapon to stow for a Somatic
+    hand (or None), which the caller stows only once the cast can no longer be refused."""
     comp = sd["components"]
     if "V" in comp:
         if caster.notes.get("gagged"):
@@ -300,39 +304,44 @@ def _components(game, caster, spell, sd, from_item):
                 rule="SPELL.casting-spells.components.verbal-v",
             )
     if not caster.is_pc() or from_item:
-        return
+        return None
     from .combat import hands_free
 
     focus = _held_focus(caster)
-    if "S" in comp and hands_free(caster) < 1 and not ("M" in comp and focus):
-        _free_a_hand(game, caster)
     if "M" in comp:
-        if sd["material_cost"]:
-            # a costed component must be the real thing (Bless: a Holy Symbol worth 5+ GP)
-            if caster.inventory.find("holy symbol") is None:
-                raise Refusal(
-                    f"{spell.title()} needs {sd['material']}",
-                    page=105,
-                    rule="SPELL.casting-spells.components.material-m",
-                )
-            return
-        if (
-            caster.inventory.find("component pouch")
-            or focus
-            or caster.inventory.find("holy symbol")
-            and "holy symbol" in FOCUS_FOR.get(caster.cls, [])
-        ):
-            return
-        raise Refusal(
-            f"{caster.name} needs {sd['material']}, a Component Pouch or a Spellcasting Focus",
-            page=105,
-            rule="SPELL.casting-spells.components.material-m",
-        )
+        _material(caster, spell, sd, focus)
+    if "S" in comp and hands_free(caster) < 1 and not ("M" in comp and focus):
+        return _hand_to_free(game, caster)
+    return None
 
 
-def _free_a_hand(game, caster):
+def _material(caster, spell, sd, focus):
+    if sd["material_cost"]:
+        # SRD[SPELL.bless#4] a costed component must be the real thing (Bless: a Holy Symbol worth 5+ GP)
+        if caster.inventory.find("holy symbol") is None:
+            raise Refusal(
+                f"{spell.title()} needs {sd['material']}",
+                page=105,
+                rule="SPELL.casting-spells.components.material-m",
+            )
+        return
+    if (
+        caster.inventory.find("component pouch")
+        or focus
+        or caster.inventory.find("holy symbol")
+        and "holy symbol" in FOCUS_FOR.get(caster.cls, [])
+    ):
+        return
+    raise Refusal(
+        f"{caster.name} needs {sd['material']}, a Component Pouch or a Spellcasting Focus",
+        page=105,
+        rule="SPELL.casting-spells.components.material-m",
+    )
+
+
+def _hand_to_free(game, caster):
     """Somatic components need a hand (p.105). A held weapon can be stowed with the free object
-    interaction; hands that are otherwise full can't cast."""
+    interaction; hands that are otherwise full can't cast. Refuses or returns the weapon to stow."""
     if caster.notes.get("hands_full") or not caster.wielded:
         raise Refusal(
             f"{caster.name} needs a free hand for the Somatic component",
@@ -340,15 +349,19 @@ def _free_a_hand(game, caster):
             rule="SPELL.casting-spells.components.somatic-s",
         )
     cb = game.combat
-    w = caster.wielded[-1]
+    if cb is not None and cb.is_turn(caster) and cb.turn.free_interaction:
+        raise Refusal(
+            f"{caster.name} needs a free hand for the Somatic component and has already used the "
+            f"free object interaction this turn",
+            page=105,
+            rule="SPELL.casting-spells.components.somatic-s",
+        )
+    return caster.wielded[-1]
+
+
+def _stow_for_somatic(game, caster, w):
+    cb = game.combat
     if cb is not None and cb.is_turn(caster):
-        if cb.turn.free_interaction:
-            raise Refusal(
-                f"{caster.name} needs a free hand for the Somatic component and has already used the "
-                f"free object interaction this turn",
-                page=105,
-                rule="SPELL.casting-spells.components.somatic-s",
-            )
         cb.turn.free_interaction = True
     caster.wielded.remove(w)
     game.log.player(
