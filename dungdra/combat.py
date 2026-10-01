@@ -375,6 +375,26 @@ def end_combat(game, reason=""):
 # ---------------------------------------------------------------------------
 # Movement (p.14, glossary)
 # ---------------------------------------------------------------------------
+@dataclass(frozen=True)
+class MoveMode:
+    """How a mode of movement uses Speed: the Speed it spends, whether a creature without
+    that Speed may still move by walking, and whether doing so costs extra feet."""
+
+    speed: str
+    walk_fallback: bool = True
+    extra_without: bool = False
+    extra_note: str = ""
+
+
+MOVE_MODES = {
+    "walk": MoveMode("walk"),
+    "crawl": MoveMode("walk"),
+    "climb": MoveMode("climb", extra_without=True, extra_note="climbing"),
+    "swim": MoveMode("swim", extra_without=True, extra_note="swimming"),
+    "fly": MoveMode("fly", walk_fallback=False),
+}
+
+
 def move(
     game,
     c,
@@ -441,23 +461,23 @@ def move(
     if mode == "crawl" or (c.has("prone") and mode == "walk" and dist > 0):
         cost += dist
         notes.append("crawling")
-    if mode == "climb":
-        if c.speed("climb") > 0:
-            notes.append("Climb Speed")
-        else:
+    spec = MOVE_MODES.get(mode, MOVE_MODES["walk"])
+    if spec.walk_fallback:
+        # a Speed reduced to 0 falls back to walking, like having none
+        has_speed = spec.speed == "walk" or c.speed(spec.speed) > 0
+    else:
+        has_speed = c.speeds.get(spec.speed, 0) > 0
+    if not has_speed and not spec.walk_fallback:
+        # SRD[GLOSS.fly-speed#1] flying needs a Fly Speed
+        raise Refusal(f"{c.name} has no {spec.speed.title()} Speed", page=182, rule="GLOSS.fly-speed#1")
+    if spec.speed != "walk":
+        if has_speed:
+            notes.append(f"{spec.speed.title()} Speed")
+        elif spec.extra_without:
+            # without the Speed, each foot costs 1 extra foot (2 extra in Difficult Terrain)
             cost += dist * (2 if difficult else 1)
-            notes.append("climbing")
+            notes.append(spec.extra_note)
             difficult = False
-    if mode == "swim":
-        if c.speed("swim") > 0:
-            notes.append("Swim Speed")
-        else:
-            cost += dist * (2 if difficult else 1)
-            notes.append("swimming")
-            difficult = False
-    # SRD[GLOSS.fly-speed#1] flying needs a Fly Speed
-    if mode == "fly" and c.speeds.get("fly", 0) == 0:
-        raise Refusal(f"{c.name} has no Fly Speed", page=182, rule="GLOSS.fly-speed#1")
     if difficult or (game.scene.difficult and mode == "walk"):
         cost += dist
         notes.append("Difficult Terrain")
@@ -469,15 +489,7 @@ def move(
     # SRD[GLOSS.grappled#4] R-05: a Tiny grappled creature never adds extra cost, whatever the
     # grappler's size; the ruling decides only when the grappler isn't two sizes larger anyway
     drag_ruling = "R-05" if drag is not None and drag.size == "tiny" and not two_smaller else None
-    speed = c.speed(
-        "fly"
-        if mode == "fly"
-        else "climb"
-        if mode == "climb" and c.speed("climb")
-        else "swim"
-        if mode == "swim" and c.speed("swim")
-        else "walk"
-    )
+    speed = c.speed(spec.speed if has_speed else "walk")
     if speed == 0 and dist > 0:
         if c.has("grappled"):
             # SRD[GLOSS.grappled#1] Speed 0; R-07: that covers every Speed, not just walking

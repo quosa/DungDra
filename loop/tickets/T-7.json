@@ -4,7 +4,12 @@
   "unit": "GLOSS.grappled",
   "title": "move(): replace the nested mode→speed ternary and the per-mode climb/swim/fly branches with a per-mode table (speed kind, fallback-to-walk allowed?, extra cost without the speed)",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I refactored `combat.move()` to look up how each mode of movement uses Speed in a table, instead of the nested mode→speed ternary and the separate climb, swim and fly branches. Behaviour should be unchanged: the full suite (576 tests), the unit tests (310), `ruff` and `dev-gate` all pass.\n\n**The table.** `MOVE_MODES` maps walk, crawl, climb, swim and fly to a frozen `MoveMode`, which records:\n- which Speed the mode spends;\n- whether a creature without that Speed can still move by walking (`walk_fallback`);\n- whether moving that way costs extra feet (`extra_without`), and the note logged when it does.\n\n`move()` now works out `has_speed` once and uses it for the log note, the extra cost and the speed to check. It keeps the existing Speed checks:\n- **Climb and swim** use the current (effective) Speed. If that Speed has been reduced to 0, the creature climbs or swims by walking at extra cost, as before.\n- **Fly** checks the creature's base Fly Speed. A creature with none is refused under GLOSS.fly-speed#1. A flyer whose Speed is 0 because it's Grappled still gets the GLOSS.grappled#1 / R-07 refusal, not \"no Fly Speed\".\n- **Crawling and the Grappled-drag cost** are handled exactly as before.\n\n**Unknown modes.** A mode not in the table is still treated as walking. Making unknown modes refusals would be a behaviour change, so I left that out of this refactor.\n\n**New unit tests** in `tests/unit/test_combat.py`:\n- climbing without a Climb Speed costs double;\n- swimming without a Swim Speed in Difficult Terrain costs triple, with no separate Difficult Terrain note;\n- swimming with a Swim Speed costs no extra;\n- a Climb Speed reduced to 0 by a speed penalty falls back to climbing by walking;\n- a Grappled flyer is refused under GLOSS.grappled#1 with R-07.\n\nThe ticket listed no failing acceptance tests, and I added no new SRD tags."
+    }
+  ]
 }

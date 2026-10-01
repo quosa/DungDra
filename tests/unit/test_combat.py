@@ -3,7 +3,7 @@
 import pytest
 
 from dungdra.combat import attack, move, release_grapple
-from dungdra.effects import Condition, Flag, grapplers_of
+from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
@@ -185,3 +185,43 @@ def test_release_grapple_ends_the_condition_and_the_grapplers_flag(game):
     release_grapple(game, gob)
     assert grapplers_of(gob) == set()
     assert not any(f.name == "grappling" for f in brom.effects)
+
+
+def test_climbing_without_a_climb_speed_costs_an_extra_foot(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.speeds.pop("climb", None)
+    assert move(game, brom, to=(10, 0), mode="climb") == 20
+    assert "climbing" in game.log.last("move").text
+
+
+def test_swimming_without_a_swim_speed_in_difficult_terrain_costs_two_extra_feet(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.speeds.pop("swim", None)
+    assert move(game, brom, to=(10, 0), mode="swim", difficult=True) == 30
+    assert "Difficult Terrain" not in game.log.last("move").text
+
+
+def test_swimming_with_a_swim_speed_costs_no_extra(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.speeds["swim"] = 30
+    assert move(game, brom, to=(10, 0), mode="swim") == 10
+    assert "Swim Speed" in game.log.last("move").text
+
+
+def test_a_climb_speed_reduced_to_0_falls_back_to_climbing_by_walking(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.speeds["climb"] = 10
+    brom.add_effect(SpeedPenalty("Ray of Frost", 10))
+    assert move(game, brom, to=(10, 0), mode="climb") == 20
+    assert "climbing" in game.log.last("move").text
+
+
+def test_a_grappled_flyer_is_refused_for_speed_0_not_for_lacking_a_fly_speed(game):
+    brom = pc(game, "BROM", (0, 0))
+    rat = mon(game, "giant rat", (5, 0))
+    rat.speeds["fly"] = 30
+    grappled_by(rat, brom)
+    with pytest.raises(Refusal) as exc:
+        move(game, rat, to=(5, 10), mode="fly")
+    assert (exc.value.rule, exc.value.ruling) == ("GLOSS.grappled#1", "R-07")
+    assert rat.position == (5, 0)
