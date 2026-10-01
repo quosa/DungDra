@@ -505,8 +505,14 @@ class Creature:
                 self.game, self, roll, page=187, visibility=visibility, rule="GLOSS.saving-throw"
             )
         ctx = Ctx("save", self, ability=ability, avoid=set(avoid), source=source, tags=set(tags))
+        mods = self.save_modifier_parts(ability) + list(bonus)
+        return self.roll_gathered(roll, ctx, mods, adv, dis, visibility=visibility, page=page, rule=rule)
+
+    def roll_gathered(self, roll, ctx, mods=(), adv=(), dis=(), visibility=PLAYER, page="7", rule=None):
+        """Roll a saving throw (or Death Saving Throw) with the effects gathered for ``ctx``: their
+        modifiers, Advantage/Disadvantage, bonus dice and automatic success or failure."""
         acc = self.gather(ctx)
-        roll.mods = self.save_modifier_parts(ability) + list(bonus) + acc.mods
+        roll.mods = list(mods) + acc.mods
         roll.adv = acc.adv + list(adv)
         roll.dis = acc.dis + list(dis)
         if acc.auto == "fail":

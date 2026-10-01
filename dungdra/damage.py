@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .d20 import D20Roll, roll_d20_test
+from .d20 import D20Roll
 from .effects import Ctx
 from .rules import HOUR, Refusal
 
@@ -59,20 +59,16 @@ def add_failures(pc, n, why):
 def death_save(game, pc) -> D20Roll:
     """p.17-18: at the start of the turn with 0 HP. 10+ succeeds; 1 = two failures; 20 = regain 1 HP."""
     roll = D20Roll("death save", "Death Saving Throw", pc.name, target=10)
-    # A Death Saving Throw is a saving throw and a D20 Test: effects on the creature apply to it
-    acc = pc.gather(Ctx("death save", pc))
-    roll.mods, roll.adv, roll.dis = list(acc.mods), list(acc.adv), list(acc.dis)
-    acc.remove_consumed()
-    roll_d20_test(
-        game,
-        pc,
-        roll,
-        bonus_dice=acc.bonus_dice,
-        page=17,
-        rule="GLOSS.death-saving-throw",
-        rulings=acc.rulings,
-    )
-    d = roll.chosen + roll.modifier
+    # A Death Saving Throw is a saving throw and a D20 Test: effects on the creature apply to it,
+    # including an automatic success or failure, as on any other save
+    pc.roll_gathered(roll, Ctx("death save", pc), page=17, rule="GLOSS.death-saving-throw")
+    if roll.chosen is None:
+        if roll.success:
+            _add_success(game, pc)
+        else:
+            add_failures(pc, 1, roll.auto_reason)
+        return roll
+    d = roll.total
     if roll.chosen == 20:
         game.log.player(
             "death_save",
@@ -86,19 +82,22 @@ def death_save(game, pc) -> D20Roll:
         add_failures(pc, 2, "rolled a 1")
         return roll
     if d >= 10:
-        pc.death_saves["success"] += 1
-        game.log.player(
-            "death_save",
-            f"{pc.name}: success ({pc.death_saves['success']} successes, "
-            f"{pc.death_saves['failure']} failures)",
-            page=17,
-            rule="GLOSS.death-saving-throw",
-        )
-        if pc.death_saves["success"] >= 3:
-            make_stable(game, pc, "three successes")
+        _add_success(game, pc)
     else:
         add_failures(pc, 1, f"rolled {d}")
     return roll
+
+
+def _add_success(game, pc):
+    pc.death_saves["success"] += 1
+    game.log.player(
+        "death_save",
+        f"{pc.name}: success ({pc.death_saves['success']} successes, {pc.death_saves['failure']} failures)",
+        page=17,
+        rule="GLOSS.death-saving-throw",
+    )
+    if pc.death_saves["success"] >= 3:
+        make_stable(game, pc, "three successes")
 
 
 def make_stable(game, pc, how: str):
