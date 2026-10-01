@@ -40,11 +40,14 @@ ticket marks the unit that opened it for a **revisit**, queued last and starting
 
 ## A session, step by step
 
+`python -m scripts.srdloop --help` lists every command; `<command> --help` gives its details
+(`ticket --help`, `ticket create --help`).
+
 ```
 python -m scripts.srdloop status                    # units done / to do
 python -m scripts.srdloop run --budget 20 [--units ID ...]   # audit loop
-python -m scripts.srdloop ruling list               # decide proposals (below)
-python -m scripts.srdloop tickets                   # what the units found
+python -m scripts.srdloop ruling list              # proposals to decide (below)
+python -m scripts.srdloop ticket list              # what the units found (--all: fixed too)
 python -m scripts.srdloop dev --budget 15 [--tickets T-n ...] # dev loop
 python -m scripts.srdloop report                    # loop/COVERAGE.md
 ```
@@ -85,8 +88,8 @@ The plan's estimate is ≈ $5.40 per unit, so far an overestimate.
 | Decision | How |
 |---|---|
 | A ruling proposal P-n | `ruling accept P-n --note "…"` adds the next R-nn to the README register and updates the markers. `ruling reject P-n --reason "…"` re-queues the unit from stage C with your reason, and the tickets that depended on the proposal become void. While a proposal is pending, its unit is `blocked` and the dev loop skips tickets whose tests depend on it |
-| A dispute (the fixer thinks a test or scenario is wrong) | Read the ticket's `why:` and `loop/requests/`. Change the test yourself or reject the dispute, set the ticket `open`, then bring the stashed code back (below) |
-| A `stuck` ticket | Read `loop/runs/T-n/fix.attempt*.json`. Then do one of these: rewrite the ticket, `ticket cap T-n 9` (a bigger fixer budget), or fix it yourself and `dev --recheck T-n` |
+| A dispute (the fixer thinks a test or scenario is wrong) | Read the ticket's `why:` and `loop/requests/`. Change the test yourself or reject the dispute, `ticket reopen T-n --reason "…"`, then bring the stashed code back (below) |
+| A `stuck` ticket | Read `loop/runs/T-n/fix.attempt*.json`. Then do one of these: `ticket cap T-n 9` (a bigger fixer budget) and `ticket reopen T-n --reason "…"`; `ticket void T-n --reason "…"`; or fix it yourself and `dev --recheck T-n` |
 | Waiving a check for one ticket | `ticket waive T-n diff_coverage --reason "…"` (only `diff_coverage` can be waived) |
 | A test the verifier doubted ("Tests to review" in `loop/COVERAGE.md`) | `review list` numbers them; then `review keep 1 3 --reason "…"` or `review remove 2 --reason "…"` (numbers or node ids; one commit; the harness removes the tests). Evidence: `mutate dungdra/<file> <line> <old> <new> <node id>` shows whether the test catches a broken engine |
 | Removing or weakening any other acceptance test | By hand, in a commit of its own |
@@ -100,8 +103,8 @@ The dev loop prints the result, the reason, the first problems, where the code w
 attempt record. To dig deeper:
 
 ```
-cat loop/tickets/T-16.json                      # status, tests, full history
-cat loop/runs/T-16/fix.attempt1.json            # fixer + reviewer output, problems, cost, stash
+python -m scripts.srdloop ticket show T-16     # status, tests, history, each attempt
+cat loop/runs/T-16/fix.attempt1.json            # fixer + reviewer output in full
 git stash list                                  # "srdloop: T-16 dispute", "… attempt 2"
 git stash show -p --include-untracked 'stash@{0}'   # the code that was set aside
 ls loop/requests/                               # the fixer's notes for a person

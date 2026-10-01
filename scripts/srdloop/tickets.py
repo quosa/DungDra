@@ -2,7 +2,8 @@
 
 kinds: bug (a red SRD test), infra (a capability the engine lacks), refactor, coverage.
 status: open → fixed | stuck (3 failed attempts; a person decides) | dispute (the fixer thinks
-the test is wrong; a person decides).
+the test is wrong; a person decides) | void (no longer wanted: a duplicate, a rejected ruling).
+A person reopens a stuck or disputed ticket, or voids one, with a reason.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 TICKETS = Path("loop/tickets")
 PRIORITY = {"bug": 0, "infra": 1, "refactor": 2, "coverage": 3}
 MAX_ATTEMPTS = 3
+ACTIVE = ("open", "stuck", "dispute")  # still needs the loop or a person; fixed and void are done
 
 
 def _next_id(root: Path) -> str:
@@ -90,3 +92,30 @@ def file(kind: str, unit: str, title: str, tests: list[str], root: Path = TICKET
             save(t, root)
             return t
     return create(kind, unit, title, tests, root)
+
+
+def _need(reason: str, what: str) -> None:
+    if not reason.strip():
+        raise ValueError(f"{what} needs a reason")
+
+
+def reopen(tid: str, reason: str, root: Path = TICKETS) -> dict:
+    """Back to the dev loop with a fresh set of attempts (after a dispute is settled, or a stuck
+    ticket was rewritten or capped)."""
+    _need(reason, "reopening a ticket")
+    t = load(tid, root)
+    if t["status"] == "open":
+        raise ValueError(f"{tid} is already open")
+    was, t["status"], t["attempts"] = t["status"], "open", 0
+    record(t, "reopened", root, was=was, reason=reason)
+    return t
+
+
+def void(tid: str, reason: str, root: Path = TICKETS) -> dict:
+    _need(reason, "voiding a ticket")
+    t = load(tid, root)
+    if t["status"] == "void":
+        raise ValueError(f"{tid} is already void")
+    t["status"] = "void"
+    record(t, "void", root, reason=reason)
+    return t

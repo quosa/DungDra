@@ -1,42 +1,8 @@
-"""python -m scripts.srdloop <command>
+"""python -m scripts.srdloop <command> [--help]
 
-status               one-line summary of the loop
-plan                 write loop/queue.json (pending and stale units, dependencies first)
-related <unit-id>    scenarios, tests and engine code related to a unit (JSON)
-report               write loop/COVERAGE.md
-gate --role R        audit gates on the working tree: write zones for role R, append-only
-                     acceptance tests, SRD test-file rules (markers, assertions, no mocks)
-dev-gate             dev-loop quality gates: lint, suppressions, coverage ratchet and diff
-                     coverage, import layers, duplication, dead code, unit-test hygiene
-run --budget USD [--units ID ...]
-                     the audit loop (stages A-D per unit); exit 4 = paused, run again to resume
-dev --budget USD [--tickets T-n ...]
-                     the dev loop (fix open tickets)
-dev --budget USD --recheck T-n
-                     gates, review and commit for a change already in the working tree
-tickets              list tickets
-review list | keep N|NODEID ... --reason R | remove N|NODEID ... --reason R
-                     decide on tests the verifier doubted (kept until a person decides)
-mutate FILE LINE OLD NEW NODEID
-                     break one engine line in a scratch copy and run a test there
-
-Interactive mode (the /srd-rule skill runs the stages in a Claude Code session):
-prompt STAGE UNIT    print the prompt for stage A, B, C or D of a unit
-accept STAGE UNIT FILE
-                     gate a stage's JSON output; on success checkpoint it
-finish UNIT          after stage D: remove refuted tests, open tickets, commit the unit
-
-Tickets:
-ticket waive T-n CHECK --reason TEXT
-                     a person waives one gate for one ticket (only diff_coverage can be)
-ticket cap T-n USD   a larger per-call cap for the fixer on a big ticket
-
-Rulings (ambiguities the test designer had to resolve):
-ruling list          proposed, accepted and rejected rulings
-ruling accept P-n [--note TEXT]
-                     make it the next R-<n> in the README register; its tests' markers follow
-ruling reject P-n --reason TEXT
-                     re-queue the unit: stage C rewrites those tests for another reading
+The SRD rule loop's command line. `--help` after any command gives its details.
+Lists show what still needs the loop or a person; --all adds the finished ones.
+Every decision a person makes here is committed with its reason.
 """
 
 from __future__ import annotations
@@ -66,21 +32,82 @@ def _verdict(problems: list[str], note: str = "") -> int:
     return 1 if problems else 0
 
 
+def _fail(message: str) -> int:
+    print(message, file=sys.stderr)
+    return 1
+
+
+def _ticket_row(t: dict) -> str:
+    return f"{t['id']:6} {t['status']:8} {t['kind']:8} {t['unit']}: {t['title']}"
+
+
+def _short(v, n: int = 240) -> str:
+    v = " ".join(str(v).split())
+    return v if len(v) <= n else v[: n - 1] + "…"
+
+
+def _ticket_show(tid: str) -> int:
+    t = T.load(tid)
+    print(_ticket_row(t))
+    for n in t["tests"]:
+        print(f"  test: {n}")
+    extras = {k: t[k] for k in ("waive", "cap_usd") if t.get(k)}
+    if extras:
+        print(f"  {extras}")
+    for h in t["history"]:
+        rest = ", ".join(f"{k}={_short(v)}" for k, v in h.items() if k not in ("event", "problems"))
+        print(f"  - {h['event']}" + (f": {rest}" if rest else ""))
+        for p in h.get("problems", []):
+            print(f"      ! {_short(p)}")
+    for rec in sorted(Run.RUNS.glob(f"{tid}/fix.attempt*.json"), key=lambda p: int(p.stem[11:])):
+        r = json.loads(rec.read_text())
+        stash = f", stash '{r['stash']}'" if r.get("stash") else ""
+        print(f"  {rec}: {r['result']}, ${r['cost_usd']:.2f}{stash}")
+    return 0
+
+
 def _ticket(a) -> int:
-    t = T.load(a.id)
-    if a.action == "waive":
-        if a.value not in Q.WAIVABLE:
-            print(f"only {sorted(Q.WAIVABLE)} can be waived", file=sys.stderr)
-            return 1
-        if not a.reason.strip():
-            print("a waiver needs --reason", file=sys.stderr)
-            return 1
-        t.setdefault("waive", {})[a.value] = a.reason
-        T.record(t, "waiver", check=a.value, reason=a.reason)
-    else:
-        t["cap_usd"] = float(a.value)
-        T.record(t, "cap", usd=t["cap_usd"])
-    print(f"{t['id']}: waive={t.get('waive', {})} cap={t.get('cap_usd')}")
+    if a.action == "list":
+        shown = [t for t in T.all_tickets() if (a.all or t["status"] in T.ACTIVE)]
+        for t in shown:
+            if a.only in (None, t["kind"]):
+                print(_ticket_row(t))
+        hidden = len(T.all_tickets()) - len(shown)
+        if hidden:
+            print(f"({hidden} fixed or void not shown; --all shows them)")
+        return 0
+    if a.action == "create":
+        t = T.create(a.kind, a.unit, a.title, a.test or [])
+        T.record(t, "created", by="person")
+        Run.commit(f"ticket: {t['id']} created ({t['kind']}, {t['unit']}): {t['title']}", Gt.HARNESS)
+        print(_ticket_row(t))
+        return 0
+    tid = a.id
+    if not (T.TICKETS / f"{tid}.json").exists():
+        return _fail(f"no ticket {tid} (ticket list --all shows them)")
+    if a.action == "show":
+        return _ticket_show(tid)
+    try:
+        if a.action in ("reopen", "void"):
+            t = (T.reopen if a.action == "reopen" else T.void)(tid, a.reason)
+            message = f"ticket: {tid} {t['status'] if a.action == 'void' else 'reopened'}: {a.reason}"
+        elif a.action == "waive":
+            check = a.check
+            if not a.reason.strip():
+                return _fail("a waiver needs --reason")
+            t = T.load(tid)
+            t.setdefault("waive", {})[check] = a.reason
+            T.record(t, "waiver", check=check, reason=a.reason)
+            message = f"ticket: {tid} waives {check}: {a.reason}"
+        else:  # cap
+            t = T.load(tid)
+            t["cap_usd"] = a.usd
+            T.record(t, "cap", usd=t["cap_usd"])
+            message = f"ticket: {tid} fixer cap ${t['cap_usd']:.2f}"
+    except ValueError as e:
+        return _fail(str(e))
+    Run.commit(message, Gt.HARNESS)
+    print(_ticket_row(t))
     return 0
 
 
@@ -88,91 +115,157 @@ def _review(a) -> int:
     if a.action == "list":
         for i, (uid, n) in enumerate(S.waiting_review(), 1):
             print(f"{i:3}  {uid}: {n}")
+        if a.all:
+            for uid, st in sorted(S.all_states().items()):
+                for r in st.get("reviewed", []):
+                    print(f"  {r['decision']:7}  {uid}: {r['test']} ({r['reason']})")
+        elif not S.waiting_review():
+            print("(nothing waiting for review; --all shows the decided ones)")
         return 0
     try:
         print(Run.decide_review(a.refs, a.action == "keep", a.reason))
     except ValueError as e:
-        print(e, file=sys.stderr)
-        return 1
+        return _fail(str(e))
     return 0
 
 
 def _ruling(a) -> int:
     if a.action == "list":
-        for r in Ru.all_rulings():
+        shown = [r for r in Ru.all_rulings() if a.all or r["status"] == "proposed"]
+        for r in shown:
             rid = f" → {r['register_id']}" if r["register_id"] else ""
             print(f"{r['id']:5} {r['status']:9}{rid} {r['unit']}: {r['ruling']}")
             if r["reason"]:
                 print(f"      rejected because: {r['reason']}")
+        hidden = len(Ru.all_rulings()) - len(shown)
+        if hidden:
+            print(f"({hidden} decided not shown; --all shows them)")
         return 0
-    if not a.id:
-        print("which ruling? e.g. ruling accept P-1", file=sys.stderr)
-        return 1
     if a.action == "reject" and not a.reason.strip():
-        print("a rejection needs --reason: stage C uses it to pick another reading", file=sys.stderr)
-        return 1
+        return _fail("a rejection needs --reason: stage C uses it to pick another reading")
     r = Run.decide_ruling(a.id, a.action == "accept", a.note if a.action == "accept" else a.reason)
     print(f"{r['id']}: {r['status']}" + (f" as {r['register_id']}" if r["register_id"] else ""))
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(
-        prog="python -m scripts.srdloop",
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+def _parser() -> argparse.ArgumentParser:
+    ap = argparse.ArgumentParser(prog="python -m scripts.srdloop", description=__doc__.split("\n\n", 1)[1])
+    sub = ap.add_subparsers(dest="cmd", required=True, metavar="<command>")
+
+    def cmd(parent, name, summary, details=""):
+        return parent.add_parser(name, help=summary, description=f"{summary}. {details}".strip())
+
+    cmd(sub, "help", "this help; `help <command> [<action>]` for one command's").add_argument(
+        "topic", nargs="*", metavar="<command>"
     )
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("status")
-    sub.add_parser("plan")
-    rel = sub.add_parser("related")
+    cmd(sub, "status", "one-line summary of the loop")
+    cmd(sub, "plan", "write loop/queue.json", "Pending and stale units, dependencies first.")
+    rel = cmd(sub, "related", "scenarios, tests and engine code related to a unit (JSON)")
     rel.add_argument("unit")
-    sub.add_parser("report")
-    gate = sub.add_parser("gate")
+    cmd(sub, "report", "write loop/COVERAGE.md", "States per chapter, the queue and what waits for a person.")
+    run = cmd(
+        sub, "run", "the audit loop: stages A-D per unit", "Exit 3: a circuit breaker; 4: paused, run again."
+    )
+    run.add_argument("--budget", type=float, required=True, help="USD for this run")
+    run.add_argument("--units", nargs="*", metavar="ID", help="only these units (default: the queue)")
+    dev = cmd(
+        sub, "dev", "the dev loop: fix open tickets", "Exit 3: a circuit breaker; 4: paused, run again."
+    )
+    dev.add_argument("--budget", type=float, required=True, help="USD for this run")
+    dev.add_argument("--tickets", nargs="*", metavar="T-n", help="only these tickets (default: all open)")
+    dev.add_argument("--recheck", metavar="T-n", help="gate, review and commit a change already in the tree")
+    gate = cmd(
+        sub, "gate", "audit gates on the working tree", "Write zones, append-only, SRD test-file rules."
+    )
     gate.add_argument("--role", required=True, choices=sorted(Gt.ZONES))
     gate.add_argument("--ref", default="HEAD")
-    devg = sub.add_parser("dev-gate")
-    devg.add_argument("--ref", default="HEAD")
-    run = sub.add_parser("run")
-    run.add_argument("--budget", type=float, required=True, help="USD for this run")
-    run.add_argument("--units", nargs="*")
-    dev = sub.add_parser("dev")
-    dev.add_argument("--budget", type=float, required=True, help="USD for this run")
-    dev.add_argument("--tickets", nargs="*")
-    dev.add_argument(
-        "--recheck", metavar="T-n", help="gate, review and commit the change already in the tree"
+    devg = cmd(
+        sub, "dev-gate", "dev-loop quality gates", "Lint, suppressions, coverage, import layers, duplication."
     )
-    sub.add_parser("tickets")
-    mut = sub.add_parser("mutate")
-    mut.add_argument("file")
-    mut.add_argument("line", type=int)
-    mut.add_argument("old")
-    mut.add_argument("new")
-    mut.add_argument("nodeid")
-    pr = sub.add_parser("prompt")
+    devg.add_argument("--ref", default="HEAD")
+
+    tk = cmd(sub, "ticket", "tickets: work for the dev loop", "See `ticket <action> --help`.")
+    tks = tk.add_subparsers(dest="action", required=True, metavar="<action>")
+    ls = cmd(tks, "list", "open, stuck and disputed tickets")
+    ls.add_argument("--all", action="store_true", help="fixed and void too")
+    ls.add_argument("--kind", dest="only", choices=sorted(T.PRIORITY), help="only this kind")
+    cmd(tks, "show", "a ticket, its history and each fix attempt").add_argument("id", metavar="T-n")
+    cr = cmd(tks, "create", "file a ticket by hand")
+    cr.add_argument("kind", choices=sorted(T.PRIORITY))
+    cr.add_argument("unit", help="the SRD unit id it belongs to (or ENGINE)")
+    cr.add_argument("title", help="what is wrong, as the rule versus the engine")
+    cr.add_argument("--test", action="append", metavar="NODEID", help="a test it must make pass (repeatable)")
+    for name, summary in (
+        ("reopen", "back to the dev loop with fresh attempts (a settled dispute, a stuck ticket)"),
+        ("void", "no longer wanted (a duplicate, superseded)"),
+    ):
+        p = cmd(tks, name, summary)
+        p.add_argument("id", metavar="T-n")
+        p.add_argument("--reason", required=True)
+    wv = cmd(tks, "waive", "waive one gate for one ticket")
+    wv.add_argument("id", metavar="T-n")
+    wv.add_argument("check", choices=sorted(Q.WAIVABLE))
+    wv.add_argument("--reason", required=True)
+    cp = cmd(tks, "cap", "a larger per-call budget for the fixer on a big ticket")
+    cp.add_argument("id", metavar="T-n")
+    cp.add_argument("usd", type=float, metavar="USD")
+
+    ru = cmd(
+        sub,
+        "ruling",
+        "rulings: ambiguities the test designer had to resolve",
+        "See `ruling <action> --help`.",
+    )
+    rus = ru.add_subparsers(dest="action", required=True, metavar="<action>")
+    cmd(rus, "list", "proposals awaiting a decision").add_argument(
+        "--all", action="store_true", help="accepted and rejected too"
+    )
+    acc = cmd(rus, "accept", "make it the next R-<n> in the README register; its tests' markers follow")
+    acc.add_argument("id", metavar="P-n")
+    acc.add_argument("--note", default="", help="shown with the ruling in the register")
+    rej = cmd(rus, "reject", "re-queue the unit: stage C rewrites those tests for another reading")
+    rej.add_argument("id", metavar="P-n")
+    rej.add_argument("--reason", required=True, help="stage C uses it to pick another reading")
+
+    rv = cmd(
+        sub,
+        "review",
+        "tests the verifier doubted, kept until a person decides",
+        "See `review <action> --help`.",
+    )
+    rvs = rv.add_subparsers(dest="action", required=True, metavar="<action>")
+    cmd(rvs, "list", "numbered tests waiting for a decision").add_argument(
+        "--all", action="store_true", help="the decided ones too"
+    )
+    for name in ("keep", "remove"):
+        p = cmd(rvs, name, f"{name} tests, by number from `review list` or node id; one commit")
+        p.add_argument("refs", nargs="+", metavar="N|NODEID")
+        p.add_argument("--reason", required=True)
+
+    mut = cmd(sub, "mutate", "break one engine line in a scratch copy and run a test there")
+    for arg in ("file", "line", "old", "new", "nodeid"):
+        mut.add_argument(arg, type=int if arg == "line" else str)
+    pr = cmd(sub, "prompt", "interactive mode: print the prompt for a stage of a unit")
     pr.add_argument("stage", choices=list("ABCD"))
     pr.add_argument("unit")
-    acc = sub.add_parser("accept")
-    acc.add_argument("stage", choices=list("ABCD"))
-    acc.add_argument("unit")
-    acc.add_argument("file")
-    fin = sub.add_parser("finish")
-    fin.add_argument("unit")
-    tkp = sub.add_parser("ticket")
-    tkp.add_argument("action", choices=["waive", "cap"])
-    tkp.add_argument("id")
-    tkp.add_argument("value")
-    tkp.add_argument("--reason", default="")
-    ru = sub.add_parser("ruling")
-    ru.add_argument("action", choices=["list", "accept", "reject"])
-    ru.add_argument("id", nargs="?")
-    ru.add_argument("--note", default="")
-    ru.add_argument("--reason", default="")
-    rv = sub.add_parser("review")
-    rv.add_argument("action", choices=["list", "keep", "remove"])
-    rv.add_argument("refs", nargs="*", help="numbers from `review list`, or node ids")
-    rv.add_argument("--reason", default="")
+    ac = cmd(sub, "accept", "interactive mode: gate a stage's JSON output; on success checkpoint it")
+    ac.add_argument("stage", choices=list("ABCD"))
+    ac.add_argument("unit")
+    ac.add_argument("file")
+    cmd(
+        sub, "finish", "interactive mode: after stage D, remove refuted tests, open tickets, commit"
+    ).add_argument("unit")
+    return ap
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = _parser()
+    argv = sys.argv[1:] if argv is None else argv
+    if not argv:
+        argv = ["help"]
     a = ap.parse_args(argv)
+    if a.cmd == "help":  # the same as --help, at any depth: help ticket create == ticket create --help
+        ap.parse_args([*a.topic, "--help"])
     if a.cmd == "ruling":
         return _ruling(a)
     if a.cmd == "review":
@@ -181,10 +274,6 @@ def main(argv: list[str] | None = None) -> int:
         return _ticket(a)
     if a.cmd == "mutate":
         print(M.mutate(a.file, a.line, a.old, a.new, a.nodeid))
-        return 0
-    if a.cmd == "tickets":
-        for t in T.all_tickets():
-            print(f"{t['id']:6} {t['status']:8} {t['kind']:8} {t['unit']}: {t['title']}")
         return 0
     if a.cmd == "run":
         return Run.run(a.budget, a.units)

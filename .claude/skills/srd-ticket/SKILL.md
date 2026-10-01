@@ -8,7 +8,7 @@ description: Work one SRD loop ticket (a red SRD test, a missing engine capabili
 The headless dev loop is `python -m scripts.srdloop dev --budget <USD> --tickets <T-n>`. This
 skill does the same in the current session.
 
-1. Read the ticket: `loop/tickets/<T-n>.json` (`python -m scripts.srdloop tickets` lists them).
+1. Read the ticket: `loop/tickets/<T-n>.json` (`python -m scripts.srdloop ticket list` lists them; `ticket show <T-n>` gives its history).
    Run its tests to see the failures: `python -m pytest <node ids> -q --runxfail`.
 2. Delegate the fix to the `fixer` agent with the ticket, the failing output, and the rule
    unit's text (`python -m scripts.srdloop related <unit>` and `docs/srd/srd.md`). The fixer
