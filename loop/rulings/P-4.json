@@ -1,7 +1,7 @@
 {
   "id": "P-4",
   "unit": "GLOSS.tremorsense",
-  "ambiguity": "GLOSS.tremorsense: “pinpoint the location”: does pinpointing cancel the unseen-target rules (Disadvantage on attacks, 'a creature you can see')?",
+  "ambiguity": "“pinpoint the location”: does pinpointing cancel the unseen-target rules (Disadvantage on attacks, 'a creature you can see')?",
   "ruling": "No. Pinpointing makes the location known (no guessing the space), but Tremorsense doesn't count as sight. Attacks against the target still have Disadvantage for an unseen target, and spells that need a target you can see stay unavailable.",
   "tests": [
     "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",

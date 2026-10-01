@@ -2,7 +2,7 @@
   "id": "T-19",
   "kind": "infra",
   "unit": "PLAY.combat.cover",
-  "title": "PLAY.combat.cover: Cover lookup by point of origin (a position, not only a creature) for area effects and other effects that don't originate at the caster",
+  "title": "Cover lookup by point of origin (a position, not only a creature) for area effects and other effects that don't originate at the caster",
   "tests": [],
   "status": "open",
   "attempts": 0,

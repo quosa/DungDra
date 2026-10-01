@@ -1,7 +1,7 @@
 {
   "id": "P-6",
   "unit": "PLAY.combat.cover",
-  "ambiguity": "PLAY.combat.cover: “Can’t be targeted directly”: does Total Cover stop area effects?",
+  "ambiguity": "“Can’t be targeted directly”: does Total Cover stop area effects?",
   "ruling": "'Directly' limits the refusal to effects that select the creature (attack rolls, chosen spell targets, each target of a multi-target spell). An area spell isn't refused. Whether the area reaches a creature behind Total Cover is decided by GLOSS.area-of-effect (a line is blocked only by Total Cover), so with Total Cover from the origin it isn't affected. SPL-05 stays as is.",
   "tests": [
     "tests/srd/test_playing_the_game.py::test_total_cover_doesnt_refuse_an_area_spell"

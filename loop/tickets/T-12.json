@@ -2,7 +2,7 @@
   "id": "T-12",
   "kind": "infra",
   "unit": "GLOSS.tremorsense",
-  "title": "GLOSS.tremorsense: Awareness model: a query such as game.pinpoints(observer, target) / knows_location, kept separate from can_see. Tremorsense (and Blindsight) feed it within their range. Hide/Search and the combat help ('N hidden enemies somewhere nearby') use it, and Refusals and Events cite rule=GLOSS.tremorsense#<n>.",
+  "title": "Awareness model: a query such as game.pinpoints(observer, target) / knows_location, kept separate from can_see. Tremorsense (and Blindsight) feed it within their range. Hide/Search and the combat help ('N hidden enemies somewhere nearby') use it, and Refusals and Events cite rule=GLOSS.tremorsense#<n>.",
   "tests": [],
   "status": "open",
   "attempts": 0,

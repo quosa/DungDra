@@ -2,7 +2,7 @@
   "id": "T-4",
   "kind": "infra",
   "unit": "GLOSS.grappled",
-  "title": "GLOSS.grappled: Support carrying a grappled creature during non-walking movement (climb/fly), not just move(drag=...)",
+  "title": "Support carrying a grappled creature during non-walking movement (climb/fly), not just move(drag=...)",
   "tests": [],
   "status": "fixed",
   "attempts": 1,

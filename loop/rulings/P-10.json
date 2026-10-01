@@ -1,7 +1,7 @@
 {
   "id": "P-10",
   "unit": "SPELL.bless",
-  "ambiguity": "SPELL.bless: “within range” — is range checked only at casting?",
+  "ambiguity": "“within range” — is range checked only at casting?",
   "ruling": "Range is checked only at casting. The benefit lasts until the spell ends, wherever the target goes.",
   "tests": [
     "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed"

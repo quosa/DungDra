@@ -12,14 +12,6 @@ COVER = "PLAY.combat.cover"
 
 GOBLIN_AC = 15  # Goblin Warrior stat block
 
-NO_CREATURE_COVER = (
-    "T-new: a creature between attacker and target gives no Half Cover; "
-    "cover comes only from scene.cover/cover_all"
-)
-NO_COVER_TRACE = (
-    "T-new: the Half/Three-Quarters Cover bonus is applied but no event carries rule=PLAY.combat.cover"
-)
-
 
 def set_turn(game, c):
     cb = game.combat
