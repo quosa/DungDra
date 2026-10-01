@@ -365,7 +365,7 @@ def test_sacred_flame_still_cant_target_total_cover(game):
     assert_refused_cleanly(game, S.cast, game, j, "sacred flame", gob, match="Total Cover")
 
 
-@pytest.mark.srd(COVER, clause=f"{COVER}#9", kind="negative", ruling="P-6")
+@pytest.mark.srd(COVER, clause=f"{COVER}#9", kind="negative", ruling="R-10")
 def test_total_cover_doesnt_refuse_an_area_spell(game):
     """'Directly': an area spell isn't refused because one creature in the area has Total Cover.
     Whether the area reaches it is the area-of-effect rule's call (blocked lines need Total Cover)."""
