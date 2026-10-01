@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
     "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-08",
   "note": "",
   "reason": ""
 }

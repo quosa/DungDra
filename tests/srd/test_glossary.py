@@ -351,7 +351,7 @@ def stonecunning_brom(game, pos=(0, 0)):
 
 
 # ---------------- #4 · Tremorsense doesn't count as a form of sight ----------------
-@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="P-4")
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="R-08")
 def test_tremorsense_doesnt_see_an_invisible_creature(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (5, 0))
@@ -377,7 +377,7 @@ def test_blinded_creature_with_tremorsense_still_cant_see(game):
     assert any("can't see" in s for s in r.roll.adv)
 
 
-@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="P-4")
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="R-08")
 def test_tremorsense_attack_command_on_invisible_target_has_disadvantage(game):
     s = Session(game)
     brom = stonecunning_brom(game)

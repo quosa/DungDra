@@ -23,7 +23,7 @@
       "summary": "I kept all 7 tests and refuted none. Rule text: \"Tremorsense… doesn't count as a form of sight.\" Every expected result follows from the words of this rule combined with Invisible (attacks against it have Disadvantage unless the attacker can see it), Blinded, and Sacred Flame (it targets a creature y"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
     "tests/srd/test_glossary.py::test_blinded_creature_with_tremorsense_still_cant_see",
