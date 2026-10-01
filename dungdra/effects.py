@@ -160,6 +160,23 @@ def condition_rule(name: str) -> str:
     return f"GLOSS.{name}"
 
 
+def grapples_on(creature, by=None) -> list:
+    """The Grappled conditions on a creature, optionally only those whose grappler has id `by`.
+
+    A list, so callers may remove the effects while iterating."""
+    return [
+        e
+        for e in creature.effects
+        if e.condition == "grappled" and (by is None or e.data.get("grappler") == by)
+    ]
+
+
+def grapplers_of(creature) -> set:
+    """Ids of every creature currently grappling `creature`."""
+    # SRD[GLOSS.grappled#2] "the grappler" is any creature currently grappling the owner
+    return {g for e in grapples_on(creature) if (g := e.data.get("grappler"))}
+
+
 def _within5(ctx):
     return ctx.distance is not None and ctx.distance <= 5
 
@@ -188,11 +205,12 @@ class Condition(Effect):
                 acc.disadvantage("Frightened")
         elif n == "grappled":
             # SRD[GLOSS.grappled#2] "the grappler" is any creature currently grappling the owner
-            grapplers = {e.data.get("grappler") for e in o.effects if e.condition == "grappled"}
-            grapplers.add(self.data.get("grappler"))
+            grapplers = grapplers_of(o)
+            if self.data.get("grappler"):
+                grapplers.add(self.data["grappler"])
             if ctx.kind == "attack" and ctx.target is not None and ctx.target.id not in grapplers:
                 acc.disadvantage("Grappled (attacking someone other than the grappler)")
-            if ctx.kind == "attack" and ctx.target is not None and len(grapplers - {None}) > 1:
+            if ctx.kind == "attack" and ctx.target is not None and len(grapplers) > 1:
                 acc.ruling(
                     "GLOSS.grappled#2",
                     "R-06",

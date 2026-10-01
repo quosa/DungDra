@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from .d20 import D20Roll, roll_d20_test
 from .data.equipment import WEAPONS
 from .dice import parse_expr
-from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see
+from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
 from .geometry import dist_points, step_away, step_toward
 from .rules import ROUND, Refusal, fmt_mod, size_index
 
@@ -397,9 +397,7 @@ def move(
     cb = game.combat
     start = tuple(c.position)
     # SRD[GLOSS.grappled#3] only "the grappler" can drag the Grappled creature
-    if drag is not None and not any(
-        e.condition == "grappled" and e.data.get("grappler") == c.id for e in drag.effects
-    ):
+    if drag is not None and c.id not in grapplers_of(drag):
         raise Refusal(
             f"{c.name} isn't grappling {drag.name}, so it can't drag it",
             page=182,
@@ -527,14 +525,13 @@ def move(
 def _after_move(game, c, start):
     # grapples end if the distance exceeds the grapple's range
     for other in game.creatures.values():
-        for e in list(other.effects):
-            if e.condition == "grappled" and e.data.get("grappler") == c.id and other.distance_to(c) > 5:
+        for e in grapples_on(other, by=c.id):
+            if other.distance_to(c) > 5:
                 other.remove_effect(e, f"{c.name} moved out of range")
-    for e in list(c.effects):
-        if e.condition == "grappled":
-            g = game.creatures.get(e.data.get("grappler"))
-            if g and c.distance_to(g) > 5:
-                c.remove_effect(e, "out of the grappler's reach")
+    for e in grapples_on(c):
+        g = game.creatures.get(e.data.get("grappler"))
+        if g and c.distance_to(g) > 5:
+            c.remove_effect(e, "out of the grappler's reach")
     mount = c.notes.get("mount")
     if mount and mount in game.creatures:
         game.creatures[mount].position = c.position
@@ -1638,14 +1635,13 @@ def escape_grapple(game, c, skill=None):
 
 
 def release_grapple(game, target, reason="escaped"):
-    for e in list(target.effects):
-        if e.condition == "grappled":
-            grappler = game.creatures.get(e.data.get("grappler"))
-            target.remove_effect(e, reason)
-            if grappler:
-                for f in list(grappler.effects):
-                    if f.name == "grappling" and f.data.get("target") == target.id:
-                        grappler.effects.remove(f)
+    for e in grapples_on(target):
+        grappler = game.creatures.get(e.data.get("grappler"))
+        target.remove_effect(e, reason)
+        if grappler:
+            for f in list(grappler.effects):
+                if f.name == "grappling" and f.data.get("target") == target.id:
+                    grappler.effects.remove(f)
 
 
 # ---------------------------------------------------------------------------

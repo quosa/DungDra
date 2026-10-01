@@ -2,8 +2,8 @@
 
 import pytest
 
-from dungdra.combat import attack, move
-from dungdra.effects import Condition
+from dungdra.combat import attack, move, release_grapple
+from dungdra.effects import Condition, Flag, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
@@ -149,3 +149,39 @@ def test_an_attack_by_a_creature_with_two_grapplers_logs_r06(game):
     [ev] = game.log.assert_applied("GLOSS.grappled#2", ruling="R-06")
     assert ev.visibility == GM
     assert game.log.last("attack").rule == "PLAY.combat.making-an-attack"
+
+
+def test_a_grappler_walking_away_without_dragging_ends_the_grapple(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    grappled_by(gob, brom)
+    move(game, brom, to=(-5, 0))
+    assert grapplers_of(gob) == set()
+
+
+def test_a_grappler_staying_within_5_feet_keeps_the_grapple(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    grappled_by(gob, brom)
+    move(game, brom, to=(5, 5))
+    assert grapplers_of(gob) == {brom.id}
+
+
+def test_a_grappled_creature_moved_out_of_reach_is_freed_of_that_grappler_only(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    bandit = mon(game, "bandit", (10, 0))
+    grappled_by(gob, brom)
+    grappled_by(gob, bandit)
+    move(game, gob, to=(15, 0), teleport=True)
+    assert grapplers_of(gob) == {bandit.id}
+
+
+def test_release_grapple_ends_the_condition_and_the_grapplers_flag(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    grappled_by(gob, brom)
+    brom.add_effect(Flag("grappling", f"grappling {gob.name}", target=gob.id))
+    release_grapple(game, gob)
+    assert grapplers_of(gob) == set()
+    assert not any(f.name == "grappling" for f in brom.effects)

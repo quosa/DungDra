@@ -1,0 +1,45 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The grappler lookup now lives in two helpers in `dungdra/effects.py`, the bottom layer: `grapples_on(creature, by=None)` returns the Grappled conditions on a creature (optionally only those from one grappler) as a list, so callers can remove effects while looping. `grapplers_of(creature)` returns the set of grappler ids and carries the SRD[GLOSS.grappled#2] tag. All the old copies of the scan now use them: the Grappled condition's attack check in effects.py; the drag check (#3), `_after_move` and `release_grapple` in combat.py; and `on_incapacitated` in game.py. In `on_incapacitated` the grapple removal is now its own loop, separate from the `ends_if_caster_incapacitated` loop, so an effect already removed isn't looked at a second time. Behaviour is otherwise unchanged. `ruff check .` and `ruff format --check .` are clean, all 305 unit tests pass, the srd and scenario suites pass (266), and `python -m scripts.srdloop dev-gate` passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`.",
+  "files": [
+   "dungdra/effects.py",
+   "dungdra/combat.py",
+   "dungdra/game.py",
+   "tests/unit/test_effects.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_grapplers_of_names_every_grappler_and_nothing_else",
+   "tests/unit/test_effects.py::test_grapples_on_filters_by_grappler",
+   "tests/unit/test_effects.py::test_grapples_on_is_safe_to_remove_from_while_iterating",
+   "tests/unit/test_combat.py::test_a_grappler_walking_away_without_dragging_ends_the_grapple",
+   "tests/unit/test_combat.py::test_a_grappler_staying_within_5_feet_keeps_the_grapple",
+   "tests/unit/test_combat.py::test_a_grappled_creature_moved_out_of_reach_is_freed_of_that_grappler_only",
+   "tests/unit/test_combat.py::test_release_grapple_ends_the_condition_and_the_grapplers_flag"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.grappled#2] on grapplers_of in dungdra/effects.py"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "escape_grapple (combat.py:1615) still finds its Grappled condition with its own `next(e for e in c.effects if e.condition == \"grappled\")` scan. Route it through grapples_on(c) so every grapple lookup uses the one helper",
+    "kind": "refactor"
+   },
+   {
+    "title": "The grappled_by(target, grappler) test helper is defined three times (tests/unit/test_effects.py:13, test_combat.py:12, test_api.py:8). Move one copy into tests/support/helpers.py",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this fix for T-5: the ticket asked for one grappler lookup, and this change delivers it. It adds two helpers in effects.py. `grapples_on(creature, by=None)` returns the creature's Grappled conditions as a list, so callers can remove effects while they loop. `grapplers_of(creature)` returns the set of grappler ids. The engine now uses them for the grapple drag check, for the ends-when-out-of-range check after a move, for release_grapple, for the incapacitation check in game.py and for Grappled's attack modifiers.\n\nBehaviour is unchanged. In Condition.apply, grapplers_of now leaves out None ids, so the old `- {None}` became unnecessary. The R-06 count and the not-the-grappler check still work the same. In game.py the grapples are now removed before the `ends_if_caster_incapacitated` loop runs. That loop then works from a fresh copy of the effect list, so it can't touch a grapple condition that was already removed.\n\nThe new unit tests check real behaviour, not constants:\n- the helpers' filtering;\n- removing effects while looping;\n- a grappler walking away ends the grapple, and staying within 5 feet keeps it;\n- with two grapplers, only the one now out of reach lets go;\n- release_grapple clears both the condition and the grappler's \"grappling\" flag.\n\nThe scope matches the ticket, and there's no hard-coding or layering problem. I'm filing two small follow-ups:\n- escape_grapple still does its own Grappled scan instead of using the new helper.\n- The `grappled_by` test helper is copied in three test files."
+ },
+ "problems": [],
+ "cost_usd": 0.6743,
+ "stash": ""
+}

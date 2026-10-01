@@ -4,7 +4,12 @@
   "unit": "GLOSS.grappled",
   "title": "Pull the grappler lookup (`e.condition == \"grappled\" and e.data.get(\"grappler\")`) into one helper, such as `grapplers_of(creature)`. The same scan appears in effects.py, combat.py (move-out-of-reach and release) and game.py (incapacitation).",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "The grappler lookup now lives in two helpers in `dungdra/effects.py`, the bottom layer: `grapples_on(creature, by=None)` returns the Grappled conditions on a creature (optionally only those from one grappler) as a list, so callers can remove effects while looping. `grapplers_of(creature)` returns the set of grappler ids and carries the SRD[GLOSS.grappled#2] tag. All the old copies of the scan now use them: the Grappled condition's attack check in effects.py; the drag check (#3), `_after_move` and `release_grapple` in combat.py; and `on_incapacitated` in game.py. In `on_incapacitated` the grapple removal is now its own loop, separate from the `ends_if_caster_incapacitated` loop, so an effect already removed isn't looked at a second time. Behaviour is otherwise unchanged. `ruff check .` and `ruff format --check .` are clean, all 305 unit tests pass, the srd and scenario suites pass (266), and `python -m scripts.srdloop dev-gate` passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`."
+    }
+  ]
 }

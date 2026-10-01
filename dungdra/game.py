@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 
 from .dice import Dice
-from .effects import Acc, Ctx
+from .effects import Acc, Ctx, grapples_on
 from .events import EventLog
 from .rules import DAY, HOUR, MINUTE, ROUND, SPACE, Refusal, norm
 
@@ -324,9 +324,9 @@ class Game:
             self.end_concentration(creature, "Incapacitated")
         # p.182 grapple ends if the grappler is Incapacitated
         for c in self.creatures.values():
+            for e in grapples_on(c, by=creature.id):
+                c.remove_effect(e, f"grappler {creature.name} is Incapacitated")
             for e in list(c.effects):
-                if e.condition == "grappled" and e.data.get("grappler") == creature.id:
-                    c.remove_effect(e, f"grappler {creature.name} is Incapacitated")
                 if getattr(e, "ends_if_caster_incapacitated", False) and e.caster_id == creature.id:
                     c.remove_effect(e, f"{creature.name} is Incapacitated")
 

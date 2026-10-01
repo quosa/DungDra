@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from dungdra.effects import Acc, Condition, Ctx, Effect, condition_rule
+from dungdra.effects import Acc, Condition, Ctx, Effect, condition_rule, grapplers_of, grapples_on
 from dungdra.rules import CONDITIONS
 from tests.support.helpers import mon, pc
 
@@ -13,6 +13,38 @@ GRAPPLED_DIS = "Grappled (attacking someone other than the grappler)"
 def grappled_by(target, *grapplers):
     for g in grapplers:
         target.add_effect(Condition("grappled", f"grappled by {g.name}", caster=g, grappler=g.id))
+
+
+def test_grapplers_of_names_every_grappler_and_nothing_else(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    bandit = mon(game, "bandit", (0, 5))
+    assert grapplers_of(brom) == set()
+    brom.add_effect(Condition("prone", "prone"))
+    grappled_by(brom, gob, bandit)
+    assert grapplers_of(brom) == {gob.id, bandit.id}
+    assert grapplers_of(gob) == set()
+
+
+def test_grapples_on_filters_by_grappler(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    bandit = mon(game, "bandit", (0, 5))
+    brom.add_effect(Condition("prone", "prone"))
+    grappled_by(brom, gob, bandit)
+    assert [e.data["grappler"] for e in grapples_on(brom)] == [gob.id, bandit.id]
+    assert [e.data["grappler"] for e in grapples_on(brom, by=bandit.id)] == [bandit.id]
+    assert grapples_on(gob) == []
+
+
+def test_grapples_on_is_safe_to_remove_from_while_iterating(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    bandit = mon(game, "bandit", (0, 5))
+    grappled_by(brom, gob, bandit)
+    for e in grapples_on(brom):
+        brom.remove_effect(e, "escaped")
+    assert grapplers_of(brom) == set()
 
 
 def test_grappled_attack_on_the_grappler_has_no_disadvantage(game):

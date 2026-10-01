@@ -1,0 +1,10 @@
+{
+  "id": "T-32",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "escape_grapple (combat.py:1615) still finds its Grappled condition with its own `next(e for e in c.effects if e.condition == \"grappled\")` scan. Route it through grapples_on(c) so every grapple lookup uses the one helper",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
