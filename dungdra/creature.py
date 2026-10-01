@@ -193,7 +193,7 @@ class Creature:
                 rule=rule,
                 # R-07: while Grappled, every Speed (also one gained later) is 0 and can't increase;
                 # the ruling only decides something for a creature with a non-walk Speed
-                ruling="R-07" if name == "grappled" and self.special_speeds() else None,
+                ruling="R-07" if name == "grappled" and self.has_special_speed() else None,
             )
         if name == "prone" and self.game and not already:
             from .combat import _mounted_fall_check
@@ -329,14 +329,22 @@ class Creature:
     def adjust_speed(self, s: int, kind: str) -> int:
         return s
 
+    def has_special_speed(self, kind: str | None = None) -> bool:
+        """Whether the creature has a non-walk Speed above 0 ft: of `kind`, or of any kind if None.
+
+        This is the case R-07 decides for a Grappled creature."""
+        if kind is None:
+            return any(self.has_special_speed(k) for k in self.speeds)
+        return kind != "walk" and self.speeds.get(kind, 0) > 0
+
     def special_speeds(self) -> list[str]:
         """The creature's non-walk Speeds (Climb, Swim, Fly ...) above 0 ft."""
-        return [k for k, v in self.speeds.items() if k != "walk" and v > 0]
+        return [k for k in self.speeds if self.has_special_speed(k)]
 
     def gain_speed(self, kind: str, ft: int, source: str = "") -> None:
         """Give the creature a Speed of `ft` feet of the `kind` given (walk, climb, swim, fly)."""
         self.speeds[kind] = ft
-        if self.game and kind != "walk" and ft > 0 and self.has("grappled"):
+        if self.game and self.has_special_speed(kind) and self.has("grappled"):
             # SRD[GLOSS.grappled#1] R-07: a Speed gained while Grappled is 0 too and can't increase
             self.game.log.player(
                 "speed",

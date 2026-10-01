@@ -1,0 +1,26 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I added one predicate, `Creature.has_special_speed(kind=None)` in `dungdra/creature.py`. With a kind, it returns true when that kind is not walk and its Speed is above 0 ft. With no kind, it returns true if any Speed meets that test. This is the case R-07 decides, and all three places now call it:\n- `add_condition`'s Grappled log, in place of `special_speeds()`\n- `gain_speed`, in place of the inline `kind != \"walk\" and ft > 0` check\n- `combat.move`'s Grappled refusal, in place of `mode != \"walk\" and c.speeds.get(mode, 0) > 0`\n\n`special_speeds()` still returns the list of qualifying Speeds, but it now filters through the predicate, so the test lives in one place. Behaviour is unchanged.\n\nI added a unit test covering walk-only, a 0-ft Speed, a gained climb Speed, and kinds the creature doesn't have. Results:\n- `ruff check` and `ruff format`: clean\n- Unit tests: 329 passed\n- Grapple-related srd/scenario tests: 20 passed\n- `dev-gate`: PASS\n\nThe ticket listed no acceptance tests, so there were none to run with `--runxfail`.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/combat.py",
+   "tests/unit/test_creature.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_creature.py::test_has_special_speed_counts_only_non_walk_speeds_above_zero"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change. It adds `Creature.has_special_speed(kind=None)` as the single check for \"a non-walk Speed above 0\", and all three places the ticket names now call it:\n- `special_speeds()` is built on the new check.\n- `gain_speed` uses it. It assigns the new speed before checking, so the result is the same as the old `kind != \"walk\" and ft > 0` test.\n- The grappled refusal in `combat.move` uses it with the movement mode.\n- The R-07 ruling when the grappled condition is added now calls `has_special_speed()` instead of testing whether `special_speeds()` is empty.\n\nNone of these behave differently. The new unit test checks real behaviour: walk-only creatures, a gained Speed of 0, a gained climb Speed, kinds the creature doesn't have, and the result of `special_speeds()`. The rest of the diff stays in scope; the only other file is the routine `loop/costs.jsonl` entry. The one remaining `kind != \"walk\"` check (`creature.py:318`) is part of working out a creature's Speed when it lacks that kind, which is a separate rule from this one."
+ },
+ "problems": [],
+ "cost_usd": 0.3034,
+ "stash": ""
+}

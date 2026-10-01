@@ -497,7 +497,7 @@ def move(
                 f"{c.name}'s Speed is 0",
                 page=182,
                 rule="GLOSS.grappled#1",
-                ruling="R-07" if mode != "walk" and c.speeds.get(mode, 0) > 0 else None,
+                ruling="R-07" if c.has_special_speed(mode) else None,
             )
         raise Refusal(f"{c.name}'s Speed is 0", page=188, rule="GLOSS.speed")
     if cb is not None and cb.is_turn(c):

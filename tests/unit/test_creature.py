@@ -11,6 +11,18 @@ def test_grappling_a_creature_with_a_special_speed_logs_ruling_r07(game):
     assert (ev.rule, ev.ruling) == ("GLOSS.grappled", "R-07")
 
 
+def test_has_special_speed_counts_only_non_walk_speeds_above_zero(game):
+    gob = mon(game, "goblin warrior")
+    assert gob.speeds.get("walk", 0) > 0
+    assert not gob.has_special_speed() and not gob.has_special_speed("walk")
+    gob.gain_speed("swim", 0)
+    assert not gob.has_special_speed() and not gob.has_special_speed("swim")
+    gob.gain_speed("climb", 30)
+    assert gob.has_special_speed() and gob.has_special_speed("climb")
+    assert not gob.has_special_speed("fly") and not gob.has_special_speed("crawl")
+    assert gob.special_speeds() == ["climb"]
+
+
 def test_grappling_a_walk_only_creature_logs_no_ruling(game):
     gob = mon(game, "goblin warrior")
     assert gob.special_speeds() == []
