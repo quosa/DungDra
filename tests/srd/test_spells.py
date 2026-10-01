@@ -130,7 +130,7 @@ def test_one_out_of_range_target_refuses_the_whole_casting(game):
     assert not b.find_effects("Bless")
 
 
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#3", kind="positive", ruling="P-10")
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#3", kind="positive", ruling="R-14")
 def test_a_target_that_moves_beyond_30_feet_stays_blessed(game):
     j, b, _, _ = party(game)
     S.cast(game, j, "bless", [b])

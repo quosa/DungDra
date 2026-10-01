@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-14",
   "note": "",
   "reason": ""
 }

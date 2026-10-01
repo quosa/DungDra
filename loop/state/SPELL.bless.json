@@ -52,7 +52,7 @@
       "summary": "I checked all 46 Bless tests. 44 are keeps and 2 are refutes. Baseline: 40 green tests pass and the 6 red tests are strict xfails. I ran the red tests with --runxfail, and each one fails for the reason its ticket gives:\n- the Mace is stowed and logged before the Holy Symbol refusal;\n- the target-cap"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
     "tests/srd/test_spells.py::test_a_wizard_cant_cast_bless",
