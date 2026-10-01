@@ -1,8 +1,6 @@
 {
   "fingerprint": "02e44a3800573aea",
-  "for_review": [
-    "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
-  ],
+  "for_review": [],
   "id": "PLAY.combat.cover",
   "out_of_scope": [],
   "refuted": [
@@ -37,6 +35,11 @@
       "decision": "kept",
       "reason": "guards creature cover since T-16 (fails under mutation)",
       "test": "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half"
+    },
+    {
+      "decision": "kept",
+      "reason": "guards creature cover since T-16 (fails under mutation)",
+      "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
     }
   ],
   "stages": {
