@@ -536,3 +536,47 @@ def test_recheck_gates_and_commits_a_change_already_in_the_tree(tmp_path, monkey
 
     assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), reviewer_only, recheck=True).startswith("fixed")
     assert roles == ["fix-reviewer"] and T.load("T-1")["status"] == "fixed"
+
+
+def test_a_ticket_whose_red_test_is_a_scenario_is_fixed_and_committed(tmp_path, monkeypatch, no_quality_gate):
+    """The harness drops xfail markers in either acceptance suite; that isn't the fixer's change."""
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    scenario = RED.replace(
+        '@pytest.mark.srd("GLOSS.grappled", clause="GLOSS.grappled#1", kind="negative")\n', ""
+    )
+    write(tmp_path, {"tests/scenarios/__init__.py": "", "tests/scenarios/test_cmb.py": scenario})
+    tk = T.load("T-1")
+    tk["tests"].append("tests/scenarios/test_cmb.py::test_bonus_does_not_raise_grappled_speed")
+    T.save(tk)
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "scenario"], check=True)
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dev(fix=True)).startswith("fixed")
+    assert "xfail" not in Path("tests/scenarios/test_cmb.py").read_text()
+    status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True)
+    assert status.stdout == ""  # the dropped markers are committed with the fix
+
+
+def test_a_fixer_that_edits_a_scenario_is_still_caught(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    write(
+        tmp_path,
+        {"tests/scenarios/__init__.py": "", "tests/scenarios/test_cmb.py": "def test_x():\n    assert 1\n"},
+    )
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "scenario"], check=True)
+    fix = fake_dev(fix=True)
+
+    def invoke(role, prompt, **kw):
+        if role == "fixer":
+            write(Path("."), {"tests/scenarios/test_cmb.py": "def test_x():\n    assert 2\n"})
+        return fix(role, prompt, **kw)
+
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), invoke) == "open"
+    assert T.load("T-1")["history"][-1]["problems"] == ["fixer may not change tests/scenarios/test_cmb.py"]
+    assert Path("tests/scenarios/test_cmb.py").read_text() == "def test_x():\n    assert 1\n"

@@ -512,7 +512,7 @@ def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
             tidy(n.split("::")[0])
         status = refresh_status(r["unit"])
         message = f"ruling: {pid} accepted as {r['register_id']} ({r['unit']} {status})"
-        commit(message, ("README.md", "tests/srd", "loop/rulings") + Gt.HARNESS)
+        commit(message, ("README.md", *Gt.ACCEPTANCE, "loop/rulings") + Gt.HARNESS)
         return r
     r = Ru.reject(pid, reason=text)
     st = S.load(r["unit"])
@@ -549,11 +549,12 @@ def run_ticket(
         set_aside(f"srdloop: {tk['id']} dispute")
         commit(f"dev: {tk['id']} disputed", Gt.HARNESS)
         return "dispute"
+    # before the harness drops xfail markers: any acceptance-suite change now is the fixer's
+    problems = Gt.zone_problems(Gt.changed_files(), "fixer")
     for n in tk["tests"]:
         drop_xfail(n, tk["id"])
     outcomes = Gt.run_pytest(tk["tests"])
-    problems = [f"{n}: {o}" for n, o in outcomes.items() if o != "passed"]
-    problems += Gt.zone_problems([f for f in Gt.changed_files() if not f.startswith("tests/srd")], "fixer")
+    problems += [f"{n}: {o}" for n, o in outcomes.items() if o != "passed"]
     co_fixed, co_problems = close_co_fixed(tk, suite_red())
     problems += co_problems
     red = [n for n in suite_red() if n not in tk["tests"]]
@@ -572,7 +573,7 @@ def run_ticket(
             ]
     tk["attempts"] += 1
     if problems:
-        git("checkout", "--", "tests/srd")  # restore the xfail markers the harness dropped
+        git("checkout", "--", *_paths(Gt.ACCEPTANCE))  # restore the xfail markers the harness dropped
         set_aside(f"srdloop: {tk['id']} attempt {tk['attempts']}")
         tk["status"] = "stuck" if tk["attempts"] >= T.MAX_ATTEMPTS else "open"
         T.record(tk, "failed", problems=problems[:30])
@@ -597,7 +598,7 @@ def run_ticket(
         also += "\n\nWaived by a person for this ticket: " + "; ".join(metrics["_waived"])
     sha = commit(
         f"fix: {tk['id']} {tk['title']}{also}",
-        DEV_ZONES + ("tests/srd", "loop/quality-baseline.json") + Gt.HARNESS,
+        DEV_ZONES + Gt.ACCEPTANCE + ("loop/quality-baseline.json",) + Gt.HARNESS,
     )
     return f"fixed ({sha})"
 
