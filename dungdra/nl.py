@@ -771,7 +771,6 @@ def _attack_cmd(session, actor, t):
 
 
 def _find_trap(session, t):
-
     for name, obj in session.game.scene.objects.items():
         tr = obj.get("trap")
         if (

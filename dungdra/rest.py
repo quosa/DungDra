@@ -124,7 +124,6 @@ def finish_short_rest(game, pcs, hit_dice=None):
 
 
 def short_rest_benefits(game, pc, max_dice=None, focus=None):
-
     con = pc.mod("con")
     spent = 0
     while pc.hit_dice_left() > 0 and pc.hp < pc.max_hp and (max_dice is None or spent < max_dice):

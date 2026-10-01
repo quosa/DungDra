@@ -465,7 +465,7 @@ def test_bless_adds_one_d4_to_an_attack_with_advantage(game):
     assert bless_mods(r.roll) == [(1, "Bless (1d4=[1])")]
 
 
-# ---------------------------------------------------------------- #8 one additional creature per slot level above 1
+# ---------------------------------------------------- #8 one additional creature per slot level above 1
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#8", kind="positive")
 def test_a_level_2_slot_blesses_four_creatures(game):
     j, b, li, m = party(game)
