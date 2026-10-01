@@ -1,0 +1,14 @@
+{
+  "id": "P-9",
+  "unit": "SPELL.bless",
+  "ambiguity": "SPELL.bless: “You bless up to three creatures within range.” — can the caster be a target?",
+  "ruling": "The caster can bless themself as one of the targets.",
+  "tests": [
+    "tests/srd/test_spells.py::test_the_caster_can_bless_themself",
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

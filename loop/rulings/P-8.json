@@ -1,0 +1,14 @@
+{
+  "id": "P-8",
+  "unit": "SPELL.bless",
+  "ambiguity": "SPELL.bless: “Whenever a target makes an attack roll or a saving throw” — do Death Saving Throws and Concentration saves get the d4?",
+  "ruling": "Any roll the rules call a saving throw gets the 1d4, including Death Saving Throws and Concentration saves.",
+  "tests": [
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

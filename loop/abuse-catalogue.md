@@ -47,6 +47,12 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Casting while unable to speak (Verbal) or without a free hand (Somatic).
 - Stacking the same effect twice; keeping Concentration on two spells.
 - Dropping and recasting Concentration to reset a duration.
+- Replacing a costed material component (Bless: a Holy Symbol worth 5+ GP) with a Component Pouch,
+  a different focus, or the 2014 component (holy water).
+- Naming the same creature twice in a multi-target spell to double its benefit (two Bless d4s).
+- Pointing a creature-targeting spell at an object or a name that isn't a creature.
+- Going over a spell's target cap, hoping the refusal only comes after the slot is spent and
+  Concentration has started.
 
 ## Equipment
 - Two shields; armor you lack training in with no penalty; wielding more weapons than hands.
@@ -56,3 +62,5 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Chained commands in one sentence ("attack the goblin twice", "cast and move").
 - Naming a creature that doesn't exist, or matching one you can't see.
 - A refused command that still costs the turn, a slot or a log entry.
+- A refused command that still has a side effect on the way to the refusal (stowing a weapon
+  to free a hand, using the free object interaction, ending Concentration on another spell).

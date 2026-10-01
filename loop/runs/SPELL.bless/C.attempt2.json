@@ -1,0 +1,510 @@
+{
+ "output": {
+  "summary": "I wrote 46 tests for SPELL.bless in tests/srd/test_spells.py. When I ran the file, 40 passed and 6 were xfailed as expected. Those 6 are red tests that point at 4 engine defects:\n1. The target cap (3, plus 1 for each slot level above 1) is enforced inside `_bless`, after the slot has been spent and Concentration has started. The refusal also cites no page.\n2. A Death Saving Throw gets no Bless d4.\n3. A V,S,M casting that is missing its material component stows the caster's weapon before it refuses.\n4. A non-creature target crashes instead of being refused.\n\nChanges from the previous attempt:\n- Every xfail reason is now a literal \"T-new: …\" string instead of a named constant.\n- I added two negative tests: `test_bless_cant_reach_a_creature_60_feet_away` for clause #3 and `test_only_the_chosen_creatures_are_blessed` for clause #6.\n\nThe 2014 traps are covered: holy water and a Component Pouch don't stand in for the Holy Symbol, and the d4 is added automatically with no prompt. Some tests depend on stage A's open ambiguities, so I'm proposing three rulings: whether the d4 applies to Death and Concentration saves, whether the caster can bless themself, and whether range is checked only at casting. Stage B found no contradictions, so I made no scenario changes.",
+  "interactions": [
+   {
+    "clause": "SPELL.bless#5",
+    "with": "GLOSS.concentration",
+    "risk": "high",
+    "note": "Losing Concentration (Incapacitated, a failed save, a new Concentration spell, recasting) must end Bless on every target."
+   },
+   {
+    "clause": "SPELL.bless#7",
+    "with": "Death Saving Throw",
+    "risk": "high",
+    "note": "Ambiguity 1: the engine's death_save doesn't gather effects."
+   },
+   {
+    "clause": "SPELL.bless#7",
+    "with": "Concentration save after damage",
+    "risk": "medium",
+    "note": "When the caster blesses themself, the d4 helps them keep Bless."
+   },
+   {
+    "clause": "SPELL.bless#6",
+    "with": "spell slot / Concentration ordering",
+    "risk": "high",
+    "note": "Too many targets should be refused before any cost is paid."
+   },
+   {
+    "clause": "SPELL.bless#4",
+    "with": "Component Pouch, holy water, free object interaction",
+    "risk": "medium",
+    "note": "Costed component; a refusal must have no side effects."
+   },
+   {
+    "clause": "SPELL.bless#7",
+    "with": "Advantage",
+    "risk": "low",
+    "note": "Only one d4 is added, however many d20s are rolled."
+   },
+   {
+    "clause": "SPELL.bless#7",
+    "with": "ability checks / initiative",
+    "risk": "low",
+    "note": "These get no d4."
+   },
+   {
+    "clause": "SPELL.bless#2",
+    "with": "GLOSS.action / action economy",
+    "risk": "medium",
+    "note": "Bless can't be cast with the action already spent, or cast twice in one turn."
+   },
+   {
+    "clause": "SPELL.bless#3",
+    "with": "movement after casting",
+    "risk": "medium",
+    "note": "Ambiguity 3: range is checked at casting only."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Going over a spell's target cap, hoping the refusal only comes after the slot is spent and Concentration has started",
+    "test": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
+    "reason": "The engine spends the slot and starts Concentration before it refuses."
+   },
+   {
+    "case": "Naming the same creature twice in a multi-target spell to double its benefit",
+    "test": "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
+    "reason": "Only one d4 is added."
+   },
+   {
+    "case": "Replacing a costed material component with a Component Pouch or the 2014 holy water",
+    "test": "tests/srd/test_spells.py::test_holy_water_isnt_the_material_component",
+    "reason": "The 2024 component is a Holy Symbol."
+   },
+   {
+    "case": "A refused command that still has a side effect (stowing a weapon)",
+    "test": "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon",
+    "reason": "The engine stows the weapon before refusing."
+   },
+   {
+    "case": "Pointing a creature-targeting spell at an object",
+    "test": "tests/srd/test_spells.py::test_bless_cant_target_an_object",
+    "reason": "The engine crashes instead of refusing cleanly."
+   },
+   {
+    "case": "Targeting an out-of-range creature",
+    "test": "tests/srd/test_spells.py::test_one_out_of_range_target_refuses_the_whole_casting",
+    "reason": "One out-of-range target refuses the whole casting."
+   },
+   {
+    "case": "Casting two slot spells in one turn",
+    "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
+    "reason": "Casting takes the action."
+   },
+   {
+    "case": "Dropping and recasting Concentration to reset a duration or spread the effect",
+    "test": "tests/srd/test_spells.py::test_recasting_bless_on_new_targets_ends_the_first_casting",
+    "reason": "The first casting ends."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
+    "clause": "SPELL.bless#1",
+    "kind": "positive",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_wizard_cant_cast_bless",
+    "clause": "SPELL.bless#1",
+    "kind": "negative",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_needs_a_slot_when_none_are_left",
+    "clause": "SPELL.bless#1",
+    "kind": "abuse",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_casting_bless_takes_the_action",
+    "clause": "SPELL.bless#2",
+    "kind": "positive",
+    "rule_quote": "Casting Time: Action",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_after_the_action_is_spent",
+    "clause": "SPELL.bless#2",
+    "kind": "negative",
+    "rule_quote": "Casting Time: Action",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
+    "clause": "SPELL.bless#2",
+    "kind": "abuse",
+    "rule_quote": "Casting Time: Action",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_through_the_session_when_the_action_is_spent_is_refused",
+    "clause": "SPELL.bless#2",
+    "kind": "abuse",
+    "rule_quote": "Casting Time: Action",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_reaches_a_creature_exactly_30_feet_away",
+    "clause": "SPELL.bless#3",
+    "kind": "boundary",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_35_feet_away",
+    "clause": "SPELL.bless#3",
+    "kind": "boundary",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_60_feet_away",
+    "clause": "SPELL.bless#3",
+    "kind": "negative",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_one_out_of_range_target_refuses_the_whole_casting",
+    "clause": "SPELL.bless#3",
+    "kind": "abuse",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed",
+    "clause": "SPELL.bless#3",
+    "kind": "positive",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_out_of_range_through_the_session_is_refused",
+    "clause": "SPELL.bless#3",
+    "kind": "abuse",
+    "rule_quote": "Range: 30 feet",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_with_a_holy_symbol_works",
+    "clause": "SPELL.bless#4",
+    "kind": "positive",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_without_a_holy_symbol_is_refused",
+    "clause": "SPELL.bless#4",
+    "kind": "negative",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_component_pouch_doesnt_replace_the_costed_holy_symbol",
+    "clause": "SPELL.bless#4",
+    "kind": "boundary",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_holy_water_isnt_the_material_component",
+    "clause": "SPELL.bless#4",
+    "kind": "abuse",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon",
+    "clause": "SPELL.bless#4",
+    "kind": "abuse",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "red",
+    "ticket_title": "Casting a V,S,M spell without its material component first stows the held weapon (free object interaction, log entry), then refuses"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_while_gagged",
+    "clause": "SPELL.bless#4",
+    "kind": "negative",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_in_magical_silence",
+    "clause": "SPELL.bless#4",
+    "kind": "negative",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_is_a_concentration_spell",
+    "clause": "SPELL.bless#5",
+    "kind": "positive",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_lasts_up_to_one_minute",
+    "clause": "SPELL.bless#5",
+    "kind": "boundary",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_losing_concentration_ends_bless_on_every_target",
+    "clause": "SPELL.bless#5",
+    "kind": "negative",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_second_concentration_spell_ends_bless",
+    "clause": "SPELL.bless#5",
+    "kind": "abuse",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_recasting_bless_on_new_targets_ends_the_first_casting",
+    "clause": "SPELL.bless#5",
+    "kind": "abuse",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_blesses_three_creatures",
+    "clause": "SPELL.bless#6",
+    "kind": "positive",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_the_caster_can_bless_themself",
+    "clause": "SPELL.bless#6",
+    "kind": "positive",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_only_the_chosen_creatures_are_blessed",
+    "clause": "SPELL.bless#6",
+    "kind": "negative",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_can_target_a_monster",
+    "clause": "SPELL.bless#6",
+    "kind": "positive",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
+    "clause": "SPELL.bless#6",
+    "kind": "boundary",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "red",
+    "ticket_title": "Bless's target cap is checked inside _bless, after the slot is spent and Concentration starts; the refusal also cites no page"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_blesses_nobody",
+    "clause": "SPELL.bless#6",
+    "kind": "boundary",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
+    "clause": "SPELL.bless#6",
+    "kind": "abuse",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "red",
+    "ticket_title": "Bless's target cap is checked inside _bless, after the slot is spent and Concentration starts; the refusal also cites no page"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
+    "clause": "SPELL.bless#6",
+    "kind": "abuse",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_cant_target_an_object",
+    "clause": "SPELL.bless#6",
+    "kind": "abuse",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "red",
+    "ticket_title": "Bless accepts a non-creature target and crashes instead of refusing it"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_an_attack_roll",
+    "clause": "SPELL.bless#7",
+    "kind": "positive",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_saving_throw_automatically",
+    "clause": "SPELL.bless#7",
+    "kind": "positive",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save",
+    "clause": "SPELL.bless#7",
+    "kind": "positive",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
+    "clause": "SPELL.bless#7",
+    "kind": "positive",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "red",
+    "ticket_title": "death_save doesn't gather effects, so Bless adds no 1d4 to a Death Saving Throw"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_nothing_to_an_ability_check",
+    "clause": "SPELL.bless#7",
+    "kind": "negative",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_nothing_to_initiative",
+    "clause": "SPELL.bless#7",
+    "kind": "negative",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_creature_that_wasnt_targeted_gets_no_d4",
+    "clause": "SPELL.bless#7",
+    "kind": "negative",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_no_d4_after_the_spell_ends",
+    "clause": "SPELL.bless#7",
+    "kind": "negative",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_one_d4_to_an_attack_with_advantage",
+    "clause": "SPELL.bless#7",
+    "kind": "boundary",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_level_2_slot_blesses_four_creatures",
+    "clause": "SPELL.bless#8",
+    "kind": "positive",
+    "rule_quote": "You can target one additional creature for each spell slot level above 1.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly",
+    "clause": "SPELL.bless#8",
+    "kind": "boundary",
+    "rule_quote": "You can target one additional creature for each spell slot level above 1.",
+    "claim": "red",
+    "ticket_title": "Bless's target cap is checked inside _bless, after the slot is spent and Concentration starts; the refusal also cites no page"
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_level_2_slot_doesnt_raise_the_d4",
+    "clause": "SPELL.bless#8",
+    "kind": "negative",
+    "rule_quote": "You can target one additional creature for each spell slot level above 1.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "SPELL.bless#8",
+    "kind": "out-of-scope",
+    "reason": "Slots of level 3 and above (6+ targets) need class levels above 3.",
+    "infra_ticket": ""
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "SPELL.bless: “Whenever a target makes an attack roll or a saving throw” — do Death Saving Throws and Concentration saves get the d4?",
+    "ruling": "Any roll the rules call a saving throw gets the 1d4, including Death Saving Throws and Concentration saves.",
+    "tests": [
+     "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
+     "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
+    ]
+   },
+   {
+    "ambiguity": "SPELL.bless: “You bless up to three creatures within range.” — can the caster be a target?",
+    "ruling": "The caster can bless themself as one of the targets.",
+    "tests": [
+     "tests/srd/test_spells.py::test_the_caster_can_bless_themself",
+     "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
+    ]
+   },
+   {
+    "ambiguity": "SPELL.bless: “within range” — is range checked only at casting?",
+    "ruling": "Range is checked only at casting. The benefit lasts until the spell ends, wherever the target goes.",
+    "tests": [
+     "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed"
+    ]
+   }
+  ]
+ },
+ "problems": [],
+ "cost_usd": 0.502117,
+ "session": "24e3f837-c289-43ea-b1d4-3405464a0e1e"
+}

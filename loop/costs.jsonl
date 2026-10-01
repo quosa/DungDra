@@ -22,3 +22,8 @@
 {"at": 1790836004, "about": "PLAY.combat.cover", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1574, "seconds": 35.5, "session_id": "ed17296c-d0d5-4692-af9f-1a9de1e4e7a9", "exit": 0}
 {"at": 1790836040, "about": "PLAY.combat.cover", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.6367, "seconds": 399.5, "session_id": "b7b288cd-f13c-412d-b6a6-4a62ec804a97", "exit": 0}
 {"at": 1790836440, "about": "PLAY.combat.cover", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 1.0674, "seconds": 238.2, "session_id": "59a1393e-5c69-4ffd-a336-5cec24356a6c", "exit": 0}
+{"at": 1790836679, "about": "SPELL.bless", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.0853, "seconds": 30.9, "session_id": "bea4b54c-e597-4f63-932f-a605f8ce4ae4", "exit": 0}
+{"at": 1790836710, "about": "SPELL.bless", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1069, "seconds": 24.3, "session_id": "85c6b087-5018-46a7-916d-fd8aea3bc3bd", "exit": 0}
+{"at": 1790836734, "about": "SPELL.bless", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.1712, "seconds": 236.3, "session_id": "30b6a13c-5869-4eaa-b061-3578449b6c45", "exit": 0}
+{"at": 1790836972, "about": "SPELL.bless", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.5021, "seconds": 89.0, "session_id": "24e3f837-c289-43ea-b1d4-3405464a0e1e", "exit": 0}
+{"at": 1790837062, "about": "SPELL.bless", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.8666, "seconds": 214.7, "session_id": "3ab014c1-313c-41ad-a50d-f2a303af52bb", "exit": 0}

@@ -1,0 +1,14 @@
+{
+  "id": "T-21",
+  "kind": "bug",
+  "unit": "SPELL.bless",
+  "title": "Bless's target cap is checked inside _bless, after the slot is spent and Concentration starts; the refusal also cites no page",
+  "tests": [
+    "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
+    "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
+    "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

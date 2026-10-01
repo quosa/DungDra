@@ -1,0 +1,12 @@
+{
+  "id": "T-20",
+  "kind": "bug",
+  "unit": "SPELL.bless",
+  "title": "Casting a V,S,M spell without its material component first stows the held weapon (free object interaction, log entry), then refuses",
+  "tests": [
+    "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

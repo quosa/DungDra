@@ -1,0 +1,114 @@
+{
+ "output": {
+  "summary": "Of 5 scenarios, 6 tests and 2 code lines, I found no contradictions. SPL-02, SPL-04, test_spl02_bless_duration, test_spl04_components, and both `page=113` code lines are consistent with the unit. SPL-06 and test_spl06_targeting depend on an unresolved gap: how two Bless castings on one creature combine. CLS-CLR-03 and MI-04 only mention Bless in passing, so they are not-related. No item checks the d4 on Death Saving Throws, the caster blessing themself, or range after casting. The engine's `_bless` handler does allow self-targeting and applies the slot-level target cap.",
+  "verdicts": [
+   {
+    "item": "CLS-CLR-03",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "The domain spells Aid, Bless, Cure Wounds and Lesser Restoration are always prepared and **don't count** toward his 6.",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "explanation": "Bless appears only as a Life Domain always-prepared spell. The scenario is about domain preparation, not Bless's own effect."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_cls_clr03",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert len(j.prepared) == 6 and \"bless\" not in j.prepared and j.castable(\"bless\")",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "explanation": "This checks that the domain spell is always prepared. It does not check any Bless effect."
+   },
+   {
+    "item": "SPL-02",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "Bless expires after 10 rounds.",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "explanation": "10 rounds is 1 minute. Ending Bless on a failed Concentration save or when another Concentration spell starts matches the Concentration duration."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spl02_concentration",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert not b.find_effects(\"Bless\") and j.concentrating == \"Shield Of Faith\"",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "explanation": "Bless ends when its caster loses Concentration, as the duration line requires. The test mostly exercises the Concentration rule."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spl02_bless_duration",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert not j.find_effects(\"Bless\")  # start of round 11: 10 rounds elapsed",
+    "rule_quote": "Duration: Concentration, up to 1 minute",
+    "explanation": "Bless is still active through round 10 and gone when round 11 starts, which is 1 minute."
+   },
+   {
+    "item": "SPL-04",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "Bless works with the Holy Symbol and is refused without it.",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "explanation": "This matches the costed Holy Symbol material component."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spl04_components",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "with pytest.raises(Refusal, match=\"Holy Symbol\"):",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "explanation": "Casting Bless succeeds with the Holy Symbol and is refused once it is removed. It does not check the 5 GP cost or the V and S components, but nothing in it contradicts the rule."
+   },
+   {
+    "item": "SPL-06",
+    "kind": "scenario",
+    "verdict": "affected-by-ambiguity",
+    "evidence": "The fighter gets only one Bless bonus die while the effects overlap.",
+    "rule_quote": "You bless up to three creatures within range.",
+    "explanation": "Stage A lists stacking of two Bless castings as a gap. The text of the unit doesn't settle it, so this assertion rests on the general Combining Spell Effects rule."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spl06_targeting",
+    "kind": "test",
+    "verdict": "affected-by-ambiguity",
+    "evidence": "assert sum(1 for _, s in r.mods if \"Bless\" in s) == 1",
+    "rule_quote": "You bless up to three creatures within range.",
+    "explanation": "Asserts that two overlapping Blesses give one d4, which is the unresolved stacking gap. The other assertions (invalid target, Total Cover) are about other spells."
+   },
+   {
+    "item": "MI-04",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "JOZAN casts Bless from the scroll with no components; the scroll crumbles.",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "explanation": "The scenario is about Spell Scroll mechanics. Bless is only the example spell, and the Bless rule text is not tested."
+   },
+   {
+    "item": "tests/scenarios/test_magic_items.py::test_mi04_scroll",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "S.cast(game, j, \"bless\", [j], item=s, scroll=True)  # no components needed",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "explanation": "This tests the Spell Scroll rule, which waives components. It does not test Bless itself."
+   },
+   {
+    "item": "dungdra/data/spells.py:81",
+    "kind": "code",
+    "verdict": "consistent",
+    "evidence": "page=113,",
+    "rule_quote": "Level 1 Enchantment (Cleric, Paladin)",
+    "explanation": "The Bless data entry has level 1, enchantment, cleric and paladin, action, 30 ft, VSM, 60 (seconds), concentration, and a Holy Symbol worth 5 GP. This matches the 2024 header."
+   },
+   {
+    "item": "dungdra/spells.py:914",
+    "kind": "code",
+    "verdict": "consistent",
+    "evidence": "page=113,",
+    "rule_quote": "You can target one additional creature for each spell slot level above 1.",
+    "explanation": "`_bless` caps targets at 3 + (level - 1) and applies a Bless effect that lasts a minute under Concentration. It allows the caster as a target and applies the bonus automatically, as the 2024 text says."
+   }
+  ]
+ },
+ "problems": [],
+ "cost_usd": 0.1069392,
+ "session": "85c6b087-5018-46a7-916d-fd8aea3bc3bd"
+}

@@ -1,0 +1,12 @@
+{
+  "id": "T-23",
+  "kind": "bug",
+  "unit": "SPELL.bless",
+  "title": "death_save doesn't gather effects, so Bless adds no 1d4 to a Death Saving Throw",
+  "tests": [
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

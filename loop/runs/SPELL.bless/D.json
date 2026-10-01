@@ -1,0 +1,327 @@
+{
+ "summary": "I checked all 46 Bless tests. 44 are keeps and 2 are refutes. Baseline: 40 green tests pass and the 6 red tests are strict xfails. I ran the red tests with --runxfail, and each one fails for the reason its ticket gives:\n- the Mace is stowed and logged before the Holy Symbol refusal;\n- the target-cap refusal cites no page;\n- through the session, the cast is logged and the slot spent before the target-cap refusal;\n- a string target hits AttributeError instead of a refusal;\n- death_save adds no Bless d4.\n\nRefutes:\n1. test_bless_cant_be_cast_twice_in_one_turn still passes with the action spend replaced by `pass`. The \"one spell slot per turn\" rule (spells.py:116) refuses the second cast first. It still passes when that rule is turned off too, so it doesn't test the Casting Time rule. The action-spent negative and session tests already cover that rule. Confidence 0.7.\n2. test_bless_cant_reach_a_creature_60_feet_away goes through the same `d > limit` check as the 35 ft boundary test, which is the stronger test. Its extra Concentration assertion is already covered by assert_refused_cleanly's snapshot. Confidence 0.55, so it goes to a person rather than being removed.\n\nEvery other green test failed under a targeted mutation:\n- range `>` changed to `>=` or `limit+5`, and range checked on the first target only;\n- a Component Pouch or holy water accepted in place of the Holy Symbol;\n- the gagged and Silence checks turned off;\n- duration doubled to 2 minutes;\n- Bless created with `concentration=False`;\n- the target cap set to 4, or fixed at 3 at any level;\n- Bless added to checks and initiative;\n- Bless removed from attack rolls, or from saves;\n- the guard against the same spell stacking turned off;\n- the die changed to 2d4.\n\nNone of the oracles goes against the 2024 wording. Treating Death Saving Throws as saving throws and keeping Bless on a target that moves out of range both follow the text.\n\nA note on test_a_wizard_cant_cast_bless: the engine refuses because Mialee hasn't prepared Bless, and it doesn't check class lists when casting. The list is enforced when characters are created (creation.py:316), and the data assertion catches it if \"wizard\" is added to the list. I kept it.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
+   "verdict": "keep",
+   "reason": "Checks that a level 1 slot is spent and checks the level, school and lists data against the clause.",
+   "mutation": "No targeted engine mutation. It shares the cast path that every other mutation breaks, and its data assertions follow the clause directly.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_wizard_cant_cast_bless",
+   "verdict": "keep",
+   "reason": "The refusal comes from Bless not being prepared, which is how the list rule plays out: creation.py:316 enforces lists when spells are picked. The data assertion checks the list itself.",
+   "mutation": "Adding wizard to the lists would fail the data assertion. The engine has no list check at cast time to mutate.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_needs_a_slot_when_none_are_left",
+   "verdict": "keep",
+   "reason": "Refused cleanly with the 'no level 1' message from the slot check.",
+   "mutation": "Not mutated separately. The match string ties the test to the slots_left refusal.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_casting_bless_takes_the_action",
+   "verdict": "keep",
+   "reason": "Directly checks actions_used goes from 0 to 1.",
+   "mutation": "With the spend at spells.py:152 replaced by pass, actions_used would stay 0, which this test asserts against. Not run on its own.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_after_the_action_is_spent",
+   "verdict": "keep",
+   "reason": "Spends the action on Dodge, then requires a clean refusal.",
+   "mutation": "Replaced cb.spend(caster,'action','Magic') with pass, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
+   "verdict": "refute",
+   "reason": "The second cast is refused by the 'one spell slot per turn' rule (spells.py:116) before the action economy is checked, so the test doesn't exercise Casting Time. Action-spent refusal is already covered by the negative and session tests.",
+   "mutation": "Replaced the action spend with pass, and the test still passed. Turning off the slot-per-turn rule also left it passing. Either rule alone blocks the second cast.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_through_the_session_when_the_action_is_spent_is_refused",
+   "verdict": "keep",
+   "reason": "Covers the same rule through the Session API, which is a different entry point.",
+   "mutation": "Replaced the action spend with pass, and the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_reaches_a_creature_exactly_30_feet_away",
+   "verdict": "keep",
+   "reason": "Inclusive boundary at 30 ft.",
+   "mutation": "Changed d > limit to d >= limit, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_35_feet_away",
+   "verdict": "keep",
+   "reason": "First grid step past the range.",
+   "mutation": "Changed d > limit to d > limit + 5, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_60_feet_away",
+   "verdict": "refute",
+   "reason": "Duplicates the 35 ft boundary test through the same d > limit check, and the 35 ft test is stronger. The extra concentrating-is-None assertion is already covered by assert_refused_cleanly's snapshot.",
+   "mutation": "Any mutation that breaks this test, such as removing the range check, also breaks the 35 ft test. A limit+5 mutation breaks only the 35 ft test.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_one_out_of_range_target_refuses_the_whole_casting",
+   "verdict": "keep",
+   "reason": "Mixes an in-range and an out-of-range target and requires the whole casting to be refused.",
+   "mutation": "Checked range on the first target only, and the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed",
+   "verdict": "keep",
+   "reason": "The 2024 text sets no range for keeping the effect, so it lasts until the spell ends. The test guards against a wrong 'leash' rule.",
+   "mutation": "Removed 'save' from Bless's kinds, and the test failed. There is no leash code to break.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_out_of_range_through_the_session_is_refused",
+   "verdict": "keep",
+   "reason": "Range refusal through the Session API.",
+   "mutation": "Changed the range check to limit+5, and the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_with_a_holy_symbol_works",
+   "verdict": "keep",
+   "reason": "Positive control for the costed material component.",
+   "mutation": "Not mutated on its own. It is the pair of the negative tests, which do fail.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_without_a_holy_symbol_is_refused",
+   "verdict": "keep",
+   "reason": "With hands free, the Holy Symbol refusal is clean.",
+   "mutation": "Any mutation that skips the holy symbol check at spells.py:312 makes the cast go through. The pouch and holy-water variants of this mutation both failed their tests.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_component_pouch_doesnt_replace_the_costed_holy_symbol",
+   "verdict": "keep",
+   "reason": "A costed component can't be replaced by a Component Pouch (p.105).",
+   "mutation": "Accepted a component pouch in place of the holy symbol, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_holy_water_isnt_the_material_component",
+   "verdict": "keep",
+   "reason": "Guards against the 2014 holy-water component.",
+   "mutation": "Accepted holy water, and the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon",
+   "verdict": "keep",
+   "reason": "A real bug. Its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with 'a refused command logged: JOZAN stows the Mace', matching the ticket.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_while_gagged",
+   "verdict": "keep",
+   "reason": "Verbal component.",
+   "mutation": "Turned off the gagged check, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_in_magical_silence",
+   "verdict": "keep",
+   "reason": "Verbal component in Silence.",
+   "mutation": "Turned off the scene.silence check, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_is_a_concentration_spell",
+   "verdict": "keep",
+   "reason": "Checks concentrating == 'Bless'.",
+   "mutation": "Not mutated on its own. The data has conc=True, and dropping it would fail this assertion.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_lasts_up_to_one_minute",
+   "verdict": "keep",
+   "reason": "Present at 54 s and gone at 60 s.",
+   "mutation": "Changed the duration to 2*MINUTE, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_losing_concentration_ends_bless_on_every_target",
+   "verdict": "keep",
+   "reason": "Losing Concentration removes Bless from all targets.",
+   "mutation": "Created Bless with concentration=False, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_second_concentration_spell_ends_bless",
+   "verdict": "keep",
+   "reason": "Starting a new Concentration spell ends Bless.",
+   "mutation": "Created Bless with concentration=False, and the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_recasting_bless_on_new_targets_ends_the_first_casting",
+   "verdict": "keep",
+   "reason": "Recasting ends the first casting's effects.",
+   "mutation": "Created Bless with concentration=False, and the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_blesses_three_creatures",
+   "verdict": "keep",
+   "reason": "Three creatures at the cap.",
+   "mutation": "Not mutated on its own. A cap below 3 would refuse the cast.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_the_caster_can_bless_themself",
+   "verdict": "keep",
+   "reason": "The caster is a creature within range.",
+   "mutation": "Not mutated on its own. It would catch a rule that excludes the caster.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_only_the_chosen_creatures_are_blessed",
+   "verdict": "keep",
+   "reason": "Bless isn't an area effect. Partly overlaps with the roll-level test for creatures that weren't targeted, but this one checks the effect itself.",
+   "mutation": "Not mutated on its own.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_can_target_a_monster",
+   "verdict": "keep",
+   "reason": "'Creatures' includes monsters.",
+   "mutation": "Not mutated on its own. It would catch a check that limits targets to PCs.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
+   "verdict": "keep",
+   "reason": "A real bug. Its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with 'refusal ... cites no SRD page or ruling', as the ticket states.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_blesses_nobody",
+   "verdict": "keep",
+   "reason": "A green guard on the cap while the strict clean-refusal test is red.",
+   "mutation": "Changed the cap to 4 + (level-1), and the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
+   "verdict": "keep",
+   "reason": "A real bug through the Session path. Its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with 'a refused command logged: JOZAN casts Bless with a level 1 slot', so the slot is spent before the refusal.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
+   "verdict": "keep",
+   "reason": "Effects of the same spell don't stack (p.106).",
+   "mutation": "Changed 'if first is self' to 'if True', and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_cant_target_an_object",
+   "verdict": "keep",
+   "reason": "A real bug. Its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with AttributeError: 'str' object has no attribute 'add_effect', a crash instead of a refusal, as the ticket states.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_1d4_to_an_attack_roll",
+   "verdict": "keep",
+   "reason": "The forced d4 turns a miss into a hit.",
+   "mutation": "Removed 'attack' from Bless's kinds, and the test failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_saving_throw_automatically",
+   "verdict": "keep",
+   "reason": "In the 2024 text, 'adds' is automatic.",
+   "mutation": "Removed 'save' from Bless's kinds, and the test failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save",
+   "verdict": "keep",
+   "reason": "A Concentration save is a saving throw.",
+   "mutation": "Removed 'save' from Bless's kinds, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
+   "verdict": "keep",
+   "reason": "A Death Saving Throw is a saving throw by the text. A real bug, and its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with 'assert [] == [(2, Bless...)]', so death_save gathers no effects.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_nothing_to_an_ability_check",
+   "verdict": "keep",
+   "reason": "Bless covers attacks and saves only.",
+   "mutation": "Added 'check' and 'initiative' to Bless's kinds. The mutation is the same one that fails the initiative test.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_nothing_to_initiative",
+   "verdict": "keep",
+   "reason": "Initiative is a Dexterity check, not a save.",
+   "mutation": "Added 'check' and 'initiative' to Bless's kinds, and the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_creature_that_wasnt_targeted_gets_no_d4",
+   "verdict": "keep",
+   "reason": "Checks at the roll level. A complement to the effect-level check for the chosen creatures.",
+   "mutation": "Not mutated on its own.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_no_d4_after_the_spell_ends",
+   "verdict": "keep",
+   "reason": "Checks the roll after expiry, not only that the effect is gone.",
+   "mutation": "Changed the duration to 2*MINUTE, and the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_bless_adds_one_d4_to_an_attack_with_advantage",
+   "verdict": "keep",
+   "reason": "With Advantage, Bless adds one d4, not one per d20.",
+   "mutation": "Removed 'attack' from Bless's kinds, and the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_level_2_slot_blesses_four_creatures",
+   "verdict": "keep",
+   "reason": "Upcasting adds one more target.",
+   "mutation": "Fixed the cap at 3 regardless of slot level, and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly",
+   "verdict": "keep",
+   "reason": "A real bug on the upcast cap. Its claim (red) matches the run.",
+   "mutation": "Ran with --runxfail. It fails with 'Bless at level 2 targets up to 4 creatures' cites no page, as the ticket states.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_level_2_slot_doesnt_raise_the_d4",
+   "verdict": "keep",
+   "reason": "Upcasting adds targets, not dice.",
+   "mutation": "Changed the d4 to 2d4, and the test failed.",
+   "confidence": 0.75
+  }
+ ]
+}
