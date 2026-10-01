@@ -44,7 +44,7 @@ ticket marks the unit that opened it for a **revisit**, queued last and starting
 (`ticket --help`, `ticket create --help`).
 
 ```
-python -m scripts.srdloop status                    # units done / to do
+python -m scripts.srdloop status                    # units, ticket backlog, what waits for you
 python -m scripts.srdloop run --budget 20 [--units ID ...]   # audit loop
 python -m scripts.srdloop ruling list              # proposals to decide (below)
 python -m scripts.srdloop ticket list              # what the units found (--all: fixed too)

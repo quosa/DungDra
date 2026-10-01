@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import Counter
 from pathlib import Path
 
 from . import gates as Gt
@@ -158,7 +159,9 @@ def _parser() -> argparse.ArgumentParser:
     cmd(sub, "help", "this help; `help <command> [<action>]` for one command's").add_argument(
         "topic", nargs="*", metavar="<command>"
     )
-    cmd(sub, "status", "one-line summary of the loop")
+    cmd(
+        sub, "status", "where the loop stands and what waits for you", "Units, the ticket backlog, decisions."
+    )
     cmd(sub, "plan", "write loop/queue.json", "Pending and stale units, dependencies first.")
     rel = cmd(sub, "related", "scenarios, tests and engine code related to a unit (JSON)")
     rel.add_argument("unit")
@@ -321,9 +324,20 @@ def main(argv: list[str] | None = None) -> int:
         Rep.write(ctx, queue)
         print(f"wrote {Rep.REPORT}")
     else:
-        done = sum(1 for s in ctx.states.values() if s.get("status") in ("green", "red", "blocked"))
-        print(f"{len(ctx.units)} units; {len(queue)} to do; {done} finished; {len(ctx.states)} with state")
+        _status(ctx, queue)
     return 0
+
+
+def _status(ctx: P.Context, queue: list[dict]) -> None:
+    states = Counter(s.get("status") for s in ctx.states.values())
+    finished = ", ".join(f"{states[k]} {k}" for k in ("green", "red", "blocked", "out-of-scope") if states[k])
+    audited = f"{sum(states.values())} audited ({finished or 'none'})"
+    print(f"{len(ctx.units)} units: {len(queue)} in the queue; {audited}")
+    backlog, you = Run.todo(ctx.states)
+    print("\n".join(backlog))
+    print("Waiting for you:" if you else "Nothing waiting for you.")
+    for line in you:
+        print(f"  - {line}")
 
 
 if __name__ == "__main__":

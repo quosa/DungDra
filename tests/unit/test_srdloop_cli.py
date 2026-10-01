@@ -100,3 +100,42 @@ def test_help_is_the_same_as_dash_dash_help_at_any_depth(capsys):
     with pytest.raises(SystemExit):
         CLI.main(["ticket", "create", "--help"])
     assert via_help == capsys.readouterr().out and "--test NODEID" in via_help
+
+
+def test_todo_lists_the_backlog_and_everything_waiting_for_a_person(repo):
+    from scripts.srdloop import runner as Run
+
+    assert Run.todo({}) == (
+        ["0 open tickets (0 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15"],
+        [],
+    )
+    for kind in ("bug", "infra", "infra"):
+        T.create(kind, "GLOSS.x", f"a {kind}", [])
+    for tid, status in (("T-2", "dispute"), ("T-3", "stuck")):
+        t = T.load(tid)
+        t["status"] = status
+        T.save(t)
+    T.save({**T.create("bug", "GLOSS.x", "done", []), "status": "fixed"})
+    Ru.create("GLOSS.x", "two at once?", "no", [])
+    states = {
+        "GLOSS.x": {"status": "red", "for_review": ["t::a", "t::b"]},
+        "GLOSS.y": {"status": "incomplete"},
+    }
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-qm", "loop"], check=True)
+    (repo / "README.md").write_text("old fix\n")
+    subprocess.run(["git", "stash", "push", "-qm", "srdloop: T-4 attempt 1"], check=True)
+    (repo / "notes.txt").write_text("mine\n")
+    backlog, you = Run.todo(states)
+    assert backlog == [
+        "1 open ticket (1 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15"
+    ]
+    assert you == [
+        "1 ruling to decide (P-1): ruling list",
+        "2 tests to review: review list",
+        "1 ticket disputed by the fixer (T-2): ticket show <T-n>",
+        "1 ticket stuck after 3 attempts (T-3): ticket show <T-n>",
+        "1 unit failed its gates twice (GLOSS.y): loop/state/<unit>.json",
+        "1 set-aside attempt of finished tickets, safe to drop: git stash list",
+        "uncommitted changes the loop won't start with: notes.txt",
+    ]

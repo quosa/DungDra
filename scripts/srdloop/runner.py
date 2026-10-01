@@ -247,18 +247,69 @@ def commit(message: str, paths: tuple[str, ...]) -> str:
     return git("rev-parse", "--short", "HEAD").strip()
 
 
-def preflight(harness_paths: tuple[str, ...] = Gt.HARNESS) -> None:
-    """The loop only starts on a tree it understands: agent-zone leftovers of an interrupted
-    unit are fine (resume keeps or stashes them); anything else is a person's work in progress."""
+def foreign_changes(harness_paths: tuple[str, ...] = Gt.HARNESS) -> list[str]:
+    """Uncommitted changes that belong to no agent zone: a person's work in progress."""
     import fnmatch
 
-    foreign = [
+    return [
         f
         for f in dirty()
         if not any(fnmatch.fnmatch(f, g) for g in harness_paths)
         and not f.startswith(AGENT_ZONES + DEV_ZONES)
         and f != "loop/quality-baseline.json"
     ]
+
+
+def _n(count: int, noun: str) -> str:
+    return f"{count} {noun}" if count == 1 else f"{count} {noun}s"
+
+
+def todo(states: dict[str, dict]) -> tuple[list[str], list[str]]:
+    """What the loop and a person still have to do: (backlog lines, waiting-for-you lines)."""
+    active = [t for t in T.all_tickets() if t["status"] in T.ACTIVE]
+    open_ = [t for t in active if t["status"] == "open"]
+    by_kind = ", ".join(f"{sum(t['kind'] == k for t in open_)} {k}" for k in T.PRIORITY)
+    full = ": run the dev loop first" if len(open_) > MAX_OPEN_TICKETS else ""
+    backlog = [
+        f"{_n(len(open_), 'open ticket')} ({by_kind}); the audit loop stops above {MAX_OPEN_TICKETS}{full}"
+    ]
+    waiting_ruling = [t["id"] for t in open_ if waits_for_ruling(t)]
+    if waiting_ruling:
+        backlog.append(f"  {len(waiting_ruling)} of them wait for a ruling: {', '.join(waiting_ruling)}")
+    you = []
+    proposals = Ru.pending()
+    if proposals:
+        ids = ", ".join(r["id"] for r in proposals)
+        you.append(f"{_n(len(proposals), 'ruling')} to decide ({ids}): ruling list")
+    doubted = S.waiting_review(states)
+    if doubted:
+        you.append(f"{_n(len(doubted), 'test')} to review: review list")
+    for status, how in (("dispute", "disputed by the fixer"), ("stuck", "stuck after 3 attempts")):
+        ids = [t["id"] for t in active if t["status"] == status]
+        if ids:
+            you.append(f"{_n(len(ids), 'ticket')} {how} ({', '.join(ids)}): ticket show <T-n>")
+    incomplete = sorted(u for u, st in states.items() if st.get("status") == "incomplete")
+    if incomplete:
+        names = ", ".join(incomplete)
+        you.append(f"{_n(len(incomplete), 'unit')} failed its gates twice ({names}): loop/state/<unit>.json")
+    done = {t["id"] for t in T.all_tickets() if t["status"] in ("fixed", "void")}
+    stashes = [ln for ln in git("stash", "list").splitlines() if "srdloop: " in ln]
+    live = [ln for ln in stashes if not any(f"srdloop: {tid} " in ln for tid in done)]
+    if live:
+        you.append(f"{_n(len(live), 'set-aside attempt')} of unfinished work: git stash list")
+    if len(stashes) > len(live):
+        n = len(stashes) - len(live)
+        you.append(f"{_n(n, 'set-aside attempt')} of finished tickets, safe to drop: git stash list")
+    foreign = foreign_changes()
+    if foreign:
+        you.append(f"uncommitted changes the loop won't start with: {', '.join(foreign[:5])}")
+    return backlog, you
+
+
+def preflight(harness_paths: tuple[str, ...] = Gt.HARNESS) -> None:
+    """The loop only starts on a tree it understands: agent-zone leftovers of an interrupted
+    unit are fine (resume keeps or stashes them); anything else is a person's work in progress."""
+    foreign = foreign_changes(harness_paths)
     if foreign:
         raise Stop(
             "the working tree has changes the loop didn't make; commit or stash them: "
