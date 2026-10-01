@@ -57,18 +57,18 @@ def render(ctx: Context, queue: list[dict]) -> str:
             f"| {r['id']} | `{r['unit']}` | {r['ambiguity']} | {r['ruling']} | {len(r['tests'])} |"
             for r in waiting
         ]
-    doubted = [(uid, n) for uid, st in sorted(ctx.states.items()) for n in st.get("for_review", [])]
+    doubted = S.waiting_review(ctx.states)
     if doubted:
         lines += [
             "",
             "## Tests to review",
             "",
             "The verifier refuted these with low confidence, so they were kept until a person decides:",
-            "`python -m scripts.srdloop review keep|remove <test> --reason '…'`.",
+            "`python -m scripts.srdloop review keep|remove 1 3 … --reason '…'` (numbers as below).",
             "",
         ]
-        lines += ["| Test | Verifier's reason |", "|---|---|"]
-        lines += [f"| `{n}` | {_verifier_reason(uid, n)} |" for uid, n in doubted]
+        lines += ["| # | Test | Verifier's reason |", "|---|---|---|"]
+        lines += [f"| {i} | `{n}` | {_verifier_reason(uid, n)} |" for i, (uid, n) in enumerate(doubted, 1)]
     from . import tickets as T
 
     stuck = [t for t in T.all_tickets() if t["status"] in ("dispute", "stuck")]

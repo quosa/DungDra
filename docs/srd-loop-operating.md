@@ -88,7 +88,7 @@ The plan's estimate is ≈ $5.40 per unit, so far an overestimate.
 | A dispute (the fixer thinks a test or scenario is wrong) | Read the ticket's `why:` and `loop/requests/`. Change the test yourself or reject the dispute, set the ticket `open`, then bring the stashed code back (below) |
 | A `stuck` ticket | Read `loop/runs/T-n/fix.attempt*.json`. Then do one of these: rewrite the ticket, `ticket cap T-n 9` (a bigger fixer budget), or fix it yourself and `dev --recheck T-n` |
 | Waiving a check for one ticket | `ticket waive T-n diff_coverage --reason "…"` (only `diff_coverage` can be waived) |
-| A test the verifier doubted ("Tests to review" in `loop/COVERAGE.md`) | `review list`, then `review keep <node id> --reason "…"` or `review remove <node id> --reason "…"` (the harness removes it and commits). Evidence: `mutate dungdra/<file> <line> <old> <new> <node id>` shows whether the test catches a broken engine |
+| A test the verifier doubted ("Tests to review" in `loop/COVERAGE.md`) | `review list` numbers them; then `review keep 1 3 --reason "…"` or `review remove 2 --reason "…"` (numbers or node ids; one commit; the harness removes the tests). Evidence: `mutate dungdra/<file> <line> <old> <new> <node id>` shows whether the test catches a broken engine |
 | Removing or weakening any other acceptance test | By hand, in a commit of its own |
 | Changing a golden scenario | By hand, together with `docs/dnd-golden-scenarios-srd521.md` |
 | Which infra tickets to build | They are large engine features (geometry, awareness, surfaces); pick them deliberately (see open questions) |

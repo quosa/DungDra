@@ -668,28 +668,33 @@ def test_the_report_lists_doubted_tests_and_tickets_waiting_for_a_person(tmp_pat
     states = {"GLOSS.grappled": {"status": "red", "for_review": [nodeid]}}
     ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, states, [])
     text = report.render(ctx, [])
-    assert f"| `{nodeid}` | may pass for the wrong \\| reason |" in text
+    assert f"| 1 | `{nodeid}` | may pass for the wrong \\| reason |" in text
     assert "- T-1 (dispute, `GLOSS.grappled`): speed bonus" in text
 
 
-def test_a_person_keeps_or_removes_a_doubted_test(tmp_path, monkeypatch):
+def test_a_person_keeps_or_removes_doubted_tests_by_number_or_node_id(tmp_path, monkeypatch):
     git_repo(tmp_path, {"tests/srd/test_g.py": SRC})
     monkeypatch.chdir(tmp_path)
-    keep, gone = "tests/srd/test_g.py::test_keep", "tests/srd/test_g.py::test_gone"
-    S.save({**S.load("GLOSS.x"), "tests": [keep, gone], "for_review": [keep, gone]})
+    keep, red, gone = (f"tests/srd/test_g.py::{n}" for n in ("test_keep", "test_red", "test_gone"))
+    S.save({**S.load("GLOSS.x"), "tests": [keep, red, gone], "for_review": [keep, red, gone]})
+    assert S.waiting_review() == [("GLOSS.x", keep), ("GLOSS.x", red), ("GLOSS.x", gone)]
     with pytest.raises(ValueError, match="needs a reason"):
-        Run.decide_review(keep, keep=True, reason=" ")
-    assert Run.decide_review(keep, keep=True, reason="guards creature cover since T-16") == "kept"
-    assert Run.decide_review(gone, keep=False, reason="duplicate") == "removed"
+        Run.decide_review(["1"], keep=True, reason=" ")
+    with pytest.raises(ValueError, match="4 isn't waiting for review"):
+        Run.decide_review(["1", "4"], keep=True, reason="x")  # nothing decided if one ref is bad
+    assert len(S.waiting_review()) == 3
+    assert Run.decide_review(["1", "2", "1"], keep=True, reason="guards cover since T-16") == "kept 2"
+    assert S.waiting_review() == [("GLOSS.x", gone)]  # numbers follow the list as it is now
+    assert Run.decide_review([gone], keep=False, reason="duplicate") == "removed 1"
     st = S.load("GLOSS.x")
-    assert st["for_review"] == [] and st["tests"] == [keep]
-    assert [r["decision"] for r in st["reviewed"]] == ["kept", "removed"]
+    assert st["for_review"] == [] and st["tests"] == [keep, red]
+    assert [r["decision"] for r in st["reviewed"]] == ["kept", "kept", "removed"]
     src = Path("tests/srd/test_g.py").read_text()
     assert "def test_keep" in src and "def test_gone" not in src
     log = subprocess.run(["git", "log", "--format=%s", "-2"], capture_output=True, text=True, check=True)
     assert log.stdout.splitlines() == [
         "review: removed test_gone (GLOSS.x): duplicate",
-        "review: kept test_keep (GLOSS.x): guards creature cover since T-16",
+        "review: kept test_keep, test_red (GLOSS.x): guards cover since T-16",
     ]
-    with pytest.raises(ValueError, match="isn't waiting for review"):
-        Run.decide_review(keep, keep=True, reason="again")
+    with pytest.raises(ValueError, match="name the tests"):
+        Run.decide_review([], keep=True, reason="x")

@@ -58,3 +58,9 @@ def is_stale(state: dict, current: str) -> bool:
     """A finished unit whose inputs changed since it finished must run again. That includes an
     out-of-scope unit: once the engine code it relates to changes, it is looked at again."""
     return state.get("status") in TERMINAL and state.get("fingerprint") != current
+
+
+def waiting_review(states: dict[str, dict] | None = None) -> list[tuple[str, str]]:
+    """(unit, node id) of every test the verifier doubted, in the order `review list` numbers them."""
+    states = all_states() if states is None else states
+    return [(uid, n) for uid, s in sorted(states.items()) for n in s.get("for_review", [])]

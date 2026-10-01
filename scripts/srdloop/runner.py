@@ -537,26 +537,37 @@ def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
     return r
 
 
-def decide_review(nodeid: str, keep: bool, reason: str) -> str:
-    """A person's decision on a test the verifier doubted: keep it, or remove it. Either way it
-    leaves the unit's for_review list, with the decision recorded in the unit's state."""
+def decide_review(refs: list[str], keep: bool, reason: str) -> str:
+    """A person's decision on tests the verifier doubted: keep them, or remove them. `refs` are
+    numbers from `review list` or node ids. Each leaves its unit's for_review list, with the
+    decision recorded in the unit's state; one commit for the lot."""
     if not reason.strip():
         raise ValueError("a review decision needs a reason")
-    uid = next((u for u, st in S.all_states().items() if nodeid in st.get("for_review", [])), None)
-    if uid is None:
-        raise ValueError(f"{nodeid} isn't waiting for review")
-    if not keep:
-        remove_test(nodeid)
-    st = S.load(uid)
-    st["for_review"].remove(nodeid)
+    waiting = S.waiting_review()
+    chosen = []
+    for ref in refs:
+        if ref.isdigit() and 1 <= int(ref) <= len(waiting):
+            chosen.append(waiting[int(ref) - 1])
+        elif any(n == ref for _, n in waiting):
+            chosen.append(next(w for w in waiting if w[1] == ref))
+        else:
+            raise ValueError(f"{ref} isn't waiting for review (see: review list)")
+    if not chosen:
+        raise ValueError("name the tests to decide on: numbers from `review list`, or node ids")
     decision = "kept" if keep else "removed"
-    st.setdefault("reviewed", []).append({"test": nodeid, "decision": decision, "reason": reason})
-    if not keep:
-        st["tests"] = [n for n in st.get("tests", []) if n != nodeid]
-    S.save(st)
-    name = nodeid.partition("::")[2]
-    commit(f"review: {decision} {name} ({uid}): {reason}", Gt.ACCEPTANCE + Gt.HARNESS)
-    return decision
+    for uid, nodeid in dict.fromkeys(chosen):
+        if not keep:
+            remove_test(nodeid)
+        st = S.load(uid)
+        st["for_review"].remove(nodeid)
+        st.setdefault("reviewed", []).append({"test": nodeid, "decision": decision, "reason": reason})
+        if not keep:
+            st["tests"] = [n for n in st.get("tests", []) if n != nodeid]
+        S.save(st)
+    names = ", ".join(n.partition("::")[2] for _, n in dict.fromkeys(chosen))
+    units = ", ".join(sorted({u for u, _ in chosen}))
+    commit(f"review: {decision} {names} ({units}): {reason}", Gt.ACCEPTANCE + Gt.HARNESS)
+    return f"{decision} {len(dict.fromkeys(chosen))}"
 
 
 def _attempt_record(tk, fixer, cost, problems, review, result, stashed, runs: Path = RUNS) -> None:

@@ -15,7 +15,7 @@ dev --budget USD [--tickets T-n ...]
 dev --budget USD --recheck T-n
                      gates, review and commit for a change already in the working tree
 tickets              list tickets
-review list | keep NODEID --reason R | remove NODEID --reason R
+review list | keep N|NODEID ... --reason R | remove N|NODEID ... --reason R
                      decide on tests the verifier doubted (kept until a person decides)
 mutate FILE LINE OLD NEW NODEID
                      break one engine line in a scratch copy and run a test there
@@ -86,12 +86,11 @@ def _ticket(a) -> int:
 
 def _review(a) -> int:
     if a.action == "list":
-        for uid, st in sorted(S.all_states().items()):
-            for n in st.get("for_review", []):
-                print(f"{uid}: {n}")
+        for i, (uid, n) in enumerate(S.waiting_review(), 1):
+            print(f"{i:3}  {uid}: {n}")
         return 0
     try:
-        print(Run.decide_review(a.nodeid or "", a.action == "keep", a.reason))
+        print(Run.decide_review(a.refs, a.action == "keep", a.reason))
     except ValueError as e:
         print(e, file=sys.stderr)
         return 1
@@ -171,7 +170,7 @@ def main(argv: list[str] | None = None) -> int:
     ru.add_argument("--reason", default="")
     rv = sub.add_parser("review")
     rv.add_argument("action", choices=["list", "keep", "remove"])
-    rv.add_argument("nodeid", nargs="?")
+    rv.add_argument("refs", nargs="*", help="numbers from `review list`, or node ids")
     rv.add_argument("--reason", default="")
     a = ap.parse_args(argv)
     if a.cmd == "ruling":
