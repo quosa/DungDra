@@ -1,0 +1,10 @@
+{
+  "id": "T-28",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "The loop that removes consumed effects (`for e in acc.consumed: e.owner.remove_effect(e)`) is now copied in four places: creature._finish, combat attack, spells spell attack and damage.death_save. Pull it into one helper on the accumulator or in effects.py",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

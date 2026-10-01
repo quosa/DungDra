@@ -614,7 +614,8 @@ class Bless(Effect):
     name = "Bless"
 
     def d20(self, ctx, acc):
-        if ctx.kind in ("attack", "save"):
+        # SRD[SPELL.bless#7] attack rolls and saving throws, a Death Saving Throw among them
+        if ctx.kind in ("attack", "save", "death save"):
             first = next(e for e in self.owner.effects if isinstance(e, Bless))
             if first is self:  # same spell twice doesn't combine (p.106)
                 acc.dice("1d4", "Bless")

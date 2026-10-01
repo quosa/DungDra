@@ -1,0 +1,10 @@
+{
+  "id": "T-27",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "SaveBonus (Cloak of Protection, effects.py:388) and any other effect keyed on ctx.kind == \"save\" skip a Death Saving Throw, because death_save gathers with kind \"death save\". Make 'is a saving throw' one predicate, such as a Ctx helper or a tag, so each save effect doesn't have to list \"death save\" itself",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

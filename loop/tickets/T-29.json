@@ -1,0 +1,10 @@
+{
+  "id": "T-29",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "death_save ignores acc.auto (auto success/fail from gathered effects), which Creature.save handles. Route death_save through the same gather/finish path as Creature.save",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

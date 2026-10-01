@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .d20 import D20Roll, roll_d20_test
+from .effects import Ctx
 from .rules import HOUR, Refusal
 
 
@@ -58,7 +59,21 @@ def add_failures(pc, n, why):
 def death_save(game, pc) -> D20Roll:
     """p.17-18: at the start of the turn with 0 HP. 10+ succeeds; 1 = two failures; 20 = regain 1 HP."""
     roll = D20Roll("death save", "Death Saving Throw", pc.name, target=10)
-    roll_d20_test(game, pc, roll, page=17, rule="GLOSS.death-saving-throw")
+    # A Death Saving Throw is a saving throw and a D20 Test: effects on the creature apply to it
+    acc = pc.gather(Ctx("death save", pc))
+    roll.mods, roll.adv, roll.dis = list(acc.mods), list(acc.adv), list(acc.dis)
+    for e in acc.consumed:
+        if e.owner is not None:
+            e.owner.remove_effect(e)
+    roll_d20_test(
+        game,
+        pc,
+        roll,
+        bonus_dice=acc.bonus_dice,
+        page=17,
+        rule="GLOSS.death-saving-throw",
+        rulings=acc.rulings,
+    )
     d = roll.chosen + roll.modifier
     if roll.chosen == 20:
         game.log.player(
