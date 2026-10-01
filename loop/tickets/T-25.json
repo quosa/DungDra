@@ -4,7 +4,12 @@
   "unit": "SPELL.bless",
   "title": "_material: any costed material component is checked as `inventory.find(\"holy symbol\")`, whatever the spell's component is. Check the spell's own component item and its GP value from the spell data instead",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "The costed material check no longer hard-codes \"holy symbol\". Before, any spell with a material cost passed if the caster had a holy symbol. Now each spell's data names its component and a minimum price, and the cast is refused unless the caster carries that item worth at least that much.\n\nChanges:\n- **Spell data** (`dungdra/data/spells.py`): new `material_item` field. Bless sets it to \"holy symbol\"; `material_cost` stays at 5 GP.\n- **Items** (`dungdra/items.py`): new `Item.unit_cost()`, which gives an item's value in copper. It uses a `cost` prop if the item has one, otherwise the equipment price table, the same way `unit_weight` works.\n- **The check** (`dungdra/spells.py`, `_material`): looks through every item matching `material_item` and passes if any is worth at least `material_cost` GP. The refusal is the same as before, page 105, and it keeps the existing `SRD[SPELL.bless#4]` tag.\n\nThree unit tests added:\n- A made-up spell variant whose component is a 1,000 GP spyglass is refused without the spyglass and refused with only a holy symbol; it goes through once a spyglass is carried.\n- A holy symbol worth only 4 GP is refused for Bless; one worth 5 GP is accepted.\n- The Bless data names the holy symbol and the 5 GP price.\n\nResults: `ruff check .` and `ruff format --check .` are clean, 276 unit tests pass, `dev-gate` passes, and the 75 spell/Bless/material acceptance and scenario tests pass. The ticket names no acceptance tests and `tests/` has no T-25 xfail marker, so there was nothing to run with `--runxfail`."
+    }
+  ]
 }

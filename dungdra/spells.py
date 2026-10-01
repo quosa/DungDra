@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from .d20 import D20Roll, roll_d20_test
+from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
 from .geometry import dist_points
@@ -319,7 +320,8 @@ def _components(game, caster, spell, sd, from_item):
 def _material(caster, spell, sd, focus):
     if sd["material_cost"]:
         # SRD[SPELL.bless#4] a costed component must be the real thing (Bless: a Holy Symbol worth 5+ GP)
-        if caster.inventory.find("holy symbol") is None:
+        floor = sd["material_cost"] * GP
+        if not any(it.unit_cost() >= floor for it in caster.inventory.find_all(sd["material_item"])):
             raise Refusal(
                 f"{spell.title()} needs {sd['material']}",
                 page=105,

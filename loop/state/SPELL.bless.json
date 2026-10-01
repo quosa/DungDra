@@ -34,6 +34,7 @@
       "type": "interacts_with"
     }
   ],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1790836710,

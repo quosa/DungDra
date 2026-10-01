@@ -72,6 +72,12 @@ class Item:
             return self.props["weight"]
         return item_weight(self.base)
 
+    def unit_cost(self) -> int:
+        """Value in CP: a `cost` prop overrides the equipment table's price."""
+        if "cost" in self.props:
+            return self.props["cost"]
+        return item_cost(self.base) or 0
+
     def weight(self) -> float:
         return self.unit_weight() * self.qty
 

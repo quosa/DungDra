@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 
+from dungdra.data.equipment import GP
 from dungdra.data.spells import SPELLS, spell_rule
 from dungdra.rules import Refusal
-from dungdra.spells import cast
+from dungdra.spells import _material, cast
 from tests.support.helpers import mon, pc
 
 UNITS = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
@@ -60,6 +61,38 @@ def test_a_bless_refused_for_its_material_keeps_the_weapon_in_hand(game):
     assert exc.value.rule == "SPELL.casting-spells.components.material-m"
     assert jozan.wielded == held
     assert game.log.last("interact") is None
+
+
+def test_a_costed_component_is_checked_against_the_spells_own_item(game):
+    jozan, _ = _jozan_holding_his_mace(game)
+    _drop(jozan, "holy symbol")
+    sd = dict(
+        SPELLS["bless"], material="a spyglass worth 1,000+ GP", material_item="spyglass", material_cost=1000
+    )
+    with pytest.raises(Refusal, match="spyglass"):
+        _material(jozan, "bless", sd, None)
+    jozan.inventory.add("holy symbol")
+    with pytest.raises(Refusal):  # a holy symbol doesn't stand in for another spell's component
+        _material(jozan, "bless", sd, None)
+    jozan.inventory.add("spyglass")
+    _material(jozan, "bless", sd, None)
+
+
+def test_a_costed_component_worth_less_than_its_price_is_refused(game):
+    jozan, brom = _jozan_holding_his_mace(game)
+    _drop(jozan, "holy symbol")
+    jozan.inventory.add("holy symbol", cost=4 * GP)
+    with pytest.raises(Refusal) as exc:
+        cast(game, jozan, "bless", [brom])
+    assert exc.value.rule == "SPELL.casting-spells.components.material-m"
+    jozan.inventory.add("holy symbol", cost=5 * GP)
+    cast(game, jozan, "bless", [brom])
+    assert brom.find_effects("Bless")
+
+
+def test_bless_names_its_holy_symbol_and_price():
+    assert SPELLS["bless"]["material_item"] == "holy symbol"
+    assert SPELLS["bless"]["material_cost"] == 5
 
 
 def test_a_somatic_hand_is_freed_only_once_the_cast_goes_ahead(game):

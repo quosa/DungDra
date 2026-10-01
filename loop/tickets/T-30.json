@@ -1,0 +1,10 @@
+{
+  "id": "T-30",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "gear.py (buy/sell valuation, lines ~147 and ~251) prices items with item_cost(name), so it ignores the new per-item `cost` prop that Item.unit_cost() honours. Route item valuation through Item.unit_cost() so one value mechanism exists",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

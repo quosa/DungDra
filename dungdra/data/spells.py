@@ -14,6 +14,7 @@ def _s(
     conc=False,
     ritual=False,
     material=None,
+    material_item=None,
     material_cost=0,
     page=None,
     **kw,
@@ -29,6 +30,7 @@ def _s(
         "concentration": conc,
         "ritual": ritual,
         "material": material,
+        "material_item": material_item,  # the costed component's item; material_cost is its GP floor
         "material_cost": material_cost,
         "page": page,
     }
@@ -77,6 +79,7 @@ SPELLS = {
         60,
         conc=True,
         material="a Holy Symbol worth 5+ GP",
+        material_item="holy symbol",
         material_cost=5,
         page=113,
         max_targets=(3, 1),
