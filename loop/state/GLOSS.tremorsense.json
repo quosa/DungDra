@@ -1,0 +1,41 @@
+{
+  "fingerprint": "74932989eb46cb2f",
+  "for_review": [],
+  "id": "GLOSS.tremorsense",
+  "out_of_scope": [],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1790835739,
+      "summary": "Tremorsense pinpoints the location of creatures (and of objects only while they move) within a range set by its source. Both sides must touch the same surface or the same liquid. It never detects anything in the air and doesn't count as sight. The main open questions are whether a creature has to mo"
+    },
+    "B": {
+      "at": 1790835755,
+      "summary": "No item tests or implements Tremorsense detection. ORIG-01 and its three tests only mention it as a granted trait. The six code lines matched on page 190, which holds other rules (teleportation, unarmed strike). All verdicts are not-related."
+    },
+    "C": {
+      "at": 1790835889,
+      "summary": "I wrote 7 tests for GLOSS.tremorsense in tests/srd/test_glossary.py. All 7 pass, and so does the full SRD suite (34 tests). The engine stores Tremorsense: Stonecunning sets `pc.senses[\"tremorsense\"] = 60` in dungdra/class_actions.py:141. But no code ever reads that value. That makes clause #4 ('does"
+    },
+    "D": {
+      "at": 1790835968,
+      "summary": "I kept all 7 tests and refuted none. Rule text: \"Tremorsense… doesn't count as a form of sight.\" Every expected result follows from the words of this rule combined with Invisible (attacks against it have Disadvantage unless the attacker can see it), Blinded, and Sacred Flame (it targets a creature y"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
+    "tests/srd/test_glossary.py::test_blinded_creature_with_tremorsense_still_cant_see",
+    "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage",
+    "tests/srd/test_glossary.py::test_tremorsense_doesnt_take_away_normal_sight",
+    "tests/srd/test_glossary.py::test_blindsight_counts_as_sight_where_tremorsense_doesnt",
+    "tests/srd/test_glossary.py::test_tremorsense_cant_target_unseen_creature_with_sight_spell",
+    "tests/srd/test_glossary.py::test_blinded_tremorsense_cast_command_on_creature_refused"
+  ],
+  "tickets": [
+    "T-12",
+    "T-13",
+    "T-14"
+  ]
+}

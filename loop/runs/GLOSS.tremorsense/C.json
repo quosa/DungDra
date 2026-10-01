@@ -1,0 +1,164 @@
+{
+ "summary": "I wrote 7 tests for GLOSS.tremorsense in tests/srd/test_glossary.py. All 7 pass, and so does the full SRD suite (34 tests). The engine stores Tremorsense: Stonecunning sets `pc.senses[\"tremorsense\"] = 60` in dungdra/class_actions.py:141. But no code ever reads that value. That makes clause #4 ('doesn't count as a form of sight') hold by default, and the tests pin it down. Tremorsense doesn't make an invisible creature seen, and doesn't make a Blinded holder see. Attacks on an unseen target still have Disadvantage, both through the direct attack call and through Session.execute. A Blinded or invisible defender still grants Advantage. Sight-targeted spells (Sacred Flame) are refused cleanly, called directly and through Session. Tremorsense also doesn't take away normal sight, and a Blindsight contrast test confirms the setup separates the two senses. Clauses #1–#3 (pinpointing location within range, same surface or liquid, not in the air) can't be tested. The engine has no idea of knowing a creature's location apart from seeing it, no surface or liquid contact model, and no airborne state (only elevation and a fly movement mode). I filed them as missing infrastructure. I added two cheats to the abuse catalogue: using a non-sight sense as sight, and detecting airborne, separate-surface or out-of-range creatures with Tremorsense. Every stage B verdict was not-related, so no scenario changed.",
+ "interactions": [
+  {
+   "clause": "GLOSS.tremorsense#4",
+   "with": "Invisible condition / unseen attacker-target rule (p.14)",
+   "risk": "high",
+   "note": "An engine that treats every 'sense' like Blindsight would cancel Disadvantage on attacks against an invisible target. Tested: still Disadvantage."
+  },
+  {
+   "clause": "GLOSS.tremorsense#4",
+   "with": "Blinded condition",
+   "risk": "high",
+   "note": "A Blinded creature with Tremorsense still can't see, and attackers still get Advantage on it. Tested."
+  },
+  {
+   "clause": "GLOSS.tremorsense#4",
+   "with": "Spells needing a target you can see (Sacred Flame, Hold Person, Command, Healing Word, Magic Missile, Misty Step)",
+   "risk": "high",
+   "note": "Tremorsense must not satisfy 'a creature you can see'. Tested with Sacred Flame, called directly and through Session."
+  },
+  {
+   "clause": "GLOSS.tremorsense#4",
+   "with": "GLOSS.blindsight / Truesight",
+   "risk": "medium",
+   "note": "game.can_see treats Blindsight and Truesight as sight. Tremorsense must not be added to that list. A contrast test guards this."
+  },
+  {
+   "clause": "GLOSS.tremorsense#1",
+   "with": "Hide action / Invisible from Hide, Search action",
+   "risk": "high",
+   "note": "Pinpointing should reveal a hidden creature's location without making it seen (gap in the SRD). The engine has no location-knowledge state, so this can't be tested."
+  },
+  {
+   "clause": "GLOSS.tremorsense#1",
+   "with": "Stonecunning (Dwarf, Tremorsense 60 ft)",
+   "risk": "medium",
+   "note": "Stonecunning is the only in-scope source. It sets the range at 60 ft and needs a stone surface. The 60 ft range boundary can't be tested: nothing reads it."
+  },
+  {
+   "clause": "GLOSS.tremorsense#3",
+   "with": "GLOSS.fly-speed, elevation, jumping, falling",
+   "risk": "medium",
+   "note": "A creature in the air must be undetectable, but a landed flyer is detectable. The engine has elevation but no airborne or contact state."
+  },
+  {
+   "clause": "GLOSS.tremorsense#2",
+   "with": "Underwater combat (scene.underwater)",
+   "risk": "low",
+   "note": "Detection through the same liquid. The scene has only a global underwater flag, with no per-creature contact."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Targeting an invisible creature with a sight spell because the caster has Tremorsense",
+   "test": "tests/srd/test_glossary.py::test_tremorsense_cant_target_unseen_creature_with_sight_spell",
+   "reason": "Tremorsense doesn't count as sight, so 'a creature you can see' isn't met."
+  },
+  {
+   "case": "A Blinded caster with Tremorsense casting a sight spell through the command interface",
+   "test": "tests/srd/test_glossary.py::test_blinded_tremorsense_cast_command_on_creature_refused",
+   "reason": "Tremorsense doesn't count as sight, so Blinded still blocks sight-targeted spells."
+  },
+  {
+   "case": "Using Tremorsense to cancel Disadvantage on attacks against an unseen target",
+   "test": "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage",
+   "reason": "Tremorsense pinpoints the location only; the attack is still against a target you can't see."
+  },
+  {
+   "case": "Detecting a flying, jumping or falling creature, or one on a separate surface or beyond range, with Tremorsense",
+   "test": null,
+   "reason": "The engine has no detection, contact or airborne model, so this can't be tested yet. It is filed under not_testable as missing."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "positive",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_blinded_creature_with_tremorsense_still_cant_see",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "positive",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "positive",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_tremorsense_doesnt_take_away_normal_sight",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "negative",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_blindsight_counts_as_sight_where_tremorsense_doesnt",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "negative",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_tremorsense_cant_target_unseen_creature_with_sight_spell",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "abuse",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_blinded_tremorsense_cast_command_on_creature_refused",
+   "clause": "GLOSS.tremorsense#4",
+   "kind": "abuse",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "GLOSS.tremorsense#1",
+   "kind": "missing",
+   "reason": "No engine state represents knowing a creature's location apart from seeing it. senses['tremorsense'] is set by Stonecunning but never read, so neither pinpointing nor the range threshold can be observed (positive, negative or boundary at 60/65 ft).",
+   "infra_ticket": "Awareness model: a query such as game.pinpoints(observer, target) / knows_location, kept separate from can_see. Tremorsense (and Blindsight) feed it within their range. Hide/Search and the combat help ('N hidden enemies somewhere nearby') use it, and Refusals and Events cite rule=GLOSS.tremorsense#<n>."
+  },
+  {
+   "clause": "GLOSS.tremorsense#2",
+   "kind": "missing",
+   "reason": "Creatures have no 'in contact with surface X / liquid Y' state. The scene has only a global underwater flag, and Stonecunning's stone check is a call argument (on_stone).",
+   "infra_ticket": "Surface/liquid contact model: each creature (and moving object) records the surface or body of liquid it touches: ground, wall, ceiling, a separate structure such as a boat, a creature it rides, a lake. Tremorsense detection requires a shared surface or liquid."
+  },
+  {
+   "clause": "GLOSS.tremorsense#3",
+   "kind": "missing",
+   "reason": "The engine has an elevation and a fly movement mode, but no airborne state (flying or hovering above ground, mid-jump, falling) that is separate from standing on a raised surface.",
+   "infra_ticket": "Airborne state: creatures that are flying, hovering, jumping or falling count as 'in the air' and touch no surface. Landing or clinging clears the state. Tremorsense excludes airborne creatures and objects."
+  }
+ ],
+ "scenario_changes": [],
+ "rulings_proposed": [
+  {
+   "ambiguity": "GLOSS.tremorsense: “pinpoint the location”: does pinpointing cancel the unseen-target rules (Disadvantage on attacks, 'a creature you can see')?",
+   "ruling": "No. Pinpointing makes the location known (no guessing the space), but Tremorsense doesn't count as sight. Attacks against the target still have Disadvantage for an unseen target, and spells that need a target you can see stay unavailable.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
+    "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage"
+   ]
+  }
+ ]
+}

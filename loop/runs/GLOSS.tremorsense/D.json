@@ -1,0 +1,54 @@
+{
+ "summary": "I kept all 7 tests and refuted none. Rule text: \"Tremorsense… doesn't count as a form of sight.\" Every expected result follows from the words of this rule combined with Invisible (attacks against it have Disadvantage unless the attacker can see it), Blinded, and Sacred Flame (it targets a creature you can see). None of the tests depends on a disputed reading. The engine never treats Tremorsense as sight: `Game.can_see` in dungdra/game.py:192-206 only checks Blindsight and Truesight. I broke the rule in a scratch copy three ways, and every test I aimed at a mutation failed. (1) Line 198: Tremorsense added to the special senses. All four tests about an Invisible creature failed. (2) Line 195: Tremorsense excuses Blinded the way Blindsight does. Both Blinded tests failed. (3) Line 195: having Tremorsense stops normal sight. The negative test about normal sight failed. There is some overlap, though no two tests are exact duplicates. Tests 1 and 3 check the same Disadvantage, one through the engine and one through the Session command. Tests 2 and 7 both start from a Blinded creature with Tremorsense, but one checks an incoming attack and the other a spell cast. Test 5 repeats test 1's `can_see` check before adding the Blindsight contrast. No earlier test in the repository covers Tremorsense.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_tremorsense_doesnt_see_an_invisible_creature",
+   "verdict": "keep",
+   "reason": "The oracle is correct. Tremorsense isn't sight, so a goblin with Tremorsense can't see an Invisible BROM, and its attack has Disadvantage under Invisible. Nothing else in the setup would make it pass: no Blindsight and no special lighting.",
+   "mutation": "Line 198 of game.py: added viewer.senses.get('tremorsense') to the special-senses max(), so Tremorsense counts as sight. The test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_blinded_creature_with_tremorsense_still_cant_see",
+   "verdict": "keep",
+   "reason": "A Blinded creature with Tremorsense still can't see. Attacks against a Blinded creature have Advantage, and the test checks that the Advantage comes from the 'can't see' reason.",
+   "mutation": "Line 195 of game.py: the Blinded check made to let Tremorsense through, as it does for Blindsight. The test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_tremorsense_attack_command_on_invisible_target_has_disadvantage",
+   "verdict": "keep",
+   "reason": "Same rule as test 1, but the attack goes through the Session command path and BROM gets Tremorsense from Stonecunning. That is a different entry point and the real source of the sense, so it isn't an exact duplicate. The text match on 'isadvantage' is loose but enough.",
+   "mutation": "Line 198 of game.py: Tremorsense added to the special senses. The test FAILED.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_tremorsense_doesnt_take_away_normal_sight",
+   "verdict": "keep",
+   "reason": "The negative guard is valid. Having Tremorsense doesn't take away normal sight, so the attack roll is normal.",
+   "mutation": "Line 195 of game.py: having Tremorsense made to block sight, as if Blinded. The test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_blindsight_counts_as_sight_where_tremorsense_doesnt",
+   "verdict": "keep",
+   "reason": "The contrast is correct: Blindsight sees an Invisible creature within range, Tremorsense doesn't. Its first assertion repeats test 1's can_see check, but the Blindsight half shows the setup isn't what decides the result.",
+   "mutation": "Line 198 of game.py: Tremorsense added to the special senses. The first assertion FAILED.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_tremorsense_cant_target_unseen_creature_with_sight_spell",
+   "verdict": "keep",
+   "reason": "Sacred Flame targets 'a creature you can see'. Tremorsense isn't sight, so casting it at an Invisible goblin must be refused. The refusal is checked against the text 'can see' and must leave no side effects.",
+   "mutation": "Line 198 of game.py: Tremorsense added to the special senses. The test FAILED, because the cast went through.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_blinded_tremorsense_cast_command_on_creature_refused",
+   "verdict": "keep",
+   "reason": "A Blinded caster with Tremorsense can't target a creature with a spell that needs sight. The test doesn't check the refusal text, but the mutation shows the refusal really comes from the sight check.",
+   "mutation": "Line 195 of game.py: the Blinded check made to let Tremorsense through. The test FAILED, because the cast was accepted.",
+   "confidence": 0.75
+  }
+ ]
+}

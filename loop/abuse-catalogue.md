@@ -29,6 +29,11 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Targeting a hidden, invisible, unseen, dead or out-of-range creature.
 - Targeting yourself, or an ally, where the rule says a creature you can see or an enemy.
 - More targets than a spell or feature allows.
+- Using a non-sight sense (Tremorsense, a sense that only pinpoints a location) as "a creature
+  you can see": to cast a sight-targeted spell, to cancel the unseen-target Disadvantage, or to
+  ignore Blinded.
+- Using Tremorsense to detect a creature in the air (flying, jumping, falling), on a separate
+  surface, or beyond its range.
 
 ## Spells and effects
 - Casting while unable to speak (Verbal) or without a free hand (Somatic).

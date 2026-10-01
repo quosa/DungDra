@@ -3,7 +3,9 @@
 import pytest
 
 from dungdra import actions
+from dungdra import class_actions as CA
 from dungdra import combat as C
+from dungdra import spells as S
 from dungdra.api import Session
 from dungdra.effects import SpeedPenalty
 from tests.support.helpers import mon, pc
@@ -332,3 +334,103 @@ def test_drag_cost_stacks_with_difficult_terrain(game):
     grab(game, brom, gob)
     in_combat(game, brom, gob)
     assert C.move(game, brom, to=(-10, 0), drag=gob, difficult=True) == 30
+
+
+# =====================================================================================
+# GLOSS.tremorsense (p.190)
+# =====================================================================================
+TS = "GLOSS.tremorsense"
+
+
+def stonecunning_brom(game, pos=(0, 0)):
+    """BROM (a dwarf) gains Tremorsense 60 ft through Stonecunning, the in-scope source."""
+    brom = pc(game, "BROM", pos)
+    CA.stonecunning(game, brom)
+    assert brom.senses.get("tremorsense") == 60
+    return brom
+
+
+# ---------------- #4 · Tremorsense doesn't count as a form of sight ----------------
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="P-4")
+def test_tremorsense_doesnt_see_an_invisible_creature(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.senses["tremorsense"] = 60
+    brom.add_condition("invisible", "test")
+    # same ground, well within range: it can pinpoint BROM, but it doesn't see him
+    assert not game.can_see(gob, brom)
+    game.dice.force_str("d20=[10,10]")
+    r = C.attack(game, gob, brom, attack_name="scimitar")
+    assert r.roll.mode == "disadvantage"
+    assert any("can't see" in s for s in r.roll.dis)
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive")
+def test_blinded_creature_with_tremorsense_still_cant_see(game):
+    brom = stonecunning_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    brom.add_condition("blinded", "test")
+    assert not game.can_see(brom, gob)
+    game.dice.force_str("d20=[10,10]")
+    r = C.attack(game, gob, brom, attack_name="scimitar")
+    assert r.roll.mode == "advantage"
+    assert any("can't see" in s for s in r.roll.adv)
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="positive", ruling="P-4")
+def test_tremorsense_attack_command_on_invisible_target_has_disadvantage(game):
+    s = Session(game)
+    brom = stonecunning_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("invisible", "test")
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[10,10]")
+    out = s.execute({"cmd": "attack", "actor": brom.id, "target": gob.id, "weapon": "longsword"})
+    assert out["ok"], out
+    assert "isadvantage" in game.log.last("attack").text
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="negative")
+def test_tremorsense_doesnt_take_away_normal_sight(game):
+    brom = stonecunning_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    assert game.can_see(brom, gob)
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[10]")
+    r = C.attack(game, brom, gob, weapon="longsword")
+    assert r.roll.mode == "normal"
+    assert not any("can't see" in s for s in r.roll.dis)
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="negative")
+def test_blindsight_counts_as_sight_where_tremorsense_doesnt(game):
+    """Contrast: Blindsight sees the same unseen target, so the tremorsense result is about
+    the sense, not the setup."""
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    brom.add_condition("invisible", "test")
+    gob.senses["tremorsense"] = 60
+    assert not game.can_see(gob, brom)
+    gob.senses["blindsight"] = 60
+    assert game.can_see(gob, brom)
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="abuse")
+def test_tremorsense_cant_target_unseen_creature_with_sight_spell(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    jozan.senses["tremorsense"] = 60
+    gob = mon(game, "goblin warrior", (10, 0))
+    gob.add_condition("invisible", "test")
+    assert_refused_cleanly(game, S.cast, game, jozan, "sacred flame", gob, match="can see")
+
+
+@pytest.mark.srd(TS, clause=f"{TS}#4", kind="abuse")
+def test_blinded_tremorsense_cast_command_on_creature_refused(game):
+    s = Session(game)
+    jozan = pc(game, "JOZAN", (0, 0))
+    jozan.senses["tremorsense"] = 60
+    jozan.add_condition("blinded", "test")
+    gob = mon(game, "goblin warrior", (10, 0))
+    assert_refused_cleanly(
+        game, s.execute, {"cmd": "cast", "actor": jozan.id, "spell": "sacred flame", "targets": [gob.id]}
+    )

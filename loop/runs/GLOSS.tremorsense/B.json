@@ -1,0 +1,85 @@
+{
+ "summary": "No item tests or implements Tremorsense detection. ORIG-01 and its three tests only mention it as a granted trait. The six code lines matched on page 190, which holds other rules (teleportation, unarmed strike). All verdicts are not-related.",
+ "verdicts": [
+  {
+   "item": "ORIG-01",
+   "kind": "scenario",
+   "verdict": "not-related",
+   "evidence": "Stonecunning (Bonus Action, Tremorsense 60 ft for 10 min, PB uses per Long Rest, only on stone)",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "The scenario checks that species traits load. It names Tremorsense only as a Stonecunning effect and never tests detection, the shared-surface requirement, air, or sight."
+  },
+  {
+   "item": "tests/scenarios/test_creation.py::test_orig01_species",
+   "kind": "test",
+   "verdict": "not-related",
+   "evidence": "assert b.resources[\"stonecunning\"][\"max\"] == 2",
+   "rule_quote": "it doesn’t count as a form of sight",
+   "explanation": "It checks the trait names and the Stonecunning use count. It does not check any Tremorsense detection behaviour."
+  },
+  {
+   "item": "tests/scenarios/test_creation.py::test_orig01_elf_lineage_spell_at_3",
+   "kind": "test",
+   "verdict": "not-related",
+   "evidence": "assert \"detect magic\" in m.always_prepared and m.free_casts[\"detect magic\"][\"available\"]",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "It is about an Elf lineage spell and has nothing to do with Tremorsense."
+  },
+  {
+   "item": "tests/scenarios/test_creation.py::test_orig01_saves_advantage",
+   "kind": "test",
+   "verdict": "not-related",
+   "evidence": "r = b.save(\"con\", 11, avoid={\"poisoned\"})",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "It is about saving throw advantage against Poisoned and has nothing to do with Tremorsense."
+  },
+  {
+   "item": "dungdra/combat.py:427",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=190,",
+   "rule_quote": "Tremorsense can’t detect creatures or objects in the air",
+   "explanation": "This is the teleportation / forced-movement log (rule=GLOSS.teleportation). It matched only on page 190."
+  },
+  {
+   "item": "dungdra/combat.py:1540",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# Unarmed Strike: Grapple and Shove (p.190)",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "This comment heads the Unarmed Strike grapple and shove code. It matched only on page 190."
+  },
+  {
+   "item": "dungdra/combat.py:1558",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=190,",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "This Refusal is for grappling a target more than one size larger (rule=GLOSS.unarmed-strike). It matched only on page 190."
+  },
+  {
+   "item": "dungdra/combat.py:1574",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=190,",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "This is the grapple saving throw call (rule=GLOSS.unarmed-strike). It matched only on page 190."
+  },
+  {
+   "item": "dungdra/combat.py:1596",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=190,",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "This Refusal is for shoving a target more than one size larger (rule=GLOSS.unarmed-strike). It matched only on page 190."
+  },
+  {
+   "item": "dungdra/combat.py:1609",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=190,",
+   "rule_quote": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+   "explanation": "This is the shove saving throw call (rule=GLOSS.unarmed-strike). It matched only on page 190."
+  }
+ ]
+}
