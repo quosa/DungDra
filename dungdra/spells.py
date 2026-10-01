@@ -948,8 +948,9 @@ def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
         page=16,
         rule="PLAY.damage-and-healing.damage-rolls",
     )
-    for t in targets:
-        r = spell_save(game, c, t, ability)
+    # the effect is simultaneous: every target saves (with the cover it has now) before anyone takes damage
+    saves = [(t, spell_save(game, c, t, ability)) for t in targets]
+    for t, r in saves:
         dmg = div(total, 2) if r.success else total
         deal(game, c, t, dmg, dtype)
         if not r.success and on_fail and not t.dead:

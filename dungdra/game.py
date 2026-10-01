@@ -13,7 +13,7 @@ from collections import defaultdict, deque
 from .dice import Dice
 from .effects import Acc, Ctx
 from .events import EventLog
-from .rules import DAY, HOUR, MINUTE, ROUND, Refusal, norm
+from .rules import DAY, HOUR, MINUTE, ROUND, SPACE, Refusal, norm
 
 
 class Scene:
@@ -207,11 +207,39 @@ class Game:
         return self.perceived_light(viewer, target) != "dark"
 
     def cover_between(self, attacker, target) -> str | None:
+        """Degree of cover the target has against the attacker: the scene's labels and the Half
+        Cover of creatures standing in the line, for attacks and saves alike."""
         order = [None, "half", "three-quarters", "total"]
         c1 = self.scene.cover.get((attacker.id, target.id)) if attacker else None
         c2 = self.scene.cover_all.get(target.id)
-        # p.179: only the most protective degree applies
-        return max(c1, c2, key=lambda c: order.index(c))
+        c3 = "half" if attacker and self.creatures_in_the_way(attacker, target) else None
+        # SRD[PLAY.combat.cover#4] only the most protective degree applies; never added together
+        return max(c1, c2, c3, key=lambda c: order.index(c))
+
+    def creatures_in_the_way(self, attacker, target) -> list:
+        """Creatures standing on the line between the two (centre of space to centre of space)."""
+        from .geometry import segment_crosses_square
+
+        def centre(c):
+            s = SPACE.get(c.size, 5)
+            return (c.position[0] + s / 2, c.position[1] + s / 2)
+
+        def between(c):
+            s = SPACE.get(c.size, 5)
+            x, y = c.position
+            # one sharing the attacker's or the target's space isn't between them
+            if any(x <= px <= x + s and y <= py <= y + s for px, py in (p, q)):
+                return False
+            return segment_crosses_square(p, q, c.position, s)
+
+        p, q = centre(attacker), centre(target)
+        # SRD[PLAY.combat.cover#6] another creature gives Half Cover (never more, R-09);
+        # SRD[PLAY.combat.cover#3] only one between the attack's origin and the target counts
+        return [
+            c
+            for c in self.creatures.values()
+            if c is not attacker and c is not target and not c.dead and between(c)
+        ]
 
     def scene_gather(self, creature, ctx: Ctx, acc: Acc):
         """Environmental modifiers to D20 Tests (light, travel pace, sunlight)."""

@@ -9,8 +9,8 @@
     "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters",
     "tests/scenarios/test_spells.py::test_spl05_burning_hands"
   ],
-  "status": "open",
-  "attempts": 1,
+  "status": "fixed",
+  "attempts": 2,
   "history": [
     {
       "event": "dispute",
@@ -25,6 +25,10 @@
       "problems": [
         "fixer may not change tests/scenarios/test_spells.py"
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }

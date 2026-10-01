@@ -1,0 +1,10 @@
+{
+  "id": "T-24",
+  "kind": "coverage",
+  "unit": "PLAY.combat.cover",
+  "title": "Unit test for _save_for_half: every target makes its save, using the cover it has at that moment, before any target takes damage, so a creature killed by the effect still gives Half Cover to the one behind it. Today only scenario SPL-05 exercises this.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

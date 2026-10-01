@@ -262,7 +262,6 @@ def test_half_cover_on_a_melee_attack(game):
 
 # ---------------- #6 · offered by another creature ----------------
 @pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
-@pytest.mark.xfail(strict=True, reason="T-16: a creature between attacker and target gives no Half Cover")
 def test_creature_in_the_way_gives_half_cover(game):
     lidda, gob = lidda_and_goblin(game, dist=30)
     mon(game, "goblin warrior", (15, 0), name="Screen")  # same size as the target, right in the line
@@ -270,7 +269,6 @@ def test_creature_in_the_way_gives_half_cover(game):
 
 
 @pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
-@pytest.mark.xfail(strict=True, reason="T-16: a creature between attacker and target gives no Half Cover")
 def test_ally_in_the_way_gives_half_cover_to_the_enemy(game):
     lidda, gob = lidda_and_goblin(game, dist=30)
     pc(game, "BROM", (15, 0))
@@ -330,7 +328,6 @@ def test_three_quarters_dex_save_one_short(game):
 
 # ---------------- #8 · offered by an object covering three-quarters ----------------
 @pytest.mark.srd(COVER, clause=f"{COVER}#8", kind="negative", ruling="R-09")
-@pytest.mark.xfail(strict=True, reason="T-16: a creature between attacker and target gives no Half Cover")
 def test_creature_alone_never_gives_three_quarters(game):
     lidda, gob = lidda_and_goblin(game, dist=30)
     mon(game, "goblin warrior", (10, 0), name="Screen 1")

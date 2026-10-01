@@ -174,7 +174,6 @@ def test_spl04_components(game):
 
 
 # ---------------- SPL-05 · Areas ----------------
-@pytest.mark.xfail(strict=True, reason="T-16: a creature in the line gives no Half Cover on Dexterity saves")
 def test_spl05_burning_hands(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")

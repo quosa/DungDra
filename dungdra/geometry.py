@@ -35,3 +35,19 @@ def step_away(p, q, feet) -> tuple[int, int]:
         dx = 1
     steps = feet // 5
     return (x + dx * 5 * steps, y + dy * 5 * steps)
+
+
+def segment_crosses_square(p, q, corner, side) -> bool:
+    """Does the open segment p→q pass through the interior of the square at `corner`
+    (lowest x, y) with edge `side`? Touching an edge or a corner doesn't count."""
+    t0, t1 = 0.0, 1.0
+    for a, b, lo in ((p[0], q[0], corner[0]), (p[1], q[1], corner[1])):
+        d = b - a
+        hi = lo + side
+        if d == 0:
+            if not lo < a < hi:
+                return False
+            continue
+        ta, tb = sorted(((lo - a) / d, (hi - a) / d))
+        t0, t1 = max(t0, ta), min(t1, tb)
+    return t0 < t1

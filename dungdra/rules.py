@@ -36,6 +36,8 @@ SKILLS = {
 }
 
 SIZES = ["tiny", "small", "medium", "large", "huge", "gargantuan"]
+# side of the square a creature controls, in feet (Size and Space)
+SPACE = {"tiny": 2.5, "small": 5, "medium": 5, "large": 10, "huge": 15, "gargantuan": 20}
 
 DAMAGE_TYPES = [
     "acid",
