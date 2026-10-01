@@ -10,7 +10,7 @@
     "tests/scenarios/test_spells.py::test_spl05_burning_hands"
   ],
   "status": "open",
-  "attempts": 0,
+  "attempts": 1,
   "history": [
     {
       "event": "dispute",
@@ -19,6 +19,12 @@
     {
       "event": "dispute resolved",
       "reason": "Person: SPL-05 was wrong; Burning Hands is a directed effect, so a creature in the line gives Half Cover on the Dex save. SPL-05 now expects it (red until T-16 is fixed)."
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "fixer may not change tests/scenarios/test_spells.py"
+      ]
     }
   ]
 }
