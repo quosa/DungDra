@@ -1,7 +1,6 @@
 {
   "fingerprint": "02e44a3800573aea",
   "for_review": [
-    "tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover",
     "tests/srd/test_playing_the_game.py::test_creature_behind_the_target_gives_no_cover",
     "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half",
     "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
@@ -23,6 +22,13 @@
       "evidence": "A target is the creature or object targeted by an attack roll, forced to make a saving throw by an effect, or selected to receive the effects of a spell or another phenomenon.",
       "target": "GLOSS.target",
       "type": "requires"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "guards creature cover since T-16 (fails under mutation)",
+      "test": "tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover"
     }
   ],
   "stages": {
