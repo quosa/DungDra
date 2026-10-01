@@ -8,7 +8,12 @@
     "tests/srd/test_playing_the_game.py::test_ally_in_the_way_gives_half_cover_to_the_enemy",
     "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters"
   ],
-  "status": "open",
+  "status": "dispute",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "dispute",
+      "reason": "Under rule #5 and R-09, a creature in the line should also give +2 on Dexterity saves. Applying that breaks tests/scenarios/test_spells.py::test_spl05_burning_hands: G1 (5 ft) stands between MIALEE and G2 (10 ft), so G2's forced d20 of 9 becomes 9+2+2 = 13, meets DC 13, and G2 survives. A person should choose one: (a) change SPL-05 so G2's d20 still fails with the +2 (e.g. 8), or (b) rule that creatures in an area don't screen each other. Then drop creatures=False in spells.spell_save. Details are in loop/requests/T-16-creature-cover-saves.md."
+    }
+  ]
 }
