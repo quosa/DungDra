@@ -8,7 +8,7 @@ import pytest
 from dungdra.data.equipment import GP
 from dungdra.data.spells import SPELLS, spell_rule
 from dungdra.rules import Refusal
-from dungdra.spells import _material, cast
+from dungdra.spells import Casting, _material, _save_for_half, cast
 from tests.support.helpers import mon, pc
 
 UNITS = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
@@ -205,3 +205,39 @@ def test_each_capped_spell_refuses_one_target_over_its_cap_under_its_own_rule(ga
     with pytest.raises(Refusal, match=f"up to {cap} creature") as exc:
         _target_cap(spell, SPELLS[spell], level, gobs)
     assert (exc.value.rule, exc.value.page) == (spell_rule(spell), SPELLS[spell]["page"])
+
+
+def _goblins_in_a_line(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    front = mon(game, "goblin warrior", (5, 0), name="Front")
+    back = mon(game, "goblin warrior", (10, 0), name="Back")  # Front stands in the line
+    c = Casting("burning hands", mialee, level=1, ability="int", dc=13, attack=5)
+    return c, front, back
+
+
+def test_every_target_saves_before_any_target_takes_damage(game):
+    c, front, back = _goblins_in_a_line(game)
+    game.dice.force_str("d6=[3,4,5]; d20=[9]; d20=[9]")
+    assert _save_for_half(game, c, [front, back], "dex", "3d6", "fire") == 12
+    # Front fails (9+2) and dies, yet Back saved first, with Front's Half Cover (9+2+2)
+    assert front.dead and back.hp == 10 - 6
+    kinds = [e.kind for e in game.log.events if e.kind in ("save", "damage", "death")]
+    assert kinds == ["save", "save", "damage", "death", "damage"]
+    assert [e.rule for e in game.log.of_kind("cover")] == ["PLAY.combat.cover#5"]
+
+
+def test_a_creature_dead_before_the_effect_gives_no_cover(game):
+    c, front, back = _goblins_in_a_line(game)
+    front.hp = 0
+    front.dead = True
+    game.dice.force_str("d6=[3,4,5]; d20=[9]")
+    _save_for_half(game, c, [back], "dex", "3d6", "fire")
+    assert back.dead and not game.log.of_kind("cover")
+
+
+def test_on_fail_runs_only_for_a_living_target_that_failed(game):
+    c, front, back = _goblins_in_a_line(game)
+    hit = []
+    game.dice.force_str("d6=[1,1,1]; d20=[9]; d20=[20]")
+    _save_for_half(game, c, [front, back], "dex", "3d6", "fire", on_fail=hit.append)
+    assert hit == [front] and front.hp == 10 - 3 and back.hp == 10 - 1
