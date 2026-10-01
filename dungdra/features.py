@@ -210,7 +210,7 @@ def choose_subclass(pc, name: str):
     if name == "champion":
         pass
     elif name == "thief":
-        pc.speeds["climb"] = pc.speeds["walk"]  # Second-Story Work: Climber
+        pc.gain_speed("climb", pc.speeds["walk"], "Second-Story Work")
     elif name == "life domain":
         for s in LIFE_DOMAIN_SPELLS[3]:
             pc.always_prepared[s] = ("wis", "Life Domain")

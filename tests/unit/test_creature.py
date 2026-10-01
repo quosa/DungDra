@@ -3,11 +3,40 @@
 from tests.support.helpers import mon, pc
 
 
-def test_the_grappled_condition_logs_its_rule_and_ruling_r07(game):
-    gob = mon(game, "goblin warrior")
-    gob.add_condition("grappled", "grappled by Brom", grappler="brom")
+def test_grappling_a_creature_with_a_special_speed_logs_ruling_r07(game):
+    rat = mon(game, "giant rat")
+    assert rat.special_speeds() == ["climb"]
+    rat.add_condition("grappled", "grappled by Brom", grappler="brom")
     ev = game.log.last("condition")
     assert (ev.rule, ev.ruling) == ("GLOSS.grappled", "R-07")
+
+
+def test_grappling_a_walk_only_creature_logs_no_ruling(game):
+    gob = mon(game, "goblin warrior")
+    assert gob.special_speeds() == []
+    gob.add_condition("grappled", "grappled by Brom", grappler="brom")
+    ev = game.log.last("condition")
+    assert (ev.rule, ev.ruling) == ("GLOSS.grappled", None)
+    assert not game.log.applied(ruling="R-07")
+
+
+def test_a_speed_gained_while_grappled_logs_r07_and_stays_zero(game):
+    gob = mon(game, "goblin warrior")
+    gob.add_condition("grappled", "grappled by Brom", grappler="brom")
+    gob.gain_speed("fly", 60, "a spell")
+    assert gob.speeds["fly"] == 60 and gob.speed("fly") == 0
+    ev = game.log.last("speed")
+    assert (ev.page, ev.rule, ev.ruling) == ("182", "GLOSS.grappled#1", "R-07")
+
+
+def test_a_speed_gained_while_free_logs_nothing(game):
+    gob = mon(game, "goblin warrior")
+    gob.gain_speed("climb", 30)
+    assert gob.speed("climb") == 30
+    assert game.log.last("speed") is None
+    gob.add_condition("grappled", "grappled by Brom", grappler="brom")
+    gob.gain_speed("walk", 40)  # a walking Speed is zeroed by the Glossary itself, not R-07
+    assert game.log.last("speed") is None
 
 
 def test_other_conditions_log_their_glossary_entry_and_no_ruling(game):

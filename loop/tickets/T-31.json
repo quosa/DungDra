@@ -1,0 +1,10 @@
+{
+  "id": "T-31",
+  "kind": "refactor",
+  "unit": "ENGINE",
+  "title": "The test for 'a non-walk Speed above 0' (the case R-07 decides) is now written three ways: Creature.special_speeds(), the inline `kind != \"walk\" and ft > 0` check in Creature.gain_speed, and `mode != \"walk\" and c.speeds.get(mode, 0) > 0` in combat.move's grappled refusal (combat.py:490). Put it in one predicate on Creature, such as `has_special_speed(kind=None)`, and call that from all three places.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
