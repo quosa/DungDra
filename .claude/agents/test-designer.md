@@ -34,8 +34,11 @@ Method:
    - for multi-step interactions, write a journey in `tests/srd/journeys/`.
 4. **Run them** with `python -m pytest <file> -q`. A test that fails because the engine is wrong
    gets `@pytest.mark.xfail(strict=True, reason="T-new: <what is wrong>")`, `claim: red` and a
-   `ticket_title`; the harness assigns the ticket number. A test that fails because you wrote it
-   wrong: fix the test, not the expectation.
+   `ticket_title`; the harness assigns the ticket number. Write the reason out in each marker,
+   not as a module constant: the harness replaces `T-new` inside the test. Phrase the
+   `ticket_title` as the rule versus the engine ("SRD: a creature in the line gives Half Cover;
+   engine: cover only from scene labels"), without the unit id (the harness adds it). A test
+   that fails because you wrote it wrong: fix the test, not the expectation.
 5. **Not testable?** Record the clause under `not_testable` with one of two kinds:
    - `missing`: the engine should handle this and has no way to express it (no map, no
      reaction-choice hook, …). Name the missing capability in `infra_ticket`; it becomes a

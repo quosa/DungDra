@@ -305,8 +305,44 @@ def test_a_missing_capability_opens_an_infra_ticket(tmp_path, monkeypatch):
         tests=[],
         abuse=[],
         not_testable=[
-            {"clause": "GLOSS.grappled#1", "kind": "missing", "reason": "no drag", "infra_ticket": "dragging"}
+            {
+                "clause": "GLOSS.grappled#1",
+                "kind": "missing",
+                "reason": "no drag",
+                "infra_ticket": "dragging",
+            },
+            # the same capability again, with the unit id the harness adds anyway: one ticket
+            {
+                "clause": "GLOSS.grappled#2",
+                "kind": "missing",
+                "reason": "no drag",
+                "infra_ticket": "GLOSS.grappled: Dragging.",
+            },
         ],
     )
     assert run(ctx, agents("C", lambda: copy.deepcopy(missing))) == "blocked"
-    assert [(t["kind"], t["title"]) for t in T.all_tickets()] == [("infra", "GLOSS.grappled: dragging")]
+    assert [(t["kind"], t["title"]) for t in T.all_tickets()] == [("infra", "dragging")]
+    assert S.load("GLOSS.grappled")["tickets"] == ["T-1"]
+
+
+def test_a_lint_error_in_the_designers_file_fails_the_gate(tmp_path, monkeypatch):
+    ctx = repo(tmp_path, monkeypatch)
+    write(Path("."), {"pyproject.toml": '[tool.ruff]\nline-length = 110\n[tool.ruff.lint]\nselect = ["E"]\n'})
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-q", "-m", "ruff config"], check=True)
+    long_comment = "# " + "x" * 120 + "\n"
+    bad = designer({"tests/srd/test_glossary.py": TEST_FILE + long_comment})
+    assert run(ctx, agents("C", bad)) == "incomplete"
+    problems = S.load("GLOSS.grappled")["problems"]["problems"]
+    assert any(p.startswith("ruff E501 tests/srd/test_glossary.py") for p in problems), problems
+
+
+def test_an_xfail_reason_held_in_a_constant_fails_the_gate(tmp_path, monkeypatch):
+    ctx = repo(tmp_path, monkeypatch)
+    held = TEST_FILE.replace('reason="T-new: speed bonus applies while grappled"', "reason=WHY").replace(
+        "import pytest\n", 'import pytest\n\nWHY = "T-new: speed bonus applies while grappled"\n', 1
+    )
+    assert held != TEST_FILE
+    assert run(ctx, agents("C", designer({"tests/srd/test_glossary.py": held}))) == "incomplete"
+    problems = S.load("GLOSS.grappled")["problems"]["problems"]
+    assert any("write the reason out in the marker" in p for p in problems)

@@ -19,6 +19,8 @@ import os
 import re
 from pathlib import Path
 
+from . import tickets as T
+
 RULINGS = Path("loop/rulings")
 REGISTER = Path("README.md")
 REGISTER_ROW = re.compile(r"^\| R-(\d+) \|", re.M)
@@ -49,7 +51,7 @@ def create(unit: str, ambiguity: str, ruling: str, tests: list[str], root: Path 
     r = {
         "id": _next_id(root),
         "unit": unit,
-        "ambiguity": ambiguity,
+        "ambiguity": T.unprefixed(ambiguity, unit),
         "ruling": ruling,
         "tests": tests,
         "status": "proposed",

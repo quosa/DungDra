@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from pathlib import Path
 
@@ -56,6 +57,23 @@ def render(ctx: Context, queue: list[dict]) -> str:
             f"| {r['id']} | `{r['unit']}` | {r['ambiguity']} | {r['ruling']} | {len(r['tests'])} |"
             for r in waiting
         ]
+    doubted = [(uid, n) for uid, st in sorted(ctx.states.items()) for n in st.get("for_review", [])]
+    if doubted:
+        lines += [
+            "",
+            "## Tests to review",
+            "",
+            "The verifier refuted these with low confidence, so they were kept. Remove one only by hand.",
+            "",
+        ]
+        lines += ["| Test | Verifier's reason |", "|---|---|"]
+        lines += [f"| `{n}` | {_verifier_reason(uid, n)} |" for uid, n in doubted]
+    from . import tickets as T
+
+    stuck = [t for t in T.all_tickets() if t["status"] in ("dispute", "stuck")]
+    if stuck:
+        lines += ["", "## Tickets waiting for a person", ""]
+        lines += [f"- {t['id']} ({t['status']}, `{t['unit']}`): {t['title']}" for t in stuck]
     oos = [(uid, x) for uid, st in sorted(ctx.states.items()) for x in st.get("out_of_scope", [])]
     if oos:
         lines += [
@@ -80,6 +98,13 @@ def render(ctx: Context, queue: list[dict]) -> str:
         lines += ["", "## Unresolved SRD cross-references", ""]
         lines += [f"- `{uid}`: “{ref}”" for uid, ref in unresolved]
     return "\n".join(lines) + "\n"
+
+
+def _verifier_reason(uid: str, nodeid: str, runs: Path = Path("loop/runs")) -> str:
+    d = runs / uid / "D.json"
+    verdicts = json.loads(d.read_text()).get("verdicts", []) if d.exists() else []
+    reason = next((v["reason"] for v in verdicts if v["test"] == nodeid), "")
+    return " ".join(reason.split()).replace("|", "\\|") or "(none recorded)"
 
 
 def write(ctx: Context, queue: list[dict], path: Path = REPORT) -> None:

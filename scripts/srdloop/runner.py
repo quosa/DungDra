@@ -38,6 +38,7 @@ MAX_CONSECUTIVE_INCOMPLETE = 3
 STAGE_ROLE = {"A": "rule-analyst", "B": "scenario-auditor", "C": "test-designer", "D": "test-verifier"}
 AGENT_ZONES = ("tests", "docs/scenario-notes.md", "loop/abuse-catalogue.md")
 DEV_ZONES = ("dungdra", "tests/unit", "loop/requests")
+KEEP = Gt.HARNESS + ("loop/requests/**",)  # survives set_aside: a fixer's request is for a person to read
 
 
 class Stop(Exception):
@@ -129,6 +130,10 @@ def gate_tests(unit: dict, out: dict, analysis: dict, unit_ids: set[str], ref: s
     for f in changed:
         if f.startswith("tests/srd/") and Path(f).name.startswith("test_") and Path(f).exists():
             problems += Gt.test_file_problems(Path(f), unit_ids, rulings=known)
+    py = [f for f in changed if f.endswith(".py") and Path(f).exists()]
+    for f in py:
+        tidy(f)  # formatting is the formatter's job; what it can't fix (line length, unused names) is theirs
+    problems += Q.ruff(*py) if py else []
     names = {t["name"] for t in out["tests"]}
     for r in out["rulings_proposed"]:
         problems += [
@@ -223,14 +228,17 @@ def stash(paths: tuple[str, ...], message: str) -> None:
         git("stash", "push", "--include-untracked", "-m", message, "--", *present)
 
 
-def set_aside(message: str) -> None:
-    """After failed work: stash every change except the loop's own files, wherever the agent put
-    it (a gate caught it writing outside its zone; that file must not stay behind either)."""
+def set_aside(message: str) -> str:
+    """After failed work: stash every change except the loop's own files and the fixer's
+    requests to a person, wherever the agent put it (a gate caught it writing outside its zone;
+    that file must not stay behind either). Returns the stash message, or "" if nothing was set aside."""
     import fnmatch
 
-    files = [f for f in dirty() if not any(fnmatch.fnmatch(f, g) for g in Gt.HARNESS)]
-    if files:
-        git("stash", "push", "--include-untracked", "-m", message, "--", *files)
+    files = [f for f in dirty() if not any(fnmatch.fnmatch(f, g) for g in KEEP)]
+    if not files:
+        return ""
+    git("stash", "push", "--include-untracked", "-m", message, "--", *files)
+    return message
 
 
 def commit(message: str, paths: tuple[str, ...]) -> str:
@@ -365,8 +373,9 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
         tickets.append(tk["id"])
     missing = [n for n in plan["not_testable"] if n.get("kind", "missing") == "missing"]
     out_of_scope = [n for n in plan["not_testable"] if n.get("kind") == "out-of-scope"]
-    for n in missing:  # the engine should support it: an infra ticket
-        tickets.append(T.create("infra", uid, f"{uid}: {n['infra_ticket']}", [])["id"])
+    for n in missing:  # the engine should support it: an infra ticket (one per capability)
+        tid = T.file("infra", uid, n["infra_ticket"], [])["id"]
+        tickets += [tid] if tid not in tickets else []
     kept_names = {t["name"] for t in kept}
     for r in plan["rulings_proposed"]:  # file each proposal and mark the tests that depend on it
         tests = [n for n in r["tests"] if n in kept_names]
@@ -528,6 +537,35 @@ def decide_ruling(pid: str, accept: bool, text: str = "") -> dict:
     return r
 
 
+def _attempt_record(tk, fixer, cost, problems, review, result, stashed, runs: Path = RUNS) -> None:
+    """Everything a fix attempt produced, as the audit stages keep it: loop/runs/<T-n>/fix.attempt<n>.json."""
+    d = runs / tk["id"]
+    d.mkdir(parents=True, exist_ok=True)
+    n = len(list(d.glob("fix.attempt*.json"))) + 1
+    record = {"result": result, "fixer": fixer, "review": review, "problems": problems}
+    record |= {"cost_usd": round(cost, 4), "stash": stashed}
+    (d / f"fix.attempt{n}.json").write_text(json.dumps(record, indent=1, ensure_ascii=False) + "\n")
+
+
+def outcome(tid: str) -> list[str]:
+    """What a person needs after a ticket's turn: the result, why, and where its work went."""
+    tk = T.load(tid)
+    last = tk["history"][-1] if tk["history"] else {}
+    lines = [f"  {tid}: {tk['status']}"]
+    if last.get("reason"):
+        lines.append(f"    why: {last['reason']}")
+    lines += [f"    - {p}" for p in last.get("problems", [])[:8]]
+    runs = sorted(
+        (RUNS / tid).glob("fix.attempt*.json"), key=lambda p: int(p.stem.removeprefix("fix.attempt"))
+    )
+    if runs:
+        rec = json.loads(runs[-1].read_text())
+        if rec.get("stash"):
+            lines.append(f"    code set aside: git stash list | grep '{rec['stash']}'")
+        lines.append(f"    details: {runs[-1]}")
+    return lines
+
+
 def run_ticket(
     ctx: P.Context, tk: dict, budget: C.Budget, invoke: Invoke = C.invoke, recheck: bool = False
 ) -> str:
@@ -535,6 +573,7 @@ def run_ticket(
     person restored or wrote it): skip the fixer and run the gates, the review and the commit."""
     unit = ctx.by_id.get(tk["unit"])
     problems: list[str] = []
+    cost = 0.0
     if recheck:
         out = {"summary": "rechecked the change already in the working tree"}
     else:
@@ -542,12 +581,13 @@ def run_ticket(
         cap = tk.get("cap_usd") or C.ROLES["fixer"].cap_usd
         prompt = Pr.fix(tk, unit, failures, problems)
         res = invoke("fixer", prompt, budget=budget, about=tk["id"], stage="fix", cap=cap)
-        out = res.output or {}
+        out, cost = res.output or {}, res.cost_usd
     if out.get("dispute") or out.get("test_change_request"):
         tk["status"] = "dispute"
         T.record(tk, "dispute", reason=out.get("dispute") or out.get("test_change_request"))
-        set_aside(f"srdloop: {tk['id']} dispute")
-        commit(f"dev: {tk['id']} disputed", Gt.HARNESS)
+        stashed = set_aside(f"srdloop: {tk['id']} dispute")
+        _attempt_record(tk, out, cost, problems, None, "dispute", stashed)
+        commit(f"dev: {tk['id']} disputed", KEEP)
         return "dispute"
     # before the harness drops xfail markers: any acceptance-suite change now is the fixer's
     problems = Gt.zone_problems(Gt.changed_files(), "fixer")
@@ -565,6 +605,7 @@ def run_ticket(
     if not problems:
         prompt = Pr.review(tk, git("diff", "HEAD"), "all gates pass", T.open_tickets())
         rev = invoke("fix-reviewer", prompt, budget=budget, about=tk["id"], stage="review")
+        cost += rev.cost_usd
         verdict = rev.output or {"verdict": "reject", "findings": [], "followups": []}
         if verdict["verdict"] != "approve":  # a rejection blocks even without findings
             problems.append(f"review: rejected ({verdict.get('summary') or 'no reason given'})")
@@ -574,15 +615,17 @@ def run_ticket(
     tk["attempts"] += 1
     if problems:
         git("checkout", "--", *_paths(Gt.ACCEPTANCE))  # restore the xfail markers the harness dropped
-        set_aside(f"srdloop: {tk['id']} attempt {tk['attempts']}")
+        stashed = set_aside(f"srdloop: {tk['id']} attempt {tk['attempts']}")
         tk["status"] = "stuck" if tk["attempts"] >= T.MAX_ATTEMPTS else "open"
         T.record(tk, "failed", problems=problems[:30])
-        commit(f"dev: {tk['id']} attempt {tk['attempts']} failed", Gt.HARNESS)
+        _attempt_record(tk, out, cost, problems, verdict, "failed", stashed)
+        commit(f"dev: {tk['id']} attempt {tk['attempts']} failed", KEEP)
         return tk["status"]
     for f in verdict.get("followups", []):
-        T.create(f["kind"], tk["unit"], f["title"], [])
+        T.file(f["kind"], tk["unit"], f["title"], [])
     tk["status"] = "fixed"
     T.record(tk, "fixed", summary=out.get("summary", ""))
+    _attempt_record(tk, out, cost, [], verdict, "fixed", "")
     for other in co_fixed:
         other["status"] = "fixed"
         T.record(other, "fixed", by=tk["id"])
@@ -611,7 +654,7 @@ def recheck(tid: str, budget_usd: float, invoke: Invoke = C.invoke, log=print) -
     except C.Paused as e:
         log(f"paused: {e}")
         return 4
-    log(f"  {tid}: {result}")
+    log("\n".join(outcome(tid)) if not result.startswith("fixed") else f"  {tid}: {result}")
     return 0 if result.startswith("fixed") else 1
 
 
@@ -632,7 +675,8 @@ def dev(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
                 return 0
             tk = todo[0]
             log(f"» {tk['id']} ({tk['kind']}): {tk['title']}  (${budget.spent_usd:.2f} spent)")
-            log(f"  {tk['id']}: {run_ticket(ctx, tk, budget, invoke)}")
+            result = run_ticket(ctx, tk, budget, invoke)
+            log("\n".join(outcome(tk["id"])) if not result.startswith("fixed") else f"  {tk['id']}: {result}")
     except C.Paused as e:
         log(f"paused: {e}. Run again to resume.")
         return 4

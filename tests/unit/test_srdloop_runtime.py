@@ -114,6 +114,18 @@ def test_tickets_ids_order_and_history(tmp_path):
     assert [t["id"] for t in T.open_tickets(tmp_path)] == ["T-3", "T-1"]
 
 
+def test_ticket_titles_lose_a_repeated_unit_id_and_file_reuses_an_open_one(tmp_path):
+    a = T.create("infra", "GLOSS.x", "GLOSS.x: GLOSS.x: no map", [], tmp_path)
+    assert a["title"] == "no map"
+    assert T.file("infra", "GLOSS.y", "No  map.", ["t::b"], tmp_path)["id"] == "T-1"  # another unit, same gap
+    assert T.load("T-1", tmp_path)["tests"] == ["t::b"]
+    assert T.file("refactor", "GLOSS.x", "no map", [], tmp_path)["id"] == "T-2"  # another kind
+    a = T.load("T-1", tmp_path)
+    a["status"] = "fixed"
+    T.save(a, tmp_path)
+    assert T.file("infra", "GLOSS.x", "no map", [], tmp_path)["id"] == "T-3"  # fixed ones aren't reused
+
+
 # ---------------------------------------------------------------- editing test files
 SRC = """import pytest
 
@@ -580,3 +592,81 @@ def test_a_fixer_that_edits_a_scenario_is_still_caught(tmp_path, monkeypatch, no
     assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), invoke) == "open"
     assert T.load("T-1")["history"][-1]["problems"] == ["fixer may not change tests/scenarios/test_cmb.py"]
     assert Path("tests/scenarios/test_cmb.py").read_text() == "def test_x():\n    assert 1\n"
+
+
+def fake_dispute(request: bool):
+    def invoke(role, prompt, *, budget, about, stage, cap=None):
+        write(Path("."), {"dungdra/rule.py": "def grappled_speed(bonus):\n    return 0\n"})
+        if request:
+            write(Path("."), {"loop/requests/T-1-why.md": "SPL-05 needs a person\n"})
+        out = {"summary": "half done", "files": ["dungdra/rule.py"], "unit_tests": [], "srd_tags": []}
+        out |= {"dispute": "the scenario expects the old reading", "test_change_request": None}
+        return C.Result(out, 0.8, "f")
+
+    return invoke
+
+
+def test_a_dispute_keeps_the_request_records_the_attempt_and_says_where_the_code_went(
+    tmp_path, monkeypatch, no_quality_gate
+):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dispute(request=True)) == "dispute"
+    assert Path("dungdra/rule.py").read_text() == RULE  # the code is set aside...
+    assert Path("loop/requests/T-1-why.md").read_text() == "SPL-05 needs a person\n"  # ...the request isn't
+    rec = json.loads(Path("loop/runs/T-1/fix.attempt1.json").read_text())
+    assert rec["result"] == "dispute" and rec["fixer"]["summary"] == "half done" and rec["cost_usd"] == 0.8
+    assert rec["stash"] == "srdloop: T-1 dispute"
+    status = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True)
+    assert status.stdout == ""  # request and record are committed with the ticket
+    lines = Run.outcome("T-1")
+    assert lines[0] == "  T-1: dispute" and "the scenario expects the old reading" in lines[1]
+    assert "git stash list | grep 'srdloop: T-1 dispute'" in lines[2]
+    assert lines[3] == "    details: loop/runs/T-1/fix.attempt1.json"
+
+
+def test_a_failed_attempt_is_recorded_with_its_problems(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    units = [GRAPPLED]
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, {}, [])
+    Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dev(fix=False))
+    rec = json.loads(Path("loop/runs/T-1/fix.attempt1.json").read_text())
+    assert rec["result"] == "failed" and rec["problems"] and rec["stash"] == ""  # the fixer changed nothing
+    assert any(line.startswith("    - tests/srd/test_rule.py::") for line in Run.outcome("T-1"))
+
+
+def test_the_report_lists_doubted_tests_and_tickets_waiting_for_a_person(tmp_path, monkeypatch):
+    from scripts.srdloop import report
+
+    monkeypatch.chdir(tmp_path)
+    nodeid = "tests/srd/test_g.py::test_maybe"
+    write(
+        tmp_path,
+        {
+            "loop/runs/GLOSS.grappled/D.json": json.dumps(
+                {
+                    "verdicts": [
+                        {
+                            "test": nodeid,
+                            "verdict": "refute",
+                            "reason": "may pass for the\nwrong | reason",
+                            "confidence": 0.3,
+                        }
+                    ]
+                }
+            )
+        },
+    )
+    T.create("bug", "GLOSS.grappled", "speed bonus", [nodeid])
+    tk = T.load("T-1")
+    tk["status"] = "dispute"
+    T.save(tk)
+    units = [GRAPPLED]
+    states = {"GLOSS.grappled": {"status": "red", "for_review": [nodeid]}}
+    ctx = P.Context(units, U.by_id(units), CONTENT, [], {}, {}, {}, states, [])
+    text = report.render(ctx, [])
+    assert f"| `{nodeid}` | may pass for the wrong \\| reason |" in text
+    assert "- T-1 (dispute, `GLOSS.grappled`): speed bonus" in text

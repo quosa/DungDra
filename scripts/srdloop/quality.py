@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import re
 import subprocess
 import sys
@@ -32,12 +33,14 @@ def run(*cmd: str) -> subprocess.CompletedProcess:
 
 
 # ---------------------------------------------------------------- lint
-def ruff() -> list[str]:
+def ruff(*paths: str) -> list[str]:
     out = []
-    check = run("ruff", "check", "--output-format", "json", ".")
+    check = run("ruff", "check", "--output-format", "json", *(paths or (".",)))
     found = json.loads(check.stdout or "[]")
-    out += [f"ruff {f['code']} {f['filename']}:{f['location']['row']}: {f['message']}" for f in found]
-    fmt = run("ruff", "format", "--check", ".")
+    for f in found:
+        where = f"{os.path.relpath(f['filename'])}:{f['location']['row']}"
+        out.append(f"ruff {f['code']} {where}: {f['message']}")
+    fmt = run("ruff", "format", "--check", *(paths or (".",)))
     out += [f"ruff format: {line}" for line in fmt.stdout.splitlines() if line.startswith("Would reformat")]
     return out
 

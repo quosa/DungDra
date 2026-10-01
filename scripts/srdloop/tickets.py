@@ -22,6 +22,20 @@ def _next_id(root: Path) -> str:
     return f"T-{max(nums, default=0) + 1}"
 
 
+def unprefixed(text: str, unit: str) -> str:
+    """Titles are shown after their unit ("<unit>: <title>"): drop the unit the agent repeated."""
+    while text.startswith(f"{unit}:"):
+        text = text[len(unit) + 1 :].lstrip()
+    return text
+
+
+def _same(a: str, b: str) -> bool:
+    def key(s):
+        return re.sub(r"\s+", " ", s).strip().rstrip(".").lower()
+
+    return key(a) == key(b)
+
+
 def create(kind: str, unit: str, title: str, tests: list[str], root: Path = TICKETS) -> dict:
     assert kind in PRIORITY, kind
     root.mkdir(parents=True, exist_ok=True)
@@ -29,7 +43,7 @@ def create(kind: str, unit: str, title: str, tests: list[str], root: Path = TICK
         "id": _next_id(root),
         "kind": kind,
         "unit": unit,
-        "title": title,
+        "title": unprefixed(title, unit),
         "tests": tests,
         "status": "open",
         "attempts": 0,
@@ -64,3 +78,15 @@ def open_tickets(root: Path = TICKETS) -> list[dict]:
 def record(t: dict, event: str, root: Path = TICKETS, **details) -> None:
     t["history"].append({"event": event, **details})
     save(t, root)
+
+
+def file(kind: str, unit: str, title: str, tests: list[str], root: Path = TICKETS) -> dict:
+    """create(), unless an open ticket of the same kind already says the same: reuse that one
+    (two units, or one plan, naming the same missing capability get one ticket)."""
+    title = unprefixed(title, unit)
+    for t in open_tickets(root):
+        if t["kind"] == kind and _same(t["title"], title):
+            t["tests"] += [n for n in tests if n not in t["tests"]]
+            save(t, root)
+            return t
+    return create(kind, unit, title, tests, root)

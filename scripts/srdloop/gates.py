@@ -167,6 +167,10 @@ def test_file_problems(
     for name, fn in _tests(src).items():
         if _asserts(fn) == 0:
             out.append(f"{path}::{name}: asserts nothing")
+        out += [
+            f'{path}::{name}: {x}: write the reason out in the marker (reason="T-new: …"), not as a name'
+            for x in _xfail_reasons(fn)
+        ]
         if not srd:
             continue
         m = markers.get(name)
@@ -183,6 +187,18 @@ def test_file_problems(
                 "name an R-<n> or leave it out (report the ambiguity in rulings_proposed and the "
                 "harness adds P-<n>)"
             )
+    return out
+
+
+def _xfail_reasons(fn: ast.FunctionDef) -> list[str]:
+    """xfail markers whose reason isn't written out as a string in the decorator: the harness
+    fills in the ticket number (T-new → T-<n>) within the test, so a constant elsewhere hides it."""
+    out = []
+    for d in fn.decorator_list:
+        if isinstance(d, ast.Call) and isinstance(d.func, ast.Attribute) and d.func.attr == "xfail":
+            reason = next((k.value for k in d.keywords if k.arg == "reason"), None)
+            if not (isinstance(reason, ast.Constant) and isinstance(reason.value, str)):
+                out.append(ast.unparse(d))
     return out
 
 
