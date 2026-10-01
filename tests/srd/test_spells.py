@@ -296,11 +296,6 @@ def test_bless_can_target_a_monster(game):
     assert gob.find_effects("Bless")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-21: Bless's target cap is checked inside _bless, after the slot is spent and Concentration "
-    "starts; the refusal also cites no page",
-)
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="boundary")
 def test_four_targets_with_a_level_1_slot_is_refused_cleanly(game):
     j, b, li, m = party(game)
@@ -315,11 +310,6 @@ def test_four_targets_with_a_level_1_slot_blesses_nobody(game):
     assert not any(c.find_effects("Bless") for c in (j, b, li, m))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-21: Bless's target cap is checked inside _bless, after the slot is spent and Concentration "
-    "starts; the refusal also cites no page",
-)
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="abuse")
 def test_four_targets_through_the_session_costs_nothing(game):
     j, b, li, m = party(game)
@@ -470,11 +460,6 @@ def test_a_level_2_slot_blesses_four_creatures(game):
     assert j.slots_left(2) == 1 and j.slots_left(1) == 4
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-21: Bless's target cap is checked inside _bless, after the slot is spent and Concentration "
-    "starts; the refusal also cites no page",
-)
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#8", kind="boundary")
 def test_five_targets_with_a_level_2_slot_is_refused_cleanly(game):
     j, b, li, m = party(game)

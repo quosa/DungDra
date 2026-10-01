@@ -79,6 +79,8 @@ SPELLS = {
         material="a Holy Symbol worth 5+ GP",
         material_cost=5,
         page=113,
+        max_targets=(3, 1),
+        target_clauses=(6, 8),
     ),
     "burning hands": _s(
         1,
@@ -95,7 +97,16 @@ SPELLS = {
         area=("cone", 15),
     ),
     "command": _s(
-        1, "enchantment", ["bard", "cleric", "paladin"], "action", 60, "V", 0, page=116, save="wis"
+        1,
+        "enchantment",
+        ["bard", "cleric", "paladin"],
+        "action",
+        60,
+        "V",
+        0,
+        page=116,
+        save="wis",
+        max_targets=(1, 1),
     ),
     "cure wounds": _s(
         1,
@@ -185,6 +196,7 @@ SPELLS = {
         8 * 3600,
         material="a strip of white cloth",
         page=107,
+        max_targets=(3, 0),
     ),
     "hold person": _s(
         2,
@@ -198,6 +210,7 @@ SPELLS = {
         material="a straight piece of iron",
         page=141,
         save="wis",
+        max_targets=(1, 1),
     ),
     "invisibility": _s(
         2,
@@ -210,6 +223,7 @@ SPELLS = {
         conc=True,
         material="an eyelash in gum arabic",
         page=143,
+        max_targets=(1, 1),
     ),
     "lesser restoration": _s(
         2,

@@ -105,3 +105,50 @@ def test_no_weapon_is_stowed_once_the_free_interaction_is_spent(game):
         cast(game, jozan, "cure wounds", [brom])
     assert len(jozan.wielded) == 2
     assert game.combat.turn.actions_used == 0
+
+
+def _bless_party(game):
+    return [pc(game, n, (5 * i, 0)) for i, n in enumerate(("JOZAN", "BROM", "LIDDA", "MIALEE"))]
+
+
+def test_too_many_bless_targets_are_refused_before_anything_is_spent(game):
+    jozan, *others = party = _bless_party(game)
+    with pytest.raises(Refusal, match="up to 3 creatures") as exc:
+        cast(game, jozan, "bless", party)
+    assert (exc.value.rule, exc.value.page) == ("SPELL.bless#6", 113)
+    assert jozan.slots_left(1) == 2 and jozan.concentrating is None
+    assert not any(c.find_effects("Bless") for c in party)
+    assert game.log.last("cast") is None
+
+
+def test_naming_a_creature_more_than_once_still_counts_against_the_cap(game):
+    jozan, brom, _, _ = _bless_party(game)
+    with pytest.raises(Refusal, match="up to 3 creatures"):
+        cast(game, jozan, "bless", [brom] * 4)
+    assert jozan.slots_left(1) == 2
+
+
+def test_a_higher_slot_raises_the_cap_and_cites_the_upcast_clause(game):
+    jozan, *_ = party = _bless_party(game)
+    jozan.award_xp(900)  # level 3: level 2 slots
+    gob = mon(game, "goblin warrior", (20, 0))
+    with pytest.raises(Refusal, match="up to 4 creatures") as exc:
+        cast(game, jozan, "bless", [*party, gob], slot=2)
+    assert exc.value.rule == "SPELL.bless#8"
+    assert jozan.slots_left(2) == 2
+    cast(game, jozan, "bless", party, slot=2)
+    assert all(c.find_effects("Bless") for c in party)
+
+
+@pytest.mark.parametrize(
+    "spell, level, cap",
+    [("command", 1, 1), ("command", 3, 3), ("hold person", 2, 1), ("hold person", 4, 3), ("aid", 4, 3)],
+)
+def test_each_capped_spell_refuses_one_target_over_its_cap_under_its_own_rule(game, spell, level, cap):
+    from dungdra.spells import _target_cap
+
+    gobs = [mon(game, "goblin warrior", (5 * i, 0)) for i in range(cap + 1)]
+    _target_cap(spell, SPELLS[spell], level, gobs[:cap])
+    with pytest.raises(Refusal, match=f"up to {cap} creature") as exc:
+        _target_cap(spell, SPELLS[spell], level, gobs)
+    assert (exc.value.rule, exc.value.page) == (spell_rule(spell), SPELLS[spell]["page"])

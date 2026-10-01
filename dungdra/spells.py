@@ -135,6 +135,7 @@ def cast(
                 rule="SPELL.casting-spells.effects.targets",
             )
     _range_check(game, caster, spell, sd, targets)
+    _target_cap(spell, sd, level, targets)
     if spell in SIGHT_SPELLS:
         for t in targets:
             if hasattr(t, "id") and t is not caster and not can_see(caster, t):
@@ -403,6 +404,26 @@ def _range_check(game, caster, spell, sd, targets):
                     page=105,
                     rule="SPELL.casting-spells.range",
                 )
+
+
+def _target_cap(spell, sd, level, targets):
+    """Refuses more targets than the spell allows at the level it's cast, before anything is paid."""
+    if "max_targets" not in sd:
+        return
+    base, per_level = sd["max_targets"]
+    # SRD[SPELL.bless#6] up to three creatures; SRD[SPELL.bless#8] one more per slot level above 1
+    n = base + per_level * (level - sd["level"])
+    if len(targets) <= n:
+        return
+    rule = spell_rule(spell)
+    if "target_clauses" in sd:
+        base_clause, upcast_clause = sd["target_clauses"]
+        rule += f"#{upcast_clause if level > sd['level'] else base_clause}"
+    raise Refusal(
+        f"{spell.title()} at level {level} targets up to {n} creature{'s' if n != 1 else ''}",
+        page=sd["page"],
+        rule=rule,
+    )
 
 
 def _on_cast_side_effects(game, caster, sd):
@@ -909,9 +930,6 @@ def _spare_the_dying(game, c, targets, **kw):
 
 
 def _bless(game, c, targets, **kw):
-    n = 3 + (c.level - 1)
-    if len(targets) > n:
-        raise Refusal(f"Bless at level {c.level} targets up to {n} creatures")
     for t in targets:
         t.add_effect(
             Bless(f"Bless ({c.caster.name})", caster=c.caster, concentration=True, until=game.clock + MINUTE)
@@ -990,9 +1008,6 @@ def _thunderwave(game, c, targets, **kw):
 
 
 def _command(game, c, targets, option="grovel", **kw):
-    n = 1 + (c.level - 1)
-    if len(targets) > n:
-        raise Refusal(f"Command at level {c.level} affects up to {n} creatures")
     word = norm(option or "grovel")
     if word not in ("approach", "drop", "flee", "grovel", "halt"):
         raise Refusal("Command words: Approach, Drop, Flee, Grovel or Halt")
@@ -1184,8 +1199,6 @@ def shake_awake(game, helper, target):
 
 
 def _aid(game, c, targets, **kw):
-    if len(targets) > 3:
-        raise Refusal("Aid targets up to three creatures")
     amount = 5 * (1 + (c.level - 2))
     for t in targets:
         for e in list(t.effects):
@@ -1203,9 +1216,6 @@ def _aid(game, c, targets, **kw):
 
 
 def _hold_person(game, c, targets, **kw):
-    n = 1 + (c.level - 2)
-    if len(targets) > n:
-        raise Refusal(f"Hold Person at level {c.level} targets up to {n} Humanoids")
     for t in targets:
         if t.ctype != "humanoid":
             # p.106 invalid target: slot spent; the target appears to succeed
@@ -1246,9 +1256,6 @@ def _hold_person(game, c, targets, **kw):
 
 
 def _invisibility(game, c, targets, **kw):
-    n = 1 + (c.level - 2)
-    if len(targets) > n:
-        raise Refusal(f"Invisibility at level {c.level} targets up to {n} creatures")
     for t in targets:
         t.add_effect(
             InvisibilitySpell("Invisibility", caster=c.caster, concentration=True, until=game.clock + HOUR)
