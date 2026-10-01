@@ -1,0 +1,39 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-30 is fixed. An owned item's value now comes from one place on the Item, so a per-item `cost` prop sets its sale price.\n\nWhat changed:\n- **`dungdra/items.py`**: I added `Item.listed_cost()`. It returns the `cost` prop if the item has one, otherwise the equipment-table price, or None if the item has no price. `unit_cost()` now just calls it and still returns 0 for an unpriced item, so the material-cost check in spells.py behaves as before.\n- **`sale_price()`** now takes an Item instead of a name and works from `listed_cost()`. It is still half the value rounded down, and it still refuses an unpriced item.\n- **`dungdra/gear.py`**: `sell()` passes the item itself to `sale_price`. Before, it passed `it.base`, which skipped the `cost` prop. The `sell_value` override still works.\n\nI left `buy()` and `craft_plan()` on `item_cost(name)`. Both price a catalog name before any Item exists, and the table price is the same source `listed_cost()` falls back to. Building a temporary Item there would use up an item id and change nothing.\n\nThe ticket lists no acceptance tests. The existing selling test (EQP-04: a longsword sells for 750 CP) still passes. New unit tests cover the cost-prop override, unpriced items, rounding down, the refusal, and selling through `gear.sell`. No SRD tags were added because this refactor adds no rule.\n\nChecks run: the new unit tests (8 passed), the full `pytest -q` (594 passed), `ruff check` and `ruff format --check` (clean), and `python -m scripts.srdloop dev-gate` (PASS).",
+  "files": [
+   "dungdra/items.py",
+   "dungdra/gear.py",
+   "tests/unit/test_items.py",
+   "tests/unit/test_gear.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_items.py::test_listed_cost_is_the_equipment_table_price_without_a_cost_prop",
+   "tests/unit/test_items.py::test_cost_prop_overrides_the_table_price",
+   "tests/unit/test_items.py::test_unpriced_item_has_no_listed_cost_and_zero_unit_cost",
+   "tests/unit/test_items.py::test_sale_price_is_half_the_item_value_including_a_cost_prop",
+   "tests/unit/test_items.py::test_sale_price_refuses_an_unpriced_item",
+   "tests/unit/test_gear.py::test_selling_an_item_with_a_cost_prop_pays_half_that_cost",
+   "tests/unit/test_gear.py::test_selling_a_plain_item_pays_half_the_table_price",
+   "tests/unit/test_gear.py::test_sell_value_prop_still_overrides_the_sale_price"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "sell() keeps a second value override beside `cost`: the `sell_value` prop replaces sale_price(it) after it is computed (gear.py:168). Fold it into the item valuation, e.g. a `sale_price` hook on Item that honours `sell_value` and otherwise halves listed_cost(), so selling has one value mechanism. Also the sale_price docstring says trade goods keep full value, but the function always halves.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this change. Selling now prices the item you actually own: `sale_price` takes an `Item` and uses the new `Item.listed_cost()`, which applies the `cost` prop when the item has one and otherwise falls back to the equipment table. `unit_cost()` is now built on `listed_cost()`, so there is only one place that works out an item's value.\n\nThe diff doesn't touch `buy` (gear.py:147) or `craft_plan` (gear.py:251). That's correct: both take a catalog name, not an item someone owns, so no `cost` prop exists yet and the table price is the right one. The ticket's \"~251\" most likely meant the old `sale_price(name)` in items.py, and that is what changed.\n\nThe new unit tests check real behaviour:\n- **Selling:** the money the purse gains, the item leaving the inventory, and the `sell_value` override still working.\n- **Valuation:** the `cost` prop override, rounding down when halving, and refusing to price an item with no listed cost.\n\nNothing is out of scope. I filed one follow-up: the `sell_value` prop is still a second override in `sell()` on top of `cost`. Also, the `sale_price` docstring says trade goods keep their full value, but the function always halves the price."
+ },
+ "problems": [],
+ "cost_usd": 0.5058,
+ "stash": ""
+}

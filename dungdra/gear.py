@@ -164,7 +164,7 @@ def sell(game, pc, name: str, qty: int = 1):
         raise Refusal(f"{pc.name} doesn't have {name}")
     if it is pc.armor or it is pc.shield:
         raise Refusal(f"Take off {it.display} before selling it")
-    price = sale_price(it.base) * qty
+    price = sale_price(it) * qty
     if it.props.get("sell_value") is not None:
         price = it.props["sell_value"] * qty
     pc.inventory.remove(it, qty)

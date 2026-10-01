@@ -72,11 +72,14 @@ class Item:
             return self.props["weight"]
         return item_weight(self.base)
 
-    def unit_cost(self) -> int:
-        """Value in CP: a `cost` prop overrides the equipment table's price."""
+    def listed_cost(self) -> int | None:
+        """Value in CP, or None if unpriced: a `cost` prop overrides the equipment table's price."""
         if "cost" in self.props:
             return self.props["cost"]
-        return item_cost(self.base) or 0
+        return item_cost(self.base)
+
+    def unit_cost(self) -> int:
+        return self.listed_cost() or 0
 
     def weight(self) -> float:
         return self.unit_weight() * self.qty
@@ -230,11 +233,11 @@ def fmt_cp(cp: int) -> str:
     return " ".join(parts) or "0 GP"
 
 
-def sale_price(name: str) -> int:
+def sale_price(item: Item) -> int:
     """p.89: equipment sells for half its cost (trade goods keep full value)."""
-    c = item_cost(canonical(name))
+    c = item.listed_cost()
     if c is None:
-        raise Refusal(f"Unknown item {name!r}")
+        raise Refusal(f"Unknown item {item.name!r}")
     return div(c, 2)
 
 
