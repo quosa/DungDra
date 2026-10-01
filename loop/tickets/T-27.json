@@ -4,7 +4,12 @@
   "unit": "SPELL.bless",
   "title": "SaveBonus (Cloak of Protection, effects.py:388) and any other effect keyed on ctx.kind == \"save\" skip a Death Saving Throw, because death_save gathers with kind \"death save\". Make 'is a saving throw' one predicate, such as a Ctx helper or a tag, so each save effect doesn't have to list \"death save\" itself",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I added a single \"is this a saving throw\" check: `Ctx.is_save` in `dungdra/effects.py`. It is true for both \"save\" and \"death save\", so save effects no longer each have to list \"death save\". The Cloak of Protection's save bonus (`SaveBonus`) now uses it, which means the Cloak now adds its bonus to Death Saving Throws as well. Bless now checks `ctx.is_attack or ctx.is_save` instead of naming the kinds itself. The Dwarven Resilience / Fey Ancestry / Brave check in character.py and the Paralyzed/Restrained save rules in effects.py also use `is_save`. Those last ones don't change behaviour: they only fire on a named ability or a condition the save avoids, and a death save has neither.\n\nThe new predicate has a plain comment rather than an `SRD[...]` tag, because `GLOSS.death-saving-throw` has no stage-A clause numbering to cite.\n\nThe ticket listed no acceptance tests. Ruff (check and format) is clean, all unit tests pass, the srd and scenario suites pass (266 passed), and dev-gate passes."
+    }
+  ]
 }

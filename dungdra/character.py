@@ -218,7 +218,7 @@ class Character(Creature):
         ):
             acc.disadvantage(f"{self.armor.display} (Stealth Disadvantage)")
         t = self.traits
-        if ctx.kind == "save":
+        if ctx.is_save:
             if "dwarven resilience" in t and "poisoned" in ctx.avoid:
                 acc.advantage("Dwarven Resilience")
             if "fey ancestry" in t and "charmed" in ctx.avoid:

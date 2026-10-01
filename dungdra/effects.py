@@ -38,6 +38,11 @@ class Ctx:
     def is_attack(self):
         return self.kind == "attack"
 
+    @property
+    def is_save(self):
+        # A Death Saving Throw is a saving throw (p.17), so save effects apply to it too.
+        return self.kind in ("save", "death save")
+
 
 class Acc:
     """Accumulates modifiers gathered from effects for one D20 Test."""
@@ -223,7 +228,7 @@ class Condition(Effect):
             if ctx.kind == "initiative":
                 acc.advantage("Invisible")
         elif n in ("paralyzed", "stunned", "unconscious", "petrified"):
-            if ctx.kind == "save" and ctx.ability in ("str", "dex"):
+            if ctx.is_save and ctx.ability in ("str", "dex"):
                 acc.fail(f"{n.title()}: automatically fails Str and Dex saves")
         elif n == "poisoned":
             if ctx.kind in ("attack", "check"):
@@ -234,7 +239,7 @@ class Condition(Effect):
         elif n == "restrained":
             if ctx.kind == "attack":
                 acc.disadvantage("Restrained")
-            if ctx.kind == "save" and ctx.ability == "dex":
+            if ctx.is_save and ctx.ability == "dex":
                 acc.disadvantage("Restrained")
 
     # ---- attack rolls (and social checks) aimed at the owner
@@ -409,7 +414,7 @@ class SaveBonus(Effect):
         self.name = source
 
     def d20(self, ctx, acc):
-        if ctx.kind == "save":
+        if ctx.is_save:
             acc.bonus(self.amount, self.source)
 
 

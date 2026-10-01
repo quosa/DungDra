@@ -3,7 +3,16 @@
 import json
 from pathlib import Path
 
-from dungdra.effects import Acc, Condition, Ctx, Effect, condition_rule, grapplers_of, grapples_on
+from dungdra.effects import (
+    Acc,
+    Condition,
+    Ctx,
+    Effect,
+    SaveBonus,
+    condition_rule,
+    grapplers_of,
+    grapples_on,
+)
 from dungdra.rules import CONDITIONS
 from tests.support.helpers import mon, pc
 
@@ -13,6 +22,36 @@ GRAPPLED_DIS = "Grappled (attacking someone other than the grappler)"
 def grappled_by(target, *grapplers):
     for g in grapplers:
         target.add_effect(Condition("grappled", f"grappled by {g.name}", caster=g, grappler=g.id))
+
+
+def test_is_save_covers_saving_throws_and_death_saves_only():
+    assert Ctx("save").is_save
+    assert Ctx("death save").is_save
+    assert not any(Ctx(k).is_save for k in ("attack", "check", "initiative"))
+
+
+def test_save_bonus_applies_to_a_death_saving_throw_but_not_a_check(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(SaveBonus("Cloak of Protection", 1))
+    assert (1, "Cloak of Protection") in brom.gather(Ctx("death save", actor=brom)).mods
+    assert (1, "Cloak of Protection") in brom.gather(Ctx("save", actor=brom, ability="con")).mods
+    assert (1, "Cloak of Protection") not in brom.gather(Ctx("check", actor=brom, ability="str")).mods
+
+
+def test_paralyzed_fails_str_dex_saves_but_not_a_death_save(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Condition("paralyzed", "paralyzed"))
+    assert brom.gather(Ctx("save", actor=brom, ability="dex")).auto == "fail"
+    assert brom.gather(Ctx("save", actor=brom, ability="wis")).auto is None
+    assert brom.gather(Ctx("death save", actor=brom)).auto is None
+
+
+def test_restrained_gives_disadvantage_on_dex_saves_only(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Condition("restrained", "restrained"))
+    assert "Restrained" in brom.gather(Ctx("save", actor=brom, ability="dex")).dis
+    assert "Restrained" not in brom.gather(Ctx("save", actor=brom, ability="con")).dis
+    assert "Restrained" not in brom.gather(Ctx("death save", actor=brom)).dis
 
 
 def test_grapplers_of_names_every_grappler_and_nothing_else(game):

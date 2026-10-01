@@ -1,0 +1,10 @@
+{
+  "id": "T-34",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "Dodge.d20 (effects.py:370) still checks `ctx.kind == \"save\"` directly. Switch it to `ctx.is_save` so every save effect uses the one predicate. Behaviour stays the same because a death save has no ability.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
