@@ -1,24 +1,31 @@
 # srdloop command
 
 
-    status
-    plan
-    related
-    report
-    gate
-    dev-gate
-    run
-    dev
-    mutate
-    prompt
-    accept
-    finish
-    tickets         - lists all tickets
-    ticket          - can be used to create tickets
-    ruling
+positional arguments:
+  <command>
+    help      this help; `help <command> [<action>]` for one command's
+!   status    one-line summary of the loop
+    plan      write loop/queue.json
+    related   scenarios, tests and engine code related to a unit (JSON)
+    report    write loop/COVERAGE.md
+    run       the audit loop: stages A-D per unit
+!   dev       the dev loop: fix open tickets
+    gate      audit gates on the working tree
+    dev-gate  dev-loop quality gates
+!   ticket    tickets: work for the dev loop
         list
         accept
         reject
+!   ruling    rulings: ambiguities the test designer had to resolve
+        list
+        accept
+        reject
+!   review    tests the verifier doubted, kept until a person decides
+    mutate    break one engine line in a scratch copy and run a test there
+    prompt    interactive mode: print the prompt for a stage of a unit
+    accept    interactive mode: gate a stage's JSON output; on success checkpoint it
+    finish    interactive mode: after stage D, remove refuted tests, open tickets, commit
+
 
 ## status
     python -m scripts.srdloop status
@@ -64,15 +71,8 @@ Can have --note and --reason options:
 
     python -m scripts.srdloop tickets
 
-    T-1    fixed    bug      GLOSS.grappled: With two grapplers, attacking one grappler still has Disadvantage from the other grapple
-    T-2    fixed    bug      GLOSS.grappled: move(drag=...) drags a creature the mover isn't grappling
-    T-3    fixed    bug      GLOSS.grappled: move(drag=...) lets a non-grappler drag a creature someone else is grappling
-    T-4    fixed    infra    GLOSS.grappled: GLOSS.grappled: Support carrying a grappled creature during non-walking movement (climb/fly), not just move(drag=...)
-    T-5    open     refactor GLOSS.grappled: Pull the grappler lookup (`e.condition == "grappled" and e.data.get("grappler")`) into one helper, such as `grapplers_of(creature)`. The same scan appears in effects.py, combat.py (move-out-of-reach and release) and game.py (incapacitation).
-    T-6    void     refactor GLOSS.grappled: Pull the 'is X grappled by Y' check (e.condition == 'grappled' and e.data.get('grappler') == id) into one helper; it's now repeated in combat.py (move drag check, the reach check around line 451, release_grapple), effects.py:172 and game.py:283
     T-7    open     refactor GLOSS.grappled: move(): replace the nested mode→speed ternary and the per-mode climb/swim/fly branches with a per-mode table (speed kind, fallback-to-walk allowed?, extra cost without the speed)
     T-8    open     infra    GLOSS.grappled: GLOSS.flying: a flying creature whose Fly Speed drops to 0 or who becomes Prone/Incapacitated falls (not modelled yet)
-    T-9    fixed    infra    ENGINE: Traceability in the event log: every Event and Refusal carries the SRD rule it applies as rule="<unit id>#<clause>" (next to page=), matching the SRD[...] code tags; and wherever the engine applies a register ruling it logs ruling="R-<n>" (R-05..R-07 for Grappled are applied but not logged; check R-01..R-04 too). Game.log gets rules() and a test helper to assert a rule or ruling was applied. Backward compatible: page= stays.
     T-10   open     coverage ENGINE: Unit tests that assert_applied(ruling=...) for R-01 (creation tool proficiency), R-02 (XP split), R-03 (encounter budget GM-only / blocked reinforcements) and R-04 (disarm without Thieves' Tools); only R-05..R-07 are covered by the new traceability tests
     T-11   open     refactor ENGINE: add_condition logs ruling="R-07" on every Grappled condition, even for a creature with only a walking Speed; log R-07 only when the grappled creature has, or later gains, a non-walk Speed that the ruling zeroes
     T-12   open     infra    GLOSS.tremorsense: GLOSS.tremorsense: Awareness model: a query such as game.pinpoints(observer, target) / knows_location, kept separate from can_see. Tremorsense (and Blindsight) feed it within their range. Hide/Search and the combat help ('N hidden enemies somewhere nearby') use it, and Refusals and Events cite rule=GLOSS.tremorsense#<n>.
