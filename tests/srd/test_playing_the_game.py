@@ -122,7 +122,7 @@ def test_cover_from_one_attacker_doesnt_protect_against_another(game):
     assert shoot(game, other, gob).roll.target == GOBLIN_AC
 
 
-@pytest.mark.srd(COVER, clause=f"{COVER}#3", kind="negative", ruling="P-7")
+@pytest.mark.srd(COVER, clause=f"{COVER}#3", kind="negative", ruling="R-11")
 def test_cover_is_not_symmetric(game):
     """The goblin is behind the wall from LIDDA's side; LIDDA isn't behind it from the goblin's."""
     lidda, gob = lidda_and_goblin(game)

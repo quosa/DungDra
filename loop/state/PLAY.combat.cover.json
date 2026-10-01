@@ -43,7 +43,7 @@
       "summary": "I checked all 41 tests. 37 pass and 4 are expected to fail (xfail), as claimed. Each of the 4 red tests fails for the reason it states. For the green tests, I broke the engine in a scratch copy and checked whether each test then failed. The code involved is game.cover_between (game.py:209-214), the "
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_playing_the_game.py::test_cover_makes_a_hit_harder",
     "tests/srd/test_playing_the_game.py::test_no_cover_no_bonus",

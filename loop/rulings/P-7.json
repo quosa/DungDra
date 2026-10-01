@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_playing_the_game.py::test_cover_is_not_symmetric"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-11",
   "note": "",
   "reason": ""
 }
