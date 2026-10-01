@@ -7,8 +7,8 @@
     "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
     "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-12",
   "note": "",
   "reason": ""
 }

@@ -381,7 +381,7 @@ def test_bless_adds_1d4_to_a_saving_throw_automatically(game):
     assert r.total == 10 and r.success
 
 
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="P-9")
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="R-12")
 def test_bless_adds_1d4_to_the_casters_concentration_save(game):
     j, b, _, _ = party(game)
     j.base_max_hp = j.hp = 40
@@ -398,7 +398,7 @@ def test_bless_adds_1d4_to_the_casters_concentration_save(game):
     strict=True,
     reason="T-23: death_save doesn't gather effects, so Bless adds no 1d4 to a Death Saving Throw",
 )
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="P-8")
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="R-12")
 def test_bless_adds_1d4_to_a_death_saving_throw(game):
     from dungdra.damage import death_save
 
