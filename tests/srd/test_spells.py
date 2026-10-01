@@ -276,7 +276,7 @@ def test_bless_blesses_three_creatures(game):
     assert not j.find_effects("Bless")
 
 
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="positive", ruling="P-9")
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="positive", ruling="R-13")
 def test_the_caster_can_bless_themself(game):
     j, b, li, _ = party(game)
     S.cast(game, j, "bless", [j, b, li])
@@ -381,7 +381,7 @@ def test_bless_adds_1d4_to_a_saving_throw_automatically(game):
     assert r.total == 10 and r.success
 
 
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="R-12")
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="R-13")
 def test_bless_adds_1d4_to_the_casters_concentration_save(game):
     j, b, _, _ = party(game)
     j.base_max_hp = j.hp = 40
