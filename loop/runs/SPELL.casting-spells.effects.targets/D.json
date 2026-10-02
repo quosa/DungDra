@@ -1,0 +1,243 @@
+{
+ "summary": "I checked all 34 tests: keep 20, refute 14. I ran every mutation through `srdloop mutate`, so the repo is unchanged. Exact duplicates: Sacred Flame vs Total Cover, a Magic Missile dart vs Total Cover, the area-spell Total Cover case (all already in test_playing_the_game.py), Bless past its 3-target cap (already at test_spells.py:300) and Fire Bolt on a crate (scenario SPELLS-05). The Guiding Bolt Total Cover case runs the same check as an existing Magic Missile test. Wrong reason: three Hold Person tests ('does nothing to a beast', 'does nothing to a fey goblin', 'beast through the session') still pass with the creature-type check removed, because the seeded save happens to succeed. The 'refused target spends no slot' test still passes with the Total Cover rule removed, because the can-see check refuses the cast. The Spare the Dying test still passes with its 0-HP target check removed; it is also tied to the slot clause, but a cantrip uses no slot. Wrong oracle: the Thunderwave red test assumes the cube has to include an unnamed creature, but the caster could place the cube to leave it out. The Mage Armor 'visibly does nothing' red test picks one reading where the rules give two: an armored creature as an invalid target, or as a target you can't choose. No register ruling covers this, so it goes to a person (confidence 0.45). Every remaining green test failed under a mutation of the rule it names. The three remaining red tests (Light on a creature, one Cone on both sides, Sleep's Sphere) fail for the reason their tickets state, and their oracles match the SRD wording.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_spells.py::test_fire_bolt_can_target_an_object",
+   "verdict": "refute",
+   "reason": "Duplicate: tests/scenarios/test_spells.py:361-363 (SPELLS-05) already casts Fire Bolt at a flammable crate and asserts it is burning. Same setup, same assertion. The oracle is correct (Fire Bolt targets 'a creature or an object').",
+   "mutation": "Replaced obj[\"burning\"] = True (spells.py:830) with pass: the test failed. It does test the rule, but so does the existing scenario.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_ray_of_frost_cant_target_an_object",
+   "verdict": "keep",
+   "reason": "Ray of Frost targets 'a creature', so refusing an object follows from the clause. I found no existing srd test of this.",
+   "mutation": "Changed the _target_kind guard (spells.py:415) to always return early: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_light_cant_target_a_creature",
+   "verdict": "keep",
+   "reason": "Light says 'You touch a Large or smaller object'. With --runxfail it fails because the engine returns a Casting instead of refusing, which matches the ticket. Refusing (rather than treating the creature as an invalid target) is consistent with the Ray of Frost test. Light is a cantrip, so no slot question arises.",
+   "mutation": "Red test: ran it with --runxfail. It failed with 'expected a refusal, got Casting(spell=light…)', the stated reason.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_spell_cant_target_a_creature_behind_total_cover",
+   "verdict": "refute",
+   "reason": "Near-duplicate of test_playing_the_game.py::test_total_cover_refuses_single_target_spell. That test sends a single-target spell (Magic Missile) at a creature behind Total Cover through the same check (spells.py:131-137) with the same match. Only the spell name differs (Guiding Bolt here).",
+   "mutation": "Changed == \"total\" to == \"nope\" on spells.py:132: the test failed.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_total_cover_refusal_through_the_session",
+   "verdict": "keep",
+   "reason": "This is the first Total Cover test that casts a spell through Session.execute; the existing session test is a weapon attack. The oracle follows the clause.",
+   "mutation": "Disabled the Total Cover check (spells.py:132): the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_three_quarters_cover_doesnt_stop_targeting",
+   "verdict": "keep",
+   "reason": "Only Total Cover blocks targeting. Three-quarters cover still lets the spell be cast: slot spent, attack rolled.",
+   "mutation": "Changed the check to in (\"total\", \"three-quarters\"): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_creature_in_the_line_doesnt_stop_targeting",
+   "verdict": "keep",
+   "reason": "Under R-09 a creature in the line gives only Half Cover, so a spell can still target past it.",
+   "mutation": "Changed the check to in (\"total\", \"half\"): the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_sacred_flame_cant_reach_a_creature_behind_total_cover",
+   "verdict": "refute",
+   "reason": "Exact duplicate of test_playing_the_game.py::test_sacred_flame_still_cant_target_total_cover (line 349): same spell, cover_all total, assert_refused_cleanly with match='Total Cover'. Only the monster differs.",
+   "mutation": "Disabled the Total Cover check: the test failed, as does the existing duplicate.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_creature_behind_total_cover_cant_be_one_of_several_bless_targets",
+   "verdict": "keep",
+   "reason": "Close to test_total_cover_target_cant_be_slipped_into_a_multi_target_spell (Magic Missile), but here the spell (Bless) affects each chosen target rather than splitting darts. It also checks that the open target isn't blessed. Borderline but distinct enough.",
+   "mutation": "Disabled the Total Cover check: the test failed.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_magic_missile_dart_cant_go_to_a_creature_behind_total_cover",
+   "verdict": "refute",
+   "reason": "Exact duplicate of test_playing_the_game.py:408 test_total_cover_target_cant_be_slipped_into_a_multi_target_spell: MIALEE, G1/G2 goblin warriors, G2 behind Total Cover, Magic Missile at [g1, g2], match='Total Cover'. Only the distance differs (20 ft vs 30 ft).",
+   "mutation": "Disabled the Total Cover check: the test failed, as would the duplicate.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_total_cover_doesnt_refuse_an_area_spell",
+   "verdict": "refute",
+   "reason": "Duplicate, and weaker: test_playing_the_game.py:357 has the same name and ruling (R-10) and the same Burning Hands setup. It also asserts slot use and the GLOSS.area-of-effect log entry.",
+   "mutation": "Removing the area exemption (spells.py:131) failed the test. Disabling the area's own Total Cover drop (spells.py:970) also failed it.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_cure_wounds_can_target_the_caster",
+   "verdict": "keep",
+   "reason": "Cure Wounds can target 'a creature you touch', and the clause lets you choose yourself. The healing math (2d8 + mod) matches the 2024 rules.",
+   "mutation": "Made spells.py:132 refuse when t is caster: the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_healing_word_on_yourself_through_the_session",
+   "verdict": "keep",
+   "reason": "Self-targeting through the Session command path; existing scenario tests cast Healing Word only on others.",
+   "mutation": "Made spells.py:132 refuse when t is caster: the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_mage_armor_can_target_the_caster",
+   "verdict": "keep",
+   "reason": "A self-target where the target has an extra requirement (not wearing armor). The oracle is correct (13 + Dex).",
+   "mutation": "Made spells.py:132 refuse when t is caster: the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_choosing_yourself_doesnt_add_a_target_past_the_cap",
+   "verdict": "refute",
+   "reason": "Duplicate, character for character, of tests/srd/test_spells.py:300 test_four_targets_with_a_level_1_slot_is_refused_cleanly: party(game), Bless at [j, b, li, m], match='up to 3'. R-13 already covers the caster as one of the three.",
+   "mutation": "Not needed: the body is identical to an existing test.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
+   "verdict": "refute",
+   "reason": "Wrong oracle. A 15-ft Cube from the caster can be placed in several ways. With MIALEE at (0,0), a cube covering x 5-15 and y -10..0 contains G1 (5,0) but not G2 (5,5). Naming only G1 is a legal placement, so 'G2 must take damage' doesn't follow from 'the area determines what the spell targets'. The engine takes no cube position or direction to settle it. A valid red test needs a creature that every legal placement containing the named one must also include, or an explicit placement.",
+   "mutation": "Red test: with --runxfail it fails at assert g2.hp == 3 (G2 untouched). That is the stated reason, but the expectation itself depends on an assumed cube placement.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_named_creature_outside_the_cone_isnt_affected",
+   "verdict": "keep",
+   "reason": "A creature 30 ft away can't be in a 15-ft Cone, so no save and no damage.",
+   "mutation": "Changed if c.caster.distance_to(t) > size (spells.py:978) to if False: the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+   "verdict": "keep",
+   "reason": "Correct whichever way the Cone points: a Cone has a single direction from its point of origin, so it can't contain creatures 5 ft east and 5 ft west of the caster. The failure matches the ticket (both damaged).",
+   "mutation": "Red test: with --runxfail it fails at count == 1 (got 2), the stated reason.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere",
+   "verdict": "keep",
+   "reason": "Sleep uses a 5-ft-radius Sphere centered on a chosen point. A creature 50 ft from that point is outside it. The test fails because a save is rolled, not because of an error from the point= argument.",
+   "mutation": "Red test: with --runxfail it fails with a logged 'G Wis save vs Sleep', the stated reason.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_area_spells_name_one_of_the_area_shapes",
+   "verdict": "keep",
+   "reason": "The data matches the SRD (Burning Hands 15-ft Cone, Thunderwave 15-ft Cube, Sleep 5-ft Sphere, Web 20-ft Cube), and every area uses one of the six listed shapes. No other test checks spell area data. It is a data check only.",
+   "mutation": "Not run: a pure data assertion that fails on any change to the area tuples.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_single_target_spells_have_no_area",
+   "verdict": "keep",
+   "reason": "Negative counterpart of the data check above; the listed spells have no area in the SRD.",
+   "mutation": "Not run: a pure data assertion.",
+   "confidence": 0.5
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_beast",
+   "verdict": "refute",
+   "reason": "Right answer, wrong reason. The d20 isn't forced, so with the creature-type rule removed the wolf rolls a real save, the seeded RNG makes it succeed, and both assertions still hold. It should also assert that no save was rolled (as test_an_invalid_target_appears_to_succeed_without_rolling does).",
+   "mutation": "Changed t.ctype != \"humanoid\" (spells.py:1238) to False: the test still passed, twice in a row (seeded RNG).",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_fey_goblin",
+   "verdict": "refute",
+   "reason": "Same flaw as the beast test: the save isn't forced, and the seeded roll saves the goblin, so the test passes with the Humanoid check removed. The fact it relies on (the 2024 Goblin Warrior is Fey) is correct.",
+   "mutation": "Changed t.ctype != \"humanoid\" to False: the test still passed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_paralyzes_a_humanoid_that_fails",
+   "verdict": "keep",
+   "reason": "A valid target that fails its save is Paralyzed. No other srd test covers Hold Person.",
+   "mutation": "Changed t.ctype != \"humanoid\" to True (every target invalid): the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_on_a_beast_through_the_session",
+   "verdict": "refute",
+   "reason": "Same seeded-save flaw: with the type check removed the wolf rolls a save, succeeds, isn't paralyzed, and the slot is spent anyway. The test can't tell 'invalid target, nothing happens' apart from 'valid target that saved'.",
+   "mutation": "Changed t.ctype != \"humanoid\" to False: the test still passed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_the_slot_is_spent_on_an_invalid_target",
+   "verdict": "keep",
+   "reason": "This is clause #9 itself. Turning the invalid target into a refusal (no slot spent) breaks it.",
+   "mutation": "Made spells.py:1240 raise Refusal('invalid target', page=106) before logging: the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_isnt_a_half_refusal",
+   "verdict": "keep",
+   "reason": "It allows either reading (a clean refusal, or an invalid target where the slot is spent and nothing happens) but catches a partial application.",
+   "mutation": "Changed the armor check (spells.py:1104) to if False: Mage Armor landed on BROM and the test failed.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_spare_the_dying_on_a_healthy_creature_isnt_a_half_refusal",
+   "verdict": "refute",
+   "reason": "It is tagged to clause #9 ('the slot is still expended'), but Spare the Dying is a cantrip and uses no slot, so the quoted rule doesn't apply. It substitutes a check that the action was used. It also still passes with the 0-HP target restriction removed.",
+   "mutation": "Changed if t.dead or t.hp > 0 (spells.py:939) to if t.dead: the test still passed through its except branch (make_stable did nothing to the healthy target).",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_refused_target_spends_no_slot",
+   "verdict": "refute",
+   "reason": "Right answer, wrong reason, and a duplicate. With the Total Cover rule removed, Hold Person is in SIGHT_SPELLS and the can-see check refuses it instead, so the test still passes. It has no match=. assert_refused_cleanly already checks that resources are unchanged, and test_total_cover_refuses_single_target_spell already asserts the slots are untouched. 'A refused target spends no slot' is not in clause #9.",
+   "mutation": "Changed == \"total\" to == \"nope\" (spells.py:132): the test still passed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_an_invalid_target_appears_to_succeed_without_rolling",
+   "verdict": "keep",
+   "reason": "Checks both halves of clause #10: no die is rolled, and the player sees a successful save.",
+   "mutation": "Changed the type check to False: the test failed (a die was rolled). Changed the text 'succeeds on its' to 'is unaffected by its': the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
+   "verdict": "keep",
+   "reason": "Clause #10 says the player gets 'no hint'; the test catches the GM-only explanation leaking into the player log.",
+   "mutation": "Changed game.log.gm( to game.log.player( (spells.py:1246): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_valid_target_really_rolls_its_save",
+   "verdict": "keep",
+   "reason": "Negative case: a valid Humanoid really rolls its save and succeeds on 19. This is the only test of the success path.",
+   "mutation": "Changed t.ctype != \"humanoid\" to True: the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing",
+   "verdict": "refute",
+   "reason": "Picks one reading of an open ambiguity with no register ruling. It treats 'a willing creature who isn't wearing armor' as an invalid target (slot spent, nothing happens). It could equally be a target you can't choose, which is how this batch treats Ray of Frost on an object and Light on a creature, and how test_mage_armor_..._isnt_a_half_refusal accepts it. The current refusal may be correct. A person should decide (propose a register row).",
+   "mutation": "Red test: with --runxfail it fails with Refusal 'BROM is wearing armor…', the stated reason. The disputed part is the expected behavior, not the failure.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing",
+   "verdict": "keep",
+   "reason": "Clause #11's 'Otherwise' excludes save spells: the player should see only the apparent save. Overlaps the no-hint test but checks event kinds rather than words.",
+   "mutation": "Changed the apparent-save event kind \"save\" to \"spell\" (spells.py:1241): the test failed.",
+   "confidence": 0.55
+  }
+ ]
+}

@@ -469,3 +469,275 @@ def test_a_level_2_slot_doesnt_raise_the_d4(game):
     game.dice.force_str("d20=[10]; d4=[4]")
     r = b.save("wis", 10)
     assert bless_mods(r) == [(4, "Bless (1d4=[4])")]
+
+
+# ==================================================================================================
+# SPELL.casting-spells.effects.targets (p.106): Targets
+# ==================================================================================================
+TARGETS = "SPELL.casting-spells.effects.targets"
+
+
+def hold_person_caster(game, pos=(0, 0)):
+    """JOZAN at level 3 (two level 2 slots) with Hold Person prepared."""
+    j = level3(pc(game, "JOZAN", pos))
+    j.prepared.append("hold person")
+    return j
+
+
+def player_text_since(game, start):
+    return " ".join(e.text for e in game.log.since(start) if e.visibility == "player")
+
+
+# ---------------------------------------------------------------- #1 the description says what it targets
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#1", kind="negative")
+def test_ray_of_frost_cant_target_an_object(game):
+    m = pc(game, "MIALEE", (0, 0))
+    game.scene.objects["crate"] = {}
+    assert_refused_cleanly(game, S.cast, game, m, "ray of frost", ["crate"])
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#1", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-37: Light targets an object, but casting it at a creature isn't refused; "
+    "the engine lights a made-up 'glowing object' instead",
+)
+def test_light_cant_target_a_creature(game):
+    m = pc(game, "MIALEE", (0, 0))
+    b = pc(game, "BROM", (5, 0))
+    assert_refused_cleanly(game, S.cast, game, m, "light", [b])
+
+
+# ---------------------------------------------------------------- #2 clear path: not behind Total Cover
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#2", kind="positive")
+def test_total_cover_refusal_through_the_session(game):
+    j = pc(game, "JOZAN", (0, 0))
+    bandit = mon(game, "bandit", (20, 0))
+    game.scene.cover_all[bandit.id] = "total"
+    s = Session(game)
+    assert_refused_cleanly(
+        game, s.execute, {"cmd": "cast", "spell": "guiding bolt", "actor": j.id, "targets": [bandit.id]}
+    )
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#2", kind="negative")
+def test_three_quarters_cover_doesnt_stop_targeting(game):
+    j = pc(game, "JOZAN", (0, 0))
+    bandit = mon(game, "bandit", (20, 0))
+    game.scene.cover_all[bandit.id] = "three-quarters"
+    game.dice.force_str("d20=[1]")
+    S.cast(game, j, "guiding bolt", bandit)
+    assert j.slots_left(1) == 1
+    assert bandit.hp == bandit.max_hp
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#2", kind="negative")
+def test_a_creature_in_the_line_doesnt_stop_targeting(game):
+    j = pc(game, "JOZAN", (0, 0))
+    mon(game, "goblin warrior", (10, 0), name="G1")  # Half Cover only (R-09)
+    bandit = mon(game, "bandit", (20, 0))
+    game.dice.force_str("d20=[1]")
+    S.cast(game, j, "guiding bolt", bandit)
+    assert j.slots_left(1) == 1
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#2", kind="abuse")
+def test_a_creature_behind_total_cover_cant_be_one_of_several_bless_targets(game):
+    j, b, li, _ = party(game)
+    game.scene.cover_all[li.id] = "total"
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [b, li], match="Total Cover")
+    assert not b.find_effects("Bless")
+
+
+# ---------------------------------------------------------------- #3 targeting yourself
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#3", kind="positive")
+def test_cure_wounds_can_target_the_caster(game):
+    j = pc(game, "JOZAN", (0, 0))
+    j.hp = 1
+    game.dice.force_str("d8=[4,5]")
+    S.cast(game, j, "cure wounds", [j])
+    assert j.hp == min(j.max_hp, 1 + 9 + j.mod("wis"))
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#3", kind="positive")
+def test_healing_word_on_yourself_through_the_session(game):
+    j = pc(game, "JOZAN", (0, 0))
+    j.hp = 1
+    game.dice.force_str("d4=[2,3]")
+    out = Session(game).execute({"cmd": "cast", "spell": "healing word", "actor": j.id, "targets": [j.id]})
+    assert out.get("ok") is not False, out
+    assert j.hp >= 1 + 5
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#3", kind="positive")
+def test_mage_armor_can_target_the_caster(game):
+    m = pc(game, "MIALEE", (0, 0))
+    S.cast(game, m, "mage armor", [m])
+    assert m.notes.get("mage_armor") and m.ac() == 13 + m.mod("dex")
+
+
+# ------------------------------------------------------------ #4 the area determines what the spell targets
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="negative")
+def test_a_named_creature_outside_the_cone_isnt_affected(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    far = mon(game, "goblin warrior", (30, 0), name="FAR")
+    game.dice.force_str("d6=[2,2,2]")
+    S.cast(game, m, "burning hands", [far])
+    assert far.hp == 10
+    assert not game.log.of_kind("save")
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="P-12")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-38: a Cone has one direction, but Burning Hands hits named creatures "
+    "on opposite sides of the caster",
+)
+def test_one_cone_cant_reach_both_sides_of_the_caster(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    west = mon(game, "goblin warrior", (-5, 0), name="WEST")
+    east.hp = west.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [east, west])
+    assert [east.hp < 30, west.hp < 30].count(True) == 1
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="P-12")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-39: Sleep ignores its point of origin; a named creature 50 ft from the "
+    "5-foot Sphere still has to save",
+)
+def test_sleep_doesnt_reach_a_creature_outside_its_sphere(game):
+    m = pc(game, "MIALEE", (0, 0))
+    g = mon(game, "goblin warrior", (10, 0), name="G")
+    start = len(game.log.events)
+    S.cast(game, m, "sleep", [g], point=(60, 0))
+    assert not [e for e in game.log.since(start) if e.kind == "save"]
+    assert not g.has("incapacitated")
+
+
+# ---------------------------------------------------------------- #5 area shapes
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#5", kind="positive")
+def test_area_spells_name_one_of_the_area_shapes(game):
+    shapes = {"cone", "cube", "cylinder", "emanation", "line", "sphere"}
+    assert S.SPELLS["burning hands"]["area"] == ("cone", 15)
+    assert S.SPELLS["thunderwave"]["area"] == ("cube", 15)
+    assert S.SPELLS["sleep"]["area"] == ("sphere", 5)
+    assert S.SPELLS["web"]["area"] == ("cube", 20)
+    assert all(sd["area"][0] in shapes for sd in S.SPELLS.values() if sd.get("area"))
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#5", kind="negative")
+def test_single_target_spells_have_no_area(game):
+    for spell in ("guiding bolt", "hold person", "cure wounds", "fire bolt", "magic missile"):
+        assert not S.SPELLS[spell].get("area"), spell
+
+
+# ---------------------------------------------------------------- #8 invalid target: nothing happens
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#8", kind="negative")
+def test_hold_person_paralyzes_a_humanoid_that_fails(game):
+    j = hold_person_caster(game)
+    bandit = mon(game, "bandit", (20, 0))
+    game.dice.force_str("d20=[2]")
+    S.cast(game, j, "hold person", bandit)
+    assert bandit.has("paralyzed")
+
+
+# ---------------------------------------------------------------- #9 the slot is still expended
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#9", kind="positive")
+def test_the_slot_is_spent_on_an_invalid_target(game):
+    j = hold_person_caster(game)
+    wolf = mon(game, "wolf", (20, 0))
+    assert j.slots_left(2) == 2
+    S.cast(game, j, "hold person", wolf)
+    assert j.slots_left(2) == 1
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#9", kind="abuse")
+def test_mage_armor_on_an_armored_creature_isnt_a_half_refusal(game):
+    m = pc(game, "MIALEE", (0, 0))
+    b = pc(game, "BROM", (5, 0))
+    ac = b.ac()
+    try:
+        assert_refused_cleanly(game, S.cast, game, m, "mage armor", [b])
+    except AssertionError:
+        # not refused: then it was cast at an invalid target and nothing happened to BROM
+        assert m.slots_left(1) == 1
+        assert b.ac() == ac and not b.notes.get("mage_armor")
+
+
+# ---------------------------------------------------------------- #10 appears to succeed on the save
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#10", kind="positive")
+def test_an_invalid_target_appears_to_succeed_without_rolling(game):
+    j = hold_person_caster(game)
+    wolf = mon(game, "wolf", (20, 0))
+    rolled = len(game.dice.history)
+    start = len(game.log.events)
+    S.cast(game, j, "hold person", wolf)
+    assert len(game.dice.history) == rolled, "the invalid target didn't attempt a save"
+    saves = [e for e in game.log.since(start) if e.kind == "save" and e.visibility == "player"]
+    assert saves and "succeeds" in saves[-1].text
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#10", kind="abuse")
+def test_an_invalid_target_gives_the_player_no_hint(game):
+    # probing a creature's type by casting at it: the player sees only a successful save
+    j = hold_person_caster(game)
+    wolf = mon(game, "wolf", (20, 0))
+    start = len(game.log.events)
+    S.cast(game, j, "hold person", wolf)
+    seen = player_text_since(game, start).lower()
+    for hint in ("invalid", "humanoid", "beast", "immune", "no effect", "nothing"):
+        assert hint not in seen, hint
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#10", kind="negative")
+def test_a_valid_target_really_rolls_its_save(game):
+    j = hold_person_caster(game)
+    bandit = mon(game, "bandit", (20, 0))
+    rolled = len(game.dice.history)
+    game.dice.force_str("d20=[19]")
+    S.cast(game, j, "hold person", bandit)
+    assert not bandit.has("paralyzed")
+    assert len(game.dice.history) == rolled + 1
+
+
+# ---------------------------------------------------------------- #11 otherwise: the spell did nothing
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#11", kind="positive", ruling="P-11")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-40: Mage Armor on a creature wearing armor is refused, instead of being cast "
+    "at an invalid target: slot spent, nothing happens, and the caster sees it did nothing",
+)
+def test_mage_armor_on_an_armored_creature_visibly_does_nothing(game):
+    m = pc(game, "MIALEE", (0, 0))
+    b = pc(game, "BROM", (5, 0))
+    ac = b.ac()
+    start = len(game.log.events)
+    S.cast(game, m, "mage armor", [b])
+    assert m.slots_left(1) == 1
+    assert b.ac() == ac and not b.notes.get("mage_armor")
+    told = [e for e in game.log.since(start) if e.visibility == "player" and e.applies(TARGETS)]
+    assert told, "the caster perceives that the spell did nothing to the target"
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#11", kind="negative")
+def test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing(game):
+    j = hold_person_caster(game)
+    wolf = mon(game, "wolf", (20, 0))
+    start = len(game.log.events)
+    S.cast(game, j, "hold person", wolf)
+    player = [e for e in game.log.since(start) if e.visibility == "player"]
+    assert all(e.kind == "save" for e in player if e.applies(TARGETS))

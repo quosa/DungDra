@@ -1,0 +1,12 @@
+{
+  "id": "T-38",
+  "kind": "bug",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "SRD: the area determines what the spell targets, and one Cone points one way; engine: Burning Hands hits listed creatures on both sides of the caster (distance check only)",
+  "tests": [
+    "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

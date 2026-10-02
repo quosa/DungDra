@@ -1,0 +1,12 @@
+{
+  "id": "T-40",
+  "kind": "bug",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "SRD: a spell cast at a target it can't affect spends the slot and the caster perceives it did nothing; engine: Mage Armor on an armored creature is refused instead",
+  "tests": [
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

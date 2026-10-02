@@ -1,0 +1,12 @@
+{
+  "id": "T-37",
+  "kind": "bug",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "SRD: Light targets an object, so casting it at a creature is refused; engine: casts it and lights an invented 'glowing object'",
+  "tests": [
+    "tests/srd/test_spells.py::test_light_cant_target_a_creature"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -53,6 +53,13 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Pointing a creature-targeting spell at an object or a name that isn't a creature.
 - Going over a spell's target cap, hoping the refusal only comes after the slot is spent and
   Concentration has started.
+- Pointing an object-targeting spell (Light) at a creature.
+- Probing a creature's type or immunities by casting at it and reading the refusal or the log
+  (an invalid target must look like a successful save, with no save rolled).
+- Getting the slot back by casting at an invalid target (the slot is still expended).
+- Naming creatures for an area spell that the area can't hold: far from the point of origin,
+  or on both sides of the caster for one Cone or Cube. Leaving creatures that are in the area
+  off the list to spare them from a spell that hits every creature in it.
 
 ## Equipment
 - Two shields; armor you lack training in with no penalty; wielding more weapons than hands.

@@ -1,0 +1,435 @@
+{
+ "interactions": [
+  {
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "with": "GLOSS.cover / PLAY.combat.cover (R-09, R-10, R-11)",
+   "risk": "high",
+   "note": "Total Cover refuses only spells that select the target directly. Three-Quarters Cover and creatures in the line don't block. Area spells aren't refused (R-10)."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "with": "Sacred Flame",
+   "risk": "high",
+   "note": "Sacred Flame ignores Half and Three-Quarters Cover but must still be refused against Total Cover."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "with": "Bless, Magic Missile (multi-target)",
+   "risk": "high",
+   "note": "If any one chosen target is behind Total Cover, the whole cast is refused before anything is paid."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#4",
+   "with": "Thunderwave, Burning Hands, Sleep (GLOSS.cube, GLOSS.cone, GLOSS.sphere)",
+   "risk": "high",
+   "note": "The engine trusts the caller's list of creatures. It has no Cone or Cube direction and ignores Sleep's point of origin, so the area doesn't decide who is affected."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#8-#10",
+   "with": "Hold Person (creature type)",
+   "risk": "high",
+   "note": "The only general invalid-target path. A Beast or Fey target appears to save, no die is rolled, and the slot is spent."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#8/#11",
+   "with": "Mage Armor (armored creature), Spare the Dying (creature not at 0 HP)",
+   "risk": "medium",
+   "note": "The engine refuses these cleanly, which is Reading B. Under Reading A they would be cast at an invalid target with the resources spent."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#1",
+   "with": "Light, Fire Bolt, Ray of Frost",
+   "risk": "medium",
+   "note": "The target kind (creature or object) comes from the spell's description. Light at a creature isn't refused."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "with": "Cure Wounds, Healing Word, Mage Armor, Bless (R-13)",
+   "risk": "low",
+   "note": "Choosing yourself is allowed, and you still count against the target cap."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "with": "GLOSS.hostile",
+   "risk": "low",
+   "note": "No in-scope spell requires a Hostile creature or a creature other than you."
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#6/#7",
+   "with": "hidden or unseen caster, subtle spells",
+   "risk": "low",
+   "note": "No in-scope spell has an imperceptible effect on another creature."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Casting a single-target spell at a creature behind Total Cover",
+   "test": "tests/srd/test_spells.py::test_a_spell_cant_target_a_creature_behind_total_cover",
+   "reason": "Clause 2."
+  },
+  {
+   "case": "Using Sacred Flame's cover exception against Total Cover",
+   "test": "tests/srd/test_spells.py::test_sacred_flame_cant_reach_a_creature_behind_total_cover",
+   "reason": "The exception covers only Half and Three-Quarters Cover."
+  },
+  {
+   "case": "Including a creature behind Total Cover as one of several Bless targets",
+   "test": "tests/srd/test_spells.py::test_a_creature_behind_total_cover_cant_be_one_of_several_bless_targets",
+   "reason": "Each chosen target needs a clear path."
+  },
+  {
+   "case": "Sending a Magic Missile dart to a creature behind Total Cover",
+   "test": "tests/srd/test_spells.py::test_a_magic_missile_dart_cant_go_to_a_creature_behind_total_cover",
+   "reason": "Each chosen target needs a clear path."
+  },
+  {
+   "case": "Pointing an object-only spell (Light) at a creature",
+   "test": "tests/srd/test_spells.py::test_light_cant_target_a_creature",
+   "reason": "New catalogue entry. The engine silently lights an invented object."
+  },
+  {
+   "case": "Naming area targets the area can't hold (both sides of a Cone, far from Sleep's point)",
+   "test": "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+   "reason": "New catalogue entry. The Sleep variant is test_sleep_doesnt_reach_a_creature_outside_its_sphere."
+  },
+  {
+   "case": "Leaving creatures inside the area off the list to spare them",
+   "test": "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
+   "reason": "New catalogue entry. Thunderwave affects every creature in its Cube."
+  },
+  {
+   "case": "Probing a creature's type through an invalid-target cast",
+   "test": "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
+   "reason": "New catalogue entry. The player may see only a successful save."
+  },
+  {
+   "case": "Getting the slot back by casting at an invalid target",
+   "test": "tests/srd/test_spells.py::test_the_slot_is_spent_on_an_invalid_target",
+   "reason": "New catalogue entry. Clause 9."
+  },
+  {
+   "case": "A refused cast that still costs a slot or the action (Mage Armor on armor, Spare the Dying on a healthy creature)",
+   "test": "tests/srd/test_spells.py::test_spare_the_dying_on_a_healthy_creature_isnt_a_half_refusal",
+   "reason": "Either a clean refusal or an invalid-target resolution is acceptable; a half-refusal is not. The Mage Armor variant is test_mage_armor_on_an_armored_creature_isnt_a_half_refusal."
+  },
+  {
+   "case": "Choosing yourself as an extra target beyond the cap",
+   "test": "tests/srd/test_spells.py::test_choosing_yourself_doesnt_add_a_target_past_the_cap",
+   "reason": "Choosing yourself uses one of the spell's target choices."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_spells.py::test_fire_bolt_can_target_an_object",
+   "clause": "SPELL.casting-spells.effects.targets#1",
+   "kind": "positive",
+   "rule_quote": "A spell’s description says whether the spell targets creatures, objects, or something else.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_ray_of_frost_cant_target_an_object",
+   "clause": "SPELL.casting-spells.effects.targets#1",
+   "kind": "negative",
+   "rule_quote": "A spell’s description says whether the spell targets creatures, objects, or something else.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_light_cant_target_a_creature",
+   "clause": "SPELL.casting-spells.effects.targets#1",
+   "kind": "abuse",
+   "rule_quote": "A spell’s description says whether the spell targets creatures, objects, or something else.",
+   "claim": "red",
+   "ticket_title": "SRD: Light targets an object, so casting it at a creature is refused; engine: casts it and lights an invented 'glowing object'"
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_spell_cant_target_a_creature_behind_total_cover",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "positive",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_total_cover_refusal_through_the_session",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "positive",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_three_quarters_cover_doesnt_stop_targeting",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "negative",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_creature_in_the_line_doesnt_stop_targeting",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "negative",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_sacred_flame_cant_reach_a_creature_behind_total_cover",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "abuse",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_creature_behind_total_cover_cant_be_one_of_several_bless_targets",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "abuse",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_magic_missile_dart_cant_go_to_a_creature_behind_total_cover",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "abuse",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_total_cover_doesnt_refuse_an_area_spell",
+   "clause": "SPELL.casting-spells.effects.targets#2",
+   "kind": "negative",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_cure_wounds_can_target_the_caster",
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "kind": "positive",
+   "rule_quote": "If a spell targets a creature of your choice, you can choose yourself unless the creature must be Hostile or specifically a creature other than you.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_healing_word_on_yourself_through_the_session",
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "kind": "positive",
+   "rule_quote": "If a spell targets a creature of your choice, you can choose yourself unless the creature must be Hostile or specifically a creature other than you.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_mage_armor_can_target_the_caster",
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "kind": "positive",
+   "rule_quote": "If a spell targets a creature of your choice, you can choose yourself unless the creature must be Hostile or specifically a creature other than you.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_choosing_yourself_doesnt_add_a_target_past_the_cap",
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "kind": "negative",
+   "rule_quote": "If a spell targets a creature of your choice, you can choose yourself unless the creature must be Hostile or specifically a creature other than you.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
+   "clause": "SPELL.casting-spells.effects.targets#4",
+   "kind": "positive",
+   "rule_quote": "The area determines what the spell targets.",
+   "claim": "red",
+   "ticket_title": "SRD: the area determines what the spell targets, so Thunderwave hits every creature in its 15-foot Cube; engine: only the creatures the caller lists are affected"
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_named_creature_outside_the_cone_isnt_affected",
+   "clause": "SPELL.casting-spells.effects.targets#4",
+   "kind": "negative",
+   "rule_quote": "The area determines what the spell targets.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+   "clause": "SPELL.casting-spells.effects.targets#4",
+   "kind": "abuse",
+   "rule_quote": "The area determines what the spell targets.",
+   "claim": "red",
+   "ticket_title": "SRD: the area determines what the spell targets, and one Cone points one way; engine: Burning Hands hits listed creatures on both sides of the caster (distance check only)"
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere",
+   "clause": "SPELL.casting-spells.effects.targets#4",
+   "kind": "abuse",
+   "rule_quote": "The area determines what the spell targets.",
+   "claim": "red",
+   "ticket_title": "SRD: the area determines what the spell targets; engine: Sleep ignores its point of origin, so a listed creature 50 ft from the 5-foot Sphere must still save"
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_area_spells_name_one_of_the_area_shapes",
+   "clause": "SPELL.casting-spells.effects.targets#5",
+   "kind": "positive",
+   "rule_quote": "The description of a spell specifies whether it has an area of effect, which is typically one of these shapes: Cone, Cube, Cylinder, Emanation, Line, or Sphere.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_single_target_spells_have_no_area",
+   "clause": "SPELL.casting-spells.effects.targets#5",
+   "kind": "negative",
+   "rule_quote": "The description of a spell specifies whether it has an area of effect, which is typically one of these shapes: Cone, Cube, Cylinder, Emanation, Line, or Sphere.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_beast",
+   "clause": "SPELL.casting-spells.effects.targets#8",
+   "kind": "positive",
+   "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_fey_goblin",
+   "clause": "SPELL.casting-spells.effects.targets#8",
+   "kind": "positive",
+   "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_hold_person_paralyzes_a_humanoid_that_fails",
+   "clause": "SPELL.casting-spells.effects.targets#8",
+   "kind": "negative",
+   "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_hold_person_on_a_beast_through_the_session",
+   "clause": "SPELL.casting-spells.effects.targets#8",
+   "kind": "positive",
+   "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_the_slot_is_spent_on_an_invalid_target",
+   "clause": "SPELL.casting-spells.effects.targets#9",
+   "kind": "positive",
+   "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_isnt_a_half_refusal",
+   "clause": "SPELL.casting-spells.effects.targets#9",
+   "kind": "abuse",
+   "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_spare_the_dying_on_a_healthy_creature_isnt_a_half_refusal",
+   "clause": "SPELL.casting-spells.effects.targets#9",
+   "kind": "abuse",
+   "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_refused_target_spends_no_slot",
+   "clause": "SPELL.casting-spells.effects.targets#9",
+   "kind": "negative",
+   "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_an_invalid_target_appears_to_succeed_without_rolling",
+   "clause": "SPELL.casting-spells.effects.targets#10",
+   "kind": "positive",
+   "rule_quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
+   "clause": "SPELL.casting-spells.effects.targets#10",
+   "kind": "abuse",
+   "rule_quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_valid_target_really_rolls_its_save",
+   "clause": "SPELL.casting-spells.effects.targets#10",
+   "kind": "negative",
+   "rule_quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing",
+   "clause": "SPELL.casting-spells.effects.targets#11",
+   "kind": "positive",
+   "rule_quote": "Otherwise, you perceive that the spell did nothing to the target.",
+   "claim": "red",
+   "ticket_title": "SRD: a spell cast at a target it can't affect spends the slot and the caster perceives it did nothing; engine: Mage Armor on an armored creature is refused instead"
+  },
+  {
+   "name": "tests/srd/test_spells.py::test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing",
+   "clause": "SPELL.casting-spells.effects.targets#11",
+   "kind": "negative",
+   "rule_quote": "Otherwise, you perceive that the spell did nothing to the target.",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "SPELL.casting-spells.effects.targets#3",
+   "kind": "out-of-scope",
+   "reason": "Only the negative half is out of scope: 'unless the creature must be Hostile or specifically a creature other than you'. No in-scope spell requires a Hostile creature or a creature other than the caster, so there is no spell to test the exclusion with. The positive half is tested.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#6",
+   "kind": "out-of-scope",
+   "reason": "Every in-scope spell that targets another creature has a perceptible effect (damage, a condition, a visible ward or a spoken command). No subset spell has a subtle effect whose target could fail to notice it.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "SPELL.casting-spells.effects.targets#7",
+   "kind": "out-of-scope",
+   "reason": "The example subtle effect, reading thoughts (Detect Thoughts and similar), isn't in the implemented spell subset.",
+   "infra_ticket": ""
+  }
+ ],
+ "scenario_changes": [],
+ "rulings_proposed": [
+  {
+   "ambiguity": "'If you cast a spell on someone or something that can't be affected by it, nothing happens to that target': does this cover restrictions the caster can see, such as Mage Armor's 'who isn't wearing armor', or does the engine refuse those?",
+   "ruling": "Reading A, applied to every target restriction in a spell's description except the positional ones the targeting rules name (range, clear path, sight). If a target fails a restriction such as creature type, wearing armor, or 0 HP, the spell is cast: the slot (and action) are spent, nothing happens to that target, and the caster either sees an apparent successful save (spells with a save) or a player-visible note that the spell did nothing (no save). The half-refusal abuse tests accept either a clean refusal or this resolution, so they don't depend on this ruling.",
+   "tests": [
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
+   ]
+  },
+  {
+   "ambiguity": "'The area determines what the spell targets': for an area spell that affects 'each creature' in the area (Thunderwave), does the engine work out who is in the area, or does it rely on a list the caller supplies?",
+   "ruling": "The engine works out the creatures in the area from the scene, using the shape, point of origin and direction. A caller's list can only narrow the choice where the spell says 'of your choice' (Sleep). It never adds creatures outside the area or drops creatures inside an 'each creature' area.",
+   "tests": [
+    "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
+    "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+    "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere"
+   ]
+  }
+ ],
+ "summary": "I added 34 tests for SPELL.casting-spells.effects.targets to tests/srd/test_spells.py: 29 claimed green and 5 red with strict xfail. All 73 tests in the file pass apart from those 5 expected failures, and ruff check/format are clean. I ran the 5 red tests with --runxfail and each one fails on the engine behaviour named in its reason, not on an error in the test.\n\nGreen: the Total Cover refusal (a single target, through the Session, Sacred Flame, one of several Bless targets, one of several Magic Missile targets), with no refusal for Three-Quarters Cover, a creature in the line, or an area spell (R-10). Also green: choosing yourself as a target (Cure Wounds, Healing Word through the Session, Mage Armor), and the Hold Person invalid-target path (slot spent, no die rolled, the target appears to save, and no hint reaches the player). Mage Armor on an armored creature and Spare the Dying on a healthy creature are refused cleanly, so the half-refusal abuse tests pass.\n\nRed:\n- Light cast at a creature isn't refused.\n- Area spells hit only the creatures the caller lists: Thunderwave misses unnamed creatures in its Cube, one Burning Hands Cone hits both sides of the caster, and Sleep ignores its point of origin.\n- Mage Armor on an armored creature is refused instead of resolving as an invalid target. This test depends on proposed ruling 1.\n\nNot testable, all out of scope: the Hostile / 'other than you' exclusion in clause 3, and clauses 6 and 7 on noticing subtle spells, because no in-scope spell has those features. There are no scenario changes, since stage B gave no under-asserts or contradicts-srd verdicts. I added four new cheats to loop/abuse-catalogue.md."
+}

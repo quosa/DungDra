@@ -74,3 +74,7 @@
 {"at": 1790930493, "about": "T-33", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.1445, "seconds": 123.4, "session_id": "136a7b6f-8a60-428b-8f5e-0ff6fb7e12c6", "exit": 0}
 {"at": 1790930762, "about": "T-33", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.2211, "seconds": 140.3, "session_id": "3e714527-f647-48e6-b0ea-c0bf4f78453a", "exit": 0}
 {"at": 1790931047, "about": "T-33", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1272, "seconds": 27.0, "session_id": "1b53ea48-7e47-4d00-8e98-60b0c03ad62c", "exit": 0}
+{"at": 1790931643, "about": "SPELL.casting-spells.effects.targets", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.2088, "seconds": 56.4, "session_id": "45bbb19f-10f3-45a0-8888-8ba8f69b2f3e", "exit": 0}
+{"at": 1790931700, "about": "SPELL.casting-spells.effects.targets", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1482, "seconds": 31.4, "session_id": "46296127-19f8-4db9-8b2a-f91937ae70cb", "exit": 0}
+{"at": 1790931731, "about": "SPELL.casting-spells.effects.targets", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.9936, "seconds": 366.0, "session_id": "65708f5c-cd84-4b22-9daa-91125d28dc4b", "exit": 0}
+{"at": 1790932099, "about": "SPELL.casting-spells.effects.targets", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 1.2468, "seconds": 254.5, "session_id": "884e5518-6d9b-4715-956a-a63f721a0e6f", "exit": 0}

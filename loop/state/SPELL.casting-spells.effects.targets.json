@@ -1,0 +1,131 @@
+{
+  "fingerprint": "fd4819b5fe8bca5d",
+  "for_review": [
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
+  ],
+  "id": "SPELL.casting-spells.effects.targets",
+  "out_of_scope": [
+    {
+      "clause": "SPELL.casting-spells.effects.targets#3",
+      "reason": "Only the negative half is out of scope: 'unless the creature must be Hostile or specifically a creature other than you'. No in-scope spell requires a Hostile creature or a creature other than the caster, so there is no spell to test the exclusion with. The positive half is tested."
+    },
+    {
+      "clause": "SPELL.casting-spells.effects.targets#6",
+      "reason": "Every in-scope spell that targets another creature has a perceptible effect (damage, a condition, a visible ward or a spoken command). No subset spell has a subtle effect whose target could fail to notice it."
+    },
+    {
+      "clause": "SPELL.casting-spells.effects.targets#7",
+      "reason": "The example subtle effect, reading thoughts (Detect Thoughts and similar), isn't in the implemented spell subset."
+    }
+  ],
+  "refuted": [
+    "tests/srd/test_spells.py::test_fire_bolt_can_target_an_object",
+    "tests/srd/test_spells.py::test_a_spell_cant_target_a_creature_behind_total_cover",
+    "tests/srd/test_spells.py::test_sacred_flame_cant_reach_a_creature_behind_total_cover",
+    "tests/srd/test_spells.py::test_a_magic_missile_dart_cant_go_to_a_creature_behind_total_cover",
+    "tests/srd/test_spells.py::test_total_cover_doesnt_refuse_an_area_spell",
+    "tests/srd/test_spells.py::test_choosing_yourself_doesnt_add_a_target_past_the_cap",
+    "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
+    "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_beast",
+    "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_fey_goblin",
+    "tests/srd/test_spells.py::test_hold_person_on_a_beast_through_the_session",
+    "tests/srd/test_spells.py::test_spare_the_dying_on_a_healthy_creature_isnt_a_half_refusal",
+    "tests/srd/test_spells.py::test_a_refused_target_spends_no_slot"
+  ],
+  "relations": [
+    {
+      "evidence": "Total Cover (can’t be targeted directly)",
+      "target": "GLOSS.cover",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "unless the creature must be Hostile or specifically a creature other than you",
+      "target": "GLOSS.hostile",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "selected to receive the effects of a spell or another phenomenon",
+      "target": "GLOSS.target",
+      "type": "same_concept_as"
+    },
+    {
+      "evidence": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+      "target": "GLOSS.cone",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+      "target": "GLOSS.cube",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Cylinder is an area of effect that extends in straight lines from a point of origin located at the center of the circular top or bottom of the Cylinder.",
+      "target": "GLOSS.cylinder",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+      "target": "GLOSS.emanation",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Line is an area of effect that extends from a point of origin in a straight path along its length and covers an area defined by its width.",
+      "target": "GLOSS.line",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+      "target": "GLOSS.sphere",
+      "type": "interacts_with"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1790931700,
+      "summary": "The unit sets the general targeting rules for spells. Targets need a clear path (not behind Total Cover). The caster can choose themself unless the spell requires a Hostile creature or a creature other than the caster. Areas of effect use the glossary shapes, including the new Emanation. Subtle spel"
+    },
+    "B": {
+      "at": 1790931731,
+      "summary": "I gave all 11 related items a verdict. None contradicts the SRD. Two scenarios and their tests, plus the Total Cover and Hold Person lines, agree with the unit. Three are affected by an ambiguity: the SPL-06 scenario, its test, and the Total Cover code (spells.py:130). The Hold Person invalid-target"
+    },
+    "C": {
+      "at": 1790932099,
+      "summary": "I added 34 tests for SPELL.casting-spells.effects.targets to tests/srd/test_spells.py: 29 claimed green and 5 red with strict xfail. All 73 tests in the file pass apart from those 5 expected failures, and ruff check/format are clean. I ran the 5 red tests with --runxfail and each one fails on the en"
+    },
+    "D": {
+      "at": 1790932353,
+      "summary": "I checked all 34 tests: keep 20, refute 14. I ran every mutation through `srdloop mutate`, so the repo is unchanged. Exact duplicates: Sacred Flame vs Total Cover, a Magic Missile dart vs Total Cover, the area-spell Total Cover case (all already in test_playing_the_game.py), Bless past its 3-target "
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_spells.py::test_ray_of_frost_cant_target_an_object",
+    "tests/srd/test_spells.py::test_light_cant_target_a_creature",
+    "tests/srd/test_spells.py::test_total_cover_refusal_through_the_session",
+    "tests/srd/test_spells.py::test_three_quarters_cover_doesnt_stop_targeting",
+    "tests/srd/test_spells.py::test_a_creature_in_the_line_doesnt_stop_targeting",
+    "tests/srd/test_spells.py::test_a_creature_behind_total_cover_cant_be_one_of_several_bless_targets",
+    "tests/srd/test_spells.py::test_cure_wounds_can_target_the_caster",
+    "tests/srd/test_spells.py::test_healing_word_on_yourself_through_the_session",
+    "tests/srd/test_spells.py::test_mage_armor_can_target_the_caster",
+    "tests/srd/test_spells.py::test_a_named_creature_outside_the_cone_isnt_affected",
+    "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+    "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere",
+    "tests/srd/test_spells.py::test_area_spells_name_one_of_the_area_shapes",
+    "tests/srd/test_spells.py::test_single_target_spells_have_no_area",
+    "tests/srd/test_spells.py::test_hold_person_paralyzes_a_humanoid_that_fails",
+    "tests/srd/test_spells.py::test_the_slot_is_spent_on_an_invalid_target",
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_isnt_a_half_refusal",
+    "tests/srd/test_spells.py::test_an_invalid_target_appears_to_succeed_without_rolling",
+    "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
+    "tests/srd/test_spells.py::test_a_valid_target_really_rolls_its_save",
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing",
+    "tests/srd/test_spells.py::test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing"
+  ],
+  "tickets": [
+    "T-37",
+    "T-38",
+    "T-39",
+    "T-40"
+  ]
+}
