@@ -86,3 +86,8 @@
 {"at": 1790933069, "about": "GLOSS.ready", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 2.0626, "seconds": 446.1, "session_id": "c0b4447c-fb3d-437e-8d8b-0553c10e1018", "exit": 0}
 {"at": 1790933516, "about": "GLOSS.ready", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.7584, "seconds": 128.4, "session_id": "1d4669ed-11f6-4577-a4e7-0513efa843dc", "exit": 0}
 {"at": 1790933646, "about": "GLOSS.ready", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.8604, "seconds": 186.0, "session_id": "cb83aa21-d777-4f0a-9f6f-83b67c604f55", "exit": 0}
+{"at": 1790933834, "about": "MONSTER.goblins.goblin-warrior", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.1583, "seconds": 44.6, "session_id": "0e1984a2-bd5d-4573-b65c-b6032f34b818", "exit": 0}
+{"at": 1790933878, "about": "MONSTER.goblins.goblin-warrior", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1726, "seconds": 40.5, "session_id": "d9500f9e-a38c-4dc7-97b0-fa95e363313e", "exit": 0}
+{"at": 1790933919, "about": "MONSTER.goblins.goblin-warrior", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1986, "seconds": 43.5, "session_id": "d1787e9f-2ecb-4075-8b61-61a9b7b99c96", "exit": 0}
+{"at": 1790933962, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 2.5996, "seconds": 1718.3, "session_id": "4a2c577e-6a4c-400b-bf6b-a6b2db03cade", "exit": 0}
+{"at": 1790935683, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.9739, "seconds": 253.6, "session_id": "ade9bce8-d76f-4805-9a3c-e6fa1b21fab2", "exit": 0}
