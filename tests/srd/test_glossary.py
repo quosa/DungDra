@@ -752,13 +752,16 @@ def test_ignored_trigger_can_be_answered_the_next_time(game):
     s, brom, gob = brom_readies_attack(game, (15, 0))
     RDY.end_turn(s)
     game.answer(RDY.READIED, False, who=brom)
-    game.answer(RDY.READIED, True, who=brom)
+    RDY.move(s, gob, (5, 0))  # the trigger: BROM ignores it
+    assert gob.hp == 10 and not RDY.reaction_used(game, brom)
     game.answer("opportunity_attack", False, who=brom)
-    RDY.move(s, gob, (5, 0))  # ignored
     RDY.move(s, gob, (15, 0))  # leaves reach; BROM declines the Opportunity Attack
+    assert not RDY.reaction_used(game, brom)
+    game.answer(RDY.READIED, True, who=brom)
     game.dice.force_str("d20=[15]; d8=[2]")
     RDY.move(s, gob, (5, 0))  # the same circumstance again: BROM takes it
-    assert gob.hp == 5
+    assert gob.hp == 5 and RDY.reaction_used(game, brom)
+    assert not any(game.answers.values()), "every queued answer was asked for"
 
 
 # ---------------- #6 · a readied spell is cast now and released with the Reaction ----------------
