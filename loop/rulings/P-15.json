@@ -1,0 +1,14 @@
+{
+  "id": "P-15",
+  "unit": "GLOSS.ready",
+  "ambiguity": "GLOSS.ready gap: what happens to a held spell that isn't released before the start of your next turn?",
+  "ruling": "The Concentration that holds it ends at the start of your next turn. The spell dissipates without effect, and the spent slot isn't refunded.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_held_spell_ends_at_the_start_of_your_next_turn",
+    "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

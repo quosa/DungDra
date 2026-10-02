@@ -18,6 +18,11 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Taking two actions, two Bonus Actions or two Reactions in one turn or round.
 - Acting out of turn, or while Incapacitated, Paralyzed, Stunned or Unconscious.
 - Reusing a once-per-turn benefit (Sneak Attack, Savage Attacker, a mastery property).
+- Taking a readied Reaction and an Opportunity Attack in the same round, or keeping a readied
+  action past the start of your next turn.
+- Readying a Bonus Action, or an action plus movement, as one readied response; readying
+  movement beyond your Speed.
+- Readying out of turn, or after the turn's action is already spent.
 - Casting two slot spells in one turn.
 
 ## Resources
@@ -47,6 +52,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Casting while unable to speak (Verbal) or without a free hand (Somatic).
 - Stacking the same effect twice; keeping Concentration on two spells.
 - Dropping and recasting Concentration to reset a duration.
+- Holding a readied spell while keeping Concentration on another spell.
+- Readying a spell to get the slot back when the trigger never comes or Concentration breaks;
+  readying a spell with no slot left; readying a Bonus Action or Reaction spell.
 - Replacing a costed material component (Bless: a Holy Symbol worth 5+ GP) with a Component Pouch,
   a different focus, or the 2014 component (holy water).
 - Naming the same creature twice in a multi-target spell to double its benefit (two Bless d4s).

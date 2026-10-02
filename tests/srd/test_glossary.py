@@ -8,6 +8,7 @@ from dungdra import combat as C
 from dungdra import spells as S
 from dungdra.api import Session
 from dungdra.effects import SpeedPenalty
+from tests.support import ready as RDY
 from tests.support.helpers import mon, pc
 from tests.support.srd import assert_refused_cleanly
 
@@ -434,3 +435,502 @@ def test_blinded_tremorsense_cast_command_on_creature_refused(game):
     assert_refused_cleanly(
         game, s.execute, {"cmd": "cast", "actor": jozan.id, "spell": "sacred flame", "targets": [gob.id]}
     )
+
+
+# ================================================================ GLOSS.ready
+RD = "GLOSS.ready"
+
+
+def brom_readies_attack(game, gob_pos=(20, 0)):
+    """BROM at (0, 0) readies a longsword attack against a goblin for when it steps next to him."""
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", gob_pos)
+    s = RDY.combat_session(game, brom, gob)
+    out = RDY.ready(s, brom, RDY.moves_within(gob, 5), {"cmd": "attack", "target": gob.id})
+    assert out["ok"], out
+    return s, brom, gob
+
+
+def mialee_readies_missile(game, *others, gob_pos=(60, 0)):
+    """MIALEE at (0, 0) readies Magic Missile (3 darts) at a goblin for when it comes within 30 ft."""
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", gob_pos)
+    s = RDY.combat_session(game, mialee, *others, gob)
+    out = RDY.ready(
+        s, mialee, RDY.moves_within(gob, 30), {"cmd": "cast", "spell": "magic missile", "targets": [gob.id]}
+    )
+    assert out["ok"], out
+    return s, mialee, gob
+
+
+def ready_cmd(actor, trigger, response) -> dict:
+    return {"cmd": "ready", "actor": actor.id, "trigger": trigger, "response": response}
+
+
+# ---------------- #1 · Ready waits for a circumstance before acting ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#1", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_attack_waits_for_the_trigger(game):
+    s, brom, gob = brom_readies_attack(game)
+    assert gob.hp == 10 and not RDY.reaction_used(game, brom)  # nothing happens yet
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    game.dice.force_str("d20=[15]; d8=[2]")
+    RDY.move(s, gob, (5, 0))
+    assert gob.hp == 5  # 2 + 3 (Str) from the readied longsword
+    assert RDY.reaction_used(game, brom)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#1", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_attack_not_taken_on_the_readying_turn(game):
+    s, brom, gob = brom_readies_attack(game, (5, 0))  # the goblin already stands next to BROM
+    assert gob.hp == 10
+    assert not RDY.reaction_used(game, brom)
+
+
+# ---------------- #2 · on your turn; a Reaction before the start of your next turn ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ready_takes_the_action(game):
+    s, brom, gob = brom_readies_attack(game, (5, 0))
+    assert game.combat.turn.actions_used == 1
+    assert_refused_cleanly(
+        game,
+        s.execute,
+        {"cmd": "attack", "actor": brom.id, "target": gob.id},
+        match="already taken their action",
+    )
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ready_refused_off_turn(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, gob, brom)  # the goblin's turn
+    cmd = ready_cmd(brom, RDY.moves_within(gob, 5), {"cmd": "attack", "target": gob.id})
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)turn")
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ready_refused_after_the_action_is_spent(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    s = RDY.combat_session(game, brom, gob)
+    game.dice.force_str("d20=[2]")  # a miss: the Attack action is spent
+    assert s.execute({"cmd": "attack", "actor": brom.id, "target": gob.id})["ok"]
+    cmd = ready_cmd(brom, RDY.moves_within(gob, 5), {"cmd": "attack", "target": gob.id})
+    assert_refused_cleanly(game, s.execute, cmd, match="already taken their action")
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="boundary")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_attack_ends_at_the_start_of_your_next_turn(game):
+    s, brom, gob = brom_readies_attack(game)
+    RDY.end_turn(s)  # the goblin's turn: it stays put
+    RDY.end_turn(s)  # BROM's next turn starts: the readied attack is gone
+    assert game.combat.current is brom
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    RDY.move(s, gob, (5, 0))
+    assert gob.hp == 10
+    assert not RDY.reaction_used(game, brom)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob2 = mon(game, "goblin warrior", (30, 0), name="Goblin 2")
+    s = RDY.combat_session(game, brom, gob, gob2)
+    assert RDY.ready(s, brom, RDY.moves_within(gob2, 5), {"cmd": "attack", "target": gob2.id})["ok"]
+    RDY.end_turn(s)
+    assert game.combat.current is gob
+    game.answer("opportunity_attack", True, who=brom)
+    game.dice.force_str("d20=[1]")  # the Opportunity Attack misses
+    RDY.move(s, gob, (5, 20))
+    assert RDY.reaction_used(game, brom)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    RDY.move(s, gob2, (5, 0))
+    assert gob2.hp == 10  # one Reaction per round: nothing left for the readied attack
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_no_opportunity_attack_after_the_readied_attack(game):
+    s, brom, gob = brom_readies_attack(game)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    game.dice.force_str("d20=[15]; d8=[2]")
+    RDY.move(s, gob, (5, 0))
+    assert gob.hp == 5
+    game.answer("opportunity_attack", True, who=brom)
+    RDY.move(s, gob, (5, 15))  # leaves BROM's reach; his Reaction is spent
+    assert gob.hp == 5
+    assert any("no Reaction available" in str(e) for e in game.log.events)
+
+
+# ---------------- #3 · a perceivable circumstance triggers the Reaction ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#3", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_attack_not_taken_when_the_trigger_doesnt_happen(game):
+    s, brom, gob = brom_readies_attack(game, (30, 0))
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    RDY.move(s, gob, (15, 0))  # moves, but not next to BROM
+    assert gob.hp == 10
+    assert not RDY.reaction_used(game, brom)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#3", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_only_the_chosen_circumstance_triggers_the_reaction(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    gob2 = mon(game, "goblin warrior", (0, 20), name="Goblin 2")
+    s = RDY.combat_session(game, brom, gob, gob2)
+    assert RDY.ready(s, brom, RDY.moves_within(gob2, 5), {"cmd": "attack", "target": gob2.id})["ok"]
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=brom)
+    RDY.move(s, gob, (5, 0))  # the other goblin: not the circumstance BROM chose
+    assert not RDY.reaction_used(game, brom)
+    RDY.end_turn(s)
+    game.dice.force_str("d20=[15]; d8=[2]")
+    RDY.move(s, gob2, (0, 5))  # the chosen circumstance
+    assert gob2.hp == 5
+    assert gob.hp == 10
+    assert RDY.reaction_used(game, brom)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#3", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ready_trigger_naming_no_creature_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, brom, gob)
+    trigger = {"event": "moves_within", "creature": "ogre", "feet": 5}
+    cmd = ready_cmd(brom, trigger, {"cmd": "attack", "target": gob.id})
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)ogre")
+
+
+# ---------------- #4 · an action, or a move up to your Speed ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_move_away_when_the_goblin_steps_next_to_you(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, lidda, gob)
+    assert RDY.ready(s, lidda, RDY.moves_within(gob, 5), {"cmd": "move", "to": [-30, 0]})["ok"]
+    assert lidda.position == (0, 0)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=lidda)
+    game.answer("opportunity_attack", False, who=gob)
+    RDY.move(s, gob, (5, 0))
+    assert lidda.position == (-30, 0)  # her whole Speed of 30 ft
+    assert RDY.reaction_used(game, lidda)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="boundary", ruling="P-16")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_move_beyond_speed_refused(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, lidda, gob)
+    cmd = ready_cmd(lidda, RDY.moves_within(gob, 5), {"cmd": "move", "to": [-35, 0]})
+    assert_refused_cleanly(game, s.execute, cmd, match="Speed")
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="negative", ruling="P-16")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_bonus_action_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, brom, gob)
+    cmd = ready_cmd(brom, RDY.moves_within(gob, 5), {"cmd": "second_wind"})
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)bonus action")
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="abuse", ruling="P-16")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_an_action_and_a_move_together_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    s = RDY.combat_session(game, brom, gob)
+    both = [{"cmd": "attack", "target": gob.id}, {"cmd": "move", "to": [-30, 0]}]
+    cmd = ready_cmd(brom, RDY.moves_within(gob, 5), both)
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)one")
+
+
+# ---------------- #5 · take the Reaction right after the trigger, or ignore it ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#5", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ignored_trigger_keeps_the_reaction(game):
+    s, brom, gob = brom_readies_attack(game)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, False, who=brom)
+    RDY.move(s, gob, (5, 0))
+    assert not game.answers[(brom.id, RDY.READIED)]  # BROM was asked, and said no
+    assert gob.hp == 10
+    assert not RDY.reaction_used(game, brom)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#5", kind="positive", ruling="P-14")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_ignored_trigger_can_be_answered_the_next_time(game):
+    s, brom, gob = brom_readies_attack(game, (15, 0))
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, False, who=brom)
+    game.answer(RDY.READIED, True, who=brom)
+    game.answer("opportunity_attack", False, who=brom)
+    RDY.move(s, gob, (5, 0))  # ignored
+    RDY.move(s, gob, (15, 0))  # leaves reach; BROM declines the Opportunity Attack
+    game.dice.force_str("d20=[15]; d8=[2]")
+    RDY.move(s, gob, (5, 0))  # the same circumstance again: BROM takes it
+    assert gob.hp == 5
+
+
+# ---------------- #6 · a readied spell is cast now and released with the Reaction ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_spell_spends_its_slot_when_readied(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    assert mialee.slots_left(1) == 1
+    assert gob.hp == 10  # the energy is held, not released
+    assert not RDY.reaction_used(game, mialee)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readied_spell_released_with_the_reaction(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=mialee)
+    game.dice.force_str("d4=[1,1,1]")
+    RDY.move(s, gob, (30, 0))
+    assert gob.hp == 4  # three darts of 1d4 + 1
+    assert RDY.reaction_used(game, mialee)
+    assert mialee.slots_left(1) == 1  # the release spends no second slot
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_held_spell_not_released_when_the_trigger_is_ignored(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, False, who=mialee)
+    RDY.move(s, gob, (30, 0))
+    assert not game.answers[(mialee.id, RDY.READIED)]  # MIALEE was asked, and held the spell
+    assert gob.hp == 10  # no Reaction, no release
+    assert not RDY.reaction_used(game, mialee)
+    assert mialee.slots_left(1) == 1  # the slot was spent when she readied it
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_spell_without_a_slot_refused(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (60, 0))
+    mialee.slots_used[1] = mialee.slots_left(1)  # both level 1 slots spent earlier
+    s = RDY.combat_session(game, mialee, gob)
+    response = {"cmd": "cast", "spell": "magic missile", "targets": [gob.id]}
+    cmd = ready_cmd(mialee, RDY.moves_within(gob, 30), response)
+    assert_refused_cleanly(game, s.execute, cmd, match="spell slots")
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse", ruling="P-15")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_unreleased_readied_spell_doesnt_refund_its_slot(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    RDY.end_turn(s)
+    RDY.end_turn(s)  # MIALEE's next turn: the trigger never came
+    assert game.combat.current is mialee
+    assert mialee.slots_left(1) == 1
+
+
+# ---------------- #7 · only a spell with a casting time of an action ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#7", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_bonus_action_spell_refused(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    s = RDY.combat_session(game, jozan, brom, gob)
+    response = {"cmd": "cast", "spell": "healing word", "targets": [brom.id]}
+    cmd = ready_cmd(jozan, RDY.moves_within(gob, 5), response)
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)casting time")
+    assert jozan.slots_left(1) == 2
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#7", kind="abuse")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_reaction_spell_refused(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    s = RDY.combat_session(game, mialee, gob)
+    cmd = ready_cmd(mialee, RDY.moves_within(gob, 5), {"cmd": "cast", "spell": "shield"})
+    assert_refused_cleanly(game, s.execute, cmd, match="(?i)casting time")
+    assert mialee.slots_left(1) == 2
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#7", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_an_action_cantrip_is_allowed(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (60, 0))
+    s = RDY.combat_session(game, mialee, gob)
+    response = {"cmd": "cast", "spell": "fire bolt", "targets": [gob.id]}
+    out = RDY.ready(s, mialee, RDY.moves_within(gob, 30), response)
+    assert out["ok"], out
+    assert mialee.concentrating
+
+
+# ---------------- #8 · holding the spell takes Concentration until your next turn ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_holding_a_readied_spell_takes_concentration(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    assert mialee.concentrating
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="boundary", ruling="P-15")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_held_spell_ends_at_the_start_of_your_next_turn(game):
+    s, mialee, gob = mialee_readies_missile(game)
+    RDY.end_turn(s)
+    RDY.end_turn(s)  # MIALEE's next turn starts
+    assert game.combat.current is mialee
+    assert not mialee.concentrating
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=mialee)
+    RDY.move(s, gob, (30, 0))
+    assert gob.hp == 10
+    assert not RDY.reaction_used(game, mialee)
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_weapon_attack_needs_no_concentration(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    S.cast(game, jozan, "bless", [jozan])
+    s = RDY.combat_session(game, jozan, gob)
+    out = RDY.ready(s, jozan, RDY.moves_within(gob, 5), {"cmd": "attack", "target": gob.id})
+    assert out["ok"], out
+    assert "bless" in str(jozan.concentrating).lower()  # only a held spell takes Concentration
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="abuse", ruling="P-13")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_readying_a_spell_ends_earlier_concentration(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    gob = mon(game, "goblin warrior", (60, 0))
+    S.cast(game, jozan, "bless", [jozan])
+    assert "bless" in str(jozan.concentrating).lower()
+    s = RDY.combat_session(game, jozan, gob)
+    response = {"cmd": "cast", "spell": "guiding bolt", "targets": [gob.id]}
+    out = RDY.ready(s, jozan, RDY.moves_within(gob, 30), response)
+    assert out["ok"], out
+    assert "bless" not in str(jozan.concentrating).lower()  # holding Guiding Bolt is Concentration too
+    assert jozan.concentrating
+
+
+# ---------------- #9 · broken Concentration: the spell dissipates ----------------
+@pytest.mark.srd(RD, clause=f"{RD}#9", kind="positive")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_held_spell_dissipates_when_concentration_breaks(game):
+    gob1 = mon(game, "goblin warrior", (5, 0), name="Goblin 1")
+    s, mialee, gob = mialee_readies_missile(game, gob1)
+    RDY.end_turn(s)
+    assert game.combat.current is gob1
+    game.dice.force_str("d20=[15,1]; d6=[1]")  # a hit for 3, then a failed DC 10 Constitution save
+    assert s.execute({"cmd": "attack", "actor": gob1.id, "target": mialee.id, "weapon": "Scimitar"})["ok"]
+    assert mialee.hp == 5
+    assert not mialee.concentrating
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=mialee)
+    RDY.move(s, gob, (30, 0))
+    assert gob.hp == 10  # dissipated without taking effect
+    assert not RDY.reaction_used(game, mialee)
+    assert mialee.slots_left(1) == 1  # and the slot stays spent
+
+
+@pytest.mark.srd(RD, clause=f"{RD}#9", kind="negative")
+@pytest.mark.xfail(
+    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
+)
+def test_held_spell_survives_a_successful_concentration_save(game):
+    gob1 = mon(game, "goblin warrior", (5, 0), name="Goblin 1")
+    s, mialee, gob = mialee_readies_missile(game, gob1)
+    RDY.end_turn(s)
+    game.dice.force_str("d20=[15,20]; d6=[1]")  # a hit for 3, then a successful save
+    assert s.execute({"cmd": "attack", "actor": gob1.id, "target": mialee.id, "weapon": "Scimitar"})["ok"]
+    assert mialee.concentrating
+    RDY.end_turn(s)
+    game.answer(RDY.READIED, True, who=mialee)
+    game.dice.force_str("d4=[1,1,1]")
+    RDY.move(s, gob, (30, 0))
+    assert gob.hp == 4
