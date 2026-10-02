@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
     "tests/srd/test_glossary.py::test_speed_five_can_still_stand"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-21",
+  "note": "Current Speed after modifiers, as in 'If your Speed is 0' in the same sentence.",
   "reason": ""
 }

@@ -1110,7 +1110,7 @@ def test_stand_command_spends_half_speed(game):
     assert game.combat.turn.movement_left == 15
 
 
-@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="P-17")
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="R-21")
 def test_stand_cost_rounds_down_for_an_odd_speed(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))
@@ -1254,7 +1254,7 @@ def test_speed_reduced_to_zero_by_a_penalty_cant_stand(game):
     assert gob.has("prone")
 
 
-@pytest.mark.srd(PR, clause=f"{PR}#3", kind="boundary", ruling="P-17")
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="boundary", ruling="R-21")
 def test_speed_five_can_still_stand(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))
