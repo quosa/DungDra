@@ -173,15 +173,19 @@ Example, T-16 in the trial:
 - The guard hook (`hooks/guard_writes.py`) enforces write zones only when `SRDLOOP_ROLE` is set,
   so interactive sessions aren't affected.
 
-## State as of 2026-10-01
+## State as of 2026-10-02
 
 **Trial run** (8 units, before tagging `loop-v1`):
 - **Done:**
-  - `GLOSS.grappled`: green, after T-1…T-4.
+  - `GLOSS.grappled`: green, after T-1…T-4. Refactors T-5, T-7, T-31…T-33 are fixed. T-36
+    (where unit-test helpers live) is void: `tests/unit/helpers.py` holds unit-only helpers,
+    `tests/support/helpers.py` the ones shared across suites.
   - `GLOSS.tremorsense`: red; infra T-12…T-14 are open.
-  - `PLAY.combat.cover`: red; T-16 is fixed, T-15 and infra T-17/T-19 are open.
-  - `SPELL.bless`: red; bugs T-20…T-23.
-- **Rulings:** R-05…R-14 accepted; none pending.
+  - `PLAY.combat.cover`: red; bugs T-15 and T-16 are fixed, infra T-17/T-19 are open.
+  - `SPELL.bless`: bugs T-20…T-23 are fixed. Its state still says red, because the dev loop
+    doesn't update a unit's status.
+- **Rulings:** R-05…R-14 accepted; none pending. Nothing is waiting for review.
+- **Tickets:** 6 open, all infra (T-8, T-12…T-14, T-17, T-19); no bugs or refactors.
 - **Still to run:**
   - `GLOSS.ready`: a canary; the engine is known to lack this capability, and the loop should
     find that by itself.
@@ -190,30 +194,24 @@ Example, T-16 in the trial:
   - `GLOSS.prone`.
   - The `GLOSS.grappled` revisit.
 
-The suite: 501 passed, 7 xfailed.
+The suite: 601 passed.
 
-**Before resuming:** 16 tickets are open, so the audit loop stops at once (more than 15). Run
-the dev loop on the bugs first:
-
-```
-python -m scripts.srdloop dev --budget 15 --tickets T-15 T-20 T-21 T-22 T-23
-```
-
-Then resume:
+**Next:** run the remaining units:
 
 ```
 python -m scripts.srdloop run --budget 20 --units GLOSS.ready SPELL.casting-spells.effects.targets MONSTER.goblins.goblin-warrior GLOSS.prone GLOSS.grappled
 ```
 
+Then run the dev loop on the bugs it opens. Always name the tickets with `--tickets` so the
+infra tickets stay parked until the infra-approval question is settled.
+
 **Open questions for the person:**
 - **Infra approval:** should infra tickets start as `proposed` and wait for an approval before
-  the dev loop builds them? Should the circuit breaker count only open bugs? Without this the
-  dev loop will start building geometry and awareness models depth-first.
-- **Tests to review:** the four Cover tests the verifier doubted were written before T-16. Each
-  now fails when creature cover is broken (checked with `mutate`), so they can be kept.
+  the dev loop builds them? Should the circuit breaker count only open bugs? Without this, a
+  `dev` run without `--tickets` starts building geometry and awareness models depth-first.
 - **Edits during a run:** a person's edit made during a run is still treated as the agent's.
   The plan is to snapshot the dirty files at start and leave later non-agent edits alone, or
   just keep the rule "don't edit during a run".
 
 **Tagging `loop-v1`:** every path has run for real, the last 4–5 units ran without harness
-changes, and cost stays within the estimate.
+changes, and cost stays within the estimate. Then merge the branch into `main`.
