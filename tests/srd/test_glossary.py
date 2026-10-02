@@ -692,7 +692,7 @@ def test_readied_move_away_when_the_goblin_steps_next_to_you(game):
     assert RDY.reaction_used(game, lidda)
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#4", kind="boundary", ruling="P-16")
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="boundary", ruling="R-20")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )
@@ -704,7 +704,7 @@ def test_readied_move_beyond_speed_refused(game):
     assert_refused_cleanly(game, s.execute, cmd, match="Speed")
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#4", kind="negative", ruling="P-16")
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="negative", ruling="R-20")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )
@@ -716,7 +716,7 @@ def test_readying_a_bonus_action_refused(game):
     assert_refused_cleanly(game, s.execute, cmd, match="(?i)bonus action")
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#4", kind="abuse", ruling="P-16")
+@pytest.mark.srd(RD, clause=f"{RD}#4", kind="abuse", ruling="R-20")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )

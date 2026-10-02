@@ -8,8 +8,8 @@
     "tests/srd/test_glossary.py::test_readying_a_bonus_action_refused",
     "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-20",
+  "note": "when you ready it, not when the trigger occurs",
   "reason": ""
 }

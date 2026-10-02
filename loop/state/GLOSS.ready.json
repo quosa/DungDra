@@ -54,7 +54,7 @@
       "summary": "All 33 GLOSS.ready tests are red, and each fails for the reason it states. With --runxfail, every test fails on `Unknown command 'ready'`. Each refusal test fails only because that message doesn't match its regex. I couldn't run any mutations because the engine has no Ready code yet, so the wrong-re"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_readied_attack_waits_for_the_trigger",
     "tests/srd/test_glossary.py::test_readied_attack_not_taken_on_the_readying_turn",
