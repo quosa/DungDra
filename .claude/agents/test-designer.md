@@ -29,6 +29,9 @@ Method:
      forced die must be rolled: a passing test that leaves forced dice unused fails;
    - a refusal is tested with `tests.support.srd.assert_refused_cleanly(game, action, ...)`,
      which also checks that nothing changed and the refusal cites a page;
+   - a helper that asserts for several tests is named `assert_*` (`assert_score_and_save`): the
+     gate counts `assert`, `pytest.raises` and `assert_*` calls, so a test that only calls a
+     `check_*` helper "asserts nothing";
    - where a command exists, test player-facing clauses through `Session.execute` too;
    - no mocks, no monkeypatching: the real engine only;
    - for multi-step interactions, write a journey in `tests/srd/journeys/`.

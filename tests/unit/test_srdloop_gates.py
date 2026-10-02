@@ -89,10 +89,33 @@ def test_test_file_problems_markers_asserts_mocks(tmp_path):
     problems = G.test_file_problems(bad, {"GLOSS.prone"})
     assert problems[0].endswith("uses mocks (unittest.mock); the SRD suites use the real engine")
     assert [p.split("::")[1] for p in problems[1:]] == [
-        "test_a: asserts nothing",
+        "test_a: asserts nothing (counted: assert statements, pytest.raises and calls to assert_* helpers)",
         "test_a: marker names unknown unit 'GLOSS.nope'",
         "test_a: marker kind 'sideways' is not one of ('positive', 'negative', 'boundary', 'abuse')",
         "test_b: no @pytest.mark.srd(...) marker",
+    ]
+
+
+def test_a_helper_that_asserts_must_be_named_assert(tmp_path):
+    f = tmp_path / "test_helpers.py"
+    f.write_text(
+        "import pytest\n\n"
+        "def setup(game):\n    assert game\n    return game\n\n"
+        "def check_save(game, n):\n    assert n == 1\n\n"
+        "def assert_save(game, n):\n    assert n == 1\n\n"
+        '@pytest.mark.srd("GLOSS.prone", clause=1, kind="positive")\n'
+        "def test_via_check(game):\n    check_save(setup(game), 1)\n\n"
+        '@pytest.mark.srd("GLOSS.prone", clause=1, kind="positive")\n'
+        "def test_via_setup(game):\n    setup(game)\n\n"
+        '@pytest.mark.srd("GLOSS.prone", clause=1, kind="positive")\n'
+        "def test_via_assert(game):\n    assert_save(setup(game), 1)\n"
+    )
+    only = "but only calls to assert_* helpers count; rename it"
+    assert [p.split("::")[1] for p in G.test_file_problems(f, {"GLOSS.prone"})] == [
+        "check_save: a helper that asserts must be named assert_save, "
+        "so the tests calling it count as asserting",
+        f"test_via_check: asserts nothing (its helper check_save() asserts, {only})",
+        f"test_via_setup: asserts nothing (its helper setup() asserts, {only})",
     ]
 
 

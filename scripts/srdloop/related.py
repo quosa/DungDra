@@ -55,6 +55,21 @@ def parse_scenarios(path: Path = SCENARIOS) -> list[Scenario]:
     return out
 
 
+FIXTURES = re.compile(r"^## \d+\. Shared fixtures$", re.M)
+SECTION = re.compile(r"^## ", re.M)
+
+
+def shared_fixtures(path: Path = SCENARIOS) -> str:
+    """The scenarios document's shared fixtures section (PCs and monster key values), which every
+    scenario relies on but none repeats."""
+    text = path.read_text()
+    m = FIXTURES.search(text)
+    if not m:
+        return ""
+    end = SECTION.search(text, m.end())
+    return text[m.start() : end.start() if end else len(text)]
+
+
 def _scenario_keys(sid: str) -> set[tuple[str, int]]:
     """CLS-ROG-01 -> {("clsrog", 1), ("rog", 1)}: test names drop the CLS- prefix."""
     m = re.fullmatch(r"([A-Z-]+?)-?(\d+)", sid)

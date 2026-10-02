@@ -210,6 +210,17 @@ def test_parse_scenarios_and_index_tests_by_banner_and_name(tmp_path):
     assert sc[1].tests[0].endswith("::test_rog01a_ally_adjacent")
 
 
+def test_shared_fixtures_is_the_fixtures_section_alone(tmp_path):
+    doc = tmp_path / "spec.md"
+    doc.write_text(
+        "## 3. Build order\n\nx\n\n## 4. Shared fixtures\n\n| Wolf | AC 12, HP 11 |\n\n"
+        "## 5. Scenarios by section\n\n#### CORE-01 · A\n"
+    )
+    assert R.shared_fixtures(doc) == "## 4. Shared fixtures\n\n| Wolf | AC 12, HP 11 |\n\n"
+    doc.write_text("## 5. Scenarios by section\n")
+    assert R.shared_fixtures(doc) == ""
+
+
 def test_term_strips_tags_levels_and_prices():
     assert R.term(unit("a", title="Grappled [Condition]")) == "Grappled"
     assert R.term(unit("a", title="Level 1: Sneak Attack")) == "Sneak Attack"

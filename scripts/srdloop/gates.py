@@ -146,6 +146,23 @@ def _asserts(fn: ast.AST) -> int:
     return n
 
 
+# Helper names that read as assertions but don't count as one: only assert_* helpers do.
+CHECK_HELPER = re.compile(r"^(check|verify|expect|ensure|confirm)_")
+
+
+def _helpers_that_assert(src: str) -> dict[str, ast.FunctionDef]:
+    """Module-level helpers (not tests, not assert_*) that assert, as `_asserts` counts it."""
+    return {
+        n.name: n
+        for n in ast.parse(src).body
+        if isinstance(n, ast.FunctionDef) and not n.name.startswith(("test", "assert_")) and _asserts(n)
+    }
+
+
+def _calls(fn: ast.AST) -> set[str]:
+    return {n.func.id for n in ast.walk(fn) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+
+
 def _tests(src: str) -> dict[str, ast.FunctionDef]:
     return {
         n.name: n
@@ -164,9 +181,22 @@ def test_file_problems(
         f"{path}: uses mocks ({m.group(1)}); the SRD suites use the real engine" for m in MOCKS.finditer(src)
     ][:1]
     markers = srd_markers(src)
+    helpers = _helpers_that_assert(src)
+    out += [
+        f"{path}::{h}: a helper that asserts must be named assert_{CHECK_HELPER.sub('', h)}, "
+        "so the tests calling it count as asserting"
+        for h in helpers
+        if CHECK_HELPER.match(h)
+    ]
     for name, fn in _tests(src).items():
         if _asserts(fn) == 0:
-            out.append(f"{path}::{name}: asserts nothing")
+            via = sorted(_calls(fn) & set(helpers))
+            hint = (
+                f"its helper {via[0]}() asserts, but only calls to assert_* helpers count; rename it"
+                if via
+                else "counted: assert statements, pytest.raises and calls to assert_* helpers"
+            )
+            out.append(f"{path}::{name}: asserts nothing ({hint})")
         out += [
             f'{path}::{name}: {x}: write the reason out in the marker (reason="T-new: …"), not as a name'
             for x in _xfail_reasons(fn)

@@ -29,6 +29,7 @@ class Context:
     engine: dict[str, list[str]]
     states: dict[str, dict]
     edges: list[G.Edge]
+    fixtures: str = ""  # the scenarios' shared fixtures, quotable as scenario evidence
 
     @classmethod
     def load(cls, state_root: Path = S.STATE_DIR) -> Context:
@@ -46,6 +47,7 @@ class Context:
             engine=R.engine_lines(),
             states=states,
             edges=G.seed_edges(units) + G.analyst_edges(states),
+            fixtures=R.shared_fixtures(),
         )
 
     def scope(self, uid: str) -> str:

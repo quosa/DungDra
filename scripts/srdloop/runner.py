@@ -82,14 +82,18 @@ def gate_analysis(unit: dict, out: dict, known: dict[str, dict]) -> list[str]:
     return problems
 
 
-def _item_text(kind: str, item: str, scenarios: dict[str, str]) -> str:
+def _item_text(kind: str, item: str, scenarios: dict[str, str], fixtures: str = "") -> str:
+    """The text a verdict's evidence must quote: the scenario with the shared fixtures it relies
+    on, or the test or code file."""
     if kind == "scenario":
-        return scenarios.get(item, "")
+        return f"{scenarios[item]}\n{fixtures}" if item in scenarios else ""
     path = item.split("::")[0] if kind == "test" else item.rsplit(":", 1)[0]
     return Path(path).read_text() if Path(path).exists() else ""
 
 
-def gate_verdicts(unit: dict, out: dict, related: dict, scenarios: dict[str, str]) -> list[str]:
+def gate_verdicts(
+    unit: dict, out: dict, related: dict, scenarios: dict[str, str], fixtures: str = ""
+) -> list[str]:
     have = {v["item"] for v in out["verdicts"]}
     need = {s["id"] for s in related["scenarios"]}
     need |= {t for s in related["scenarios"] for t in s["tests"]} | set(related["srd_tests"])
@@ -98,7 +102,10 @@ def gate_verdicts(unit: dict, out: dict, related: dict, scenarios: dict[str, str
     problems += Gt.quotes(out["verdicts"], "rule_quote", [unit["text"]], "verdict")
     for v in out["verdicts"]:
         problems += Gt.quotes(
-            [v], "evidence", [_item_text(v["kind"], v["item"], scenarios)], f"verdict on {v['item']}"
+            [v],
+            "evidence",
+            [_item_text(v["kind"], v["item"], scenarios, fixtures)],
+            f"verdict on {v['item']}",
         )
     return problems
 
@@ -341,7 +348,8 @@ def stage_gate(ctx: P.Context, uid: str, stage: str, output: dict) -> list[str]:
     if stage == "A":
         return gate_analysis(unit, output, ctx.by_id)
     if stage == "B":
-        return gate_verdicts(unit, output, ctx.related(uid), {s.id: s.text for s in ctx.scenarios})
+        scenarios = {s.id: s.text for s in ctx.scenarios}
+        return gate_verdicts(unit, output, ctx.related(uid), scenarios, ctx.fixtures)
     if stage == "C":
         return gate_tests(unit, output, stage_output(uid, "A"), set(ctx.by_id))
     return gate_verification(output, stage_output(uid, "C"))

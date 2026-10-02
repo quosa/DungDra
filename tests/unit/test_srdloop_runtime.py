@@ -242,6 +242,23 @@ def test_gate_verdicts_needs_a_verdict_for_every_related_item():
     assert Run.gate_verdicts(GRAPPLED, out, related, scen) == ["no verdict for t.py::t"]
 
 
+def test_scenario_evidence_may_quote_the_shared_fixtures_but_test_evidence_may_not():
+    related = {"scenarios": [{"id": "MON-02", "tests": []}], "srd_tests": ["t.py::t"], "code": []}
+    scen = {"MON-02": "- **Pass:** [H] (b) LIDDA is Prone (Medium or smaller, no save)."}
+    fixtures = "| Wolf | Bite +4, 1d6+2; a Medium or smaller target gets the **Prone** condition (no save). |"
+    quote = "a Medium or smaller target gets the **Prone** condition"
+    v = {"verdict": "not-related", "evidence": quote, "rule_quote": "Your Speed is 0", "explanation": ""}
+    out = {
+        "verdicts": [{**v, "item": "MON-02", "kind": "scenario"}, {**v, "item": "t.py::t", "kind": "test"}]
+    }
+    assert Run.gate_verdicts(GRAPPLED, out, related, scen, fixtures) == [
+        f"verdict on t.py::t #1: evidence is not a verbatim quote: {quote!r}"
+    ]
+    assert Run.gate_verdicts(GRAPPLED, out, related, scen)[0].startswith(
+        "verdict on MON-02 #1: evidence is not"
+    )
+
+
 def test_gate_verification_needs_every_test():
     plan = {"tests": [{"name": "a"}, {"name": "b"}]}
     assert Run.gate_verification({"verdicts": [{"test": "a"}]}, plan) == ["no verdict for b"]

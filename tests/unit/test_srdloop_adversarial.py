@@ -125,6 +125,10 @@ SKIPPED = TEST_FILE.replace(
 NO_TICKET = TEST_FILE.replace(
     'reason="T-new: speed bonus applies while grappled"', 'reason="engine is wrong"'
 )
+CHECK_HELPER = TEST_FILE.replace(
+    "def test_grappled_speed_is_zero():\n    assert 0 == 0\n",
+    "def check_speed(n):\n    assert n == 0\n\n\ndef test_grappled_speed_is_zero():\n    check_speed(0)\n",
+)
 ONLY_POSITIVE = plan_with(tests=[PLAN["tests"][0]])
 INVENTED_QUOTE = plan_with(
     tests=[{**PLAN["tests"][0], "rule_quote": "Grappled creatures can't move at all"}, PLAN["tests"][1]]
@@ -175,6 +179,7 @@ GHOST_TEST = plan_with(
         ("C", designer({"tests/srd/test_glossary.py": RED_BUT_PASSES}), "claimed red, but"),
         ("C", designer({"tests/srd/test_glossary.py": NO_MARKER}), "no @pytest.mark.srd"),
         ("C", designer({"tests/srd/test_glossary.py": MOCKED}), "uses mocks"),
+        ("C", designer({"tests/srd/test_glossary.py": CHECK_HELPER}), "must be named assert_speed"),
         (
             "C",
             designer({"tests/srd/test_glossary.py": UNKNOWN_UNIT}),
@@ -240,6 +245,21 @@ def test_good_work_still_gets_through(tmp_path, monkeypatch):
     ctx = repo(tmp_path, monkeypatch)
     assert run(ctx, agents("none", lambda: None)) == "red"  # one red test: a ticket, not a failure
     assert [t["title"] for t in T.all_tickets()] == ["Grappled: a Speed bonus still applies"]
+
+
+def test_a_scenario_verdict_may_quote_the_shared_fixtures(tmp_path, monkeypatch):
+    """MON-02 relies on the Wolf's key values in the fixtures section, not in its own text."""
+    ctx = repo(tmp_path, monkeypatch)
+    ctx.fixtures = "| Wolf | a Medium or smaller target gets the **Prone** condition (no save) |"
+
+    def fixture_quote():
+        out = good_verdicts()
+        out["verdicts"][0]["evidence"] = "a Medium or smaller target gets the **Prone** condition"
+        return out
+
+    assert run(ctx, agents("B", fixture_quote)) == "red"
+    ctx2 = repo(tmp_path / "again", monkeypatch)
+    assert run(ctx2, agents("B", fixture_quote)) == "incomplete"  # no fixtures: still not a quote
 
 
 def test_a_paused_retry_resumes_with_the_problems_and_keeps_the_designers_files(tmp_path, monkeypatch):

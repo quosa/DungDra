@@ -17,7 +17,8 @@ Read each item yourself and give it exactly one verdict:
 - `affected-by-ambiguity`: depends on one reading of an ambiguity from stage A;
 - `not-related`: matched by page or word only; it isn't about this rule.
 
-`evidence` is a verbatim quote from the item (a scenario line, a test line, a code line) and
+`evidence` is a verbatim quote from the item (a scenario line, a test line, a code line, or for
+a scenario a line of the shared fixtures section it relies on, such as a monster's key values) and
 `rule_quote` a verbatim quote from the unit; both are checked mechanically. Every scenario and
 test you were given needs a verdict; code lines tagged `SRD[...]` too. Candidate code lines
 found only by page number need a verdict only if they are about this rule.
