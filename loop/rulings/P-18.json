@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
     "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-22",
+  "note": "You can't spend movement you don't have; refused before anything changes.",
   "reason": ""
 }

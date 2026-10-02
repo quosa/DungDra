@@ -55,7 +55,7 @@
       "summary": "I checked 42 tests: 39 keep and 3 refute.\n\nAll 39 green tests pass, and every keep was confirmed by a mutation (the engine broken on purpose in a scratch copy, which made the test fail). The mutations hit three places:\n- **Movement** (combat.py:461): the crawl cost and the rule that a plain move whi"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_prone_crawl_costs_double_and_stays_prone",
     "tests/srd/test_glossary.py::test_prone_walk_is_a_crawl_not_a_free_stand",

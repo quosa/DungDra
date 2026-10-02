@@ -1135,7 +1135,7 @@ def test_stand_with_exactly_the_cost_left(game):
     assert not gob.has("prone")
 
 
-@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="P-18")
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="R-22")
 def test_stand_refused_with_less_than_the_cost_left(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))
@@ -1187,7 +1187,7 @@ def test_cant_stand_up_for_free_on_another_creatures_turn(game):
     assert brom.has("prone")
 
 
-@pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse", ruling="P-18")
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse", ruling="R-22")
 def test_drop_and_stand_repeatedly_pays_each_time(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))
