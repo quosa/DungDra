@@ -1,8 +1,6 @@
 {
   "fingerprint": "3ca5e85d02264040",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand"
-  ],
+  "for_review": [],
   "id": "GLOSS.prone",
   "out_of_scope": [],
   "refuted": [
@@ -34,6 +32,13 @@
       "evidence": "Advantage and Disadvantage on the same roll cancel each other.",
       "target": "GLOSS.disadvantage",
       "type": "interacts_with"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Only test of grapple ends → Speed restored → can stand; catches a stale Speed after release",
+      "test": "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand"
     }
   ],
   "revisit": false,
