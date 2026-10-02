@@ -1,0 +1,12 @@
+{
+  "id": "T-44",
+  "kind": "bug",
+  "unit": "GLOSS.prone",
+  "title": "SRD: righting yourself ends the Prone condition, so a creature that isn't Prone has nothing to end; engine: refuses but cites no page",
+  "tests": [
+    "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

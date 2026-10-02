@@ -1,0 +1,14 @@
+{
+  "id": "P-17",
+  "unit": "GLOSS.prone",
+  "ambiguity": "GLOSS.prone ambiguity 1: 'half your Speed (round down)' — current Speed after modifiers, or base Speed?",
+  "ruling": "Use the creature's current Speed after all modifiers, halved and rounded down (Speed 25 costs 12; Speed 5 costs 2).",
+  "tests": [
+    "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
+    "tests/srd/test_glossary.py::test_speed_five_can_still_stand"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

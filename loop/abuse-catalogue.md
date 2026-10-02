@@ -8,6 +8,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Moving through walls, closed doors or occupied spaces.
 - Moving farther than Speed allows; Difficult Terrain for free; moving while Speed is 0.
 - Standing up from Prone without spending movement; crawling at full speed.
+- Standing up from Prone on another creature's turn, where no movement budget is checked.
+- Moving while Prone with a Climb, Swim or Fly Speed instead of crawling, to dodge the crawl cost.
+- Righting yourself with movement left over from before a Speed-0 condition, or by paying half
+  your movement (after a Dash) instead of half your Speed.
 - Teleporting or stepping to a position the rules don't allow.
 - Dashing (or stacking a Speed bonus) to get movement while your Speed is 0 and can't increase.
 - Spending movement left over from before you gained a Speed-0 condition mid-turn.

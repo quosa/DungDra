@@ -1,0 +1,299 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_crawl_costs_double_and_stays_prone",
+   "verdict": "keep",
+   "reason": "Matches #1 together with GLOSS.crawling: 10 ft of crawling costs 20 ft, and the creature stays Prone.",
+   "mutation": "combat.py:461: replaced the crawl-cost condition with `if False:`, so crawling costs nothing extra. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_walk_is_a_crawl_not_a_free_stand",
+   "verdict": "keep",
+   "reason": "A plain move by a Prone creature is charged as a crawl and doesn't end Prone. The test picks one interface choice (treat the move as a crawl instead of refusing it), but under the rules both give the same cost and leave the creature Prone. Separate from the explicit mode=\"crawl\" test.",
+   "mutation": "combat.py:461: `(c.has(\"prone\") and mode` -> `(False and mode`, so a walk while Prone is no longer a crawl. Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_move_command_crawls",
+   "verdict": "keep",
+   "reason": "Checks the same rule as the C.move test, but through the Session command layer. 5 ft costs 10 ft and the PC stays Prone.",
+   "mutation": "combat.py:461: auto-crawl disabled (`False and mode`). Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_after_standing_movement_costs_normal",
+   "verdict": "keep",
+   "reason": "Negative case: once Prone ends, movement costs the normal amount (15 to stand + 10 to walk leaves 5).",
+   "mutation": "combat.py:461: `(c.has(\"prone\") and mode` -> `(True and mode`, so every walk is charged as a crawl. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_crawl_through_difficult_terrain_stacks",
+   "verdict": "keep",
+   "reason": "GLOSS.crawling says 2 extra feet in Difficult Terrain, so 5 ft costs 15 ft. The expected value is correct.",
+   "mutation": "combat.py:461: removed the crawl cost (`if False:`). Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_cant_crawl_at_full_speed",
+   "verdict": "keep",
+   "reason": "20 ft of crawling costs 40 ft against a 30 ft Speed, so the move is refused cleanly and nothing changes.",
+   "mutation": "combat.py:461: auto-crawl disabled. Test FAILED (the 20 ft walk went through).",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling",
+   "verdict": "keep",
+   "reason": "Red test. The rule says 'only movement options are to crawl', so using a Climb Speed is ruled out. With --runxfail it fails for the stated reason: C.move(mode=\"climb\") returned 10 instead of refusing.",
+   "mutation": "Red test, so no mutation. Ran it with --runxfail: 'expected a refusal, got 10', which matches the T-new reason.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_costs_half_speed_and_ends_prone",
+   "verdict": "keep",
+   "reason": "Speed 30 gives a cost of 15, and Prone ends.",
+   "mutation": "combat.py:1712: `cb.turn.movement_left -= cost` -> `pass`. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_cost_follows_the_creatures_speed",
+   "verdict": "keep",
+   "reason": "With Speed 40 the cost is 20. This catches a hard-coded cost of 15.",
+   "mutation": "combat.py:1703: `cost = 15`. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_command_spends_half_speed",
+   "verdict": "keep",
+   "reason": "Checks the stand rule through the Session `stand` command. A different layer from the C.stand_up test.",
+   "mutation": "combat.py:1712: movement no longer deducted. Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
+   "verdict": "keep",
+   "reason": "'round down': Speed 25 gives a cost of 12, leaving 13.",
+   "mutation": "combat.py:1703: `cost = (c.speed() + 1) // 2` (rounds up). Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_with_exactly_the_cost_left",
+   "verdict": "keep",
+   "reason": "Boundary: with exactly 15 ft left, standing is allowed.",
+   "mutation": "combat.py:1706: `<` -> `<=` (off by one). Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
+   "verdict": "keep",
+   "reason": "With 10 ft left and a cost of 15, standing is refused, the refusal cites the cost, and the creature stays Prone.",
+   "mutation": "combat.py:1706: `movement_left < cost` -> `movement_left < 0`. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_dash_doesnt_raise_the_stand_cost",
+   "verdict": "keep",
+   "reason": "The cost is half your Speed, not half your movement. After a Dash the cost is still 15.",
+   "mutation": "combat.py:1703: cost computed from movement_left // 2. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly",
+   "verdict": "keep",
+   "reason": "Red test. It fails for the stated reason: the refusal \"Goblin Warrior isn't Prone\" cites no page. This is a traceability defect, not a rules defect, but the abuse case is valid.",
+   "mutation": "Red test, so no mutation. With --runxfail: 'refusal \"Goblin Warrior isn't Prone\" cites no SRD page or ruling', which matches the T-new reason.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_cant_stand_up_for_free_on_another_creatures_turn",
+   "verdict": "keep",
+   "reason": "Red test. Standing costs movement, and you only have movement on your own turn. The engine skips the cost when `cb.is_turn(c)` is false, so standing is free off-turn. With --runxfail the command returns ok:True and BROM stands for '15 ft' that is never spent.",
+   "mutation": "Red test, so no mutation. With --runxfail: 'expected a refusal, got {ok: True, ...stood up...}', which matches the reason.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time",
+   "verdict": "keep",
+   "reason": "Each stand pays 15 ft. After two stands there is 0 ft left, so a third is refused.",
+   "mutation": "combat.py:1706: insufficient-movement check disabled (`< 0`). Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_prone_creature_cant_stand",
+   "verdict": "keep",
+   "reason": "Grappled gives Speed 0, so the creature can't right itself. The refusal matches 'Speed 0'.",
+   "mutation": "combat.py:1701: `if c.speed() == 0:` -> `if False:`. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_restrained_prone_pc_stand_command_refused",
+   "verdict": "keep",
+   "reason": "Restrained gives Speed 0. Checks the stand refusal through the Session command, using a different source of Speed 0.",
+   "mutation": "combat.py:1701: Speed-0 check removed. Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand",
+   "verdict": "refute",
+   "reason": "Not wrong, but it adds almost nothing. The engine reads Speed live and in_combat is called after the release, so the test is test_stand_costs_half_speed_and_ends_prone plus release_grapple. No mutation of the Prone code I could find breaks only this test. It would only catch a bug in release_grapple (GLOSS.grappled), not in Prone #3. Sending it to a person rather than removing it.",
+   "mutation": "combat.py:1701: `if c.speed() == 0:` -> `if c.has(\"grappled\") or c.speed() == 0:` (a leftover grapple blocks standing). Test PASSED, because release already removed the grapple. Only a mutation that blocks all standing breaks it, and test_stand_costs_half_speed already catches that.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_speed_reduced_to_zero_by_a_penalty_cant_stand",
+   "verdict": "keep",
+   "reason": "Speed 0 from a penalty, not from a condition, also blocks standing.",
+   "mutation": "combat.py:1701: Speed-0 check removed. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_speed_five_can_still_stand",
+   "verdict": "keep",
+   "reason": "Boundary: Speed 5 gives a cost of 2 (rounded down) and standing is allowed.",
+   "mutation": "combat.py:1701: `== 0` -> `<= 5`. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_movement_left_from_before_a_grapple_cant_right_you",
+   "verdict": "keep",
+   "reason": "With 30 ft left over from before a mid-turn grapple, standing is still refused because Speed is 0. This catches an implementation that checks movement_left instead of Speed.",
+   "mutation": "combat.py:1701: Speed-0 check removed. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_attacker_melee_has_disadvantage",
+   "verdict": "keep",
+   "reason": "#4: a Prone attacker's melee attack has Disadvantage, and the source is named.",
+   "mutation": "effects.py:238: `acc.disadvantage(\"Prone\")` -> `pass`. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_attacker_ranged_has_disadvantage",
+   "verdict": "keep",
+   "reason": "#4 also applies to ranged attacks. The target is 30 ft away, so no other rule interferes.",
+   "mutation": "effects.py:238 -> pass. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_caster_spell_attack_has_disadvantage",
+   "verdict": "keep",
+   "reason": "#4 covers all attack rolls, including spell attacks, which go through a different code path.",
+   "mutation": "effects.py:238 -> pass. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_attack_command_has_disadvantage",
+   "verdict": "keep",
+   "reason": "Checks #4 through the Session command layer.",
+   "mutation": "effects.py:238 -> pass. Test FAILED.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_standing_attacker_has_no_prone_disadvantage",
+   "verdict": "keep",
+   "reason": "Negative case: after stand_up the attacker loses Prone's Disadvantage.",
+   "mutation": "combat.py:1713: stand_up no longer removes Prone (`pass`). Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_doesnt_affect_saving_throws",
+   "verdict": "keep",
+   "reason": "The rule applies to attack rolls only, so a Dex save is normal.",
+   "mutation": "effects.py:237: `if ctx.kind == \"attack\":` -> `if True:`. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_attacker_against_prone_target_cancels",
+   "verdict": "keep",
+   "reason": "A Prone attacker gets Disadvantage, and a Prone target within 5 ft gives Advantage. They cancel to a normal roll, and both sources are recorded.",
+   "mutation": "effects.py:238 -> pass. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_prone_attacker_disadvantage_cancels_restrained_target_advantage",
+   "verdict": "keep",
+   "reason": "The Prone attacker's Disadvantage cancels the Advantage against a Restrained target.",
+   "mutation": "effects.py:238 -> pass. Test FAILED (Advantage only).",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_adjacent_attack_on_prone_target_has_advantage",
+   "verdict": "keep",
+   "reason": "#5: an attacker within 5 ft has Advantage against a Prone target.",
+   "mutation": "effects.py:258: the within-5-ft advantage -> `pass`. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_diagonal_adjacent_attack_on_prone_target_has_advantage",
+   "verdict": "keep",
+   "reason": "Diagonal adjacency counts as 5 ft on the grid, so Advantage applies.",
+   "mutation": "effects.py:186: _within5 forced to False. Test FAILED.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_monster_attack_on_adjacent_prone_pc_has_advantage",
+   "verdict": "keep",
+   "reason": "Checks #5 through the monster attack path (attack_name) with a PC as the target.",
+   "mutation": "effects.py:258 -> pass. Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_adjacent_attack_on_standing_target_is_normal",
+   "verdict": "refute",
+   "reason": "Never exercises the Prone rule. It adds Prone and removes it at once with remove_condition, so the target has no Prone effect when it is attacked. No mutation of the Prone attack code can make it fail. It can only catch a broken remove_condition, which is generic condition machinery. test_standing_attacker_has_no_prone_disadvantage already covers 'Prone ends, its effect ends' through the real stand_up path.",
+   "mutation": "effects.py:256: `elif n == \"prone\":` -> `else:` (Prone's target effects applied to every condition). Test PASSED.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ranged_attack_from_within_5_ft_on_prone_target_cancels",
+   "verdict": "keep",
+   "reason": "The rule says 'attack roll', not 'melee attack roll'. A ranged attack from within 5 ft gets Prone's Advantage, which cancels the ranged-in-melee Disadvantage. The oracle is correct and the test is a good one.",
+   "mutation": "effects.py:258 -> pass. Test FAILED.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ranged_attack_on_distant_prone_target_has_disadvantage",
+   "verdict": "keep",
+   "reason": "#6: an attacker beyond 5 ft has Disadvantage against a Prone target.",
+   "mutation": "effects.py:260: the beyond-5-ft disadvantage -> `pass`. Test FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_reach_attack_from_10_ft_on_prone_target_has_disadvantage",
+   "verdict": "keep",
+   "reason": "Boundary: a melee attack with Reach from 10 ft is not 'within 5 feet', so it has Disadvantage. Catches an implementation that keys on melee vs ranged or on reach.",
+   "mutation": "effects.py:186: _within5 widened to `<= 10`. Test FAILED. Also effects.py:260 -> pass: FAILED.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ranged_attack_on_distant_standing_target_is_normal",
+   "verdict": "refute",
+   "reason": "No creature in the test is Prone, so it never touches GLOSS.prone. It only checks that a shortbow shot at 30 ft is normally a normal roll. That is a control case for the attack pipeline, not a test of #6. No break to the Prone rule can make it fail.",
+   "mutation": "effects.py:256: `elif n == \"prone\":` -> `else:` (Prone's target effects applied to every condition). Test PASSED, because the target has no conditions.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_distant_prone_restrained_target_cancels",
+   "verdict": "keep",
+   "reason": "The distant-Prone Disadvantage cancels Restrained's Advantage, giving a normal roll. Correct stacking.",
+   "mutation": "effects.py:260 -> pass. Test FAILED.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_spell_attack_on_distant_prone_target_has_disadvantage",
+   "verdict": "keep",
+   "reason": "#6 applied to a spell attack, which goes through a separate code path.",
+   "mutation": "effects.py:260 -> pass. Test FAILED.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/journeys/test_prone_journey.py::test_prone_pc_fights_crawls_and_stands",
+   "verdict": "keep",
+   "reason": "An end-to-end sequence over clauses #1, #2, #4 and #5, checking each step (crawl 10 ft, stand 15 ft, walk 5 ft, a normal roll once standing). Minor smell: set_turn calls the private C._expire.",
+   "mutation": "combat.py:461: auto-crawl disabled -> FAILED. combat.py:1712: stand cost not deducted -> FAILED.",
+   "confidence": 0.75
+  }
+ ],
+ "summary": "I checked 42 tests: 39 keep and 3 refute.\n\nAll 39 green tests pass, and every keep was confirmed by a mutation (the engine broken on purpose in a scratch copy, which made the test fail). The mutations hit three places:\n- **Movement** (combat.py:461): the crawl cost and the rule that a plain move while Prone counts as a crawl.\n- **Standing up** (combat.py:1701–1713): the half-Speed cost, rounding down, the movement-left check, the Speed 0 check and removing Prone.\n- **Attacks** (effects.py:186/238/256/258/260): the attacker's Disadvantage, the within-5-ft test, and Advantage/Disadvantage against a Prone target.\n\nThe three red tests were run with `--runxfail` and each fails for its stated reason:\n- **Climb:** moving with a Climb Speed while Prone returned 10 instead of a refusal.\n- **Stand when not Prone:** the refusal \"isn't Prone\" cites no page.\n- **Off-turn stand:** standing on another creature's turn returned ok:True and no movement was spent.\n\nThe oracles match the SRD text and GLOSS.crawling, including the crawl cost doubling in Difficult Terrain, rounding down for an odd Speed, and Prone's Advantage cancelling the ranged-in-melee Disadvantage.\n\nRefuted:\n- **test_ranged_attack_on_distant_standing_target_is_normal** (0.6): nothing in the test is Prone, so it never exercises the rule.\n- **test_adjacent_attack_on_standing_target_is_normal** (0.55): Prone is removed before the attack, so only a broken remove_condition could fail it. test_standing_attacker_has_no_prone_disadvantage already covers \"Prone ends, its effect ends\" through stand_up.\n- **test_speed_zero_ends_and_the_creature_can_stand** (0.45, goes to a person): no mutation of the Prone code breaks only this test. In practice it is the basic stand test plus releasing the grapple.\n\nOne interface choice has no ruling in the register: a plain move by a Prone creature is charged as a crawl instead of being refused. This affects test_prone_walk_is_a_crawl_not_a_free_stand and test_prone_move_command_crawls. Under the rules both give the same result (crawl cost, still Prone), so I kept them. The journey test calls the private C._expire, which is a minor smell."
+}

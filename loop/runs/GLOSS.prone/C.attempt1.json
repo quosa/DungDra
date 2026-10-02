@@ -1,0 +1,490 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.prone#1",
+    "with": "Climb/Swim/Fly Speed (MOVE_MODES)",
+    "risk": "high",
+    "note": "The engine only charges the crawl cost when mode is 'walk' or 'crawl', so a prone creature with a Climb Speed moves at normal cost. This is red."
+   },
+   {
+    "clause": "GLOSS.prone#1",
+    "with": "Difficult Terrain",
+    "risk": "medium",
+    "note": "The extra costs stack: crawling 5 ft through Difficult Terrain costs 15 ft. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#2",
+    "with": "turn order (off-turn movement)",
+    "risk": "high",
+    "note": "stand_up only checks the budget when it is the creature's turn. Off-turn in combat it ends Prone for free. This is red."
+   },
+   {
+    "clause": "GLOSS.prone#2",
+    "with": "GLOSS.dash",
+    "risk": "medium",
+    "note": "The cost is half the Speed, not half the movement left after a Dash. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#2",
+    "with": "SpeedPenalty / ambiguity 1",
+    "risk": "medium",
+    "note": "An odd modified Speed (25) costs 12 to stand. This depends on the current-Speed reading."
+   },
+   {
+    "clause": "GLOSS.prone#2",
+    "with": "stage A gap (too little movement left)",
+    "risk": "medium",
+    "note": "The engine refuses when movement left is less than the cost. Proposed ruling below."
+   },
+   {
+    "clause": "GLOSS.prone#3",
+    "with": "GLOSS.grappled / GLOSS.restrained / SpeedPenalty to 0",
+    "risk": "high",
+    "note": "Every Speed-0 source blocks standing up, including a grapple gained mid-turn with movement left. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#4",
+    "with": "GLOSS.restrained target, prone target (Advantage)",
+    "risk": "medium",
+    "note": "Disadvantage and Advantage cancel to a normal roll. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#4",
+    "with": "spell attacks (Fire Bolt)",
+    "risk": "medium",
+    "note": "Prone Disadvantage applies to spell attack rolls too. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#5",
+    "with": "ranged attack with a hostile within 5 ft",
+    "risk": "medium",
+    "note": "Prone Advantage cancels the ranged-in-melee Disadvantage. This is green."
+   },
+   {
+    "clause": "GLOSS.prone#5",
+    "with": "Large creatures / ambiguity 3",
+    "risk": "medium",
+    "note": "The engine measures between point positions and has no creature footprint, so a Large attacker standing adjacent can count as beyond 5 ft. Not testable."
+   },
+   {
+    "clause": "GLOSS.prone#6",
+    "with": "Reach weapons (glaive)",
+    "risk": "medium",
+    "note": "An attack from 10 ft with reach gets Disadvantage. This is green."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Standing up from Prone without spending movement",
+    "test": "tests/srd/test_glossary.py::test_cant_stand_up_for_free_on_another_creatures_turn",
+    "reason": "Off-turn, stand ends Prone for free. Red."
+   },
+   {
+    "case": "Crawling at full speed",
+    "test": "tests/srd/test_glossary.py::test_prone_cant_crawl_at_full_speed",
+    "reason": "Moving 20 ft while prone costs 40 and is refused cleanly."
+   },
+   {
+    "case": "Moving while Prone with a special Speed instead of crawling (new)",
+    "test": "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling",
+    "reason": "A climb while prone is accepted at normal cost. Red."
+   },
+   {
+    "case": "Spending movement left over from before a Speed-0 condition",
+    "test": "tests/srd/test_glossary.py::test_movement_left_from_before_a_grapple_cant_right_you",
+    "reason": "The grapple is applied mid-turn with 30 ft left, and stand is refused."
+   },
+   {
+    "case": "Paying half your movement after a Dash instead of half your Speed (new)",
+    "test": "tests/srd/test_glossary.py::test_dash_doesnt_raise_the_stand_cost",
+    "reason": "The cost stays 15 after a Dash."
+   },
+   {
+    "case": "Drop Prone / stand repeatedly",
+    "test": "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time",
+    "reason": "Each stand costs 15, and the third is refused."
+   },
+   {
+    "case": "Standing up when not Prone (refusal must cite a page)",
+    "test": "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly",
+    "reason": "The refusal cites no page. Red."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_crawl_costs_double_and_stays_prone",
+    "clause": "GLOSS.prone#1",
+    "kind": "positive",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_walk_is_a_crawl_not_a_free_stand",
+    "clause": "GLOSS.prone#1",
+    "kind": "positive",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_move_command_crawls",
+    "clause": "GLOSS.prone#1",
+    "kind": "positive",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_after_standing_movement_costs_normal",
+    "clause": "GLOSS.prone#1",
+    "kind": "negative",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_crawl_through_difficult_terrain_stacks",
+    "clause": "GLOSS.prone#1",
+    "kind": "positive",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_cant_crawl_at_full_speed",
+    "clause": "GLOSS.prone#1",
+    "kind": "abuse",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling",
+    "clause": "GLOSS.prone#1",
+    "kind": "abuse",
+    "rule_quote": "Your only movement options are to crawl",
+    "claim": "red",
+    "ticket_title": "SRD: a Prone creature's only movement is crawling or righting itself; engine: lets it move with its Climb Speed at normal cost"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_costs_half_speed_and_ends_prone",
+    "clause": "GLOSS.prone#2",
+    "kind": "positive",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_cost_follows_the_creatures_speed",
+    "clause": "GLOSS.prone#2",
+    "kind": "positive",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_command_spends_half_speed",
+    "clause": "GLOSS.prone#2",
+    "kind": "positive",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
+    "clause": "GLOSS.prone#2",
+    "kind": "boundary",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_with_exactly_the_cost_left",
+    "clause": "GLOSS.prone#2",
+    "kind": "boundary",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
+    "clause": "GLOSS.prone#2",
+    "kind": "boundary",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_dash_doesnt_raise_the_stand_cost",
+    "clause": "GLOSS.prone#2",
+    "kind": "negative",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly",
+    "clause": "GLOSS.prone#2",
+    "kind": "abuse",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "red",
+    "ticket_title": "SRD: righting yourself ends the Prone condition, so a creature that isn't Prone has nothing to end; engine: refuses but cites no page"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_cant_stand_up_for_free_on_another_creatures_turn",
+    "clause": "GLOSS.prone#2",
+    "kind": "abuse",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "red",
+    "ticket_title": "SRD: righting yourself costs half your Speed in movement; engine: on another creature's turn the stand command ends Prone without spending any"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time",
+    "clause": "GLOSS.prone#2",
+    "kind": "abuse",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_grappled_prone_creature_cant_stand",
+    "clause": "GLOSS.prone#3",
+    "kind": "positive",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_restrained_prone_pc_stand_command_refused",
+    "clause": "GLOSS.prone#3",
+    "kind": "positive",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand",
+    "clause": "GLOSS.prone#3",
+    "kind": "negative",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_speed_reduced_to_zero_by_a_penalty_cant_stand",
+    "clause": "GLOSS.prone#3",
+    "kind": "boundary",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_speed_five_can_still_stand",
+    "clause": "GLOSS.prone#3",
+    "kind": "boundary",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_movement_left_from_before_a_grapple_cant_right_you",
+    "clause": "GLOSS.prone#3",
+    "kind": "abuse",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_attacker_melee_has_disadvantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_attacker_ranged_has_disadvantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_caster_spell_attack_has_disadvantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_attack_command_has_disadvantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_standing_attacker_has_no_prone_disadvantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "negative",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_doesnt_affect_saving_throws",
+    "clause": "GLOSS.prone#4",
+    "kind": "negative",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_attacker_against_prone_target_cancels",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_prone_attacker_disadvantage_cancels_restrained_target_advantage",
+    "clause": "GLOSS.prone#4",
+    "kind": "positive",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_adjacent_attack_on_prone_target_has_advantage",
+    "clause": "GLOSS.prone#5",
+    "kind": "positive",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_diagonal_adjacent_attack_on_prone_target_has_advantage",
+    "clause": "GLOSS.prone#5",
+    "kind": "boundary",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_monster_attack_on_adjacent_prone_pc_has_advantage",
+    "clause": "GLOSS.prone#5",
+    "kind": "positive",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_adjacent_attack_on_standing_target_is_normal",
+    "clause": "GLOSS.prone#5",
+    "kind": "negative",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ranged_attack_from_within_5_ft_on_prone_target_cancels",
+    "clause": "GLOSS.prone#5",
+    "kind": "positive",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ranged_attack_on_distant_prone_target_has_disadvantage",
+    "clause": "GLOSS.prone#6",
+    "kind": "positive",
+    "rule_quote": "Otherwise, that attack roll has Disadvantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_reach_attack_from_10_ft_on_prone_target_has_disadvantage",
+    "clause": "GLOSS.prone#6",
+    "kind": "boundary",
+    "rule_quote": "Otherwise, that attack roll has Disadvantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ranged_attack_on_distant_standing_target_is_normal",
+    "clause": "GLOSS.prone#6",
+    "kind": "negative",
+    "rule_quote": "Otherwise, that attack roll has Disadvantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_distant_prone_restrained_target_cancels",
+    "clause": "GLOSS.prone#6",
+    "kind": "positive",
+    "rule_quote": "Otherwise, that attack roll has Disadvantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_spell_attack_on_distant_prone_target_has_disadvantage",
+    "clause": "GLOSS.prone#6",
+    "kind": "positive",
+    "rule_quote": "Otherwise, that attack roll has Disadvantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/journeys/test_prone_journey.py::test_prone_pc_fights_crawls_and_stands",
+    "clause": "GLOSS.prone#2",
+    "kind": "positive",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.prone#5",
+    "kind": "missing",
+    "reason": "Ambiguity 3 depends on measuring from a creature's whole space. The engine measures between single point positions and has no footprint for Large or bigger creatures, so 'a Large attacker adjacent to the target' can't be expressed.",
+    "infra_ticket": "Creature spaces: give Large and bigger creatures a footprint, and measure distance and adjacency between the nearest occupied squares"
+   }
+  ],
+  "scenario_changes": [
+   {
+    "scenario": "tests/scenarios/test_damage_rest.py::test_cond02",
+    "change": "Under-asserts verdict. Added: the Prone goblin's own scimitar attack has Disadvantage (#4); after dropping Prone again, crawling 10 ft costs 10 of its 15 ft left and it stays Prone (#1); the Speed-0 stand refusal is also checked with assert_refused_cleanly (match 'Speed 0', nothing changed) and the creature stays Prone (#3). The existing assertions are kept.",
+    "note_row": "| COND-02 | test_cond02 | under-asserts (GLOSS.prone) | Added the prone attacker's Disadvantage (#4), the crawl cost while Prone (#1) and a clean Speed-0 refusal (#3) |"
+   }
+  ],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.prone ambiguity 1: 'half your Speed (round down)' — current Speed after modifiers, or base Speed?",
+    "ruling": "Use the creature's current Speed after all modifiers, halved and rounded down (Speed 25 costs 12; Speed 5 costs 2).",
+    "tests": [
+     "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
+     "tests/srd/test_glossary.py::test_speed_five_can_still_stand"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.prone gap: righting yourself with less movement left than half your Speed.",
+    "ruling": "Refuse it cleanly. Righting yourself needs at least the full cost in remaining movement, and no partial cost carries over.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
+     "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time"
+    ]
+   }
+  ],
+  "summary": "I added 41 GLOSS.prone tests to tests/srd/test_glossary.py and wrote one journey (tests/srd/journeys/test_prone_journey.py). Every clause has positive and negative tests, the threshold clauses have boundary tests, and abuse cases are covered too. The tests cover: crawling at double cost, which stacks with Difficult Terrain; the stand-up cost of half the Speed, including round-down, the exact-cost and short-movement boundaries, and the cost after a Dash; the Speed-0 refusal from grappled, restrained and a penalty (also when grappled mid-turn); the prone attacker's Disadvantage on melee, ranged and spell attacks; and the Advantage within 5 ft (diagonal included) versus Disadvantage beyond it (a 10-ft reach attack included), with cancellation against other sources. Three tests are red: (1) a prone creature can move with its Climb Speed at normal cost instead of crawling; (2) the stand command on another creature's turn ends Prone without spending movement; (3) standing up when not Prone is refused without citing a page. I strengthened test_cond02 per stage B with checks for #4, #1 and a clean Speed-0 refusal, and added three cheats to the abuse catalogue. Large-creature adjacency (ambiguity 3) needs creature footprints, which the engine doesn't have. Results: 101 passed, 34 xfailed (3 of them new); ruff check and format are clean."
+ },
+ "problems": [],
+ "cost_usd": 1.9684309999999996,
+ "session": "56c27047-9dd6-4f76-91f9-65facf2e9fa3"
+}

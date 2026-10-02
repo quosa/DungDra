@@ -971,3 +971,482 @@ def test_held_spell_survives_a_successful_concentration_save(game):
     game.dice.force_str("d4=[1,1,1]")
     RDY.move(s, gob, (30, 0))
     assert gob.hp == 4
+
+
+# ================ GLOSS.prone ================
+PR = "GLOSS.prone"
+
+
+def knock_prone(c):
+    c.add_condition("prone", "knocked down")
+    assert c.has("prone")
+
+
+def melee_mode(game, attacker, target, weapon="longsword", d20="d20=[2,2]"):
+    """A PC's weapon attack with low forced dice (a miss), returning the roll."""
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str(d20)
+    return C.attack(game, attacker, target, weapon=weapon).roll
+
+
+# ---------------- #1 · Only crawling ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="positive")
+def test_prone_crawl_costs_double_and_stays_prone(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    C.move(game, gob, to=(10, 0), mode="crawl")
+    assert gob.position == (10, 0)
+    assert game.combat.turn.movement_left == 10
+    assert gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="positive")
+def test_prone_walk_is_a_crawl_not_a_free_stand(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    C.move(game, gob, to=(10, 0))
+    assert game.combat.turn.movement_left == 10
+    assert gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="positive")
+def test_prone_move_command_crawls(game):
+    s = Session(game)
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (40, 0))
+    in_combat(game, brom, gob)
+    knock_prone(brom)
+    out = s.execute({"cmd": "move", "actor": brom.id, "to": [5, 0]})
+    assert out["ok"], out
+    assert game.combat.turn.movement_left == 20
+    assert brom.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="negative")
+def test_after_standing_movement_costs_normal(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert C.stand_up(game, gob) == 15
+    C.move(game, gob, to=(10, 0))
+    assert game.combat.turn.movement_left == 5
+    assert not gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="positive")
+def test_prone_crawl_through_difficult_terrain_stacks(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    C.move(game, gob, to=(5, 0), mode="crawl", difficult=True)
+    assert game.combat.turn.movement_left == 15  # 5 ft + 5 crawling + 5 Difficult Terrain
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="abuse")
+def test_prone_cant_crawl_at_full_speed(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert_refused_cleanly(game, C.move, game, gob, to=(20, 0))
+    assert gob.position == (0, 0)
+    assert game.combat.turn.movement_left == 30
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#1", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-43: a Prone creature can move with its Climb Speed at normal cost instead of only crawling",
+)
+def test_prone_cant_climb_instead_of_crawling(game):
+    rat = mon(game, "giant rat", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, rat, brom)
+    assert rat.speed("climb") > 0
+    knock_prone(rat)
+    assert_refused_cleanly(game, C.move, game, rat, to=(10, 0), mode="climb")
+    assert rat.position == (0, 0)
+
+
+# ---------------- #2 · Righting yourself costs half your Speed ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="positive")
+def test_stand_costs_half_speed_and_ends_prone(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert C.stand_up(game, gob) == 15
+    assert game.combat.turn.movement_left == 15
+    assert not gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="positive")
+def test_stand_cost_follows_the_creatures_speed(game):
+    ogre = mon(game, "ogre", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, ogre, brom)
+    assert ogre.speed() == 40
+    knock_prone(ogre)
+    assert C.stand_up(game, ogre) == 20
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="positive")
+def test_stand_command_spends_half_speed(game):
+    s = Session(game)
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (40, 0))
+    in_combat(game, brom, gob)
+    knock_prone(brom)
+    out = s.execute({"cmd": "stand", "actor": brom.id})
+    assert out["ok"], out
+    assert not brom.has("prone")
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="P-17")
+def test_stand_cost_rounds_down_for_an_odd_speed(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    gob.add_effect(SpeedPenalty("hobbled", 5))
+    assert gob.speed() == 25
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert C.stand_up(game, gob) == 12
+    assert game.combat.turn.movement_left == 13
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary")
+def test_stand_with_exactly_the_cost_left(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    C.move(game, gob, to=(15, 0))
+    C.drop_prone(game, gob)
+    assert game.combat.turn.movement_left == 15
+    assert C.stand_up(game, gob) == 15
+    assert game.combat.turn.movement_left == 0
+    assert not gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="boundary", ruling="P-18")
+def test_stand_refused_with_less_than_the_cost_left(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    C.move(game, gob, to=(20, 0))
+    C.drop_prone(game, gob)
+    assert game.combat.turn.movement_left == 10
+    assert_refused_cleanly(game, C.stand_up, game, gob, match="15")
+    assert gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="negative")
+def test_dash_doesnt_raise_the_stand_cost(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    actions.dash(game, gob)
+    assert game.combat.turn.movement_left == 60
+    assert C.stand_up(game, gob) == 15  # half the Speed, not half the movement
+    assert game.combat.turn.movement_left == 45
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse")
+@pytest.mark.xfail(strict=True, reason="T-44: standing up when not Prone is refused without citing a page")
+def test_stand_when_not_prone_refused_cleanly(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    C.stand_up(game, gob)
+    assert_refused_cleanly(game, C.stand_up, game, gob)
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-45: a Prone creature can stand up on another creature's turn without spending movement",
+)
+def test_cant_stand_up_for_free_on_another_creatures_turn(game):
+    s = Session(game)
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    in_combat(game, gob, brom)
+    knock_prone(brom)
+    assert game.combat.current is gob
+    assert_refused_cleanly(game, s.execute, {"cmd": "stand", "actor": brom.id})
+    assert brom.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse", ruling="P-18")
+def test_drop_and_stand_repeatedly_pays_each_time(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert C.stand_up(game, gob) == 15
+    C.drop_prone(game, gob)
+    assert C.stand_up(game, gob) == 15
+    C.drop_prone(game, gob)
+    assert game.combat.turn.movement_left == 0
+    assert_refused_cleanly(game, C.stand_up, game, gob)
+    assert gob.has("prone")
+
+
+# ---------------- #3 · Speed 0: can't right yourself ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="positive")
+def test_grappled_prone_creature_cant_stand(game):
+    brom = brom_free_hand(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    grab(game, brom, gob)
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert gob.speed() == 0
+    assert_refused_cleanly(game, C.stand_up, game, gob, match="Speed 0")
+    assert gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="positive")
+def test_restrained_prone_pc_stand_command_refused(game):
+    s = Session(game)
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (40, 0))
+    in_combat(game, brom, gob)
+    brom.add_condition("restrained")
+    knock_prone(brom)
+    assert brom.speed() == 0
+    out = assert_refused_cleanly(game, s.execute, {"cmd": "stand", "actor": brom.id})
+    assert "Speed 0" in out["error"]
+    assert brom.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="negative")
+def test_speed_zero_ends_and_the_creature_can_stand(game):
+    brom = brom_free_hand(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    grab(game, brom, gob)
+    knock_prone(gob)
+    C.release_grapple(game, gob)
+    in_combat(game, gob, brom)
+    assert gob.speed() == 30
+    assert C.stand_up(game, gob) == 15
+    assert not gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="boundary")
+def test_speed_reduced_to_zero_by_a_penalty_cant_stand(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    gob.add_effect(SpeedPenalty("crushed", 30))
+    assert gob.speed() == 0
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert_refused_cleanly(game, C.stand_up, game, gob)
+    assert gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="boundary", ruling="P-17")
+def test_speed_five_can_still_stand(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    gob.add_effect(SpeedPenalty("crushed", 25))
+    assert gob.speed() == 5
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert C.stand_up(game, gob) == 2
+    assert game.combat.turn.movement_left == 3
+    assert not gob.has("prone")
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#3", kind="abuse")
+def test_movement_left_from_before_a_grapple_cant_right_you(game):
+    brom = brom_free_hand(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    in_combat(game, gob, brom)
+    knock_prone(gob)
+    assert game.combat.turn.movement_left == 30
+    gob.add_condition("grappled", "grappled mid-turn", grappler=brom.id)
+    assert_refused_cleanly(game, C.stand_up, game, gob)
+    assert gob.has("prone")
+
+
+# ---------------- #4 · Your attack rolls have Disadvantage ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_attacker_melee_has_disadvantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(brom)
+    r = melee_mode(game, brom, gob)
+    assert r.mode == "disadvantage"
+    assert any("Prone" in s for s in r.dis)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_attacker_ranged_has_disadvantage(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    knock_prone(lidda)
+    game.dice.force_str("d20=[2,2]")
+    r = C.attack(game, lidda, gob, weapon="shortbow").roll
+    assert r.mode == "disadvantage"
+    assert any("Prone" in s for s in r.dis)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_caster_spell_attack_has_disadvantage(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    knock_prone(m)
+    game.dice.force_str("d20=[2,2]")
+    S.cast(game, m, "fire bolt", gob)
+    atk = game.log.last("attack")
+    assert "isadvantage" in atk.text, atk.text
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_attack_command_has_disadvantage(game):
+    s = Session(game)
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(brom)
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[2,2]")
+    out = s.execute({"cmd": "attack", "actor": brom.id, "target": gob.id, "weapon": "longsword"})
+    assert out["ok"], out
+    assert "isadvantage" in game.log.last("attack").text
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="negative")
+def test_standing_attacker_has_no_prone_disadvantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(brom)
+    C.stand_up(game, brom)
+    r = melee_mode(game, brom, gob, d20="d20=[2]")
+    assert r.mode == "normal"
+    assert not any("Prone" in s for s in r.dis)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="negative")
+def test_prone_doesnt_affect_saving_throws(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    knock_prone(gob)
+    game.dice.force_str("d20=[10]")
+    assert gob.save("dex", 10).mode == "normal"
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_attacker_against_prone_target_cancels(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(brom)
+    knock_prone(gob)
+    r = melee_mode(game, brom, gob, d20="d20=[2]")
+    assert r.mode == "normal"
+    assert any("Prone" in s for s in r.dis) and any("Prone" in s for s in r.adv)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#4", kind="positive")
+def test_prone_attacker_disadvantage_cancels_restrained_target_advantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("restrained")
+    knock_prone(brom)
+    r = melee_mode(game, brom, gob, d20="d20=[2]")
+    assert r.mode == "normal"
+
+
+# ---------------- #5 · Advantage from within 5 feet ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#5", kind="positive")
+def test_adjacent_attack_on_prone_target_has_advantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(gob)
+    r = melee_mode(game, brom, gob)
+    assert r.mode == "advantage"
+    assert any("Prone" in s for s in r.adv)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#5", kind="boundary")
+def test_diagonal_adjacent_attack_on_prone_target_has_advantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 5))
+    knock_prone(gob)
+    assert brom.distance_to(gob) == 5
+    assert melee_mode(game, brom, gob).mode == "advantage"
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#5", kind="positive")
+def test_monster_attack_on_adjacent_prone_pc_has_advantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(brom)
+    game.dice.force_str("d20=[2,2]")
+    r = C.attack(game, gob, brom, attack_name="scimitar").roll
+    assert r.mode == "advantage"
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#5", kind="positive")
+def test_ranged_attack_from_within_5_ft_on_prone_target_cancels(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    knock_prone(gob)
+    game.dice.force_str("d20=[2]")
+    r = C.attack(game, lidda, gob, weapon="shortbow").roll
+    assert any("Prone" in s for s in r.adv)
+    assert r.mode == "normal"  # Prone's Advantage cancels the ranged-in-melee Disadvantage
+
+
+# ---------------- #6 · Otherwise Disadvantage ----------------
+@pytest.mark.srd(PR, clause=f"{PR}#6", kind="positive")
+def test_ranged_attack_on_distant_prone_target_has_disadvantage(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    knock_prone(gob)
+    game.dice.force_str("d20=[2,2]")
+    r = C.attack(game, lidda, gob, weapon="shortbow").roll
+    assert r.mode == "disadvantage"
+    assert any("Prone" in s for s in r.dis)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#6", kind="boundary")
+def test_reach_attack_from_10_ft_on_prone_target_has_disadvantage(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.shield = None
+    gob = mon(game, "goblin warrior", (10, 0))
+    knock_prone(gob)
+    r = melee_mode(game, brom, gob, weapon="glaive")
+    assert r.mode == "disadvantage"
+    assert any("Prone" in s for s in r.dis)
+    assert not any("Prone" in s for s in r.adv)
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#6", kind="positive")
+def test_distant_prone_restrained_target_cancels(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.add_condition("restrained")
+    knock_prone(gob)
+    game.dice.force_str("d20=[2]")
+    r = C.attack(game, lidda, gob, weapon="shortbow").roll
+    assert any("Prone" in s for s in r.dis)
+    assert r.mode == "normal"
+
+
+@pytest.mark.srd(PR, clause=f"{PR}#6", kind="positive")
+def test_spell_attack_on_distant_prone_target_has_disadvantage(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    knock_prone(gob)
+    game.dice.force_str("d20=[2,2]")
+    S.cast(game, m, "fire bolt", gob)
+    assert "isadvantage" in game.log.last("attack").text

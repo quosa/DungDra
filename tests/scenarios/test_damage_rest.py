@@ -10,6 +10,7 @@ from dungdra import hazards as H
 from dungdra import rest as R
 from tests.scenarios.test_combat import set_turn, start
 from tests.support.helpers import mon, pc
+from tests.support.srd import assert_refused_cleanly
 
 
 # ---------------- DMG-01 ----------------
@@ -201,16 +202,25 @@ def test_cond02(game):
     lidda = pc(game, "LIDDA", (40, 0))
     game.dice.force_str("d20=[5,5]")
     assert C.attack(game, lidda, gob, weapon="shortbow").roll.mode == "disadvantage"
+    # the Prone creature's own attacks have Disadvantage
+    game.dice.force_str("d20=[5,5]")
+    assert C.attack(game, gob, b, attack_name="scimitar").roll.mode == "disadvantage"
     b2 = pc(game, "BROM", (0, 20))
     game.dice.force_str("d20=[20, 1, 1]")
     start(game, gob, b, b2)
     set_turn(game, gob)
     assert C.stand_up(game, gob) == 15 and game.combat.turn.movement_left == 15
+    # Prone again: moving is crawling, 1 extra foot per foot, and it stays Prone
+    C.drop_prone(game, gob)
+    C.move(game, gob, to=(10, 0), mode="crawl")
+    assert game.combat.turn.movement_left == 5 and gob.has("prone")
     gob.add_condition("prone")
     gob.add_condition("grappled", grappler=b.id)
     assert gob.speed() == 0
     with pytest.raises(Refusal):
         C.stand_up(game, gob)
+    assert_refused_cleanly(game, C.stand_up, game, gob, match="Speed 0")
+    assert gob.has("prone")
     # Frightened
     b2.add_condition("frightened", caster=gob)
     game.dice.force_str("d20=[5,5]")

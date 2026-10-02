@@ -40,62 +40,59 @@
    },
    {
     "type": "interacts_with",
-    "target": "GLOSS.advantage",
-    "evidence": "A roll can’t be affected by more than one Advantage, and Advantage and Disadvantage on the same roll cancel each other."
+    "target": "GLOSS.speed",
+    "evidence": "If your Speed is 0, you can’t right yourself."
    },
    {
     "type": "interacts_with",
     "target": "GLOSS.disadvantage",
-    "evidence": "A roll can’t be affected by more than one Disadvantage, and Advantage and Disadvantage on the same roll cancel each other."
+    "evidence": "You have Disadvantage on attack rolls."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.advantage",
+    "evidence": "An attack roll against you has Advantage if the attacker is within 5 feet of you."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.disadvantage",
+    "evidence": "Advantage and Disadvantage on the same roll cancel each other."
    }
   ],
   "ambiguities": [
    {
     "quote": "half your Speed (round down)",
-    "reading_a": "Half of the creature's current Speed (its walking Speed after reductions such as being halved), whatever speed it is otherwise using.",
-    "reading_b": "Half of whichever speed the creature is using to move (e.g. Fly or Swim Speed), or of its base unmodified Speed.",
-    "proposed_ruling": "Use the creature's current Speed (the walking Speed as GLOSS.speed defines it, after any increases or decreases in effect at that moment), halved and rounded down.",
+    "reading_a": "Half of the creature's current Speed after modifiers (e.g. a Speed halved or reduced by an effect, so 30 halved to 15 costs 7 ft).",
+    "reading_b": "Half of the creature's base (unmodified) Speed, so 30 costs 15 ft whatever the current modifiers.",
+    "proposed_ruling": "Use the current Speed after all modifiers, rounded down.",
     "confidence": 0.7
    },
    {
-    "quote": "spend an amount of movement equal to half your Speed (round down) to right yourself",
-    "reading_a": "The creature must have at least that much movement left this turn; if it has less, it can't right itself.",
-    "reading_b": "The creature can right itself with whatever movement it has left, even if that is less than half its Speed.",
-    "proposed_ruling": "Righting yourself needs at least half your Speed (rounded down) of movement remaining; with less left, you stay Prone.",
-    "confidence": 0.75
+    "quote": "half your Speed (round down)",
+    "reading_a": "'Speed' means the walking Speed only, even for a creature with a Fly, Swim or Climb Speed.",
+    "reading_b": "It means whichever speed the creature is using for the move (e.g. half its Swim Speed while in water).",
+    "proposed_ruling": "Use the walking Speed; GLOSS.speed treats 'Speed' as distinct from the named special speeds.",
+    "confidence": 0.6
    },
    {
-    "quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
-    "reading_a": "Applies to every attack roll, melee or ranged, based only on the distance between attacker and target.",
-    "reading_b": "Applies only to melee attacks within 5 feet, and ranged attacks always have Disadvantage (as many people remember the rule).",
-    "proposed_ruling": "Distance only: any attack roll from within 5 feet gets Advantage and any attack roll from farther away gets Disadvantage, whether melee or ranged. A ranged attack from within 5 feet also gets Disadvantage from the close-range rule, so the two cancel out.",
-    "confidence": 0.85
+    "quote": "if the attacker is within 5 feet of you",
+    "reading_a": "Measured from the nearest edge of the attacker's space to yours (any adjacent square counts, whatever the creatures' sizes).",
+    "reading_b": "Measured from the creatures' centres, so a Large attacker may count as beyond 5 feet while adjacent.",
+    "proposed_ruling": "Measure between the nearest occupied spaces; adjacent counts as within 5 feet, and a 10-ft reach attacker one square away gets Disadvantage.",
+    "confidence": 0.8
    }
   ],
   "conflicts": [],
   "gaps": [
    {
-    "quote": "Your only movement options are to crawl",
-    "explanation": "This unit doesn't give the movement cost of crawling. It depends on the Crawling rule, which wasn't provided here."
-   },
-   {
-    "quote": "If your Speed is 0, you can’t right yourself.",
-    "explanation": "The unit doesn't cover a Speed so low that half of it rounds down to 0 (Speed 1). Read literally, righting yourself would cost 0 movement as long as Speed isn't 0."
+    "quote": "spend an amount of movement equal to half your Speed (round down) to right yourself",
+    "explanation": "The unit doesn't say what happens if you have less movement left than the cost (e.g. after crawling). 'Spend' implies you need that much remaining movement, but no rule says the attempt is refused or that partial movement carries over."
    }
   ],
-  "traps": [
-   {
-    "quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you. Otherwise, that attack roll has Disadvantage.",
-    "note": "A common misremembering of the 2014 rule is 'melee attacks have Advantage, ranged attacks have Disadvantage'. In both editions the test is distance, not attack type. An engine that branches on melee or ranged gets reach melee attacks from 10 feet and ranged attacks from within 5 feet wrong."
-   },
-   {
-    "quote": "half your Speed (round down)",
-    "note": "In 2014 this was 'half your speed', with no rounding stated and with an extra clause: 'can't stand up if you don't have enough movement left'. The 2024 text adds round down and drops the enough-movement clause. It also calls this 'right yourself' instead of 'stand up'."
-   }
-  ],
-  "summary": "I split Prone into 6 clauses. Movement is limited to crawling or righting yourself, which costs half your Speed rounded down and ends the condition; you can't right yourself at Speed 0. You have Disadvantage on your own attack rolls. Attacks against you have Advantage from within 5 feet and Disadvantage from farther away. Through GLOSS.advantage and GLOSS.disadvantage these can cancel out. Open points for a ruling: which Speed counts, whether you need enough movement left to right yourself, and that the attack effects depend on distance, not melee or ranged."
+  "traps": [],
+  "summary": "Prone limits movement to crawling or righting yourself. Righting yourself costs half your Speed, rounded down, and isn't possible at Speed 0. A prone creature has Disadvantage on its attack rolls. Attacks against it have Advantage from within 5 feet and Disadvantage from farther away. These combine with other sources under the normal Advantage/Disadvantage cancelling rules. The ambiguities: which Speed (modified or base, walking or special) sets the cost to right yourself, and how the 5-foot distance is measured."
  },
  "problems": [],
- "cost_usd": 0.11596519999999999,
- "session": "0dac3e78-462f-40d7-9ae1-a99daa4e83d5"
+ "cost_usd": 0.14832800000000002,
+ "session": "4f8d393d-7a29-4691-9498-92c9b9293144"
 }

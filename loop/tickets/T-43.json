@@ -1,0 +1,12 @@
+{
+  "id": "T-43",
+  "kind": "bug",
+  "unit": "GLOSS.prone",
+  "title": "SRD: a Prone creature's only movement is crawling or righting itself; engine: lets it move with its Climb Speed at normal cost",
+  "tests": [
+    "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

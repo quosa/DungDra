@@ -1,0 +1,12 @@
+{
+  "id": "T-45",
+  "kind": "bug",
+  "unit": "GLOSS.prone",
+  "title": "SRD: righting yourself costs half your Speed in movement; engine: on another creature's turn the stand command ends Prone without spending any",
+  "tests": [
+    "tests/srd/test_glossary.py::test_cant_stand_up_for_free_on_another_creatures_turn"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
