@@ -2,7 +2,7 @@
 
 import pytest
 
-from dungdra.combat import attack, move, release_grapple
+from dungdra.combat import attack, escape_grapple, move, release_grapple
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
@@ -185,6 +185,25 @@ def test_release_grapple_ends_the_condition_and_the_grapplers_flag(game):
     release_grapple(game, gob)
     assert grapplers_of(gob) == set()
     assert not any(f.name == "grappling" for f in brom.effects)
+
+
+def test_escape_grapple_refused_when_not_grappled(game):
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("restrained", "net", escape_dc=10)
+    with pytest.raises(Refusal):
+        escape_grapple(game, gob)
+    assert gob.has("restrained")
+
+
+def test_escape_grapple_checks_against_the_grapples_escape_dc(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("restrained", "net", escape_dc=30)
+    gob.add_effect(Condition("grappled", "grappled", grappler=brom.id, escape_dc=15))
+    game.dice.force_str("d20=[20]")
+    r = escape_grapple(game, gob, skill="acrobatics")
+    assert r.target == 15 and r.success
+    assert grapplers_of(gob) == set()
 
 
 def test_climbing_without_a_climb_speed_costs_an_extra_foot(game):

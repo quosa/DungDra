@@ -1624,7 +1624,7 @@ def shove(game, attacker, target, effect="prone"):
 
 
 def escape_grapple(game, c, skill=None):
-    eff = next((e for e in c.effects if e.condition == "grappled"), None)
+    eff = next(iter(grapples_on(c)), None)
     if eff is None:
         raise Refusal(f"{c.name} isn't Grappled")
     if game.combat is not None:
