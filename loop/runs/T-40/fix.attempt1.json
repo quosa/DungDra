@@ -1,0 +1,44 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "Casting Mage Armor on a creature wearing armor is no longer refused; it is now handled as an invalid target (SRD p.106). The slot is spent, and the target gets no effect and no AC change. The player-visible log says \"Mage Armor does nothing to <target>\" (rule SPELL.casting-spells.effects.targets#11, page 106), and a GM-only invalid_target event records why (#8). Mage Armor has no saving throw, so this is the \"you perceive that the spell did nothing\" case, not the \"appears to save\" case. The fix follows the existing Hold Person invalid-target handling in the same module. The T-40 test passes with --runxfail. Without --runxfail, its only failure is the expected strict xpass, and the other 36 xfails stay xfailed, so no other ticket was closed by accident. Unit tests: 343 passed (342 existing plus 1 new). ruff check and ruff format --check are clean, and dev-gate passes.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_mage_armor_on_an_armored_creature_spends_the_slot_and_does_nothing"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#8]",
+   "SRD[SPELL.casting-spells.effects.targets#9]",
+   "SRD[SPELL.casting-spells.effects.targets#11]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "other",
+    "file": "dungdra/spells.py",
+    "line": 1119,
+    "explanation": "Wearing armor is exactly the case README ruling R-15 covers ('If a target fails a restriction such as creature type, wearing armor, or 0 HP, the spell is cast… a player-visible note that the spell did nothing'). The acceptance test this fix un-xfails is marked ruling=\"R-15\". CLAUDE.md requires log events to carry ruling=\"R-nn\" when a register ruling applies, but neither new event does: the player 'spell' event (rule=…targets#11) and the gm 'invalid_target' event (rule=…targets#8). Add ruling=\"R-15\" to both and assert it in the unit test. Apart from that the behaviour is right: the slot is spent, nothing happens to the target, the caster gets a player-visible note, and the gm detail stays hidden. The clause tags are #8, #9 and #11, as they should be."
+   }
+  ],
+  "followups": [
+   {
+    "title": "Invalid-target handling is hand-written in each spell: _hold_person (appears to save, untagged rule=SPELL.casting-spells.effects.targets) and now _mage_armor (did nothing, #8/#11). Per R-15 it applies to every target restriction. Give each spell its target restriction as data (a predicate plus a reason) and add one shared resolver that spends the slot and logs either an apparent save (#10) or 'did nothing' (#11) with ruling R-15.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "The fix gets the rule right. Mage Armor cast on an armored creature now spends the slot and does nothing. The caster sees a player-visible 'does nothing' event and the gm detail stays hidden. The tags cite clauses #8, #9 and #11. The unit test checks real behaviour: the slot count, the AC, the missing effect, and each event's visibility and rule. I'm rejecting it because both new events leave out ruling=\"R-15\", although R-15 names this exact case (armor) and CLAUDE.md requires the tag. The fix also copies the hand-written invalid-target code from Hold Person instead of sharing one mechanism, so I filed that as a refactor follow-up."
+ },
+ "problems": [
+  "review: rejected (The fix gets the rule right. Mage Armor cast on an armored creature now spends the slot and does nothing. The caster sees a player-visible 'does nothing' event and the gm detail stays hidden. The tags cite clauses #8, #9 and #11. The unit test checks real behaviour: the slot count, the AC, the missing effect, and each event's visibility and rule. I'm rejecting it because both new events leave out ruling=\"R-15\", although R-15 names this exact case (armor) and CLAUDE.md requires the tag. The fix also copies the hand-written invalid-target code from Hold Person instead of sharing one mechanism, so I filed that as a refactor follow-up.)",
+  "review: other dungdra/spells.py:1119 Wearing armor is exactly the case README ruling R-15 covers ('If a target fails a restriction such as creature type, wearing armor, or 0 HP, the spell is cast… a player-visible note that the spell did nothing'). The acceptance test this fix un-xfails is marked ruling=\"R-15\". CLAUDE.md requires log events to carry ruling=\"R-nn\" when a register ruling applies, but neither new event does: the player 'spell' event (rule=…targets#11) and the gm 'invalid_target' event (rule=…targets#8). Add ruling=\"R-15\" to both and assert it in the unit test. Apart from that the behaviour is right: the slot is spent, nothing happens to the target, the caster gets a player-visible note, and the gm detail stays hidden. The clause tags are #8, #9 and #11, as they should be."
+ ],
+ "cost_usd": 0.4331,
+ "stash": "srdloop: T-40 attempt 1"
+}
