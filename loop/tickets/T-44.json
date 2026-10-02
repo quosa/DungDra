@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Fixed T-44. When a creature that isn't Prone tries to stand up, `stand_up` in dungdra/combat.py still refuses, but the refusal now cites page=186 and rule=\"GLOSS.prone#2\": righting yourself is what ends the condition, so there's nothing to end. I also gave the other two refusals in `stand_up` their clause numbers (Speed 0 is #3, too little movement left is #2) and tagged them with SRD comments. I added 3 unit tests. Results: all 351 unit tests pass, the ticket's test passes with --runxfail, ruff check and ruff format are clean, and dev-gate passes. With --runxfail, test_cant_stand_up_for_free_on_another_creatures_turn still fails; that one belongs to T-45, which is a separate ticket and is still marked xfail."
+    }
+  ]
 }

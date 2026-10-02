@@ -1703,10 +1703,13 @@ def drop_prone(game, c):
 
 
 def stand_up(game, c):
+    # SRD[GLOSS.prone#2]: righting yourself ends the condition, so there is nothing to end without it
     if not c.has("prone"):
-        raise Refusal(f"{c.name} isn't Prone")
+        raise Refusal(f"{c.name} isn't Prone, so has nothing to right", page=186, rule="GLOSS.prone#2")
+    # SRD[GLOSS.prone#3]
     if c.speed() == 0:
-        raise Refusal(f"{c.name} can't right themselves with Speed 0", page=186, rule="GLOSS.prone")
+        raise Refusal(f"{c.name} can't right themselves with Speed 0", page=186, rule="GLOSS.prone#3")
+    # SRD[GLOSS.prone#2]
     cost = c.speed() // 2
     cb = game.combat
     if cb is not None and cb.is_turn(c):
@@ -1714,7 +1717,7 @@ def stand_up(game, c):
             raise Refusal(
                 f"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left",
                 page=186,
-                rule="GLOSS.prone",
+                rule="GLOSS.prone#2",
             )
         cb.turn.movement_left -= cost
     c.remove_condition("prone", reason=f"stood up for {cost} ft of movement")

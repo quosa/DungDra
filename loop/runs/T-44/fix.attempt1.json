@@ -1,0 +1,37 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed T-44. When a creature that isn't Prone tries to stand up, `stand_up` in dungdra/combat.py still refuses, but the refusal now cites page=186 and rule=\"GLOSS.prone#2\": righting yourself is what ends the condition, so there's nothing to end. I also gave the other two refusals in `stand_up` their clause numbers (Speed 0 is #3, too little movement left is #2) and tagged them with SRD comments. I added 3 unit tests. Results: all 351 unit tests pass, the ticket's test passes with --runxfail, ruff check and ruff format are clean, and dev-gate passes. With --runxfail, test_cant_stand_up_for_free_on_another_creatures_turn still fails; that one belongs to T-45, which is a separate ticket and is still marked xfail.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_stand_up_refused_when_not_prone_cites_the_page",
+   "tests/unit/test_combat.py::test_stand_up_refused_at_speed_zero",
+   "tests/unit/test_combat.py::test_stand_up_ends_prone_for_half_speed"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.prone#2]",
+   "SRD[GLOSS.prone#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_combat.py",
+    "line": 284,
+    "explanation": "Minor: `stand_up(...) == gob.speed() // 2` repeats the implementation's own formula instead of asserting a literal (15 for a goblin warrior with Speed 30). The acceptance tests already pin the literal values, so this isn't blocking."
+   }
+  ],
+  "followups": [],
+  "summary": "The fix is sound and narrow. The not-Prone refusal now cites page=186, rule=\"GLOSS.prone#2\", with an SRD tag, and the T-44 xfail was removed from the acceptance test, which now passes. The existing refusals also had clause numbers missing. The fix relabels the Speed-0 refusal to #3 and the cost refusal to #2, matching stage A's clause numbering. This is a small extension of the traceability work the ticket asked for, not new behaviour. No hard-coding, and the rule stays in combat.stand_up. One unit test checks the cost against the implementation's own formula rather than a literal value. That's minor, because the acceptance suite already covers the literal values."
+ },
+ "problems": [],
+ "cost_usd": 0.3902,
+ "stash": ""
+}

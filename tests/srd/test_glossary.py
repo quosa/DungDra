@@ -1156,7 +1156,6 @@ def test_dash_doesnt_raise_the_stand_cost(game):
 
 
 @pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse")
-@pytest.mark.xfail(strict=True, reason="T-44: standing up when not Prone is refused without citing a page")
 def test_stand_when_not_prone_refused_cleanly(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))

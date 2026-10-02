@@ -2,7 +2,7 @@
 
 import pytest
 
-from dungdra.combat import attack, escape_grapple, move, release_grapple
+from dungdra.combat import attack, escape_grapple, move, release_grapple, stand_up
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
@@ -258,3 +258,28 @@ def test_a_prone_creature_still_crawls_at_double_cost(game):
     brom.add_effect(Condition("prone", "prone"))
     assert move(game, brom, to=(10, 0), mode="crawl") == 20
     assert brom.position == (10, 0)
+
+
+def test_stand_up_refused_when_not_prone_cites_the_page(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    with pytest.raises(Refusal) as exc:
+        stand_up(game, gob)
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.prone#2")
+    assert not gob.has("prone")
+
+
+def test_stand_up_refused_at_speed_zero(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.add_condition("prone", "knocked down")
+    gob.speeds["walk"] = 0
+    with pytest.raises(Refusal) as exc:
+        stand_up(game, gob)
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.prone#3")
+    assert gob.has("prone")
+
+
+def test_stand_up_ends_prone_for_half_speed(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.add_condition("prone", "knocked down")
+    assert stand_up(game, gob) == gob.speed() // 2
+    assert not gob.has("prone")
