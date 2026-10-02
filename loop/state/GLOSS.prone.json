@@ -1,0 +1,19 @@
+{
+  "fingerprint": null,
+  "id": "GLOSS.prone",
+  "problems": {
+    "problems": [
+      "verdict on MON-02 #1: evidence is not a verbatim quote: 'a Medium or smaller target gets the **Prone** condition (no save)'"
+    ],
+    "stage": "B"
+  },
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1790932387,
+      "summary": "I split Prone into 6 clauses. Movement is limited to crawling or righting yourself, which costs half your Speed rounded down and ends the condition; you can't right yourself at Speed 0. You have Disadvantage on your own attack rolls. Attacks against you have Advantage from within 5 feet and Disadvan"
+    }
+  },
+  "status": "incomplete",
+  "tickets": []
+}
