@@ -913,7 +913,7 @@ def test_readying_a_weapon_attack_needs_no_concentration(game):
     assert "bless" in str(jozan.concentrating).lower()  # only a held spell takes Concentration
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#8", kind="abuse", ruling="P-13")
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="abuse", ruling="R-17")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )

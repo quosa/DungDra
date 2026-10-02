@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-17",
+  "note": "you can only concentrate on one thing at a time",
   "reason": ""
 }
