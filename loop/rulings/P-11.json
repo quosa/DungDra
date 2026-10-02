@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-15",
+  "note": "Target kind (creature vs object, from the spell's description) is part of choosing a target and stays a refusal, like range, clear path and sight (T-26, T-37). Every other restriction (creature type, armor, 0 HP, …) is an invalid target: cast, slot spent, nothing happens.",
   "reason": ""
 }
