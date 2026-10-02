@@ -711,11 +711,6 @@ def test_a_valid_target_really_rolls_its_save(game):
 
 # ---------------------------------------------------------------- #11 otherwise: the spell did nothing
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#11", kind="positive", ruling="R-15")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-40: Mage Armor on a creature wearing armor is refused, instead of being cast "
-    "at an invalid target: slot spent, nothing happens, and the caster sees it did nothing",
-)
 def test_mage_armor_on_an_armored_creature_visibly_does_nothing(game):
     m = pc(game, "MIALEE", (0, 0))
     b = pc(game, "BROM", (5, 0))

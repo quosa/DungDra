@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
   ],
-  "status": "open",
-  "attempts": 1,
+  "status": "fixed",
+  "attempts": 2,
   "history": [
     {
       "event": "failed",
@@ -15,6 +15,10 @@
         "review: rejected (The fix gets the rule right. Mage Armor cast on an armored creature now spends the slot and does nothing. The caster sees a player-visible 'does nothing' event and the gm detail stays hidden. The tags cite clauses #8, #9 and #11. The unit test checks real behaviour: the slot count, the AC, the missing effect, and each event's visibility and rule. I'm rejecting it because both new events leave out ruling=\"R-15\", although R-15 names this exact case (armor) and CLAUDE.md requires the tag. The fix also copies the hand-written invalid-target code from Hold Person instead of sharing one mechanism, so I filed that as a refactor follow-up.)",
         "review: other dungdra/spells.py:1119 Wearing armor is exactly the case README ruling R-15 covers ('If a target fails a restriction such as creature type, wearing armor, or 0 HP, the spell is cast… a player-visible note that the spell did nothing'). The acceptance test this fix un-xfails is marked ruling=\"R-15\". CLAUDE.md requires log events to carry ruling=\"R-nn\" when a register ruling applies, but neither new event does: the player 'spell' event (rule=…targets#11) and the gm 'invalid_target' event (rule=…targets#8). Add ruling=\"R-15\" to both and assert it in the unit test. Apart from that the behaviour is right: the slot is spent, nothing happens to the target, the caster gets a player-visible note, and the gm detail stays hidden. The clause tags are #8, #9 and #11, as they should be."
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "Mage Armor cast on a creature wearing armor is no longer refused. Following ruling R-15, it now counts as an invalid target: the slot is spent and nothing happens to the target (no AC change, no effect). The caster gets a player-visible \"Mage Armor does nothing to <target>\" event (rule SPELL.casting-spells.effects.targets#11, page 106, ruling R-15), and a GM-only invalid_target event records why (#8, R-15).\n\nThe previous attempt was rejected for leaving out ruling=\"R-15\" and for copying Hold Person's hand-written code, so this time both spells use one helper, `_invalid_target` in dungdra/spells.py. If the spell is harmless on a successful save (`save=`), the target appears to succeed without rolling (#10); otherwise the caster sees \"does nothing\" (#11). Either way the GM event explains why (#8/#9). All events carry ruling R-15. Hold Person now uses the helper too, which gives its events clause-numbered rules and the R-15 ruling; the player-visible text is unchanged.\n\nResults:\n- The T-40 test passes with --runxfail.\n- The full srd and scenarios run shows only the expected strict XPASS for T-40; the other 36 xfails are unchanged.\n- Unit tests: 344 passed.\n- `ruff check` and `ruff format --check` are clean, and dev-gate passes."
     }
   ]
 }

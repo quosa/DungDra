@@ -286,3 +286,42 @@ def test_on_fail_runs_only_for_a_living_target_that_failed(game):
     game.dice.force_str("d6=[1,1,1]; d20=[9]; d20=[20]")
     _save_for_half(game, c, [front, back], "dex", "3d6", "fire", on_fail=hit.append)
     assert hit == [front] and front.hp == 10 - 3 and back.hp == 10 - 1
+
+
+def test_mage_armor_on_an_armored_creature_spends_the_slot_and_says_it_did_nothing(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    ac = brom.ac()
+    start = len(game.log.events)
+    cast(game, mialee, "mage armor", [brom])
+    assert mialee.slots_left(1) == 1
+    assert brom.ac() == ac and not brom.notes.get("mage_armor")
+    new = game.log.since(start)
+    told = [e for e in new if e.kind == "spell" and e.visibility == "player"]
+    assert told[-1].text == "Mage Armor does nothing to BROM"
+    assert (told[-1].rule, told[-1].ruling, told[-1].page) == (
+        "SPELL.casting-spells.effects.targets#11",
+        "R-15",
+        "106",
+    )
+    why = [e for e in new if e.kind == "invalid_target"]
+    assert len(why) == 1 and why[0].visibility == "gm" and "wearing armor" in why[0].text
+    assert (why[0].rule, why[0].ruling) == ("SPELL.casting-spells.effects.targets#8", "R-15")
+
+
+def test_hold_person_on_a_non_humanoid_appears_to_save_under_r15(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    jozan.award_xp(900)  # level 3: two level 2 slots
+    jozan.prepared.append("hold person")
+    wolf = mon(game, "wolf", (20, 0))
+    start = len(game.log.events)
+    rolled = len(game.dice.history)
+    cast(game, jozan, "hold person", [wolf])
+    assert jozan.slots_left(2) == 1 and len(game.dice.history) == rolled
+    assert not wolf.has("paralyzed")
+    new = game.log.since(start)
+    saves = [e for e in new if e.kind == "save" and e.visibility == "player"]
+    assert saves[-1].text == "Wolf succeeds on its Wisdom saving throw against Hold Person"
+    assert (saves[-1].rule, saves[-1].ruling) == ("SPELL.casting-spells.effects.targets#10", "R-15")
+    assert not [e for e in new if e.kind == "spell" and "does nothing" in e.text]
+    assert [e.visibility for e in new if e.kind == "invalid_target"] == ["gm"]

@@ -1,0 +1,10 @@
+{
+  "id": "T-50",
+  "kind": "refactor",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "The Total Cover refusal in cast() (dungdra/spells.py:136) cites rule=\"SPELL.casting-spells.effects.targets\" without a clause number and has no SRD[...#2] tag. Tag it #2.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

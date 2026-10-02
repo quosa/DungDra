@@ -9,7 +9,7 @@ from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
 from .geometry import dist_points
-from .rules import HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm
+from .rules import ABILITY_NAMES, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm
 
 # spells whose text says "that you can see"
 SIGHT_SPELLS = {"sacred flame", "healing word", "command", "hold person", "magic missile", "misty step"}
@@ -1110,14 +1110,47 @@ class GuidedTarget(Effect):
             acc.consumed.append(self)
 
 
+def _invalid_target(game, t, spell, why, save=None):
+    """A target the spell can't affect (R-15): the cast and its slot are already spent.
+
+    `save` names the ability of a spell that a successful save makes harmless; such a target
+    appears to succeed on it without rolling. Otherwise the caster sees the spell did nothing.
+    """
+    targets = "SPELL.casting-spells.effects.targets"
+    if save:
+        # SRD[SPELL.casting-spells.effects.targets#10]
+        game.log.player(
+            "save",
+            f"{t.name} succeeds on its {ABILITY_NAMES[save]} saving throw against {spell}",
+            page=106,
+            rule=f"{targets}#10",
+            ruling="R-15",
+        )
+    else:
+        # SRD[SPELL.casting-spells.effects.targets#11]
+        game.log.player(
+            "spell",
+            f"{spell} does nothing to {t.name}",
+            page=106,
+            rule=f"{targets}#11",
+            ruling="R-15",
+        )
+    # SRD[SPELL.casting-spells.effects.targets#8] SRD[SPELL.casting-spells.effects.targets#9]
+    game.log.gm(
+        "invalid_target",
+        f"{why}: invalid target for {spell}; the slot is spent and nothing happens to it",
+        page=106,
+        rule=f"{targets}#8",
+        ruling="R-15",
+    )
+
+
 def _mage_armor(game, c, targets, **kw):
     t = targets[0] if targets else c.caster
     if getattr(t, "armor", None) is not None:
-        raise Refusal(
-            f"{t.name} is wearing armor; Mage Armor needs a creature not wearing armor",
-            page=145,
-            rule="SPELL.mage-armor",
-        )
+        # SRD[SPELL.casting-spells.effects.targets#8] a creature who isn't wearing armor
+        _invalid_target(game, t, "Mage Armor", f"{t.name} is wearing armor")
+        return
     t.notes["mage_armor"] = True
     t.add_effect(MageArmorEffect("Mage Armor", caster=c.caster, until=game.clock + 8 * HOUR))
     game.log.player(
@@ -1247,19 +1280,9 @@ def _aid(game, c, targets, **kw):
 def _hold_person(game, c, targets, **kw):
     for t in targets:
         if t.ctype != "humanoid":
-            # p.106 invalid target: slot spent; the target appears to succeed
-            game.log.player(
-                "save",
-                f"{t.name} succeeds on its Wisdom saving throw against Hold Person",
-                page=106,
-                rule="SPELL.casting-spells.effects.targets",
-            )
-            game.log.gm(
-                "invalid_target",
-                f"{t.name} is a {t.ctype.title()}, not a Humanoid: invalid target for Hold "
-                f"Person; the slot is spent and it only appears to save",
-                page=106,
-                rule="SPELL.casting-spells.effects.targets",
+            # SRD[SPELL.casting-spells.effects.targets#10] the target appears to succeed
+            _invalid_target(
+                game, t, "Hold Person", f"{t.name} is a {t.ctype.title()}, not a Humanoid", save="wis"
             )
             continue
         r = spell_save(game, c, t, "wis", avoid={"paralyzed"})

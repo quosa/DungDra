@@ -1,0 +1,10 @@
+{
+  "id": "T-49",
+  "kind": "refactor",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "Each spell still decides its own target restriction in its handler (_mage_armor checks armor, _hold_person checks ctype). Give the restriction to the spell data as a predicate plus a reason and the save ability, and have the cast pipeline route failing targets to _invalid_target, so that every restricted spell follows R-15 without hand-written code.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
