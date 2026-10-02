@@ -97,7 +97,7 @@
       "summary": "I checked all 34 tests: keep 20, refute 14. I ran every mutation through `srdloop mutate`, so the repo is unchanged. Exact duplicates: Sacred Flame vs Total Cover, a Magic Missile dart vs Total Cover, the area-spell Total Cover case (all already in test_playing_the_game.py), Bless past its 3-target "
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_spells.py::test_ray_of_frost_cant_target_an_object",
     "tests/srd/test_spells.py::test_light_cant_target_a_creature",

@@ -594,7 +594,7 @@ def test_a_named_creature_outside_the_cone_isnt_affected(game):
     assert not game.log.of_kind("save")
 
 
-@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="P-12")
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="R-16")
 @pytest.mark.xfail(
     strict=True,
     reason="T-38: a Cone has one direction, but Burning Hands hits named creatures "
@@ -611,7 +611,7 @@ def test_one_cone_cant_reach_both_sides_of_the_caster(game):
     assert [east.hp < 30, west.hp < 30].count(True) == 1
 
 
-@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="P-12")
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="R-16")
 @pytest.mark.xfail(
     strict=True,
     reason="T-39: Sleep ignores its point of origin; a named creature 50 ft from the "
