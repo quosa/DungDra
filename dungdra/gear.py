@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from .data.equipment import ARMOR, DON_DOFF, GP, LIFESTYLE, TOOLS, WEAPONS, canonical, item_cost
-from .items import Item, fmt_cp, make_change, sale_price
+from .items import Item, fmt_cp, make_change
 from .rules import DAY, Refusal, div, div_up, norm
 
 
@@ -164,9 +164,7 @@ def sell(game, pc, name: str, qty: int = 1):
         raise Refusal(f"{pc.name} doesn't have {name}")
     if it is pc.armor or it is pc.shield:
         raise Refusal(f"Take off {it.display} before selling it")
-    price = sale_price(it) * qty
-    if it.props.get("sell_value") is not None:
-        price = it.props["sell_value"] * qty
+    price = it.sale_price() * qty
     pc.inventory.remove(it, qty)
     if it in pc.wielded:
         pc.wielded.remove(it)

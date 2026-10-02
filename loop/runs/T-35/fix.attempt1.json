@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Selling now has one value mechanism. I added `Item.sale_price()` in `dungdra/items.py`: if the item has a `sell_value` prop, that is the price of one unit; otherwise it is half of `listed_cost()`, rounded down, and an unpriced item is refused. `gear.sell()` now just calls `it.sale_price() * qty`, so the override that ran after the price was computed is gone. I removed the old module-level `sale_price()` function and its docstring, which wrongly said trade goods keep full value. In `tests/unit/test_items.py` the existing tests now call the new method, and one new test checks that `sell_value` replaces the half price, even on an item with no listed cost. Unit tests, the full test suite (599 passed), ruff and dev-gate all pass. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`. One thing I left alone: `sell()`'s log message still says \"(half price)\", even when `sell_value` sets a different price.",
+  "files": [
+   "dungdra/items.py",
+   "dungdra/gear.py",
+   "tests/unit/test_items.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_items.py::test_sale_price_is_half_the_item_value_including_a_cost_prop",
+   "tests/unit/test_items.py::test_sale_price_refuses_an_unpriced_item",
+   "tests/unit/test_items.py::test_sell_value_prop_replaces_the_half_price_sale"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "Approved: the change does what T-35 asks and I found no problems. Selling now has one value mechanism. The module-level `sale_price` function is replaced by `Item.sale_price()`, which returns the `sell_value` prop when it is set and otherwise half of `listed_cost()` (rounded down). It still refuses an item with no price. `sell()` in `dungdra/gear.py` just calls `it.sale_price() * qty` and no longer applies its own override afterwards. The wrong docstring is fixed too: it no longer says trade goods keep full value, and it describes `sell_value` as the override.\n\nOne behaviour change: before, an item with `sell_value` but no listed cost was refused, because the half-price calculation ran before the override. Now it sells at its `sell_value`. That follows from the single mechanism the ticket asks for, and a new unit test asserts it.\n\nNo other callers of the old function were left behind. The tests check outcomes: the halving, rounding down, the refusal, and `sell_value` taking precedence. The existing gear test `test_sell_value_prop_still_overrides_the_sale_price` still covers the full sell path. The diff also touches `loop/costs.jsonl`, but that is only the loop's own cost log. All gates pass."
+ },
+ "problems": [],
+ "cost_usd": 0.3939,
+ "stash": ""
+}

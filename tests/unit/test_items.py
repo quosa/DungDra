@@ -2,7 +2,7 @@
 
 import pytest
 
-from dungdra.items import Item, sale_price
+from dungdra.items import Item
 from dungdra.rules import Refusal
 
 
@@ -22,10 +22,15 @@ def test_unpriced_item_has_no_listed_cost_and_zero_unit_cost():
 
 
 def test_sale_price_is_half_the_item_value_including_a_cost_prop():
-    assert sale_price(Item("longsword")) == 750
-    assert sale_price(Item("dagger", cost=5001)) == 2500  # rounds down
+    assert Item("longsword").sale_price() == 750
+    assert Item("dagger", cost=5001).sale_price() == 2500  # rounds down
 
 
 def test_sale_price_refuses_an_unpriced_item():
     with pytest.raises(Refusal, match="strange idol"):
-        sale_price(Item("strange idol"))
+        Item("strange idol").sale_price()
+
+
+def test_sell_value_prop_replaces_the_half_price_sale():
+    assert Item("dagger", cost=5000, sell_value=5000).sale_price() == 5000
+    assert Item("strange idol", sell_value=300).sale_price() == 300  # no listed cost needed

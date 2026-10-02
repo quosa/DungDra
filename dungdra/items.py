@@ -81,6 +81,16 @@ class Item:
     def unit_cost(self) -> int:
         return self.listed_cost() or 0
 
+    def sale_price(self) -> int:
+        """p.89: what one unit sells for, in CP: half its listed cost; a `sell_value` prop
+        (e.g. treasure that sells at full value) replaces it. Refuses an unpriced item."""
+        if self.props.get("sell_value") is not None:
+            return self.props["sell_value"]
+        c = self.listed_cost()
+        if c is None:
+            raise Refusal(f"Unknown item {self.name!r}")
+        return div(c, 2)
+
     def weight(self) -> float:
         return self.unit_weight() * self.qty
 
@@ -231,14 +241,6 @@ def fmt_cp(cp: int) -> str:
     if c:
         parts.append(f"{c} CP")
     return " ".join(parts) or "0 GP"
-
-
-def sale_price(item: Item) -> int:
-    """p.89: equipment sells for half its cost (trade goods keep full value)."""
-    c = item.listed_cost()
-    if c is None:
-        raise Refusal(f"Unknown item {item.name!r}")
-    return div(c, 2)
 
 
 def carrying_capacity(size: str, strength: int) -> tuple[float, float]:
