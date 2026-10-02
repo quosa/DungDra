@@ -1,8 +1,6 @@
 {
   "fingerprint": "482c046a0d3116d7",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time"
-  ],
+  "for_review": [],
   "id": "GLOSS.ready",
   "out_of_scope": [],
   "refuted": [
@@ -34,6 +32,13 @@
       "evidence": "or you choose to move up to your Speed in response to it",
       "target": "GLOSS.speed",
       "type": "interacts_with"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "strengthened by hand.",
+      "test": "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time"
     }
   ],
   "stages": {
