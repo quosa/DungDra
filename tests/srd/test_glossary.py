@@ -124,6 +124,19 @@ def test_grappled_mid_turn_cant_spend_leftover_movement(game):
     assert_refused_cleanly(game, C.move, game, gob, to=(10, 0), match="Speed")
 
 
+@pytest.mark.srd(U, clause=f"{U}#1", kind="abuse", ruling="R-07")
+def test_grappled_mid_turn_cant_climb_with_leftover_movement(game):
+    """The turn's 30 ft budget is still there, so only a zeroed Climb Speed can stop the climb."""
+    brom = brom_free_hand(game)
+    rat = mon(game, "giant rat", (5, 0))
+    in_combat(game, rat, brom)
+    assert game.combat.turn.movement_left == 30
+    rat.add_condition("grappled", "grappled mid-turn", grappler=brom.id)
+    assert rat.speed("climb") == 0
+    assert_refused_cleanly(game, C.move, game, rat, to=(10, 0), mode="climb", match="Speed")
+    assert rat.position == (5, 0)
+
+
 @pytest.mark.srd(U, clause=f"{U}#1", kind="abuse")
 def test_grappled_pc_move_command_refused(game):
     s = Session(game)
@@ -306,6 +319,27 @@ def test_tiny_dragging_tiny_costs_nothing_extra(game):
     grab(game, gob, rat)
     in_combat(game, gob, rat)
     assert C.move(game, gob, to=(-10, 0), drag=rat) == 10
+
+
+@pytest.mark.srd(U, clause=f"{U}#4", kind="boundary")
+def test_small_grappler_drags_tiny_without_extra_cost(game):
+    """Small to Tiny is one size apart: only the Tiny exemption, not the size gap, waives the cost."""
+    gob = mon(game, "goblin warrior", (0, 0))  # Small
+    rat = mon(game, "giant rat", (5, 0))
+    rat.size = "tiny"
+    grab(game, gob, rat)
+    in_combat(game, gob, rat)
+    assert C.move(game, gob, to=(-10, 0), drag=rat) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(U, clause=f"{U}#4", kind="negative")
+def test_small_grappler_drags_small_at_double_cost(game):
+    gob = mon(game, "goblin warrior", (0, 0))  # Small
+    rat = mon(game, "giant rat", (5, 0))  # Small
+    grab(game, gob, rat)
+    in_combat(game, gob, rat)
+    assert C.move(game, gob, to=(-10, 0), drag=rat) == 20
 
 
 @pytest.mark.srd(U, clause=f"{U}#4", kind="boundary")

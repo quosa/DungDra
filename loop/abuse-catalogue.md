@@ -13,6 +13,8 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Spending movement left over from before you gained a Speed-0 condition mid-turn.
 - Dragging a creature you aren't grappling, or one someone else is grappling, to move it for free.
 - Dragging a grappled creature past what your Speed covers once the extra drag cost is counted.
+- Escaping a Speed-0 condition with a special Speed (climbing, swimming or flying away while
+  Grappled), using movement left over from before the condition started.
 
 ## Action economy
 - Taking two actions, two Bonus Actions or two Reactions in one turn or round.

@@ -91,3 +91,6 @@
 {"at": 1790933919, "about": "MONSTER.goblins.goblin-warrior", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.1986, "seconds": 43.5, "session_id": "d1787e9f-2ecb-4075-8b61-61a9b7b99c96", "exit": 0}
 {"at": 1790933962, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 2.5996, "seconds": 1718.3, "session_id": "4a2c577e-6a4c-400b-bf6b-a6b2db03cade", "exit": 0}
 {"at": 1790935683, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.9739, "seconds": 253.6, "session_id": "ade9bce8-d76f-4805-9a3c-e6fa1b21fab2", "exit": 0}
+{"at": 1790935940, "about": "GLOSS.grappled", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.6075, "seconds": 81.8, "session_id": "83f350b0-038e-480a-83d3-2990bf736e1c", "exit": 0}
+{"at": 1790936022, "about": "GLOSS.grappled", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.3954, "seconds": 60.6, "session_id": "2780758b-341d-4bb3-80f5-48306b885d0a", "exit": 0}
+{"at": 1790936084, "about": "GLOSS.grappled", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.8124, "seconds": 161.7, "session_id": "0af0b130-dde9-4106-ba23-27c2be666bbd", "exit": 0}

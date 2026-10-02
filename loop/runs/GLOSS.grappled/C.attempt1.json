@@ -1,0 +1,101 @@
+{
+ "output": {
+  "abuse": [
+   {
+    "case": "Moving while Speed is 0 / spending movement left over from before a Speed-0 condition started, including with a special Speed (climb)",
+    "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+    "reason": "Grappled sets every Speed to 0 (R-07). A 30 ft budget left over from the start of the turn must not let the creature climb away."
+   },
+   {
+    "case": "Dashing or stacking a Speed bonus while Speed is 0 and can't increase",
+    "test": "tests/srd/test_glossary.py::test_grappled_dash_adds_no_movement",
+    "reason": "Already covered by an existing test, which still passes."
+   },
+   {
+    "case": "Dragging a creature you aren't grappling or that someone else grapples",
+    "test": "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples",
+    "reason": "Already covered by existing tests."
+   },
+   {
+    "case": "Dragging past what your Speed covers once the drag cost is counted",
+    "test": "tests/srd/test_glossary.py::test_drag_beyond_speed_refused",
+    "reason": "Already covered by an existing test."
+   },
+   {
+    "case": "NEW (added to the catalogue): escaping a Speed-0 condition with a special Speed using leftover movement",
+    "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+    "reason": "Stage D showed the old climb test was refused by the empty budget whatever the Climb Speed was. Leftover movement is what separates the two."
+   }
+  ],
+  "interactions": [
+   {
+    "clause": "GLOSS.grappled#1",
+    "with": "GLOSS.speed (special speeds: Climb)",
+    "risk": "high",
+    "note": "R-07: every Speed is 0. Testing this needs a non-zero movement budget, or the budget refuses the move before the Speed rule is checked."
+   },
+   {
+    "clause": "GLOSS.grappled#1",
+    "with": "Dash / Speed bonuses",
+    "risk": "medium",
+    "note": "Covered by existing tests."
+   },
+   {
+    "clause": "GLOSS.grappled#2",
+    "with": "multiple grapplers (R-06)",
+    "risk": "medium",
+    "note": "Covered by test_two_grapplers_neither_attack_has_disadvantage, which now passes."
+   },
+   {
+    "clause": "GLOSS.grappled#4",
+    "with": "creature sizes (Tiny exemption vs the two-sizes gap)",
+    "risk": "high",
+    "note": "The Tiny branch only matters when the grappler is less than two sizes larger, i.e. a Tiny or Small grappler. Medium dragging Tiny exercises the size-gap branch instead."
+   },
+   {
+    "clause": "GLOSS.grappled#4",
+    "with": "Difficult Terrain",
+    "risk": "medium",
+    "note": "The extra costs stack. Covered by an existing test."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+    "clause": "GLOSS.grappled#1",
+    "kind": "abuse",
+    "rule_quote": "Your Speed is 0 and can’t increase.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_small_grappler_drags_tiny_without_extra_cost",
+    "clause": "GLOSS.grappled#4",
+    "kind": "boundary",
+    "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_small_grappler_drags_small_at_double_cost",
+    "clause": "GLOSS.grappled#4",
+    "kind": "negative",
+    "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [],
+  "scenario_changes": [],
+  "rulings_proposed": [],
+  "summary": "This is a revisit of GLOSS.grappled. Stage D refuted two tests because they passed for the wrong reason, and both are already gone from test_glossary.py. I wrote three tests in tests/srd/test_glossary.py to replace them.\n\n1. **test_grappled_mid_turn_cant_climb_with_leftover_movement** (#1, abuse, R-07): a giant rat becomes Grappled mid-turn with 30 ft of movement left. The test checks that its Climb Speed is 0 and that a climb move is refused cleanly with a Speed reason. The budget is non-zero, so if the engine zeroed only walking Speed, the climb would succeed and the test would fail.\n2. **test_small_grappler_drags_tiny_without_extra_cost** (#4, boundary): a Small goblin drags a Tiny creature 10 ft for 10 ft of movement. Small and Tiny are only one size apart, so only the Tiny exemption can waive the extra cost. It doesn't depend on R-05, because the grappler isn't Tiny.\n3. **test_small_grappler_drags_small_at_double_cost** (#4, negative): the same setup with a Small target costs 20 ft. This shows the Tiny exemption, not the setup, is what makes the cost 10.\n\nI also added a cheat to loop/abuse-catalogue.md: using a special Speed and leftover movement to escape a Speed-0 condition.\n\nResults: all 30 grappled tests pass, and ruff check and ruff format are clean. The glossary and scenario suites together give 187 passed and 31 xfailed. The other grappled tests, including the two-grappler and drag-abuse tests that used to be strict xfails, now pass with no xfail marker. I didn't touch them.\n\nI couldn't run my own mutation checks: the run in a scratch copy of the engine was denied. My reading of the code says both refuted gaps are now caught. If climb Speed isn't zeroed, test 1 fails at `rat.speed(\"climb\") == 0`. Without the Tiny exemption, test 2 would cost 20 ft instead of 10.\n\nI made no scenario changes and proposed no new rulings."
+ },
+ "problems": [
+  "clause GLOSS.grappled#1: no boundary, negative, positive test",
+  "clause GLOSS.grappled#2: no negative, positive test",
+  "clause GLOSS.grappled#3: no negative, positive test",
+  "clause GLOSS.grappled#4: no positive test"
+ ],
+ "cost_usd": 0.6075084,
+ "session": "83f350b0-038e-480a-83d3-2990bf736e1c"
+}
