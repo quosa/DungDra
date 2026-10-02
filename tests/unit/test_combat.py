@@ -2,7 +2,7 @@
 
 import pytest
 
-from dungdra.combat import attack, escape_grapple, move, release_grapple, stand_up
+from dungdra.combat import attack, escape_grapple, move, release_grapple, roll_initiative, stand_up
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
@@ -283,3 +283,28 @@ def test_stand_up_ends_prone_for_half_speed(game):
     gob.add_condition("prone", "knocked down")
     assert stand_up(game, gob) == gob.speed() // 2
     assert not gob.has("prone")
+
+
+def test_stand_up_refused_off_turn_in_combat(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [gob, brom])
+    assert game.combat.is_turn(gob)
+    brom.add_condition("prone", "knocked down")
+    with pytest.raises(Refusal, match="own turn") as exc:
+        stand_up(game, brom)
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.prone#2")
+    assert brom.has("prone")
+    assert game.combat.turn.movement_left == gob.speed()
+
+
+def test_stand_up_on_own_turn_spends_half_speed(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [gob, brom])
+    gob.add_condition("prone", "knocked down")
+    assert stand_up(game, gob) == 15
+    assert not gob.has("prone")
+    assert game.combat.turn.movement_left == 15

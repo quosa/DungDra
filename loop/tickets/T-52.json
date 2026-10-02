@@ -1,0 +1,10 @@
+{
+  "id": "T-52",
+  "kind": "refactor",
+  "unit": "GLOSS.prone",
+  "title": "dungdra/combat.py: move() and stand_up() each check and spend the turn's movement budget themselves (is_turn check, movement_left comparison, refusal, decrement). Add one CombatTurn/Combat helper, e.g. spend_movement(c, cost, rule=...), used by both. It would also decide what off-turn voluntary movement means: move() currently skips the budget off-turn, while stand_up() now refuses.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

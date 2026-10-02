@@ -1712,7 +1712,14 @@ def stand_up(game, c):
     # SRD[GLOSS.prone#2]
     cost = c.speed() // 2
     cb = game.combat
-    if cb is not None and cb.is_turn(c):
+    if cb is not None and not cb.is_turn(c):
+        # movement is spent on your own turn, so off-turn there is none to right yourself with
+        raise Refusal(
+            f"Standing up costs {cost} ft of movement, which {c.name} has only on their own turn",
+            page=186,
+            rule="GLOSS.prone#2",
+        )
+    if cb is not None:
         if cb.turn.movement_left < cost:
             raise Refusal(
                 f"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left",

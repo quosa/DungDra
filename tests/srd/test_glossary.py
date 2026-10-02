@@ -1167,10 +1167,6 @@ def test_stand_when_not_prone_refused_cleanly(game):
 
 
 @pytest.mark.srd(PR, clause=f"{PR}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-45: a Prone creature can stand up on another creature's turn without spending movement",
-)
 def test_cant_stand_up_for_free_on_another_creatures_turn(game):
     s = Session(game)
     brom = pc(game, "BROM", (0, 0))
