@@ -5,6 +5,13 @@
   "title": "The grappled_by(target, grappler) test helper is defined three times (tests/unit/test_effects.py:13, test_combat.py:12, test_api.py:8). Move one copy into tests/support/helpers.py",
   "tests": [],
   "status": "open",
-  "attempts": 0,
-  "history": []
+  "attempts": 1,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "fixer may not change tests/support/helpers.py"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,22 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "Moved the grappled_by test helper into tests/support/helpers.py, using the variadic signature `grappled_by(target, *grapplers)`. It replaces the two-argument versions without changing any call. I deleted the three local copies in test_effects.py, test_combat.py and test_api.py, and they now import it from tests.support.helpers. test_api.py's `Condition` import was no longer used, so I dropped it. All 335 unit tests pass, ruff check and ruff format --check are clean, and dev-gate passes. This ticket names no acceptance tests and no engine code changed, so I added no SRD tags.",
+  "files": [
+   "tests/support/helpers.py",
+   "tests/unit/test_effects.py",
+   "tests/unit/test_combat.py",
+   "tests/unit/test_api.py"
+  ],
+  "unit_tests": [],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": null,
+ "problems": [
+  "fixer may not change tests/support/helpers.py"
+ ],
+ "cost_usd": 0.1445,
+ "stash": "srdloop: T-33 attempt 1"
+}
