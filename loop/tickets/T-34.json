@@ -4,7 +4,12 @@
   "unit": "SPELL.bless",
   "title": "Dodge.d20 (effects.py:370) still checks `ctx.kind == \"save\"` directly. Switch it to `ctx.is_save` so every save effect uses the one predicate. Behaviour stays the same because a death save has no ability.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I changed Dodge.d20 (dungdra/effects.py:370) to use `ctx.is_save` instead of `ctx.kind == \"save\"`, so every save effect now goes through the one predicate. Behaviour stays the same: a death save has no ability, so the `ability == \"dex\"` check still leaves it out. I added a unit test that checks Dodge gives advantage on a Dex save and not on a Con save, a Dex check or a death save. Unit tests pass (332), ruff check and ruff format --check are clean, and dev-gate passes. The ticket names no acceptance tests, so there were none to run with --runxfail."
+    }
+  ]
 }

@@ -367,7 +367,7 @@ class Dodge(Effect):
             acc.disadvantage(f"{self.owner.name} is Dodging")
 
     def d20(self, ctx, acc):
-        if ctx.kind == "save" and ctx.ability == "dex" and self.active():
+        if ctx.is_save and ctx.ability == "dex" and self.active():
             acc.advantage("Dodge")
 
 

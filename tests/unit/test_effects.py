@@ -7,6 +7,7 @@ from dungdra.effects import (
     Acc,
     Condition,
     Ctx,
+    Dodge,
     Effect,
     SaveBonus,
     condition_rule,
@@ -52,6 +53,15 @@ def test_restrained_gives_disadvantage_on_dex_saves_only(game):
     assert "Restrained" in brom.gather(Ctx("save", actor=brom, ability="dex")).dis
     assert "Restrained" not in brom.gather(Ctx("save", actor=brom, ability="con")).dis
     assert "Restrained" not in brom.gather(Ctx("death save", actor=brom)).dis
+
+
+def test_dodge_gives_advantage_on_dex_saves_only(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Dodge("Dodge"))
+    assert "Dodge" in brom.gather(Ctx("save", actor=brom, ability="dex")).adv
+    assert "Dodge" not in brom.gather(Ctx("save", actor=brom, ability="con")).adv
+    assert "Dodge" not in brom.gather(Ctx("check", actor=brom, ability="dex")).adv
+    assert "Dodge" not in brom.gather(Ctx("death save", actor=brom)).adv
 
 
 def test_grapplers_of_names_every_grappler_and_nothing_else(game):
