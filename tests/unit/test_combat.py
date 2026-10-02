@@ -239,3 +239,22 @@ def test_a_grappled_flyer_is_refused_for_speed_0_not_for_lacking_a_fly_speed(gam
         move(game, rat, to=(5, 10), mode="fly")
     assert (exc.value.rule, exc.value.ruling) == ("GLOSS.grappled#1", "R-07")
     assert rat.position == (5, 0)
+
+
+@pytest.mark.parametrize("mode", ["climb", "swim", "fly"])
+def test_a_prone_creature_is_refused_any_movement_but_crawling(game, mode):
+    brom = pc(game, "BROM", (0, 0))
+    brom.speeds[mode] = 30
+    brom.add_effect(Condition("prone", "prone"))
+    with pytest.raises(Refusal) as exc:
+        move(game, brom, to=(10, 0), mode=mode)
+    assert exc.value.page == 186
+    assert exc.value.rule == "GLOSS.prone#1"
+    assert brom.position == (0, 0)
+
+
+def test_a_prone_creature_still_crawls_at_double_cost(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Condition("prone", "prone"))
+    assert move(game, brom, to=(10, 0), mode="crawl") == 20
+    assert brom.position == (10, 0)

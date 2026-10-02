@@ -1,0 +1,10 @@
+{
+  "id": "T-51",
+  "kind": "refactor",
+  "unit": "GLOSS.prone",
+  "title": "dungdra/combat.py move(): the Prone checks hard-code the mode names (`mode not in (\"walk\", \"crawl\")`, `mode == \"walk\"`). Have them use the MOVE_MODES spec (spec.speed == \"walk\") so the list of modes allowed while Prone comes from that table.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

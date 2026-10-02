@@ -1060,10 +1060,6 @@ def test_prone_cant_crawl_at_full_speed(game):
 
 
 @pytest.mark.srd(PR, clause=f"{PR}#1", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-43: a Prone creature can move with its Climb Speed at normal cost instead of only crawling",
-)
 def test_prone_cant_climb_instead_of_crawling(game):
     rat = mon(game, "giant rat", (0, 0))
     brom = pc(game, "BROM", (40, 0))

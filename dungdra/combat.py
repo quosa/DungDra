@@ -456,6 +456,13 @@ def move(
                         page=182,
                         rule="GLOSS.frightened",
                     )
+    # SRD[GLOSS.prone#1] a Prone creature's only movement is crawling (or righting itself)
+    if c.has("prone") and mode not in ("walk", "crawl") and dist > 0:
+        raise Refusal(
+            f"{c.name} is Prone and can only crawl, not {mode}",
+            page=186,
+            rule="GLOSS.prone#1",
+        )
     cost = dist
     notes = []
     if mode == "crawl" or (c.has("prone") and mode == "walk" and dist > 0):

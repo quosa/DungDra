@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Fixed T-43. A Prone creature can now only move by walking or crawling; asking `move()` to climb, swim or fly is refused with page=186 and rule=\"GLOSS.prone#1\". Walking while Prone still counts as crawling, so it costs double, and moving 0 ft is still allowed. The check runs in `combat.move` after the Frightened check and before costs are worked out, tagged `# SRD[GLOSS.prone#1]`. Righting yourself is still handled by `stand_up`. Unit tests pass (348), ruff check and ruff format are clean, and dev-gate passes. T-43's acceptance test passes with --runxfail. In the glossary prone tests run with --runxfail, `test_stand_when_not_prone_refused_cleanly` fails: it is T-44's own strict xfail (about a refusal that cites no page), and I didn't confirm it fails the same way without my change."
+    }
+  ]
 }
