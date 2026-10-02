@@ -1,8 +1,6 @@
 {
   "fingerprint": "fd4819b5fe8bca5d",
-  "for_review": [
-    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
-  ],
+  "for_review": [],
   "id": "SPELL.casting-spells.effects.targets",
   "out_of_scope": [
     {
@@ -77,6 +75,13 @@
       "evidence": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
       "target": "GLOSS.sphere",
       "type": "interacts_with"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Matches R-15: slot spent, no effect, caster told",
+      "test": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
     }
   ],
   "stages": {
