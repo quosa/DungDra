@@ -16,13 +16,9 @@ from dungdra.effects import (
 )
 from dungdra.rules import CONDITIONS
 from tests.support.helpers import mon, pc
+from tests.unit.helpers import grappled_by
 
 GRAPPLED_DIS = "Grappled (attacking someone other than the grappler)"
-
-
-def grappled_by(target, *grapplers):
-    for g in grapplers:
-        target.add_effect(Condition("grappled", f"grappled by {g.name}", caster=g, grappler=g.id))
 
 
 def test_is_save_covers_saving_throws_and_death_saves_only():

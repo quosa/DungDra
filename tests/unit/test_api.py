@@ -1,14 +1,8 @@
 """Unit tests for dungdra.api: the move command, and how refusals are logged."""
 
 from dungdra.api import Session
-from dungdra.effects import Condition
 from tests.support.helpers import mon, pc
-
-
-def grappled_by(target, grappler):
-    target.add_effect(
-        Condition("grappled", f"grappled by {grappler.name}", caster=grappler, grappler=grappler.id)
-    )
+from tests.unit.helpers import grappled_by
 
 
 def test_move_command_carries_a_grappled_creature_while_flying(game):

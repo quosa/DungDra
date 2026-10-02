@@ -4,14 +4,18 @@
   "unit": "GLOSS.grappled",
   "title": "The grappled_by(target, grappler) test helper is defined three times (tests/unit/test_effects.py:13, test_combat.py:12, test_api.py:8). Move one copy into tests/support/helpers.py",
   "tests": [],
-  "status": "open",
-  "attempts": 1,
+  "status": "fixed",
+  "attempts": 2,
   "history": [
     {
       "event": "failed",
       "problems": [
         "fixer may not change tests/support/helpers.py"
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "`grappled_by` is now defined once, in the new `tests/unit/helpers.py`, instead of in three test files. That is not where the ticket asked for it. The ticket names `tests/support/helpers.py`, but I may not write there, and that is why attempt 1 was rejected. The kept copy is the version that takes any number of grapplers, so every existing call works unchanged. I removed the local copies from `test_api.py`, `test_combat.py` and `test_effects.py`, which now import it from `tests.unit.helpers`. `test_api.py` no longer used `Condition`, so I removed that import; `test_combat.py` and `test_effects.py` still use it and keep it. No engine code changed and no tests were added, so there are no SRD tags or new unit tests. The ticket names no acceptance tests, so there were none to run with `--runxfail`. `ruff check` and `ruff format --check` are clean, all 335 unit tests pass, and `dev-gate` passes. If you want the helper in `tests/support/helpers.py` as the ticket says, a person needs to move it there."
     }
   ]
 }

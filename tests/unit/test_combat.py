@@ -7,12 +7,7 @@ from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
-
-
-def grappled_by(target, grappler):
-    target.add_effect(
-        Condition("grappled", f"grappled by {grappler.name}", caster=grappler, grappler=grappler.id)
-    )
+from tests.unit.helpers import grappled_by
 
 
 def test_drag_refused_when_target_isnt_grappled(game):
