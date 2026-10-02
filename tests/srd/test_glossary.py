@@ -744,7 +744,7 @@ def test_ignored_trigger_keeps_the_reaction(game):
     assert not RDY.reaction_used(game, brom)
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#5", kind="positive", ruling="P-14")
+@pytest.mark.srd(RD, clause=f"{RD}#5", kind="positive", ruling="R-18")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )
