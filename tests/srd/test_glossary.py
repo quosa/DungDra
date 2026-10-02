@@ -817,7 +817,7 @@ def test_readying_a_spell_without_a_slot_refused(game):
     assert_refused_cleanly(game, s.execute, cmd, match="spell slots")
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse", ruling="P-15")
+@pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse", ruling="R-19")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )
@@ -882,7 +882,7 @@ def test_holding_a_readied_spell_takes_concentration(game):
     assert mialee.concentrating
 
 
-@pytest.mark.srd(RD, clause=f"{RD}#8", kind="boundary", ruling="P-15")
+@pytest.mark.srd(RD, clause=f"{RD}#8", kind="boundary", ruling="R-19")
 @pytest.mark.xfail(
     strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
 )

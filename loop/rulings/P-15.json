@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_held_spell_ends_at_the_start_of_your_next_turn",
     "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-19",
+  "note": "the unreleased spell is gone",
   "reason": ""
 }
