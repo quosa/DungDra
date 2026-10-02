@@ -1,0 +1,10 @@
+{
+  "id": "T-48",
+  "kind": "refactor",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "dungdra/spells.py tests whether a target is a creature with hasattr(t, \"id\") in several places (cover, sight, _target_kind, caught). Add one is_creature predicate and use it everywhere.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

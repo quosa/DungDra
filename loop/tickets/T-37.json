@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_spells.py::test_light_cant_target_a_creature"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I fixed T-37: casting Light at a creature is now refused before anything is spent. The ticket's test passes with `--runxfail`, the unit tests pass (342), and `ruff check`, `ruff format --check` and `dev-gate` are clean. In the full suite the only failure is T-37's own test, because its strict xfail marker now passes; the harness removes that marker. Running `test_spells.py` with `--runxfail` also fails three tests that belong to other tickets (cone reach, Sleep's sphere, Mage Armor on an armored creature). Their xfail markers are still in place, so they don't affect this fix.\n\n**The fix:** spell data already had a `targets` field, used only to mark creature-only spells. I added a second value, `\"object\"`, and gave Light `targets=\"object\"`. The existing target-kind check (`_target_kind` in `dungdra/spells.py`) now also handles that value: any creature target is refused with `page=106` and `rule=\"SPELL.casting-spells.effects.targets#1\"`. The check runs before any slot or component is used, and the code carries the `SRD[...]` tag. Creature-only spells behave as before.\n\nCasting Light with no target at all still lights an invented 'glowing object'. That part of the ticket title is outside this test, and I didn't change it.\n\n**Unit tests:** two new ones in `tests/unit/test_spells.py`. One checks that the refusal names the right rule and page and that an object target is still accepted. The other checks that a refused cast on a creature lights nothing and logs no cast."
+    }
+  ]
 }

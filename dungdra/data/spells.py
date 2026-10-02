@@ -34,7 +34,8 @@ def _s(
         "material_item": material_item,  # the costed component's item; material_cost is its GP floor
         "material_cost": material_cost,
         "page": page,
-        "targets": targets,  # "creature": only creatures are valid targets; None: no restriction
+        # "creature": only creatures are valid targets; "object": only objects; None: no restriction
+        "targets": targets,
     }
     d.update(kw)
     return d
@@ -69,6 +70,7 @@ SPELLS = {
         3600,
         material="a firefly or phosphorescent moss",
         page=144,
+        targets="object",
     ),
     "mage hand": _s(0, "conjuration", W, "action", 30, "VS", 60, page=145),
     "minor illusion": _s(0, "illusion", W, "action", 30, "SM", 60, material="a bit of fleece", page=149),

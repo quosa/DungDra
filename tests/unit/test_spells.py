@@ -202,6 +202,24 @@ def test_a_spell_that_can_target_an_object_accepts_one(game):
     _target_kind("fire bolt", SPELLS["fire bolt"], ["door"])
 
 
+def test_an_object_only_spell_refuses_a_creature_and_accepts_an_object(game):
+    from dungdra.spells import _target_kind
+
+    _, brom = _jozan_holding_his_mace(game)
+    with pytest.raises(Refusal, match=f"Light targets an object, and {brom.name} is a creature") as exc:
+        _target_kind("light", SPELLS["light"], [brom])
+    assert (exc.value.rule, exc.value.page) == ("SPELL.casting-spells.effects.targets#1", 106)
+    _target_kind("light", SPELLS["light"], ["lantern"])
+
+
+def test_a_refused_light_on_a_creature_lights_nothing(game):
+    jozan, brom = _jozan_holding_his_mace(game)
+    with pytest.raises(Refusal, match="targets an object"):
+        cast(game, jozan, "light", [brom])
+    assert not any(o.get("light_spell") for o in game.scene.objects.values())
+    assert game.log.last("cast") is None
+
+
 def test_every_capped_spell_is_creature_only():
     assert [n for n, sd in SPELLS.items() if "max_targets" in sd and sd["targets"] != "creature"] == []
 

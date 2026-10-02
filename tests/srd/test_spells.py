@@ -499,11 +499,6 @@ def test_ray_of_frost_cant_target_an_object(game):
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#1", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-37: Light targets an object, but casting it at a creature isn't refused; "
-    "the engine lights a made-up 'glowing object' instead",
-)
 def test_light_cant_target_a_creature(game):
     m = pc(game, "MIALEE", (0, 0))
     b = pc(game, "BROM", (5, 0))

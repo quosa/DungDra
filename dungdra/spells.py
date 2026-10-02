@@ -411,7 +411,18 @@ def _range_check(game, caster, spell, sd, targets):
 
 def _target_kind(spell, sd, targets):
     """Refuses a target of the wrong kind before anything is paid: a spell whose data says
-    targets="creature" can't be aimed at an object (or anything else that isn't a creature)."""
+    targets="creature" can't be aimed at an object (or anything else that isn't a creature), and
+    one whose data says targets="object" can't be aimed at a creature."""
+    if sd["targets"] == "object":
+        # SRD[SPELL.casting-spells.effects.targets#1] the description says the spell targets objects
+        for t in targets:
+            if hasattr(t, "id"):
+                raise Refusal(
+                    f"{spell.title()} targets an object, and {t.name} is a creature",
+                    page=106,
+                    rule="SPELL.casting-spells.effects.targets#1",
+                )
+        return
     if sd["targets"] != "creature":
         return
     base_clause = sd.get("target_clauses", (None, None))[0]

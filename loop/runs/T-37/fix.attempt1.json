@@ -1,0 +1,38 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-37: casting Light at a creature is now refused before anything is spent. The ticket's test passes with `--runxfail`, the unit tests pass (342), and `ruff check`, `ruff format --check` and `dev-gate` are clean. In the full suite the only failure is T-37's own test, because its strict xfail marker now passes; the harness removes that marker. Running `test_spells.py` with `--runxfail` also fails three tests that belong to other tickets (cone reach, Sleep's sphere, Mage Armor on an armored creature). Their xfail markers are still in place, so they don't affect this fix.\n\n**The fix:** spell data already had a `targets` field, used only to mark creature-only spells. I added a second value, `\"object\"`, and gave Light `targets=\"object\"`. The existing target-kind check (`_target_kind` in `dungdra/spells.py`) now also handles that value: any creature target is refused with `page=106` and `rule=\"SPELL.casting-spells.effects.targets#1\"`. The check runs before any slot or component is used, and the code carries the `SRD[...]` tag. Creature-only spells behave as before.\n\nCasting Light with no target at all still lights an invented 'glowing object'. That part of the ticket title is outside this test, and I didn't change it.\n\n**Unit tests:** two new ones in `tests/unit/test_spells.py`. One checks that the refusal names the right rule and page and that an object target is still accepted. The other checks that a refused cast on a creature lights nothing and logs no cast.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_an_object_only_spell_refuses_a_creature_and_accepts_an_object",
+   "tests/unit/test_spells.py::test_a_refused_light_on_a_creature_lights_nothing"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#1]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "Light with no target, or with any string, still makes a new 'glowing object' at the caster's position. SRD: Light needs a touched object that is Large or smaller and not worn or carried by someone else. Model those limits and light the object that is actually there.",
+    "kind": "infra"
+   },
+   {
+    "title": "dungdra/spells.py tests whether a target is a creature with hasattr(t, \"id\") in several places (cover, sight, _target_kind, caught). Add one is_creature predicate and use it everywhere.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "Approved, with no findings. The fix extends the existing `targets` data field with an \"object\" value instead of special-casing Light. Light gets that value in `dungdra/data/spells.py`. In `dungdra/spells.py`, `_target_kind` now refuses any creature target for an object-only spell. The check runs before anything is paid, cites SPELL.casting-spells.effects.targets#1 at p.106, and uses the module's usual creature test. The xfail on the SRD test is removed, and that test now passes. There are two new unit tests. One checks that the refusal fires and that an object target is accepted. The other runs the real cast path and checks that a refused cast creates no lit object and writes no cast log. The only out-of-scope line is the loop's costs.jsonl entry. I filed two follow-ups. The Light handler still invents a 'glowing object' when no target is given, and it doesn't model Light's limits on which objects it can target. The creature test `hasattr(t, \"id\")` is repeated in several places in dungdra/spells.py."
+ },
+ "problems": [],
+ "cost_usd": 0.5762,
+ "stash": ""
+}
