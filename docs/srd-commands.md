@@ -1,5 +1,12 @@
 # srdloop command
 
+NOTE: to use my personal acocunt, I have
+
+    srdloop='CLAUDE_CONFIG_DIR=~/.claude-personal python -m scripts.srdloop'
+    claude-personal='CLAUDE_CONFIG_DIR=~/.claude-personal claude'
+
+The CLAUDE_CONFIG_DIR is inherited by spawned agents, so the loop and its agents all use the same account.
+
 
 positional arguments:
   <command>
@@ -29,7 +36,9 @@ positional arguments:
 
 ## status
     python -m scripts.srdloop status
-    1835 units; 641 to do; 4 finished; 4 with state
+    1835 units: 642 in the queue; 4 audited (1 green, 3 red)
+    12 open tickets (0 bug, 6 infra, 6 refactor, 0 coverage); the audit loop stops above 15
+    Nothing waiting for you.
 
 ## list rulings to decide on
     python -m scripts.srdloop ruling list
