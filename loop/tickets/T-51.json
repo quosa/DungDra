@@ -4,7 +4,12 @@
   "unit": "GLOSS.prone",
   "title": "dungdra/combat.py move(): the Prone checks hard-code the mode names (`mode not in (\"walk\", \"crawl\")`, `mode == \"walk\"`). Have them use the MOVE_MODES spec (spec.speed == \"walk\") so the list of modes allowed while Prone comes from that table.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "combat.move() now finds the mode's MOVE_MODES entry before the Prone checks. While Prone, only modes whose spec.speed == \"walk\" are allowed; anything else is refused with page 186 and rule GLOSS.prone#1. A mode not in the table is also refused while Prone, as before. The double cost for crawling now uses spec.speed == \"walk\" instead of mode == \"walk\". Two unit tests were added: a Prone creature that walks pays double, and a Prone creature is refused a mode that isn't in the table. Unit tests: 362 passed. SRD and scenario tests: 329 passed, 33 xfailed. ruff check, ruff format --check and dev-gate all pass."
+    }
+  ]
 }

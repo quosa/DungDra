@@ -260,6 +260,22 @@ def test_a_prone_creature_still_crawls_at_double_cost(game):
     assert brom.position == (10, 0)
 
 
+def test_a_prone_creature_walking_crawls_at_double_cost(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Condition("prone", "prone"))
+    assert move(game, brom, to=(10, 0), mode="walk") == 20
+    assert brom.position == (10, 0)
+
+
+def test_a_prone_creature_is_refused_a_mode_outside_the_move_modes_table(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_effect(Condition("prone", "prone"))
+    with pytest.raises(Refusal) as exc:
+        move(game, brom, to=(10, 0), mode="burrow")
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.prone#1")
+    assert brom.position == (0, 0)
+
+
 def test_stand_up_refused_when_not_prone_cites_the_page(game):
     gob = mon(game, "goblin warrior", (0, 0))
     with pytest.raises(Refusal) as exc:

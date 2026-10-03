@@ -1,0 +1,10 @@
+{
+  "id": "T-54",
+  "kind": "refactor",
+  "unit": "GLOSS.prone",
+  "title": "dungdra/combat.py move(): crawling's doubled cost is still chosen by name (`mode == \"crawl\"`). Give MoveMode a field such as `crawling: bool` (or an extra-cost flag) and set it on the \"crawl\" entry of MOVE_MODES, so the crawl cost comes from that table like the Prone check now does.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

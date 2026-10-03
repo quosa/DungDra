@@ -456,19 +456,21 @@ def move(
                         page=182,
                         rule="GLOSS.frightened",
                     )
-    # SRD[GLOSS.prone#1] a Prone creature's only movement is crawling (or righting itself)
-    if c.has("prone") and mode not in ("walk", "crawl") and dist > 0:
+    spec = MOVE_MODES.get(mode)
+    # SRD[GLOSS.prone#1] a Prone creature's only movement is crawling (or righting itself):
+    # only the modes that spend walking Speed are open to it
+    if c.has("prone") and (spec is None or spec.speed != "walk") and dist > 0:
         raise Refusal(
             f"{c.name} is Prone and can only crawl, not {mode}",
             page=186,
             rule="GLOSS.prone#1",
         )
+    spec = spec or MOVE_MODES["walk"]
     cost = dist
     notes = []
-    if mode == "crawl" or (c.has("prone") and mode == "walk" and dist > 0):
+    if mode == "crawl" or (c.has("prone") and spec.speed == "walk" and dist > 0):
         cost += dist
         notes.append("crawling")
-    spec = MOVE_MODES.get(mode, MOVE_MODES["walk"])
     if spec.walk_fallback:
         # a Speed reduced to 0 falls back to walking, like having none
         has_speed = spec.speed == "walk" or c.speed(spec.speed) > 0
