@@ -40,6 +40,15 @@ def test_an_out_of_range_spell_is_refused_under_the_range_rule(game):
     assert exc.value.rule == "SPELL.casting-spells.range"
 
 
+def test_a_target_behind_total_cover_is_refused_under_the_clear_path_clause(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (10, 0))
+    game.scene.cover_all[gob.id] = "total"
+    with pytest.raises(Refusal) as exc:
+        cast(game, mialee, "fire bolt", targets=[gob])
+    assert (exc.value.rule, exc.value.page) == ("SPELL.casting-spells.effects.targets#2", 106)
+
+
 def _jozan_holding_his_mace(game):
     jozan = pc(game, "JOZAN", (0, 0))
     brom = pc(game, "BROM", (5, 0))

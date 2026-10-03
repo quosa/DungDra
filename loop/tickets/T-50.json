@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "The Total Cover refusal in cast() (dungdra/spells.py:136) cites rule=\"SPELL.casting-spells.effects.targets\" without a clause number and has no SRD[...#2] tag. Tag it #2.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-50 is fixed. In `cast()`, the Total Cover refusal now cites `rule=\"SPELL.casting-spells.effects.targets#2\"` and keeps `page=106`. The check above it carries the tag `# SRD[SPELL.casting-spells.effects.targets#2]` (`dungdra/spells.py:138-144`). I added a unit test that casts fire bolt at a goblin behind Total Cover and checks the refusal's rule and page. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`. Unit tests pass (360). The SRD tests in `tests/srd/test_spells.py` and `tests/srd/test_playing_the_game.py` pass (102 passed, 2 xfailed). `ruff check`, `ruff format --check` and `dev-gate` are clean."
+    }
+  ]
 }

@@ -135,13 +135,13 @@ def cast(
             page=105,
             rule="SPELL.casting-spells.casting-time.longer-casting-times",
         )
-    # targets behind Total Cover can't be targeted (p.106)
+    # SRD[SPELL.casting-spells.effects.targets#2] targets behind Total Cover can't be targeted
     for t in [] if sd.get("area") else targets:
         if is_creature(t) and t is not caster and game.cover_between(caster, t) == "total":
             raise Refusal(
                 f"{t.name} is behind Total Cover and can't be targeted",
                 page=106,
-                rule="SPELL.casting-spells.effects.targets",
+                rule="SPELL.casting-spells.effects.targets#2",
             )
     _range_check(game, caster, spell, sd, targets)
     _target_kind(spell, sd, targets)
