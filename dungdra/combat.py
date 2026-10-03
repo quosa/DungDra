@@ -85,6 +85,43 @@ class Combat:
         return c.id not in self.reaction_used and c.can_act()
 
     # -- action economy --
+    def spend_movement(
+        self,
+        c,
+        cost: int,
+        what: str,
+        *,
+        page: int,
+        rule: str,
+        ruling: str | None = None,
+        free_off_turn: bool = False,
+    ) -> bool:
+        """Spend `cost` ft of the turn's movement on `what`, or refuse before anything changes.
+
+        Movement is a budget of the creature's own turn, so off-turn there is none to spend and
+        the cost is refused. `free_off_turn` is for voluntary moves another feature grants
+        off-turn under its own limit (a controlled mount on its rider's turn): they are allowed
+        without touching the turn's budget. Returns whether the budget was spent."""
+        if not self.is_turn(c):
+            if free_off_turn:
+                return False
+            raise Refusal(
+                f"{what} costs {cost} ft of movement, which {c.name} has only on their own turn",
+                page=page,
+                rule=rule,
+                ruling=ruling,
+            )
+        # R-22: no partial spend; the full cost must be left
+        if cost > self.turn.movement_left:
+            raise Refusal(
+                f"{what} costs {cost} ft of movement; {c.name} has {self.turn.movement_left} ft left",
+                page=page,
+                rule=rule,
+                ruling=ruling,
+            )
+        self.turn.movement_left -= cost
+        return True
+
     def spend(self, actor, what="action", label=""):
         if what == "reaction":
             if actor.id in self.reaction_used:
@@ -408,7 +445,6 @@ def move(
     teleport=False,
     drag=None,
     provoke=True,
-    jump=False,
 ):
     """Move a creature. Returns feet of movement spent.
 
@@ -509,16 +545,18 @@ def move(
                 ruling="R-07" if c.has_special_speed(mode) else None,
             )
         raise Refusal(f"{c.name}'s Speed is 0", page=188, rule="GLOSS.speed")
-    if cb is not None and cb.is_turn(c):
-        if cost > cb.turn.movement_left:
-            raise Refusal(
-                f"{c.name} needs {cost} ft of movement but has {cb.turn.movement_left} ft left",
-                page=14,
-                rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
-                ruling=drag_ruling,
-            )
-    elif cb is None and cost > max(speed, 0) and not jump:
-        pass  # outside combat, movement isn't budgeted per turn
+    # outside combat, movement isn't budgeted per turn
+    budgeted = cb is not None and cb.spend_movement(
+        c,
+        cost,
+        f"Moving {dist} ft",
+        page=14,
+        rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
+        ruling=drag_ruling,
+        free_off_turn=True,
+    )
+    if budgeted:
+        cb.turn.moved += dist
     if provoke:
         _check_leave_reach(game, c, start, dest, provoke=True)
         if c.dead or c.has("incapacitated") and c.hp == 0:
@@ -527,15 +565,12 @@ def move(
     if drag is not None:
         # SRD[GLOSS.grappled#3] the carried creature ends beside its grappler
         drag.position = step_toward(dest, start, 5) if dist_points(dest, start) >= 5 else start
-    if cb is not None and cb.is_turn(c):
-        cb.turn.movement_left -= cost
-        cb.turn.moved += dist
     _after_move(game, c, start)
     game.log.player(
         "move",
         f"{c.name} moves {dist} ft"
         + (f" ({', '.join(notes)}; costs {cost} ft)" if notes else "")
-        + (f"; {cb.turn.movement_left} ft left" if cb and cb.is_turn(c) else ""),
+        + (f"; {cb.turn.movement_left} ft left" if budgeted else ""),
         page=14,
         rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
         ruling=drag_ruling,
@@ -1714,20 +1749,7 @@ def stand_up(game, c):
     # SRD[GLOSS.prone#2]
     cost = c.speed() // 2
     cb = game.combat
-    if cb is not None and not cb.is_turn(c):
-        # movement is spent on your own turn, so off-turn there is none to right yourself with
-        raise Refusal(
-            f"Standing up costs {cost} ft of movement, which {c.name} has only on their own turn",
-            page=186,
-            rule="GLOSS.prone#2",
-        )
     if cb is not None:
-        if cb.turn.movement_left < cost:
-            raise Refusal(
-                f"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left",
-                page=186,
-                rule="GLOSS.prone#2",
-            )
-        cb.turn.movement_left -= cost
+        cb.spend_movement(c, cost, "Standing up", page=186, rule="GLOSS.prone#2", ruling="R-22")
     c.remove_condition("prone", reason=f"stood up for {cost} ft of movement")
     return cost

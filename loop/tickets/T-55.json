@@ -1,0 +1,10 @@
+{
+  "id": "T-55",
+  "kind": "refactor",
+  "unit": "GLOSS.prone",
+  "title": "dungdra/combat.py move(): off-turn voluntary movement is still unbudgeted (free_off_turn=True for every caller). Decide which off-turn moves are legitimate (controlled mount, reaction-granted movement) and refuse the rest through spend_movement, proposing a ruling if the SRD is silent",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

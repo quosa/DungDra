@@ -324,3 +324,57 @@ def test_stand_up_on_own_turn_spends_half_speed(game):
     assert stand_up(game, gob) == 15
     assert not gob.has("prone")
     assert game.combat.turn.movement_left == 15
+
+
+def _goblin_turn(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    brom = pc(game, "BROM", (40, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [gob, brom])
+    assert game.combat.is_turn(gob)
+    return gob, brom
+
+
+def test_spend_movement_decrements_the_turn_budget(game):
+    gob, _ = _goblin_turn(game)
+    assert game.combat.spend_movement(gob, 10, "Climbing", page=14, rule="X#1") is True
+    assert game.combat.turn.movement_left == gob.speed() - 10
+
+
+def test_spend_movement_refuses_more_than_is_left_without_spending(game):
+    gob, _ = _goblin_turn(game)
+    game.combat.turn.movement_left = 5
+    with pytest.raises(Refusal, match="costs 10 ft.*5 ft left") as exc:
+        game.combat.spend_movement(gob, 10, "Standing up", page=186, rule="GLOSS.prone#2", ruling="R-22")
+    assert (exc.value.page, exc.value.rule, exc.value.ruling) == (186, "GLOSS.prone#2", "R-22")
+    assert game.combat.turn.movement_left == 5
+
+
+def test_spend_movement_refuses_off_turn_by_default(game):
+    gob, brom = _goblin_turn(game)
+    with pytest.raises(Refusal, match="own turn") as exc:
+        game.combat.spend_movement(brom, 5, "Standing up", page=186, rule="GLOSS.prone#2")
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.prone#2")
+    assert game.combat.turn.movement_left == gob.speed()
+
+
+def test_spend_movement_off_turn_free_leaves_the_budget_alone(game):
+    gob, brom = _goblin_turn(game)
+    assert game.combat.spend_movement(brom, 500, "Moving", page=14, rule="X#1", free_off_turn=True) is False
+    assert game.combat.turn.movement_left == gob.speed()
+
+
+def test_move_off_turn_is_not_drawn_from_the_current_turn(game):
+    gob, brom = _goblin_turn(game)
+    move(game, brom, to=(30, 0))
+    assert brom.position == (30, 0)
+    assert (game.combat.turn.movement_left, game.combat.turn.moved) == (gob.speed(), 0)
+
+
+def test_move_refused_over_budget_names_the_cost_and_changes_nothing(game):
+    gob, _ = _goblin_turn(game)
+    with pytest.raises(Refusal, match="costs 35 ft") as exc:
+        move(game, gob, to=(-35, 0))
+    assert (exc.value.page, exc.value.rule) == (14, "PLAY.combat.movement-and-position")
+    assert gob.position == (0, 0)
+    assert game.combat.turn.movement_left == gob.speed()
