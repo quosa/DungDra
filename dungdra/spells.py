@@ -14,6 +14,12 @@ from .rules import ABILITY_NAMES, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div,
 # spells whose text says "that you can see"
 SIGHT_SPELLS = {"sacred flame", "healing word", "command", "hold person", "magic missile", "misty step"}
 
+
+def is_creature(target) -> bool:
+    """A spell target is a creature (it has a creature id) rather than an object, a point or a name."""
+    return hasattr(target, "id")
+
+
 FOCUS_FOR = {"cleric": ["holy symbol"], "wizard": ["arcane focus", "spellbook", "quarterstaff"]}
 
 
@@ -129,7 +135,7 @@ def cast(
         )
     # targets behind Total Cover can't be targeted (p.106)
     for t in [] if sd.get("area") else targets:
-        if hasattr(t, "id") and t is not caster and game.cover_between(caster, t) == "total":
+        if is_creature(t) and t is not caster and game.cover_between(caster, t) == "total":
             raise Refusal(
                 f"{t.name} is behind Total Cover and can't be targeted",
                 page=106,
@@ -140,7 +146,7 @@ def cast(
     _target_cap(spell, sd, level, targets)
     if spell in SIGHT_SPELLS:
         for t in targets:
-            if hasattr(t, "id") and t is not caster and not can_see(caster, t):
+            if is_creature(t) and t is not caster and not can_see(caster, t):
                 raise Refusal(
                     f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
                     f"(try the Search action to find hidden creatures)",
@@ -416,7 +422,7 @@ def _target_kind(spell, sd, targets):
     if sd["targets"] == "object":
         # SRD[SPELL.casting-spells.effects.targets#1] the description says the spell targets objects
         for t in targets:
-            if hasattr(t, "id"):
+            if is_creature(t):
                 raise Refusal(
                     f"{spell.title()} targets an object, and {t.name} is a creature",
                     page=106,
@@ -428,7 +434,7 @@ def _target_kind(spell, sd, targets):
     base_clause = sd.get("target_clauses", (None, None))[0]
     # SRD[SPELL.bless#6] Bless targets creatures: an object (or anything else) isn't a valid target
     for t in targets:
-        if not hasattr(t, "id"):
+        if not is_creature(t):
             raise Refusal(
                 f"{spell.title()} targets creatures, and {getattr(t, 'name', t)!r} isn't one",
                 page=sd["page"],
@@ -1412,7 +1418,7 @@ def _web(game, c, targets, point=None, option=None, **kw):
         "anchored": anchored,
         "difficult": True,
         "lightly_obscured": True,
-        "caught": [t.id for t in targets if hasattr(t, "id")],
+        "caught": [t.id for t in targets if is_creature(t)],
     }
     game.log.player(
         "spell",

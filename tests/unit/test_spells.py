@@ -8,7 +8,7 @@ import pytest
 from dungdra.data.equipment import GP
 from dungdra.data.spells import SPELLS, spell_rule
 from dungdra.rules import Refusal
-from dungdra.spells import Casting, _material, _save_for_half, cast
+from dungdra.spells import Casting, _material, _save_for_half, cast, is_creature
 from tests.support.helpers import mon, pc
 
 UNITS = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
@@ -193,6 +193,14 @@ def test_each_creature_only_spell_refuses_a_non_creature_target_under_its_own_ru
     with pytest.raises(Refusal, match="targets creatures") as exc:
         _target_kind(spell, SPELLS[spell], ["door"])
     assert (exc.value.rule, exc.value.page) == (spell_rule(spell), SPELLS[spell]["page"])
+
+
+def test_is_creature_tells_a_creature_from_an_object_name_or_point(game):
+    assert is_creature(pc(game, "MIALEE"))
+    assert is_creature(mon(game, "goblin warrior"))
+    assert not is_creature("door")
+    assert not is_creature({"web": True})
+    assert not is_creature((10, 5))
 
 
 def test_a_spell_that_can_target_an_object_accepts_one(game):

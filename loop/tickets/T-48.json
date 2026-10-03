@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "dungdra/spells.py tests whether a target is a creature with hasattr(t, \"id\") in several places (cover, sight, _target_kind, caught). Add one is_creature predicate and use it everywhere.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-48 is done. I added a public `is_creature(target)` predicate to `dungdra/spells.py` and replaced all five `hasattr(t, \"id\")` checks in that file with it: the Total Cover check, the sight check, both branches of `_target_kind`, and Web's `caught` list. Behaviour is unchanged. I added one unit test that checks a PC and a monster count as creatures, and a name string, a scene-object dict and a point don't.\n\nResults: `ruff check` and `ruff format --check` are clean, `tests/unit` passes (354), `tests/srd` plus `tests/scenarios` show 329 passed and 33 xfailed, and `dev-gate` passes. The ticket listed no acceptance tests, so there was nothing to run with `--runxfail`. I added no SRD tags, since this is a pure refactor and the existing tags stay where they were.\n\nOne check is left on purpose: `Game.get` in `dungdra/game.py` still has a `hasattr(ref, \"id\")`. It's outside the ticket's scope, and it decides whether a reference is already a creature or needs looking up by name, which isn't a spell-target check. `game` also sits below `spells` in the import layers, so it couldn't use the new predicate without moving it to a lower module."
+    }
+  ]
 }
