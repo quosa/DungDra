@@ -1,0 +1,10 @@
+{
+  "id": "T-53",
+  "kind": "refactor",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "Guidance (dungdra/spells.py:911) and the handler at :1237 still pick the caster by hand with `targets[0] if targets else c.caster`. Mark those spells `default_self=True` in dungdra/data/spells.py and remove the fallback from the handlers, so every self-default comes from the data.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

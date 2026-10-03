@@ -72,6 +72,8 @@ def cast(
         raise OutOfScope(f"{spell.title()} isn't a spell in scope")
     sd = SPELLS[spell]
     targets = _as_list(game, targets)
+    if not targets and sd["default_self"]:
+        targets = [caster]
     g = game
     if caster.dead or caster.has("incapacitated"):
         raise Refusal(f"{caster.name} can't cast spells right now")
@@ -204,7 +206,9 @@ def cast(
     fn = IMPL.get(spell)
     if fn is None:
         raise OutOfScope(f"{spell.title()} has no implementation")
-    fn(game, c, targets, point=point, option=option, **kw)
+    affected = _affected_targets(game, spell, sd, targets)
+    if affected or not targets:
+        fn(game, c, affected, point=point, option=option, **kw)
     if item is not None and scroll:
         caster.inventory.remove(item, 1)
         g.log.player("item", "The Spell Scroll crumbles to dust", page=244, rule="MAGIC.spell-scroll")
@@ -1151,12 +1155,24 @@ def _invalid_target(game, t, spell, why, save=None):
     )
 
 
+def _affected_targets(game, spell, sd, targets):
+    """The targets the spell can affect, by its data's Restriction; each other creature target
+    goes to R-15's invalid-target handling once the cast is paid for."""
+    restrict = sd["restrict"]
+    if restrict is None:
+        return targets
+    affected = []
+    for t in targets:
+        if is_creature(t) and not restrict.affects(t):
+            # SRD[SPELL.casting-spells.effects.targets#8] nothing happens to that target
+            _invalid_target(game, t, spell.title(), restrict.why(t), save=restrict.save)
+        else:
+            affected.append(t)
+    return affected
+
+
 def _mage_armor(game, c, targets, **kw):
-    t = targets[0] if targets else c.caster
-    if getattr(t, "armor", None) is not None:
-        # SRD[SPELL.casting-spells.effects.targets#8] a creature who isn't wearing armor
-        _invalid_target(game, t, "Mage Armor", f"{t.name} is wearing armor")
-        return
+    t = targets[0]
     t.notes["mage_armor"] = True
     t.add_effect(MageArmorEffect("Mage Armor", caster=c.caster, until=game.clock + 8 * HOUR))
     game.log.player(
@@ -1285,12 +1301,6 @@ def _aid(game, c, targets, **kw):
 
 def _hold_person(game, c, targets, **kw):
     for t in targets:
-        if t.ctype != "humanoid":
-            # SRD[SPELL.casting-spells.effects.targets#10] the target appears to succeed
-            _invalid_target(
-                game, t, "Hold Person", f"{t.name} is a {t.ctype.title()}, not a Humanoid", save="wis"
-            )
-            continue
         r = spell_save(game, c, t, "wis", avoid={"paralyzed"})
         if not r.success:
             e = RepeatSave(

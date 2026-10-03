@@ -2,6 +2,19 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import NamedTuple
+
+
+class Restriction(NamedTuple):
+    """Which creatures a spell can affect. The cast pipeline routes any other target to R-15's
+    invalid-target handling: `why` explains it to the GM, and `save` names the ability of a spell
+    that a successful save makes harmless, so the invalid target appears to succeed on it."""
+
+    affects: Callable[[object], bool]
+    why: Callable[[object], str]
+    save: str | None = None
+
 
 def _s(
     level,
@@ -18,6 +31,8 @@ def _s(
     material_cost=0,
     page=None,
     targets=None,
+    restrict=None,
+    default_self=False,
     **kw,
 ):
     d = {
@@ -36,6 +51,10 @@ def _s(
         "page": page,
         # "creature": only creatures are valid targets; "object": only objects; None: no restriction
         "targets": targets,
+        # Restriction on the creatures it can affect (None: any creature of the right kind)
+        "restrict": restrict,
+        # with no target named, the caster is the target
+        "default_self": default_self,
     }
     d.update(kw)
     return d
@@ -213,6 +232,11 @@ SPELLS = {
         material="a piece of cured leather",
         page=145,
         targets="creature",
+        default_self=True,
+        # SRD[SPELL.casting-spells.effects.targets#8] a creature who isn't wearing armor
+        restrict=Restriction(
+            lambda t: getattr(t, "armor", None) is None, lambda t: f"{t.name} is wearing armor"
+        ),
     ),
     "magic missile": _s(
         1, "evocation", W, "action", 120, "VS", 0, page=146, targets="creature", dtype="force"
@@ -299,6 +323,12 @@ SPELLS = {
         targets="creature",
         save="wis",
         max_targets=(1, 1),
+        # SRD[SPELL.casting-spells.effects.targets#10] a non-Humanoid appears to succeed on the save
+        restrict=Restriction(
+            lambda t: t.ctype == "humanoid",
+            lambda t: f"{t.name} is a {t.ctype.title()}, not a Humanoid",
+            save="wis",
+        ),
     ),
     "invisibility": _s(
         2,

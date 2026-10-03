@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "Each spell still decides its own target restriction in its handler (_mage_armor checks armor, _hold_person checks ctype). Give the restriction to the spell data as a predicate plus a reason and the save ability, and have the cast pipeline route failing targets to _invalid_target, so that every restricted spell follows R-15 without hand-written code.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "The restriction on which targets a spell can affect is now part of the spell's data, and the cast pipeline handles any target that fails it. No spell handler checks targets by hand any more.\n\n- **Spell data** (`dungdra/data/spells.py`): there is a new `Restriction(affects, why, save=None)` record and a `restrict=` field. Mage Armor's restriction is \"not wearing armor\" with no save, so the caster is told the spell did nothing. Hold Person's is \"is a Humanoid\" with a Wisdom save, so an invalid target appears to pass its save. I also added a `default_self` field. Mage Armor's handler used to target the caster when no target was named. That default now has to be decided before the restriction check, so it moved into the data too.\n- **Cast pipeline** (`dungdra/spells.py`): after the cast is paid for, the new `_affected_targets` checks each creature target against the restriction. Failing targets go to the existing `_invalid_target` (R-15: slot spent, a fake save success or \"did nothing\", plus a GM log entry). The handler only gets the targets the spell can affect. If every named target was invalid, the handler isn't called. The armor check in `_mage_armor` and the creature-type check in `_hold_person` are gone.\n\nThe ticket names no acceptance tests and none are marked T-49, so there was no red test to turn green. Checks:\n- Unit tests: 359 passed, including the existing Mage Armor and Hold Person R-15 tests, which still pass unchanged.\n- Full suite: 688 passed, 33 xfailed.\n- `ruff check` and `ruff format --check`: clean.\n- `python -m scripts.srdloop dev-gate`: PASS, import contract OK."
+    }
+  ]
 }

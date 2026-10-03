@@ -6,9 +6,9 @@ from pathlib import Path
 import pytest
 
 from dungdra.data.equipment import GP
-from dungdra.data.spells import SPELLS, spell_rule
+from dungdra.data.spells import SPELLS, Restriction, spell_rule
 from dungdra.rules import Refusal
-from dungdra.spells import Casting, _material, _save_for_half, cast, is_creature
+from dungdra.spells import Casting, _affected_targets, _material, _save_for_half, cast, is_creature
 from tests.support.helpers import mon, pc
 
 UNITS = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
@@ -333,3 +333,50 @@ def test_hold_person_on_a_non_humanoid_appears_to_save_under_r15(game):
     assert (saves[-1].rule, saves[-1].ruling) == ("SPELL.casting-spells.effects.targets#10", "R-15")
     assert not [e for e in new if e.kind == "spell" and "does nothing" in e.text]
     assert [e.visibility for e in new if e.kind == "invalid_target"] == ["gm"]
+
+
+def test_a_spell_restriction_routes_failing_targets_to_r15_and_keeps_the_rest(game):
+    wolf = mon(game, "wolf", (20, 0))
+    brom = pc(game, "BROM", (5, 0))
+    sd = {
+        "restrict": Restriction(lambda t: t.ctype == "humanoid", lambda t: f"{t.name} is no Humanoid", "wis")
+    }
+    start = len(game.log.events)
+    assert _affected_targets(game, "hold person", sd, [wolf, brom, "a rock"]) == [brom, "a rock"]
+    new = game.log.since(start)
+    assert [e.text for e in new if e.kind == "save"] == [
+        "Wolf succeeds on its Wisdom saving throw against Hold Person"
+    ]
+    assert [e.text for e in new if e.kind == "invalid_target"] == [
+        "Wolf is no Humanoid: invalid target for Hold Person; the slot is spent and nothing happens to it"
+    ]
+
+
+def test_a_restriction_without_a_save_says_the_spell_did_nothing(game):
+    brom = pc(game, "BROM", (5, 0))
+    sd = {"restrict": Restriction(lambda t: False, lambda t: "never")}
+    start = len(game.log.events)
+    assert _affected_targets(game, "mage armor", sd, [brom]) == []
+    new = game.log.since(start)
+    assert [e.text for e in new if e.kind == "spell"] == ["Mage Armor does nothing to BROM"]
+    assert not [e for e in new if e.kind == "save"]
+
+
+def test_an_unrestricted_spell_affects_every_target(game):
+    brom = pc(game, "BROM", (5, 0))
+    start = len(game.log.events)
+    assert _affected_targets(game, "bless", {"restrict": None}, [brom]) == [brom]
+    assert game.log.since(start) == []
+
+
+def test_mage_armor_with_no_target_named_wards_the_caster(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    cast(game, mialee, "mage armor")
+    assert mialee.notes.get("mage_armor") and mialee.find_effects("Mage Armor")
+
+
+def test_restricted_spells_carry_the_restriction_in_their_data():
+    restricted = {n for n, sd in SPELLS.items() if sd["restrict"] is not None}
+    assert restricted >= {"mage armor", "hold person"}
+    assert SPELLS["hold person"]["restrict"].save == "wis"
+    assert SPELLS["mage armor"]["restrict"].save is None
