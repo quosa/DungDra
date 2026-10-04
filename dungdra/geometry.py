@@ -37,6 +37,20 @@ def step_away(p, q, feet) -> tuple[int, int]:
     return (x + dx * 5 * steps, y + dy * 5 * steps)
 
 
+def in_cone_direction(origin, toward, p) -> bool:
+    """Is p inside the (unbounded) Cone from `origin` aimed at `toward`? A Cone's width at any point
+    equals that point's distance from the origin, so p may stray at most half its distance along
+    the axis from it. The origin itself isn't included. Length is checked by the caller."""
+    ux, uy = toward[0] - origin[0], toward[1] - origin[1]
+    norm = (ux * ux + uy * uy) ** 0.5
+    if norm == 0:
+        return False
+    vx, vy = p[0] - origin[0], p[1] - origin[1]
+    along = (vx * ux + vy * uy) / norm
+    across = abs(vx * uy - vy * ux) / norm
+    return along > 0 and across <= along / 2
+
+
 def segment_crosses_square(p, q, corner, side) -> bool:
     """Does the open segment p→q pass through the interior of the square at `corner`
     (lowest x, y) with edge `side`? Touching an edge or a corner doesn't count."""

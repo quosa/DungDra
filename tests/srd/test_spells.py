@@ -590,11 +590,6 @@ def test_a_named_creature_outside_the_cone_isnt_affected(game):
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="R-16")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-38: a Cone has one direction, but Burning Hands hits named creatures "
-    "on opposite sides of the caster",
-)
 def test_one_cone_cant_reach_both_sides_of_the_caster(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")

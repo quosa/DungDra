@@ -8,7 +8,7 @@ from .d20 import D20Roll, roll_d20_test
 from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
-from .geometry import dist_points
+from .geometry import dist_points, in_cone_direction
 from .rules import ABILITY_NAMES, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm
 
 # spells whose text says "that you can see"
@@ -981,9 +981,13 @@ def _bless(game, c, targets, **kw):
     )
 
 
-def _area_targets(game, c, targets, shape, size):
+def _area_targets(game, c, targets, shape, size, point=None):
     """Creatures named by the caller as inside the area; drop anyone behind Total Cover from the origin
-    and the caster (the point of origin of a Cone/Cube from self isn't included)."""
+    and the caster (the point of origin of a Cone/Cube from self isn't included). A Cone points one
+    way: toward `point` if given, else toward the first creature named other than the caster."""
+    aim = None
+    if shape == "Cone":
+        aim = point or next((t.position for t in targets if is_creature(t) and t is not c.caster), None)
     out = []
     for t in targets:
         if t is c.caster:
@@ -999,6 +1003,15 @@ def _area_targets(game, c, targets, shape, size):
         if c.caster.distance_to(t) > size:
             game.log.player(
                 "spell", f"{t.name} is outside the {size}-ft {shape}", page=177, rule="GLOSS.area-of-effect"
+            )
+            continue
+        # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
+        if aim is not None and not in_cone_direction(c.caster.position, aim, t.position):
+            game.log.player(
+                "spell",
+                f"{t.name} is outside the {size}-ft {shape}",
+                page=106,
+                rule="SPELL.casting-spells.effects.targets#4",
             )
             continue
         out.append(t)
@@ -1023,8 +1036,8 @@ def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
     return total
 
 
-def _burning_hands(game, c, targets, **kw):
-    ts = _area_targets(game, c, targets, "Cone", 15)
+def _burning_hands(game, c, targets, point=None, **kw):
+    ts = _area_targets(game, c, targets, "Cone", 15, point=point)
     _save_for_half(game, c, ts, "dex", f"{3 + c.level - 1}d6", "fire")
     for name, obj in game.scene.objects.items():
         if obj.get("flammable") and obj.get("in_cone") and not obj.get("worn"):

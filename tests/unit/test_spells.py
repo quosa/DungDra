@@ -389,3 +389,26 @@ def test_restricted_spells_carry_the_restriction_in_their_data():
     assert restricted >= {"mage armor", "hold person"}
     assert SPELLS["hold person"]["restrict"].save == "wis"
     assert SPELLS["mage armor"]["restrict"].save is None
+
+
+def test_a_cone_aimed_at_the_first_named_creature_skips_one_behind_the_caster(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    west = mon(game, "goblin warrior", (-5, 0), name="WEST")
+    east.hp = west.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    cast(game, m, "burning hands", [west, east])
+    assert west.hp == 24 and east.hp == 30
+    game.log.assert_applied(rule="SPELL.casting-spells.effects.targets#4")
+
+
+def test_a_cone_aimed_at_a_point_follows_the_point(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    west = mon(game, "goblin warrior", (-5, 0), name="WEST")
+    east.hp = west.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    cast(game, m, "burning hands", [east, west], point=(-15, 0))
+    assert west.hp == 24 and east.hp == 30

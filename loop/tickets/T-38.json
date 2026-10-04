@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Fixed T-38: Burning Hands now hits only creatures inside one Cone pointing in one direction. Before, it checked distance only, so it could hit named creatures on both sides of the caster.\n\n- Added `geometry.in_cone_direction(origin, toward, p)`. It checks whether a point is inside the Cone's angle: a Cone's width equals the distance from its origin, and the origin itself isn't included. Length is still checked by the caller.\n- `spells._area_targets` takes an aim for Cones. The aim is the `point=` argument if the caller gives one; otherwise it's the first named creature other than the caster. Named creatures outside the Cone are skipped and logged as outside it (page 106, rule `SPELL.casting-spells.effects.targets#4`), and the code carries the `SRD[...#4]` tag. `_burning_hands` passes `point` through.\n\nTest results: the ticket's acceptance test now passes with `--runxfail` (without it, it shows as a strict XPASS, which is expected). All other srd and scenario tests pass, apart from the 32 still marked xfail for other tickets; the existing Burning Hands tests all aim along +x and still pass. 373 unit tests pass, ruff is clean, and dev-gate passes.\n\nChoices a person may want to review:\n- **Default aim:** with no `point=`, the Cone aims at the first named creature. That's my own choice, not a register ruling.\n- **Creatures as points:** a creature counts as a single point at its position, not a 5-ft square, so a creature whose square only partly overlaps the Cone isn't hit.\n- **Caller's list:** the engine still only narrows the list the caller gives. It doesn't yet find unnamed creatures in the area as R-16 describes; that is a broader change.\n- **Tagging:** there's no stage-A analysis for `GLOSS.cone`, so the code is tagged with the ticket's clause #4 only."
+    }
+  ]
 }

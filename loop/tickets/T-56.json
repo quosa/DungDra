@@ -1,0 +1,10 @@
+{
+  "id": "T-56",
+  "kind": "infra",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "R-16: area spells (Burning Hands Cone, Thunderwave Cube) still take the affected creatures from the caller's list. Select every creature in the area from scene positions, shape, origin and an explicit direction, so a caller can't leave out a creature inside an 'each creature' area. Once the direction is explicit, drop the 'aim at the first named creature' fallback in _area_targets.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
