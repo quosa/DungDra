@@ -36,6 +36,8 @@ class Casting:
     source: str = ""
     item: object = None
     results: dict = field(default_factory=dict)
+    held: str | None = None  # a readied spell: the Concentration holding its energy
+    release: object = None  # a readied spell: release(game) lets the held energy take effect
 
     @property
     def data(self):
@@ -62,15 +64,27 @@ def cast(
     point=None,
     option=None,
     charges=None,
+    ready=False,
     **kw,
 ):
-    """Cast a spell. targets: creature(s)/object names; slot: slot level to expend."""
+    """Cast a spell. targets: creature(s)/object names; slot: slot level to expend.
+
+    ready: cast it as the response of a Ready action, which pays for the action; the energy is
+    held and the returned Casting's `release(game)` lets it take effect later."""
     spell = norm(spell)
     if spell not in SPELLS:
         if spell_level(spell) is not None:
             raise OutOfScope(f"{spell.title()} is out of scope for this game")
         raise OutOfScope(f"{spell.title()} isn't a spell in scope")
     sd = SPELLS[spell]
+    # SRD[GLOSS.ready#7] only a spell with a casting time of an action can be readied
+    if ready and sd["time"] != "action":
+        raise Refusal(
+            f"{spell.title()} has a casting time of a {sd['time']}; only a spell with a casting time "
+            f"of an action can be readied",
+            page=187,
+            rule="GLOSS.ready#7",
+        )
     targets = _as_list(game, targets)
     if not targets and sd["default_self"]:
         targets = [caster]
@@ -156,9 +170,12 @@ def cast(
                     rule=spell_rule(spell),
                 )
     stow = _components(game, caster, spell, sd, scroll or item is not None)
+    fn = IMPL.get(spell)
+    if fn is None:
+        raise OutOfScope(f"{spell.title()} has no implementation")
     # --- action economy ----------------------------------------------------------
     time = sd["time"]
-    if cb is not None:
+    if cb is not None and not ready:
         if time == "action":
             cb.spend(caster, "action", "Magic")
         elif time == "bonus action":
@@ -201,18 +218,50 @@ def cast(
     )
     if ritual:
         game.advance(10 * MINUTE + (ROUND if time == "action" else 0), f"ritual casting of {spell.title()}")
-    if sd["concentration"]:
-        game.start_concentration(caster, spell.title())
-    fn = IMPL.get(spell)
-    if fn is None:
-        raise OutOfScope(f"{spell.title()} has no implementation")
-    affected = _affected_targets(game, spell, sd, targets)
-    if affected or not targets:
-        fn(game, c, affected, point=point, option=option, **kw)
+    if ready:
+        # SRD[GLOSS.ready#6] cast as normal, its resources spent, but its energy is held
+        # SRD[GLOSS.ready#8] holding the magic requires Concentration; R-17: for any spell, so it
+        # ends Concentration on an earlier spell
+        c.held = f"{spell.title()} (readied)"
+        game.start_concentration(caster, c.held)
+        g.log.player(
+            "ready",
+            f"{caster.name} holds the energy of {spell.title()} (Concentration)",
+            page=187,
+            rule="GLOSS.ready#8",
+            ruling="R-17",
+        )
+
+        def release(game_):
+            _release(game_, c, sd, targets, fn, point, option, kw)
+
+        c.release = release
+    else:
+        _take_effect(game, c, sd, targets, fn, point, option, kw)
     if item is not None and scroll:
         caster.inventory.remove(item, 1)
         g.log.player("item", "The Spell Scroll crumbles to dust", page=244, rule="MAGIC.spell-scroll")
     return c
+
+
+def _take_effect(game, c, sd, targets, fn, point, option, kw):
+    if sd["concentration"]:
+        game.start_concentration(c.caster, c.spell.title())
+    affected = _affected_targets(game, c.spell, sd, targets)
+    if affected or not targets:
+        fn(game, c, affected, point=point, option=option, **kw)
+
+
+def _release(game, c, sd, targets, fn, point, option, kw):
+    # SRD[GLOSS.ready#6] the held energy is released with the Reaction, spending nothing more
+    game.end_concentration(c.caster, f"{c.spell.title()} is released")
+    game.log.player(
+        "ready",
+        f"{c.caster.name} releases the held {c.spell.title()}",
+        page=187,
+        rule="GLOSS.ready#6",
+    )
+    _take_effect(game, c, sd, targets, fn, point, option, kw)
 
 
 def _as_list(game, targets):

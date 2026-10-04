@@ -36,7 +36,12 @@
     "tests/srd/test_glossary.py::test_held_spell_dissipates_when_concentration_breaks",
     "tests/srd/test_glossary.py::test_held_spell_survives_a_successful_concentration_save"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Added the Ready action (GLOSS.ready). \n- combat.py: Combat.readied plus a Readied record (trigger creature, distance, response, release, held Concentration). ready() checks the turn and that the action is free (new Combat.require_action, which spend() now reuses), checks the trigger, builds the response, then spends the action. A refused response costs nothing. readied_attack and readied_move build the responses; a readied move is checked against Speed when readied (R-20). _readied_triggers runs after any move: only the chosen creature moving to within the distance triggers it. With no Reaction left, this is logged and nobody is asked. Otherwise the readier is asked `readied`. Ignoring keeps the response (R-18); taking it spends the Reaction and releases it right away. A refused release keeps both. attack() gained reaction=True, so a readied attack doesn't spend the action. start_turn and end_combat drop the readied response (#2). A held spell's Concentration ends at the start of the readier's next turn and the slot isn't refunded (R-19). An on_concentration_end hook makes a held spell dissipate when Concentration breaks (#9). \n- spells.py: cast(ready=True) refuses spells whose casting time isn't an action (#7). It casts as normal (slot and components spent, no action spent) and holds the energy under Concentration \"<Spell> (readied)\" (#8, R-17). It returns the Casting with release(game), which ends the holding Concentration and applies the effect through the new _take_effect helper. The 'no implementation' OutOfScope check now runs before anything is paid. \n- api.py: cmd_ready parses {trigger: moves_within, response: one command}. Lists are refused ('one', R-20), Bonus Action commands are refused (R-20), and other actions or triggers are OutOfScope. cmd_cast's argument handling moved into _cast so it can be reused. \nResults: all 31 T-41 tests pass with --runxfail. The unit suite and ruff are clean, dev-gate passes, and in the full run the only failures are the 31 T-41 strict-xfail XPASSes."
+    }
+  ]
 }

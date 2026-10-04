@@ -2,7 +2,19 @@
 
 import pytest
 
-from dungdra.combat import attack, escape_grapple, move, release_grapple, roll_initiative, stand_up
+from dungdra.combat import (
+    attack,
+    end_combat,
+    end_turn,
+    escape_grapple,
+    move,
+    readied_attack,
+    readied_move,
+    ready,
+    release_grapple,
+    roll_initiative,
+    stand_up,
+)
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.rules import Refusal
@@ -378,3 +390,149 @@ def test_move_refused_over_budget_names_the_cost_and_changes_nothing(game):
     assert (exc.value.page, exc.value.rule) == (14, "PLAY.combat.movement-and-position")
     assert gob.position == (0, 0)
     assert game.combat.turn.movement_left == gob.speed()
+
+
+# ---------------- the Ready action ----------------
+def _brom_vs_goblins(game, *positions):
+    brom = pc(game, "BROM", (0, 0))
+    gobs = [mon(game, "goblin warrior", p, name=f"G{i}") for i, p in enumerate(positions)]
+    game.dice.force_str("d20=[20,1]")  # identical goblins share one Initiative roll
+    roll_initiative(game, [brom, *gobs])
+    assert game.combat.current is brom
+    return brom, gobs
+
+
+def test_ready_spends_the_action_and_holds_the_response(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    assert game.combat.turn.actions_used == 1
+    assert game.combat.readied[brom.id].trigger == gob.id
+    assert gob.hp == 10
+    assert game.log.last("ready").rule == "GLOSS.ready#1"
+
+
+def test_ready_refused_before_building_the_response_when_the_action_is_spent(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    game.combat.spend(brom, "action", "Dodge")
+    built = []
+    with pytest.raises(Refusal, match="already taken their action"):
+        ready(game, brom, gob.id, 5, lambda: built.append(1))
+    assert built == [] and game.combat.readied == {}
+
+
+def test_ready_trigger_naming_no_creature_cites_the_trigger_clause(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    with pytest.raises(Refusal, match="ogre") as exc:
+        ready(game, brom, "ogre", 5, lambda: readied_attack(game, brom, gob))
+    assert (exc.value.page, exc.value.rule) == (186, "GLOSS.ready#3")
+    assert game.combat.turn.actions_used == 0
+
+
+def test_readied_attack_taken_with_the_reaction_when_the_creature_comes_within(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    game.dice.force_str("d20=[15]; d8=[2]")
+    move(game, gob, to=(5, 0))
+    assert gob.hp == 5
+    assert brom.id in game.combat.reaction_used
+    assert brom.id not in game.combat.readied
+
+
+def test_readied_trigger_needs_the_creature_to_come_within_the_distance(game):
+    brom, (gob,) = _brom_vs_goblins(game, (5, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    move(game, gob, to=(5, 5))  # already within 5 ft: it doesn't come within
+    assert game.answers[(brom.id, "readied")]  # never asked
+    assert brom.id in game.combat.readied
+
+
+def test_a_refused_release_keeps_the_reaction_and_the_readied_response(game):
+    brom, (gob, gob2) = _brom_vs_goblins(game, (20, 0), (40, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob2))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    move(game, gob, to=(5, 0))  # the trigger, but the Goblin 2 is far beyond reach
+    assert brom.id not in game.combat.reaction_used
+    assert brom.id in game.combat.readied
+    assert "can't take the readied" in str(game.log.last("ready"))
+
+
+def test_readied_response_lapses_at_the_start_of_the_readiers_next_turn(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    end_turn(game)
+    end_turn(game)
+    assert game.combat.current is brom
+    assert game.combat.readied == {}
+    assert game.log.last("ready").rule == "GLOSS.ready#2"
+
+
+def test_ready_refused_outside_combat_and_for_a_bad_trigger(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    with pytest.raises(Refusal) as exc:
+        ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    assert exc.value.rule == "GLOSS.ready#2"
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [brom, gob])
+    for trigger, feet in ((brom.id, 5), (gob.id, -5)):
+        with pytest.raises(Refusal) as exc:
+            ready(game, brom, trigger, feet, lambda: readied_attack(game, brom, gob))
+        assert exc.value.rule == "GLOSS.ready#3"
+    assert game.combat.readied == {}
+
+
+def test_require_action_refuses_off_turn_incapacitated_and_a_surged_magic_action(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    cb = game.combat
+    with pytest.raises(Refusal, match="isn't"):
+        cb.require_action(gob)
+    cb.turn.surge_active, cb.turn.actions, cb.turn.actions_used = True, 2, 1
+    with pytest.raises(Refusal) as exc:
+        cb.require_action(brom, "Magic")
+    assert exc.value.page == 48
+    cb.require_action(brom, "Attack")  # the surged action is free for anything else
+    brom.add_condition("incapacitated", "test")
+    with pytest.raises(Refusal) as exc:
+        cb.require_action(brom)
+    assert exc.value.rule == "GLOSS.incapacitated"
+
+
+def test_readied_trigger_without_a_reaction_is_logged_and_not_asked(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    end_turn(game)
+    game.combat.reaction_used.add(brom.id)
+    game.answer("readied", True, who=brom)
+    move(game, gob, to=(5, 0))
+    assert game.answers[(brom.id, "readied")]
+    assert "no Reaction available" in str(game.log.last("ready"))
+    assert gob.hp == 10
+
+
+def test_a_readied_response_lapses_when_combat_ends(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
+    end_combat(game)
+    assert "combat ended" in str(game.log.last("ready"))
+
+
+def test_readied_move_beyond_speed_cites_ruling_r20(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    with pytest.raises(Refusal, match="Speed") as exc:
+        readied_move(game, brom, (-35, 0))
+    assert (exc.value.page, exc.value.rule, exc.value.ruling) == (187, "GLOSS.ready#4", "R-20")
+
+
+def test_readied_move_is_released_off_turn_without_a_movement_budget(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    ready(game, brom, gob.id, 5, lambda: readied_move(game, brom, (-30, 0)))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    game.answer("opportunity_attack", False, who=gob)
+    move(game, gob, to=(5, 0))
+    assert brom.position == (-30, 0)

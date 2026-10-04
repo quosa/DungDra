@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from dungdra.combat import roll_initiative
 from dungdra.data.equipment import GP
 from dungdra.data.spells import SPELLS, Restriction, spell_rule
 from dungdra.rules import Refusal
@@ -431,3 +432,48 @@ def test_a_cone_aimed_at_a_point_follows_the_point(game):
     game.dice.force_str("d6=[2,2,2]; d20=[1]")
     cast(game, m, "burning hands", [east, west], point=(-15, 0))
     assert west.hp == 24 and east.hp == 30
+
+
+# ---------------- readied spells ----------------
+def _in_combat(game, name, gob_pos=(30, 0)):
+    caster = pc(game, name, (0, 0))
+    gob = mon(game, "goblin warrior", gob_pos)
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [caster, gob])
+    return caster, gob
+
+
+def test_a_bonus_action_spell_cant_be_readied_and_spends_nothing(game):
+    jozan, _ = _in_combat(game, "JOZAN")
+    with pytest.raises(Refusal, match="casting time") as exc:
+        cast(game, jozan, "healing word", [jozan], ready=True)
+    assert (exc.value.page, exc.value.rule) == (187, "GLOSS.ready#7")
+    assert jozan.slots_left(1) == 2 and not game.combat.turn.bonus_used
+
+
+def test_a_readied_spell_pays_its_slot_but_not_the_action_and_holds_its_energy(game):
+    mialee, gob = _in_combat(game, "MIALEE")
+    c = cast(game, mialee, "magic missile", [gob], ready=True)
+    assert mialee.slots_left(1) == 1
+    assert game.combat.turn.actions_used == 0  # the Ready action pays for it
+    assert mialee.concentrating == c.held == "Magic Missile (readied)"
+    assert gob.hp == 10
+    assert game.log.last("ready").ruling == "R-17"
+
+
+def test_releasing_a_held_spell_ends_the_holding_and_takes_effect(game):
+    mialee, gob = _in_combat(game, "MIALEE")
+    c = cast(game, mialee, "magic missile", [gob], ready=True)
+    game.dice.force_str("d4=[1,1,1]")
+    c.release(game)
+    assert gob.hp == 4
+    assert not mialee.concentrating
+    assert mialee.slots_left(1) == 1
+
+
+def test_releasing_a_concentration_spell_concentrates_on_the_spell_itself(game):
+    jozan, _ = _in_combat(game, "JOZAN")
+    c = cast(game, jozan, "bless", [jozan], ready=True)
+    assert "readied" in jozan.concentrating
+    c.release(game)
+    assert jozan.concentrating == "Bless"

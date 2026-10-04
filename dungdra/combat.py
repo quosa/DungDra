@@ -1,8 +1,9 @@
 """Combat: Initiative, turns and the action economy, movement, attacks, damage,
-Opportunity Attacks, grappling and shoving (SRD p.13-18, glossary)."""
+Opportunity Attacks, the Ready action, grappling and shoving (SRD p.13-18, glossary)."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from .d20 import D20Roll, roll_d20_test
@@ -57,6 +58,7 @@ class Combat:
         self.ammo_spent: dict[tuple[str, str], int] = {}
         self.defeated: list[str] = []
         self.ended = False
+        self.readied: dict[str, Readied] = {}  # readier id -> its readied response
 
     # -- queries --
     @property
@@ -122,6 +124,28 @@ class Combat:
         self.turn.movement_left -= cost
         return True
 
+    def require_action(self, actor, label=""):
+        """Refuse unless it is `actor`'s turn and its action is still free; spends nothing."""
+        if not self.is_turn(actor):
+            raise Refusal(f"It isn't {actor.name}'s turn")
+        if not actor.can_act():
+            raise Refusal(
+                f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
+            )
+        t = self.turn
+        if not t.action_available():
+            raise Refusal(
+                f"{actor.name} has already taken their action this turn",
+                page=13,
+                rule="PLAY.combat.the-order-of-combat",
+            )
+        if label == "Magic" and t.surge_active and t.actions_used == 1:
+            raise Refusal(
+                "Action Surge grants an additional action other than the Magic action",
+                page=48,
+                rule="CLASS.fighter.level-2-action-surge",
+            )
+
     def spend(self, actor, what="action", label=""):
         if what == "reaction":
             if actor.id in self.reaction_used:
@@ -136,6 +160,8 @@ class Combat:
                 )
             self.reaction_used.add(actor.id)
             return
+        if what == "action":
+            self.require_action(actor, label)
         if not self.is_turn(actor):
             raise Refusal(f"It isn't {actor.name}'s turn")
         if not actor.can_act():
@@ -144,18 +170,6 @@ class Combat:
             )
         t = self.turn
         if what == "action":
-            if not t.action_available():
-                raise Refusal(
-                    f"{actor.name} has already taken their action this turn",
-                    page=13,
-                    rule="PLAY.combat.the-order-of-combat",
-                )
-            if label == "Magic" and t.surge_active and t.actions_used == 1:
-                raise Refusal(
-                    "Action Surge grants an additional action other than the Magic action",
-                    page=48,
-                    rule="CLASS.fighter.level-2-action-surge",
-                )
             t.actions_used += 1
             t.log.append(label or "action")
         elif what == "bonus":
@@ -322,6 +336,7 @@ def start_turn(game):
         return
     cb.turn = TurnState(c.id)
     cb.reaction_used.discard(c.id)
+    _readied_lapses(game, c)
     cb.turn.movement_left = c.speed()
     game.turn_actor = c
     game.log.player(
@@ -386,6 +401,8 @@ def end_combat(game, reason=""):
         return
     cb.ended = True
     rounds = cb.round
+    for cid in list(cb.readied):
+        _readied_lapses(game, game.creatures[cid], "combat ended")
     # the final round counts in full, even when the fight ends partway through it
     game.clock = max(game.clock, cb.start_clock + rounds * ROUND)
     game.log.player(
@@ -481,6 +498,7 @@ def move(
             page=190,
             rule="GLOSS.teleportation" if teleport else "PLAY.combat.movement-and-position",
         )
+        _readied_triggers(game, c, start)
         return 0
     if c.has("frightened"):
         for e in c.effects:
@@ -575,6 +593,7 @@ def move(
         rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
         ruling=drag_ruling,
     )
+    _readied_triggers(game, c, start)
     return cost
 
 
@@ -674,6 +693,185 @@ def opportunity_attack(game, attacker, target):
 
 
 # ---------------------------------------------------------------------------
+# The Ready action (glossary p.186-187)
+# ---------------------------------------------------------------------------
+@dataclass
+class Readied:
+    """A readied response. The trigger is `trigger` (a creature id) moving to within `feet` ft
+    of the readier; `release` runs the response; `held` names the Concentration holding a spell."""
+
+    trigger: str
+    feet: int
+    what: str
+    release: Callable
+    held: str | None = None
+
+
+def ready(game, c, trigger, feet, build):
+    """Take the Ready action: `c` readies a response for when the creature `trigger` moves to
+    within `feet` ft of it. `build()` prepares the response and returns (what, release, held);
+    it runs only once the action is known to be free, so a refused response costs nothing."""
+    cb = game.combat
+    # SRD[GLOSS.ready#2] the Ready action is taken on your turn, and it is that turn's action
+    if cb is None:
+        raise Refusal(f"{c.name} can Ready only on their turn in combat", page=186, rule="GLOSS.ready#2")
+    cb.require_action(c, "Ready")
+    # SRD[GLOSS.ready#3] the trigger is a perceivable circumstance: a creature that is here
+    try:
+        who = game.get(trigger)
+    except Refusal as e:
+        raise Refusal(
+            f"The trigger needs a creature that is here: {e.reason}", page=186, rule="GLOSS.ready#3"
+        ) from e
+    if who is c or not isinstance(feet, int) or feet < 0:
+        raise Refusal(
+            "The trigger is another creature moving to within a distance of you",
+            page=186,
+            rule="GLOSS.ready#3",
+        )
+    what, release, held = build()
+    cb.spend(c, "action", "Ready")
+    cb.readied[c.id] = Readied(who.id, feet, what, release, held)
+    if held:
+        c.notes["on_concentration_end"] = lambda g: _held_spell_dissipates(g, c)
+    # SRD[GLOSS.ready#1] nothing happens now: the response waits for the trigger
+    game.log.player(
+        "ready",
+        f"{c.name} readies {what} for when {who.name} moves to within {feet} ft",
+        page=186,
+        rule="GLOSS.ready#1",
+    )
+
+
+def readied_attack(game, c, target, weapon=None):
+    """An attack readied as the response (GLOSS.ready#4); see `ready` for the return value."""
+    kw = {"weapon": weapon} if c.is_pc() else {"attack_name": weapon}
+
+    def release(g):
+        attack(g, c, target, reaction=True, **kw)
+
+    return f"an attack on {target.name}", release, None
+
+
+def readied_move(game, c, to):
+    """A move readied as the response (GLOSS.ready#4); see `ready` for the return value."""
+    dest = tuple(to)
+
+    def check():
+        # SRD[GLOSS.ready#4] R-20: a move of up to your Speed, checked when you ready it
+        feet = dist_points(c.position, dest)
+        if feet > c.speed():
+            raise Refusal(
+                f"A readied move goes up to {c.name}'s Speed of {c.speed()} ft, not {feet} ft",
+                page=187,
+                rule="GLOSS.ready#4",
+                ruling="R-20",
+            )
+
+    check()
+
+    def release(g):
+        check()
+        move(g, c, to=dest)
+
+    return f"a move to {dest}", release, None
+
+
+def _readied_triggers(game, mover, start):
+    """After `mover` has moved from `start`, each creature whose readied trigger that was may
+    take its Reaction right after it (GLOSS.ready#5)."""
+    cb = game.combat
+    if cb is None or mover.dead:
+        return
+    for rid, rec in list(cb.readied.items()):
+        readier = game.creatures.get(rid)
+        if rec.trigger != mover.id or readier is None or readier is mover or cb.readied.get(rid) is not rec:
+            continue
+        # SRD[GLOSS.ready#3] only the chosen circumstance: this creature moving to within the distance
+        here = readier.position
+        if not dist_points(here, start) > rec.feet >= dist_points(here, mover.position):
+            continue
+        if not cb.has_reaction(readier):
+            game.log.player(
+                "ready",
+                f"{readier.name} can't take the readied {rec.what} (no Reaction available)",
+                page=186,
+                rule="GLOSS.ready#2",
+            )
+            continue
+        # SRD[GLOSS.ready#5] take the Reaction right after the trigger finishes, or ignore the trigger
+        if not game.decide(
+            readier,
+            "readied",
+            [True, False],
+            default=True,
+            prompt=f"{mover.name} is within {rec.feet} ft of {readier.name}: take the readied {rec.what}?",
+        ):
+            # R-18: an ignored trigger keeps the readied response and the Reaction
+            game.log.player(
+                "ready",
+                f"{readier.name} ignores the trigger and keeps {rec.what} readied",
+                page=187,
+                rule="GLOSS.ready#5",
+                ruling="R-18",
+            )
+            continue
+        cb.spend(readier, "reaction")
+        del cb.readied[rid]
+        game.log.player(
+            "ready",
+            f"{readier.name} takes the readied {rec.what} with their Reaction",
+            page=187,
+            rule="GLOSS.ready#5",
+        )
+        try:
+            rec.release(game)
+        except Refusal as e:
+            # nothing was taken: the Reaction and the readied response stay for a later trigger
+            cb.reaction_used.discard(rid)
+            cb.readied[rid] = rec
+            game.log.player(
+                "ready",
+                f"{readier.name} can't take the readied {rec.what}: {e.reason}",
+                page=187,
+                rule="GLOSS.ready#5",
+            )
+
+
+def _held_spell_dissipates(game, c):
+    cb = game.combat
+    rec = cb.readied.pop(c.id, None) if cb is not None else None
+    if rec is None:
+        return
+    # SRD[GLOSS.ready#9] broken Concentration: the held spell dissipates without taking effect
+    game.log.player(
+        "ready",
+        f"{c.name}'s held {rec.what} dissipates without taking effect",
+        page=187,
+        rule="GLOSS.ready#9",
+    )
+
+
+def _readied_lapses(game, c, why="the start of their next turn"):
+    rec = game.combat.readied.pop(c.id, None)
+    if rec is None:
+        return
+    # SRD[GLOSS.ready#2] the readied Reaction lasts until the start of your next turn
+    game.log.player("ready", f"{c.name}'s readied {rec.what} lapses ({why})", page=186, rule="GLOSS.ready#2")
+    if rec.held and c.concentrating == rec.held:
+        # SRD[GLOSS.ready#8] R-19: the Concentration holding the spell ends with it; the slot stays spent
+        c.notes.pop("on_concentration_end", None)
+        game.end_concentration(c, f"the held spell is lost at {why}")
+        game.log.player(
+            "ready",
+            f"{c.name}'s held {rec.what} dissipates without taking effect",
+            page=187,
+            rule="GLOSS.ready#8",
+            ruling="R-19",
+        )
+
+
+# ---------------------------------------------------------------------------
 # Attacks
 # ---------------------------------------------------------------------------
 @dataclass
@@ -708,6 +906,7 @@ def attack(
     light_extra=False,
     nick=False,
     opportunity=False,
+    reaction=False,
     unarmed=False,
     adv=(),
     dis=(),
@@ -717,7 +916,8 @@ def attack(
     knock_out=None,
     ignore_range=False,
 ):
-    """Resolve one attack roll. `weapon`: PC weapon item/name; `attack_name`: monster attack."""
+    """Resolve one attack roll. `weapon`: PC weapon item/name; `attack_name`: monster attack.
+    `reaction`: the attack is made with a Reaction the caller has spent (a readied attack)."""
     cb = game.combat
     if not attacker.can_act():
         raise Refusal(f"{attacker.name} can't attack right now")
@@ -770,7 +970,7 @@ def attack(
         reach = matk["reach"]
     # --- action economy ---
     if cb is not None:
-        _spend_attack(game, attacker, item, light_extra, nick, opportunity)
+        _spend_attack(game, attacker, item, light_extra, nick, opportunity or reaction)
     elif opportunity:
         pass
     # --- range ---
@@ -987,9 +1187,9 @@ def _charm_check(game, attacker, target):
             )
 
 
-def _spend_attack(game, attacker, item, light_extra, nick, opportunity):
+def _spend_attack(game, attacker, item, light_extra, nick, with_reaction):
     cb = game.combat
-    if opportunity:
+    if with_reaction:  # an Opportunity Attack or a readied attack: the Reaction pays for it
         return
     t = cb.turn
     if not cb.is_turn(attacker):

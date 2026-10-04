@@ -503,9 +503,6 @@ def ready_cmd(actor, trigger, response) -> dict:
 
 # ---------------- #1 · Ready waits for a circumstance before acting ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#1", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_attack_waits_for_the_trigger(game):
     s, brom, gob = brom_readies_attack(game)
     assert gob.hp == 10 and not RDY.reaction_used(game, brom)  # nothing happens yet
@@ -518,9 +515,6 @@ def test_readied_attack_waits_for_the_trigger(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#1", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_attack_not_taken_on_the_readying_turn(game):
     s, brom, gob = brom_readies_attack(game, (5, 0))  # the goblin already stands next to BROM
     assert gob.hp == 10
@@ -529,9 +523,6 @@ def test_readied_attack_not_taken_on_the_readying_turn(game):
 
 # ---------------- #2 · on your turn; a Reaction before the start of your next turn ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ready_takes_the_action(game):
     s, brom, gob = brom_readies_attack(game, (5, 0))
     assert game.combat.turn.actions_used == 1
@@ -544,9 +535,6 @@ def test_ready_takes_the_action(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ready_refused_off_turn(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -556,9 +544,6 @@ def test_ready_refused_off_turn(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ready_refused_after_the_action_is_spent(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (5, 0))
@@ -570,9 +555,6 @@ def test_ready_refused_after_the_action_is_spent(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="boundary")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_attack_ends_at_the_start_of_your_next_turn(game):
     s, brom, gob = brom_readies_attack(game)
     RDY.end_turn(s)  # the goblin's turn: it stays put
@@ -586,9 +568,6 @@ def test_readied_attack_ends_at_the_start_of_your_next_turn(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (5, 0))
@@ -608,9 +587,6 @@ def test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction(game)
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_no_opportunity_attack_after_the_readied_attack(game):
     s, brom, gob = brom_readies_attack(game)
     RDY.end_turn(s)
@@ -626,9 +602,6 @@ def test_no_opportunity_attack_after_the_readied_attack(game):
 
 # ---------------- #3 · a perceivable circumstance triggers the Reaction ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#3", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_attack_not_taken_when_the_trigger_doesnt_happen(game):
     s, brom, gob = brom_readies_attack(game, (30, 0))
     RDY.end_turn(s)
@@ -639,9 +612,6 @@ def test_readied_attack_not_taken_when_the_trigger_doesnt_happen(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#3", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_only_the_chosen_circumstance_triggers_the_reaction(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -661,9 +631,6 @@ def test_only_the_chosen_circumstance_triggers_the_reaction(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#3", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ready_trigger_naming_no_creature_refused(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -675,9 +642,6 @@ def test_ready_trigger_naming_no_creature_refused(game):
 
 # ---------------- #4 · an action, or a move up to your Speed ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#4", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_move_away_when_the_goblin_steps_next_to_you(game):
     lidda = pc(game, "LIDDA", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -693,9 +657,6 @@ def test_readied_move_away_when_the_goblin_steps_next_to_you(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#4", kind="boundary", ruling="R-20")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_move_beyond_speed_refused(game):
     lidda = pc(game, "LIDDA", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -705,9 +666,6 @@ def test_readied_move_beyond_speed_refused(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#4", kind="negative", ruling="R-20")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_bonus_action_refused(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -717,9 +675,6 @@ def test_readying_a_bonus_action_refused(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#4", kind="abuse", ruling="R-20")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_an_action_and_a_move_together_refused(game):
     brom = pc(game, "BROM", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -731,9 +686,6 @@ def test_readying_an_action_and_a_move_together_refused(game):
 
 # ---------------- #5 · take the Reaction right after the trigger, or ignore it ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#5", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ignored_trigger_keeps_the_reaction(game):
     s, brom, gob = brom_readies_attack(game)
     RDY.end_turn(s)
@@ -745,9 +697,6 @@ def test_ignored_trigger_keeps_the_reaction(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#5", kind="positive", ruling="R-18")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_ignored_trigger_can_be_answered_the_next_time(game):
     s, brom, gob = brom_readies_attack(game, (15, 0))
     RDY.end_turn(s)
@@ -766,9 +715,6 @@ def test_ignored_trigger_can_be_answered_the_next_time(game):
 
 # ---------------- #6 · a readied spell is cast now and released with the Reaction ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#6", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_spell_spends_its_slot_when_readied(game):
     s, mialee, gob = mialee_readies_missile(game)
     assert mialee.slots_left(1) == 1
@@ -777,9 +723,6 @@ def test_readied_spell_spends_its_slot_when_readied(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#6", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readied_spell_released_with_the_reaction(game):
     s, mialee, gob = mialee_readies_missile(game)
     RDY.end_turn(s)
@@ -792,9 +735,6 @@ def test_readied_spell_released_with_the_reaction(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#6", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_held_spell_not_released_when_the_trigger_is_ignored(game):
     s, mialee, gob = mialee_readies_missile(game)
     RDY.end_turn(s)
@@ -807,9 +747,6 @@ def test_held_spell_not_released_when_the_trigger_is_ignored(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_spell_without_a_slot_refused(game):
     mialee = pc(game, "MIALEE", (0, 0))
     gob = mon(game, "goblin warrior", (60, 0))
@@ -821,9 +758,6 @@ def test_readying_a_spell_without_a_slot_refused(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#6", kind="abuse", ruling="R-19")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_unreleased_readied_spell_doesnt_refund_its_slot(game):
     s, mialee, gob = mialee_readies_missile(game)
     RDY.end_turn(s)
@@ -834,9 +768,6 @@ def test_unreleased_readied_spell_doesnt_refund_its_slot(game):
 
 # ---------------- #7 · only a spell with a casting time of an action ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#7", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_bonus_action_spell_refused(game):
     jozan = pc(game, "JOZAN", (0, 0))
     brom = pc(game, "BROM", (5, 0))
@@ -849,9 +780,6 @@ def test_readying_a_bonus_action_spell_refused(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#7", kind="abuse")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_reaction_spell_refused(game):
     mialee = pc(game, "MIALEE", (0, 0))
     gob = mon(game, "goblin warrior", (30, 0))
@@ -862,9 +790,6 @@ def test_readying_a_reaction_spell_refused(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#7", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_an_action_cantrip_is_allowed(game):
     mialee = pc(game, "MIALEE", (0, 0))
     gob = mon(game, "goblin warrior", (60, 0))
@@ -877,18 +802,12 @@ def test_readying_an_action_cantrip_is_allowed(game):
 
 # ---------------- #8 · holding the spell takes Concentration until your next turn ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#8", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_holding_a_readied_spell_takes_concentration(game):
     s, mialee, gob = mialee_readies_missile(game)
     assert mialee.concentrating
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#8", kind="boundary", ruling="R-19")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_held_spell_ends_at_the_start_of_your_next_turn(game):
     s, mialee, gob = mialee_readies_missile(game)
     RDY.end_turn(s)
@@ -903,9 +822,6 @@ def test_held_spell_ends_at_the_start_of_your_next_turn(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#8", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_weapon_attack_needs_no_concentration(game):
     jozan = pc(game, "JOZAN", (0, 0))
     gob = mon(game, "goblin warrior", (20, 0))
@@ -917,9 +833,6 @@ def test_readying_a_weapon_attack_needs_no_concentration(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#8", kind="abuse", ruling="R-17")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_readying_a_spell_ends_earlier_concentration(game):
     jozan = pc(game, "JOZAN", (0, 0))
     gob = mon(game, "goblin warrior", (60, 0))
@@ -935,9 +848,6 @@ def test_readying_a_spell_ends_earlier_concentration(game):
 
 # ---------------- #9 · broken Concentration: the spell dissipates ----------------
 @pytest.mark.srd(RD, clause=f"{RD}#9", kind="positive")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_held_spell_dissipates_when_concentration_breaks(game):
     gob1 = mon(game, "goblin warrior", (5, 0), name="Goblin 1")
     s, mialee, gob = mialee_readies_missile(game, gob1)
@@ -956,9 +866,6 @@ def test_held_spell_dissipates_when_concentration_breaks(game):
 
 
 @pytest.mark.srd(RD, clause=f"{RD}#9", kind="negative")
-@pytest.mark.xfail(
-    strict=True, reason="T-41: the engine has no Ready action: no ready command, trigger or readied Reaction"
-)
 def test_held_spell_survives_a_successful_concentration_save(game):
     gob1 = mon(game, "goblin warrior", (5, 0), name="Goblin 1")
     s, mialee, gob = mialee_readies_missile(game, gob1)

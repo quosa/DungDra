@@ -1,0 +1,10 @@
+{
+  "id": "T-61",
+  "kind": "refactor",
+  "unit": "GLOSS.ready",
+  "title": "dungdra/api.py BONUS_ACTION_COMMANDS duplicates which commands cost a Bonus Action. Derive the Ready refusal from the engine (for example, the action cost class_abilities spends) instead of a hand-kept list in the interface layer.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

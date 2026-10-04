@@ -47,6 +47,9 @@ from .fixtures import make as make_fixture
 from .game import Game
 from .rules import OutOfScope, Refusal, norm
 
+# commands that take a Bonus Action, so can't be the response of a Ready action
+BONUS_ACTION_COMMANDS = {"second_wind", "cunning_action", "steady_aim"}
+
 
 def _enemy_state(e) -> str:
     if e.dead:
@@ -264,14 +267,30 @@ class Session:
         point=None,
         charges=None,
     ):
-        a = self._c(actor)
+        self._cast(self._c(actor), spell, targets, slot, ritual, free, item, option, point, charges)
+        self._after_pc_action()
+
+    def _cast(
+        self,
+        a,
+        spell,
+        targets=None,
+        slot=None,
+        ritual=False,
+        free=False,
+        item=None,
+        option=None,
+        point=None,
+        charges=None,
+        ready=False,
+    ):
         it = a.inventory.find(item) if item else None
         if item and it is None:
             raise Refusal(f"{a.name} has no {item}")
         scroll = it is not None and it.name == "spell scroll"
         if targets is not None and not isinstance(targets, list):
             targets = [targets]
-        S.cast(
+        return S.cast(
             self.game,
             a,
             spell,
@@ -284,8 +303,52 @@ class Session:
             option=option,
             point=tuple(point) if point else None,
             charges=charges,
+            ready=ready,
         )
-        self._after_pc_action()
+
+    def cmd_ready(self, trigger, response, actor=None):
+        """The Ready action: `trigger` is {"event": "moves_within", "creature": id, "feet": n};
+        `response` is one command without its actor: an attack, an action spell or a move."""
+        g = self.game
+        a = self._c(actor)
+        if not isinstance(trigger, dict) or trigger.get("event") != "moves_within":
+            raise OutOfScope("the only readied trigger is a creature moving to within a distance of you")
+        # SRD[GLOSS.ready#4] R-20: one action, or one move up to your Speed, checked now
+        if not isinstance(response, dict):
+            raise Refusal(
+                "Ready takes one response: one action, or one move up to your Speed",
+                page=187,
+                rule="GLOSS.ready#4",
+                ruling="R-20",
+            )
+        kind = response.get("cmd")
+        args = {k: v for k, v in response.items() if k not in ("cmd", "actor")}
+        if kind == "attack":
+
+            def build():
+                return C.readied_attack(g, a, g.get(args["target"]), args.get("weapon"))
+
+        elif kind == "move":
+
+            def build():
+                return C.readied_move(g, a, args["to"])
+
+        elif kind == "cast":
+
+            def build():
+                c = self._cast(a, ready=True, **args)
+                return c.spell.title(), c.release, c.held
+
+        elif kind in BONUS_ACTION_COMMANDS or args.get("bonus"):
+            raise Refusal(
+                f"{kind} is a Bonus Action; Ready readies an action or a move",
+                page=187,
+                rule="GLOSS.ready#4",
+                ruling="R-20",
+            )
+        else:
+            raise OutOfScope(f"readying {kind!r}: only an attack, an action spell or a move can be readied")
+        C.ready(g, a, trigger.get("creature"), trigger.get("feet", 5), build)
 
     def cmd_move(self, actor=None, to=None, toward=None, feet=None, away_from=None, mode="walk", drag=None):
         g = self.game

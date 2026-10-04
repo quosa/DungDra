@@ -1,0 +1,10 @@
+{
+  "id": "T-60",
+  "kind": "coverage",
+  "unit": "GLOSS.ready",
+  "title": "A readied spell whose release is refused (handler raises Refusal after _release has ended the holding Concentration) is restored to cb.readied with no Concentration and no on_concentration_end hook. Either check the release before ending Concentration or don't restore a held spell, and add a unit test for it.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

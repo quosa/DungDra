@@ -1,0 +1,10 @@
+{
+  "id": "T-62",
+  "kind": "refactor",
+  "unit": "GLOSS.ready",
+  "title": "Combat.spend('action') now calls require_action and then repeats the is_turn and can_act checks right after it. Fold the remaining checks so each refusal is written in one place.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
