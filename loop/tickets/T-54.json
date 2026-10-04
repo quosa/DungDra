@@ -4,7 +4,12 @@
   "unit": "GLOSS.prone",
   "title": "dungdra/combat.py move(): crawling's doubled cost is still chosen by name (`mode == \"crawl\"`). Give MoveMode a field such as `crawling: bool` (or an extra-cost flag) and set it on the \"crawl\" entry of MOVE_MODES, so the crawl cost comes from that table like the Prone check now does.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Gave MoveMode a `crawling: bool = False` field and set it on the \"crawl\" entry of MOVE_MODES. move() now applies crawling's doubled cost via `spec.crawling` instead of checking `mode == \"crawl\"`, so the crawl cost comes from the table, like the Prone check. Behaviour is unchanged. Added unit tests: only the crawl entry is flagged as crawling, and crawling while not Prone costs double while walking doesn't. Ruff, unit tests (401 passed), the Prone/crawl glossary tests and dev-gate all pass. No SRD tag was added: GLOSS.crawling has no stage-A analysis to take a clause number from, and the existing GLOSS.prone#1 tag still covers the Prone part."
+    }
+  ]
 }

@@ -3,6 +3,7 @@
 import pytest
 
 from dungdra.combat import (
+    MOVE_MODES,
     attack,
     end_combat,
     end_turn,
@@ -277,6 +278,17 @@ def test_a_prone_creature_walking_crawls_at_double_cost(game):
     brom.add_effect(Condition("prone", "prone"))
     assert move(game, brom, to=(10, 0), mode="walk") == 20
     assert brom.position == (10, 0)
+
+
+def test_only_the_crawl_entry_of_the_move_modes_table_is_crawling():
+    assert [name for name, spec in MOVE_MODES.items() if spec.crawling] == ["crawl"]
+
+
+def test_crawling_costs_double_without_being_prone_and_walking_does_not(game):
+    brom = pc(game, "BROM", (0, 0))
+    assert move(game, brom, to=(10, 0), mode="crawl") == 20
+    assert move(game, brom, to=(20, 0), mode="walk") == 10
+    assert brom.position == (20, 0)
 
 
 def test_a_prone_creature_is_refused_a_mode_outside_the_move_modes_table(game):

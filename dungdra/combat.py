@@ -432,17 +432,19 @@ def end_combat(game, reason=""):
 @dataclass(frozen=True)
 class MoveMode:
     """How a mode of movement uses Speed: the Speed it spends, whether a creature without
-    that Speed may still move by walking, and whether doing so costs extra feet."""
+    that Speed may still move by walking, whether doing so costs extra feet, and whether the
+    mode is crawling (each foot costs 1 extra foot)."""
 
     speed: str
     walk_fallback: bool = True
     extra_without: bool = False
     extra_note: str = ""
+    crawling: bool = False
 
 
 MOVE_MODES = {
     "walk": MoveMode("walk"),
-    "crawl": MoveMode("walk"),
+    "crawl": MoveMode("walk", crawling=True),
     "climb": MoveMode("climb", extra_without=True, extra_note="climbing"),
     "swim": MoveMode("swim", extra_without=True, extra_note="swimming"),
     "fly": MoveMode("fly", walk_fallback=False),
@@ -522,7 +524,7 @@ def move(
     spec = spec or MOVE_MODES["walk"]
     cost = dist
     notes = []
-    if mode == "crawl" or (c.has("prone") and spec.speed == "walk" and dist > 0):
+    if spec.crawling or (c.has("prone") and spec.speed == "walk" and dist > 0):
         cost += dist
         notes.append("crawling")
     if spec.walk_fallback:
