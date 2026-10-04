@@ -1,0 +1,10 @@
+{
+  "id": "T-59",
+  "kind": "infra",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "The point of origin of a point-placed area spell (Sleep, Web, ...) isn't checked against the spell's range: _range_check only looks at the targets. Sleep also falls back to 'every listed creature is inside' when no point is given. Require a point for spells whose area sits at a point, and refuse one beyond the spell's range under SPELL.casting-spells.range.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

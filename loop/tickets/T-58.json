@@ -1,0 +1,10 @@
+{
+  "id": "T-58",
+  "kind": "refactor",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "Area membership is split across two helpers: _area_targets (caster origin, Cone/Cube, with a Total Cover check) and _sphere_targets (Sphere at a point, no cover check). Each handler also hard-codes its size: _sleep passes 5 and _burning_hands passes 15, though SPELLS[...]['area'] already holds ('sphere', 5) and ('cone', 15). Merge them into one area-selection helper that takes the origin (caster or point) and reads shape and size from the spell's area data.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Sleep now uses its point of origin. I added `_sphere_targets` in dungdra/spells.py: when a `point` is given, it drops every named creature farther than the Sphere's radius from that point, using grid distance (`dist_points`). Each dropped creature gets a log line with page=106 and rule=\"SPELL.casting-spells.effects.targets#4\". `_sleep` now accepts `point` and filters through this helper with radius 5. With no point given, it still treats the named creatures as inside the Sphere, so existing scenario callers behave as before. Checks run: unit tests (375 passed); tests/srd/test_spells.py plus tests/scenarios with --runxfail (216 passed, including the T-39 test); ruff check and ruff format --check (both clean); dev-gate (PASS)."
+    }
+  ]
 }

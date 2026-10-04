@@ -1018,6 +1018,26 @@ def _area_targets(game, c, targets, shape, size, point=None):
     return out
 
 
+def _sphere_targets(game, targets, size, point=None):
+    """Creatures named by the caller that are inside a Sphere of radius `size` centred on `point`;
+    without a point the caller's list is taken as the creatures inside it."""
+    if point is None:
+        return list(targets)
+    out = []
+    for t in targets:
+        # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
+        if is_creature(t) and dist_points(point, t.position) > size:
+            game.log.player(
+                "spell",
+                f"{t.name} is outside the {size}-ft Sphere",
+                page=106,
+                rule="SPELL.casting-spells.effects.targets#4",
+            )
+            continue
+        out.append(t)
+    return out
+
+
 def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
     total, rolls = roll_dice(game, dice, False, c.caster)
     game.log.player(
@@ -1256,8 +1276,8 @@ def _shield_of_faith(game, c, targets, **kw):
     )
 
 
-def _sleep(game, c, targets, **kw):
-    for t in targets:
+def _sleep(game, c, targets, point=None, **kw):
+    for t in _sphere_targets(game, targets, 5, point=point):
         if "trance" in t.traits or "exhaustion" in t.cond_immune or t.notes.get("doesnt_sleep"):
             game.log.player(
                 "save",

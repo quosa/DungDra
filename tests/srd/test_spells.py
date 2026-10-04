@@ -602,11 +602,6 @@ def test_one_cone_cant_reach_both_sides_of_the_caster(game):
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="abuse", ruling="R-16")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-39: Sleep ignores its point of origin; a named creature 50 ft from the "
-    "5-foot Sphere still has to save",
-)
 def test_sleep_doesnt_reach_a_creature_outside_its_sphere(game):
     m = pc(game, "MIALEE", (0, 0))
     g = mon(game, "goblin warrior", (10, 0), name="G")

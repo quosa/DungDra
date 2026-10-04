@@ -403,6 +403,25 @@ def test_a_cone_aimed_at_the_first_named_creature_skips_one_behind_the_caster(ga
     game.log.assert_applied(rule="SPELL.casting-spells.effects.targets#4")
 
 
+def test_sleep_at_a_point_only_reaches_creatures_in_its_sphere(game):
+    m = pc(game, "MIALEE", (0, 0))
+    near = mon(game, "goblin warrior", (35, 0), name="NEAR")
+    far = mon(game, "goblin warrior", (10, 0), name="FAR")
+    game.dice.force_str("d20=[1]")
+    cast(game, m, "sleep", [near, far], point=(40, 0))
+    assert near.has("incapacitated") and not far.has("incapacitated")
+    assert len([e for e in game.log.events if e.kind == "save"]) == 1
+    game.log.assert_applied(rule="SPELL.casting-spells.effects.targets#4")
+
+
+def test_sleep_without_a_point_takes_the_named_creatures_as_inside(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[1]")
+    cast(game, m, "sleep", [gob])
+    assert gob.has("incapacitated")
+
+
 def test_a_cone_aimed_at_a_point_follows_the_point(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")
