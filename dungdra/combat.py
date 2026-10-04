@@ -11,6 +11,7 @@ from .data.equipment import WEAPONS
 from .dice import parse_expr
 from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
 from .geometry import dist_points, step_away, step_toward
+from .mounted import moves_on_riders_turn
 from .rules import ROUND, Refusal, fmt_mod, size_index
 
 
@@ -102,8 +103,9 @@ class Combat:
 
         Movement is a budget of the creature's own turn, so off-turn there is none to spend and
         the cost is refused. `free_off_turn` is for voluntary moves another feature grants
-        off-turn under its own limit (a controlled mount on its rider's turn): they are allowed
-        without touching the turn's budget. Returns whether the budget was spent."""
+        off-turn under its own limit (a readied move, a controlled mount on its rider's turn):
+        they are allowed without touching the turn's budget. Returns whether the budget was
+        spent."""
         if not self.is_turn(c):
             if free_off_turn:
                 return False
@@ -464,11 +466,13 @@ def move(
     teleport=False,
     drag=None,
     provoke=True,
+    reaction=False,
 ):
     """Move a creature. Returns feet of movement spent.
 
     mode: walk | climb | crawl | swim | fly.  forced/teleport never provoke OAs.
-    drag: a creature this mover grapples, dragged or carried along in any mode."""
+    drag: a creature this mover grapples, dragged or carried along in any mode.
+    reaction: the move is a Reaction's (a readied move), which may be taken off-turn."""
     cb = game.combat
     start = tuple(c.position)
     # SRD[GLOSS.grappled#3] only "the grappler" can drag the Grappled creature
@@ -565,7 +569,10 @@ def move(
                 ruling="R-07" if c.has_special_speed(mode) else None,
             )
         raise Refusal(f"{c.name}'s Speed is 0", page=188, rule="GLOSS.speed")
-    # outside combat, movement isn't budgeted per turn
+    # outside combat, movement isn't budgeted per turn. SRD[PLAY.combat.movement-and-position]
+    # "On your turn, you can move": off-turn, only a Reaction's move (limited by its own
+    # feature, GLOSS.ready#4) and a controlled mount moving on its rider's turn are allowed;
+    # any other voluntary move is refused.
     budgeted = cb is not None and cb.spend_movement(
         c,
         cost,
@@ -573,7 +580,7 @@ def move(
         page=14,
         rule="GLOSS.grappled#4" if drag is not None else "PLAY.combat.movement-and-position",
         ruling=drag_ruling,
-        free_off_turn=True,
+        free_off_turn=reaction or moves_on_riders_turn(game, c),
     )
     if budgeted:
         cb.turn.moved += dist
@@ -774,7 +781,8 @@ def readied_move(game, c, to):
 
     def release(g):
         check()
-        move(g, c, to=dest)
+        # SRD[GLOSS.ready#4] the readied move is the Reaction's, outside the turn's budget
+        move(g, c, to=dest, reaction=True)
 
     return f"a move to {dest}", release, None
 

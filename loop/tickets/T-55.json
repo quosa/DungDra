@@ -4,7 +4,12 @@
   "unit": "GLOSS.prone",
   "title": "dungdra/combat.py move(): off-turn voluntary movement is still unbudgeted (free_off_turn=True for every caller). Decide which off-turn moves are legitimate (controlled mount, reaction-granted movement) and refuse the rest through spend_movement, proposing a ruling if the SRD is silent",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-55 is done. In combat, `move()` now refuses voluntary movement made outside the creature's own turn. The SRD text settled every case, so no new ruling was needed:\n- \"On your turn, you can move\" (PLAY.combat.movement-and-position, p.14) means a move off-turn is refused through spend_movement, citing page=14 and that rule, and nothing changes.\n- A readied move is allowed off-turn and doesn't use the current turn's movement. `move()` has a new `reaction=False` parameter, and `readied_move`'s release passes `reaction=True`. Its own limit (up to your Speed) is still checked under GLOSS.ready#4 / R-20.\n- A controlled mount \"moves on your turn as you direct it\" (PLAY.combat.mounted-combat, p.16), so it may move on its rider's turn without using the rider's movement. The new helper `mounted.moves_on_riders_turn(game, steed)` (combat may import mounted under the layer rules) decides this. An independent mount, or one whose rider has dismounted, is refused off-turn.\n\nSo `free_off_turn` is now set to `reaction or moves_on_riders_turn(game, c)` instead of always True. Forced movement and teleports are unchanged. Golden scenario CMB-04(g), where the mount moves on Jozan's turn, still passes.\n\nChecks: `python -m pytest -q` passed all 767 tests before I added test_mounted.py. After that, the 409 unit tests passed, `ruff check` and `ruff format --check` were clean, and `python -m scripts.srdloop dev-gate` passed. The ticket has no acceptance tests of its own. My last edit only re-wrapped a docstring line that was too long; I re-ran ruff and dev-gate after it but not pytest."
+    }
+  ]
 }

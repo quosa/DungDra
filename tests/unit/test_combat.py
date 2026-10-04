@@ -18,6 +18,7 @@ from dungdra.combat import (
 )
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
+from dungdra.mounted import mount
 from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
 from tests.unit.helpers import grappled_by
@@ -388,9 +389,56 @@ def test_spend_movement_off_turn_free_leaves_the_budget_alone(game):
     assert game.combat.turn.movement_left == gob.speed()
 
 
-def test_move_off_turn_is_not_drawn_from_the_current_turn(game):
+def test_move_off_turn_is_refused_and_changes_nothing(game):
     gob, brom = _goblin_turn(game)
-    move(game, brom, to=(30, 0))
+    start = tuple(brom.position)
+    with pytest.raises(Refusal, match="own turn") as exc:
+        move(game, brom, to=(30, 0))
+    assert (exc.value.page, exc.value.rule) == (14, "PLAY.combat.movement-and-position")
+    assert tuple(brom.position) == start
+    assert (game.combat.turn.movement_left, game.combat.turn.moved) == (gob.speed(), 0)
+
+
+def _mounted_turn(game, controlled):
+    jozan = pc(game, "JOZAN", (0, 0))
+    horse = mon(game, "riding horse", (5, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [jozan, horse])
+    mount(game, jozan, horse, controlled=controlled)
+    assert game.combat.is_turn(jozan)
+    return jozan, horse
+
+
+def test_controlled_mount_moves_on_its_riders_turn_outside_the_riders_budget(game):
+    jozan, horse = _mounted_turn(game, controlled=True)
+    left = game.combat.turn.movement_left
+    move(game, horse, to=(-30, 0))
+    assert horse.position == (-30, 0)
+    assert (game.combat.turn.movement_left, game.combat.turn.moved) == (left, 0)
+
+
+def test_independent_mount_cant_move_on_its_riders_turn(game):
+    jozan, horse = _mounted_turn(game, controlled=False)
+    with pytest.raises(Refusal, match="own turn") as exc:
+        move(game, horse, to=(-30, 0))
+    assert (exc.value.page, exc.value.rule) == (14, "PLAY.combat.movement-and-position")
+    assert horse.position == (5, 0) and jozan.position == (5, 0)
+
+
+def test_readied_move_released_off_turn_moves_the_readier(game):
+    gob, brom = _goblin_turn(game)
+    end_turn(game)
+    ready(game, brom, gob, 10, lambda: readied_move(game, brom, (60, 0)))
+    end_turn(game)
+    assert game.combat.is_turn(gob)
+    move(game, gob, to=(30, 0))
+    assert brom.position == (60, 0)
+    assert game.combat.turn.movement_left == 0
+
+
+def test_reaction_move_off_turn_is_not_drawn_from_the_current_turn(game):
+    gob, brom = _goblin_turn(game)
+    move(game, brom, to=(30, 0), reaction=True)
     assert brom.position == (30, 0)
     assert (game.combat.turn.movement_left, game.combat.turn.moved) == (gob.speed(), 0)
 

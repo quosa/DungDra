@@ -1,0 +1,44 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-55 is done. In combat, `move()` now refuses voluntary movement made outside the creature's own turn. The SRD text settled every case, so no new ruling was needed:\n- \"On your turn, you can move\" (PLAY.combat.movement-and-position, p.14) means a move off-turn is refused through spend_movement, citing page=14 and that rule, and nothing changes.\n- A readied move is allowed off-turn and doesn't use the current turn's movement. `move()` has a new `reaction=False` parameter, and `readied_move`'s release passes `reaction=True`. Its own limit (up to your Speed) is still checked under GLOSS.ready#4 / R-20.\n- A controlled mount \"moves on your turn as you direct it\" (PLAY.combat.mounted-combat, p.16), so it may move on its rider's turn without using the rider's movement. The new helper `mounted.moves_on_riders_turn(game, steed)` (combat may import mounted under the layer rules) decides this. An independent mount, or one whose rider has dismounted, is refused off-turn.\n\nSo `free_off_turn` is now set to `reaction or moves_on_riders_turn(game, c)` instead of always True. Forced movement and teleports are unchanged. Golden scenario CMB-04(g), where the mount moves on Jozan's turn, still passes.\n\nChecks: `python -m pytest -q` passed all 767 tests before I added test_mounted.py. After that, the 409 unit tests passed, `ruff check` and `ruff format --check` were clean, and `python -m scripts.srdloop dev-gate` passed. The ticket has no acceptance tests of its own. My last edit only re-wrapped a docstring line that was too long; I re-ran ruff and dev-gate after it but not pytest.",
+  "files": [
+   "dungdra/combat.py",
+   "dungdra/mounted.py",
+   "tests/unit/test_combat.py",
+   "tests/unit/test_mounted.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_move_off_turn_is_refused_and_changes_nothing",
+   "tests/unit/test_combat.py::test_reaction_move_off_turn_is_not_drawn_from_the_current_turn",
+   "tests/unit/test_combat.py::test_controlled_mount_moves_on_its_riders_turn_outside_the_riders_budget",
+   "tests/unit/test_combat.py::test_independent_mount_cant_move_on_its_riders_turn",
+   "tests/unit/test_combat.py::test_readied_move_released_off_turn_moves_the_readier",
+   "tests/unit/test_mounted.py::test_controlled_mount_moves_on_its_riders_turn",
+   "tests/unit/test_mounted.py::test_controlled_mount_doesnt_move_on_another_creatures_turn",
+   "tests/unit/test_mounted.py::test_independent_mount_doesnt_move_on_its_riders_turn",
+   "tests/unit/test_mounted.py::test_dismounted_steed_no_longer_moves_on_the_former_riders_turn"
+  ],
+  "srd_tags": [
+   "SRD[PLAY.combat.movement-and-position]",
+   "SRD[PLAY.combat.mounted-combat]",
+   "SRD[GLOSS.ready#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "kind": "infra",
+    "title": "A controlled mount's movement on its rider's turn draws on no budget (moves_on_riders_turn makes it free_off_turn), so it can move without limit there, and it still gets its own full budget in the separate initiative slot mount() inserts after the rider. Give the controlled mount one movement budget per rider's turn, limited by the mount's Speed (PLAY.combat.mounted-combat \"moves on your turn as you direct it\"), and stop granting it a second budget."
+   }
+  ],
+  "summary": "I'm approving this change. It does what T-55 asked for. `move()` now passes `free_off_turn=True` in only two cases: a Reaction's move (`reaction=True`, which only `readied_move`'s release sets) and a controlled mount moving on its rider's turn (`mounted.moves_on_riders_turn`). Any other voluntary off-turn move now goes to `spend_movement` and is refused under PLAY.combat.movement-and-position (\"On your turn, you can move\"). The SRD covers this, so no ruling is needed.\n\n- **Engine callers:** forced moves and teleports return before the budget check, so shoves and spells that push or teleport still work. The rest either move the creature whose turn it is (the GM AI, `cmd_move` for the actor) or are readied moves.\n- **Where the rule lives:** the mount check sits in `mounted.py`, beside the mount data, and doesn't duplicate any other check. The import-layer gate passes.\n- **Tests:** they check real behaviour: a refused move leaves position and budget unchanged and carries `page` and `rule`; a controlled mount moves on its rider's turn without touching the rider's budget; an independent mount is refused; a readied move fires off-turn. `test_mounted.py` is untracked, so it isn't in `git diff HEAD`, but it tests the helper on the rider's turn, on someone else's turn, for an independent mount and after dismounting.\n- **Follow-up (existing gap, not caused by this change):** a controlled mount still has no movement limit on its rider's turn. It also gets its own full budget in the separate initiative slot that `mount()` inserts after the rider. I've filed this as an infra follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.9108,
+ "stash": ""
+}

@@ -68,6 +68,13 @@ def dismount(game, rider):
     )
 
 
+def moves_on_riders_turn(game, steed) -> bool:
+    """Whether `steed` is a controlled mount and it is its rider's turn."""
+    rider = game.creatures.get(steed.notes.get("rider"))
+    # SRD[PLAY.combat.mounted-combat] a controlled mount "moves on your turn as you direct it"
+    return bool(steed.notes.get("controlled")) and rider is not None and game.combat.is_turn(rider)
+
+
 def mount_action(game, steed, action):
     if steed.notes.get("controlled") and action.lower() not in MOUNT_ACTIONS:
         raise Refusal(
