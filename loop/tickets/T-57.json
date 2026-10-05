@@ -6,7 +6,7 @@
   "tests": [
     "tests/scenarios/test_spells.py::test_spl05_burning_hands"
   ],
-  "status": "dispute",
+  "status": "open",
   "attempts": 0,
   "history": [
     {
@@ -21,6 +21,11 @@
       "event": "test changed by a person",
       "test": "tests/scenarios/test_spells.py::test_spl05_burning_hands",
       "change": "the hay is placed by position, not by an in_cone flag"
+    },
+    {
+      "event": "reopened",
+      "was": "dispute",
+      "reason": "SPL-05 now places the hay by position; remove the in_cone flag."
     }
   ]
 }
