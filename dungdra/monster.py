@@ -133,10 +133,12 @@ class Monster(Creature):
             return [(self.skill_bonus_fixed[skill], f"{skill.title()} (stat block)")]
         return super().check_modifier_parts(ability, skill, tool)
 
-    def passive(self, skill="perception", tags=()):
-        if skill == "perception" and not tags:
+    def passive_base(self, skill):
+        # SRD[MONSTER.goblins.goblin-warrior#15] the printed Passive Perception is the base score;
+        # Advantage or Disadvantage on Perception checks still moves it by 5 (p.186)
+        if skill == "perception":
             return self.fixed_passive
-        return super().passive(skill, tags)
+        return super().passive_base(skill)
 
     def extra_gather(self, ctx, acc):
         if (

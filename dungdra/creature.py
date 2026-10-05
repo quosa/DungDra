@@ -537,12 +537,16 @@ class Creature:
     def skill_total(self, skill: str) -> int:
         return sum(v for v, _ in self.check_modifier_parts(SKILLS[skill], skill))
 
+    def passive_base(self, skill: str) -> int:
+        """The passive score before Advantage, Disadvantage and situational modifiers."""
+        return 10 + self.skill_total(skill)
+
     def passive(self, skill: str = "perception", tags=()) -> int:
         """p.186: 10 + check bonus, +5 with Advantage, -5 with Disadvantage."""
         tags = set(tags) | ({"sight"} if skill == "perception" else set())
         ctx = Ctx("check", self, ability=SKILLS[skill], skill=skill, tags=tags)
         acc = self.gather(ctx)
-        total = 10 + self.skill_total(skill) + sum(v for v, _ in acc.mods)
+        total = self.passive_base(skill) + sum(v for v, _ in acc.mods)
         if acc.adv and not acc.dis:
             total += 5
         elif acc.dis and not acc.adv:

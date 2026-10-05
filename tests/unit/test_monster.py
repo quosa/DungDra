@@ -54,3 +54,23 @@ def test_an_attack_the_stat_block_doesnt_list_is_refused_citing_the_actions_rule
         gob.attack_named("longsword")
     assert exc.value.page == 256 and exc.value.rule == "MONSTER.parts-of-a-stat-block.actions"
     assert "Scimitar, Shortbow" in exc.value.reason
+
+
+def test_passive_perception_is_the_printed_number_without_advantage_or_disadvantage(game):
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.fixed_passive = 13  # a stat block whose printed score isn't 10 + its Wisdom modifier
+    assert gob.passive("perception") == 13
+
+
+def test_disadvantage_on_perception_checks_lowers_the_printed_passive_by_5(game):
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.fixed_passive = 13
+    gob.add_condition("poisoned", "test")
+    assert gob.passive("perception") == 8
+
+
+def test_other_passive_skills_still_come_from_the_check_bonus(game):
+    gob = mon(game, "goblin warrior", (30, 0))
+    assert gob.passive("stealth") == 16
+    gob.add_condition("poisoned", "test")
+    assert gob.passive("stealth") == 11

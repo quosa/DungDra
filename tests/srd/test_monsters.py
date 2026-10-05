@@ -354,11 +354,6 @@ def test_goblin_passive_perception_9_misses_a_hide_total_of_10(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#15", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-70: a monster's Passive Perception is the printed number even with Disadvantage on "
-    "Perception checks (Poisoned); the -5 isn't applied",
-)
 def test_a_poisoned_goblins_passive_perception_drops_to_4(game):
     gob = mon(game, "goblin warrior", (30, 0))
     gob.add_condition("poisoned", "test")
