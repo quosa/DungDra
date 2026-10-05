@@ -73,3 +73,28 @@ def test_no_or_total_cover_gives_no_bonus_and_logs_nothing(game):
     game.scene.cover[(lidda.id, gob.id)] = "total"
     assert game.cover_bonus(lidda, gob, "AC") == []
     assert game.log.applied(rule="PLAY.combat.cover") == []
+
+
+def test_cover_from_a_point_of_origin_reads_the_scene_label_for_that_point(game):
+    lidda, gob = setup(game)
+    game.scene.cover[((40, 0), gob.id)] = "total"
+    assert game.cover_between((40, 0), gob) == "total"
+    # the label is for that point only, not for the caster nor another point
+    assert game.cover_between(lidda, gob) is None
+    assert game.cover_between((20, 0), gob) is None
+
+
+def test_a_creature_between_a_point_of_origin_and_the_target_gives_half_cover(game):
+    _, gob = setup(game)
+    mon(game, "goblin warrior", (50, 0), name="SHIELD")
+    assert game.cover_between((70, 2.5), gob) == "half"
+    # the same creature is behind the target as seen from the caster's side
+    assert game.cover_between((0, 2.5), gob) is None
+
+
+def test_cover_bonus_against_a_point_names_the_point_in_the_log(game):
+    _, gob = setup(game)
+    game.scene.cover[((40, 0), gob.id)] = "half"
+    assert game.cover_bonus([40, 0], gob, "the Dexterity saving throw") == [(2, "Half Cover")]
+    (ev,) = game.log.applied(rule="PLAY.combat.cover")
+    assert "point of origin at [40, 0]" in ev.text and ev.rule == "PLAY.combat.cover#5"

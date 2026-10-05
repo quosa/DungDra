@@ -26,7 +26,8 @@ class Scene:
         self.underwater = False
         self.terrain = "open"
         self.difficult = False
-        self.cover: dict[tuple[str, str], str] = {}  # (attacker, target) -> degree
+        # (attacker id or point of origin (x, y), target id) -> degree
+        self.cover: dict[tuple[str | tuple, str], str] = {}
         self.cover_all: dict[str, str] = {}  # target -> degree vs everyone
         self.no_los: set[tuple[str, str]] = set()  # blocked line of sight pairs
         self.silence = False
@@ -44,7 +45,7 @@ class Scene:
                 if isinstance(v, set) and v and isinstance(next(iter(v)), tuple)
                 else sorted(v)
                 if isinstance(v, set)
-                else {"|".join(kk): vv for kk, vv in v.items()}
+                else {"|".join(map(str, kk)): vv for kk, vv in v.items()}
                 if k == "cover"
                 else v
             )
@@ -207,12 +208,17 @@ class Game:
         return self.perceived_light(viewer, target) != "dark"
 
     def cover_between(self, attacker, target) -> str | None:
-        """Degree of cover the target has against the attacker: the scene's labels and the Half
-        Cover of creatures standing in the line, for attacks and saves alike."""
+        """Degree of cover the target has against an effect's origin: the scene's labels and the
+        Half Cover of creatures standing in the line, for attacks and saves alike. The origin is
+        the attacker (a creature) or a point (x, y) in feet where an area or other effect
+        originates; the scene labels cover from a point under the key (point, target id)."""
         order = [None, "half", "three-quarters", "total"]
-        c1 = self.scene.cover.get((attacker.id, target.id)) if attacker else None
+        # SRD[PLAY.combat.cover#3] cover counts against where the effect originates, which needn't
+        # be the caster: a point of origin is looked up like a creature
+        key = _origin_key(attacker)
+        c1 = self.scene.cover.get((key, target.id)) if key is not None else None
         c2 = self.scene.cover_all.get(target.id)
-        c3 = "half" if attacker and self.creatures_in_the_way(attacker, target) else None
+        c3 = "half" if attacker is not None and self.creatures_in_the_way(attacker, target) else None
         # SRD[PLAY.combat.cover#4] only the most protective degree applies; never added together
         return max(c1, c2, c3, key=lambda c: order.index(c))
 
@@ -227,17 +233,20 @@ class Game:
         label = f"{cover.title()} Cover"
         self.log.gm(
             "cover",
-            f"{target.name} has {label} against {attacker.name}: +{value} to {against}",
+            f"{target.name} has {label} against {_origin_name(attacker)}: +{value} to {against}",
             page=15,
             rule=f"PLAY.combat.cover#{clause}",
         )
         return [(value, label)]
 
     def creatures_in_the_way(self, attacker, target) -> list:
-        """Creatures standing on the line between the two (centre of space to centre of space)."""
+        """Creatures standing on the line between the two (centre of space to centre of space); an
+        origin that is a point (x, y) is the line's end itself."""
         from .geometry import segment_crosses_square
 
         def centre(c):
+            if _is_point(c):
+                return (float(c[0]), float(c[1]))
             s = SPACE.get(c.size, 5)
             return (c.position[0] + s / 2, c.position[1] + s / 2)
 
@@ -386,6 +395,22 @@ class Game:
         from .snapshot import snapshot
 
         return snapshot(self)
+
+
+def _is_point(origin) -> bool:
+    """An effect's origin given as a point (x, y) in feet rather than as a creature."""
+    return isinstance(origin, (tuple, list))
+
+
+def _origin_key(origin):
+    """The scene's cover key for an origin: a creature's id, or the point itself."""
+    if origin is None:
+        return None
+    return tuple(origin) if _is_point(origin) else origin.id
+
+
+def _origin_name(origin) -> str:
+    return f"the point of origin at {origin}" if _is_point(origin) else origin.name
 
 
 def fmt_duration(s: int) -> str:

@@ -599,10 +599,13 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
     return roll, hit, crit
 
 
-def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), label=None):
+def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), label=None, origin=None):
+    """`origin` is where the effect originates when that isn't the caster: a point (x, y)."""
     bonus = []
     if ability == "dex" and not ignore_cover:
-        bonus = game.cover_bonus(c.caster, target, "the Dexterity saving throw")
+        # SRD[PLAY.combat.cover#3] cover against the effect's point of origin, the caster by default
+        src = c.caster if origin is None else origin
+        bonus = game.cover_bonus(src, target, "the Dexterity saving throw")
     return target.save(
         ability,
         c.dc,
@@ -1071,12 +1074,22 @@ def _area_targets(game, c, targets, shape, size, point=None):
 
 
 def _sphere_targets(game, targets, size, point=None):
-    """Creatures named by the caller that are inside a Sphere of radius `size` centred on `point`;
-    without a point the caller's list is taken as the creatures inside it."""
+    """Creatures named by the caller that are inside a Sphere of radius `size` centred on `point`
+    and not behind Total Cover from it; without a point the caller's list is taken as the
+    creatures inside it."""
     if point is None:
         return list(targets)
     out = []
     for t in targets:
+        # SRD[PLAY.combat.cover#3] a Sphere originates at its point, so Total Cover counts from there
+        if is_creature(t) and game.cover_between(point, t) == "total":
+            game.log.player(
+                "spell",
+                f"{t.name} is behind Total Cover from the point of origin and isn't affected",
+                page=15,
+                rule="PLAY.combat.cover#3",
+            )
+            continue
         # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
         if is_creature(t) and dist_points(point, t.position) > size:
             game.log.player(

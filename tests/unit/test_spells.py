@@ -9,7 +9,15 @@ from dungdra.combat import roll_initiative
 from dungdra.data.equipment import GP
 from dungdra.data.spells import SPELLS, Restriction, spell_rule
 from dungdra.rules import Refusal
-from dungdra.spells import Casting, _affected_targets, _material, _save_for_half, cast, is_creature
+from dungdra.spells import (
+    Casting,
+    _affected_targets,
+    _material,
+    _save_for_half,
+    cast,
+    is_creature,
+    spell_save,
+)
 from tests.support.helpers import mon, pc
 
 UNITS = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
@@ -298,6 +306,19 @@ def test_a_creature_dead_before_the_effect_gives_no_cover(game):
     assert back.dead and not game.log.of_kind("cover")
 
 
+def test_a_dex_save_takes_cover_from_the_point_of_origin_when_one_is_given(game):
+    c, front, back = _goblins_in_a_line(game)
+    # Front stands between the caster and Back, but not between a point east of Back and Back
+    game.dice.force_str("d20=[9]")
+    r = spell_save(game, c, back, "dex", origin=(30, 2.5))
+    assert r.total == 9 + 2 and not game.log.of_kind("cover")
+    game.scene.cover[((30, 2.5), back.id)] = "three-quarters"
+    game.dice.force_str("d20=[9]")
+    r = spell_save(game, c, back, "dex", origin=(30, 2.5))
+    assert r.total == 9 + 2 + 5
+    assert [e.rule for e in game.log.of_kind("cover")] == ["PLAY.combat.cover#7"]
+
+
 def test_on_fail_runs_only_for_a_living_target_that_failed(game):
     c, front, back = _goblins_in_a_line(game)
     hit = []
@@ -437,6 +458,17 @@ def test_sleep_at_a_point_only_reaches_creatures_in_its_sphere(game):
     assert near.has("incapacitated") and not far.has("incapacitated")
     assert len([e for e in game.log.events if e.kind == "save"]) == 1
     game.log.assert_applied(rule="SPELL.casting-spells.effects.targets#4")
+
+
+def test_sleep_spares_a_creature_behind_total_cover_from_its_point_of_origin(game):
+    m = pc(game, "MIALEE", (0, 0))
+    open_ = mon(game, "goblin warrior", (35, 0), name="OPEN")
+    walled = mon(game, "goblin warrior", (40, 5), name="WALLED")
+    game.scene.cover[((40, 0), walled.id)] = "total"
+    game.dice.force_str("d20=[1]")
+    cast(game, m, "sleep", [open_, walled], point=(40, 0))
+    assert open_.has("incapacitated") and not walled.has("incapacitated")
+    game.log.assert_applied(rule="PLAY.combat.cover#3")
 
 
 def test_sleep_without_a_point_takes_the_named_creatures_as_inside(game):

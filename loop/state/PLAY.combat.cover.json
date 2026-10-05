@@ -42,6 +42,7 @@
       "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover"
     }
   ],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1790836004,
