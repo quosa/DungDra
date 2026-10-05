@@ -4,7 +4,12 @@
   "unit": "GLOSS.tremorsense",
   "title": "Airborne state: creatures that are flying, hovering, jumping or falling count as 'in the air' and touch no surface. Landing or clinging clears the state. Tremorsense excludes airborne creatures and objects.",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
 }
