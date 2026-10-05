@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_monsters.py::test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-24",
+  "note": "The 1d4 is one of the attack's damage dice; a Critical Hit rolls them all twice.",
   "reason": ""
 }

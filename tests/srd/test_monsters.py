@@ -512,7 +512,7 @@ def test_scimitar_with_cancelled_advantage_adds_no_1d4(game):
     assert r.roll.mode == "normal" and r.damage == 3
 
 
-@pytest.mark.srd(GW, clause=f"{GW}#20", kind="positive", ruling="P-20")
+@pytest.mark.srd(GW, clause=f"{GW}#20", kind="positive", ruling="R-24")
 def test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too(game):
     b, gob = goblin_vs_brom(game)
     game.dice.force_str("d20=[20,5]; d6=[1,1]; d4=[1,1]")
