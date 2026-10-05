@@ -1,0 +1,31 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I merged `_area_targets` and `_sphere_targets` into one helper, `_area_targets(game, c, targets, point=None)` in `dungdra/spells.py`. It now reads the shape and size from `SPELLS[c.spell]['area']` instead of taking them as arguments. If the spell's range is Self, the area starts at the caster: the caster isn't included, and a Cone points toward `point` or else toward the first creature named. Any other area is centred on `point`, and with no point the caller's list is taken as the creatures inside it, as before. Total Cover is checked from the origin either way, so the Sphere and the Cone/Cube share that check now, and non-creature targets go through unchanged. `_burning_hands`, `_thunderwave` and `_sleep` no longer pass hard-coded shapes or sizes.\n\nTwo log events changed:\n- **Total Cover:** one event for both origins now, logged under `GLOSS.area-of-effect` (p.177). Sleep used to log it under `PLAY.combat.cover#3` (p.15), so I updated the one unit test that checked that rule.\n- **Outside the area:** this is logged under `SPELL.casting-spells.effects.targets#4` (p.106) for every shape. The Cone/Cube distance check used to log it under `GLOSS.area-of-effect`.\n\nI added three unit tests: Sleep's 5-ft Sphere edge and Thunderwave's 15-ft Cube are taken from the spell data, and a Self-origin area drops a creature behind Total Cover from the caster.\n\nThe full test suite passes (812 tests), `ruff check` and `ruff format --check` are clean, and dev-gate passes. The ticket listed no acceptance tests, so there were none to run with `--runxfail`.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_sleep_reads_its_5_ft_sphere_from_the_spell_data",
+   "tests/unit/test_spells.py::test_thunderwave_reads_its_15_ft_cube_from_the_spell_data",
+   "tests/unit/test_spells.py::test_a_self_area_drops_a_creature_behind_total_cover_from_the_caster",
+   "tests/unit/test_spells.py::test_sleep_spares_a_creature_behind_total_cover_from_its_point_of_origin"
+  ],
+  "srd_tags": [
+   "SRD[PLAY.combat.cover#3]",
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix does what T-58 asks. `_sphere_targets` is gone, and `_area_targets` is now the only helper that decides who is inside an area. It reads the shape and size from `SPELLS[spell]['area']`, which holds ('cone', 15), ('cube', 15) and ('sphere', 5) for the three spells. It works out the origin from the spell's range: a Self spell starts at the caster, any other spell at `point`. So `_burning_hands`, `_thunderwave` and `_sleep` no longer pass a hard-coded 15 or 5.\n\nHow the merged helper decides each case:\n- **Total Cover:** checked from the origin, so it is the caster for Self spells and the point for Sleep (PLAY.combat.cover#3).\n- **Sleep with no point:** still takes the creatures the caller named as inside the area.\n- **Non-creature targets:** still pass through without a check, as `_sphere_targets` let them.\n\nOne trade-off in the log: the old Sleep path cited `PLAY.combat.cover#3` (p.15) when it dropped a covered creature. The merged log now cites `GLOSS.area-of-effect` (p.177), which `tests/srd/test_playing_the_game.py:370` requires for Burning Hands. The unit test was changed to match. The `SRD[PLAY.combat.cover#3]` comment stays in the code, so I didn't count this as a regression.\n\nThe three new unit tests check real behaviour: creatures just inside and just past the 5-ft Sphere and the 15-ft Cube, and a creature behind Total Cover from the caster for a Self area. Each test checks both the damage or condition and the log. The cost line in `loop/costs.jsonl` is the loop's own bookkeeping. The change has nothing outside the ticket's scope. The gates passed; I didn't run the tests myself."
+ },
+ "problems": [],
+ "cost_usd": 0.5797,
+ "stash": ""
+}

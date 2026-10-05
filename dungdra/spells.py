@@ -1036,65 +1036,46 @@ def _bless(game, c, targets, **kw):
     )
 
 
-def _area_targets(game, c, targets, shape, size, point=None):
-    """Creatures named by the caller as inside the area; drop anyone behind Total Cover from the origin
-    and the caster (the point of origin of a Cone/Cube from self isn't included). A Cone points one
-    way: toward `point` if given, else toward the first creature named other than the caster."""
+def _area_targets(game, c, targets, point=None):
+    """Creatures named by the caller that are inside the spell's area, its shape and size read from
+    the spell's `area` data. A spell with a range of Self originates at the caster (who isn't
+    included), and a Cone points one way: toward `point` if given, else toward the first creature
+    named other than the caster. Any other area is centred on `point`; without one the caller's
+    list is taken as the creatures inside it. Anyone behind Total Cover from the origin is dropped."""
+    shape, size = SPELLS[c.spell]["area"]
+    shape = shape.title()
+    from_self = SPELLS[c.spell]["range"] == "self"
+    if not from_self and point is None:
+        return list(targets)
+    # SRD[PLAY.combat.cover#3] cover counts from where the area originates: the caster or its point
+    origin = c.caster if from_self else point
     aim = None
     if shape == "Cone":
         aim = point or next((t.position for t in targets if is_creature(t) and t is not c.caster), None)
     out = []
     for t in targets:
-        if t is c.caster:
+        if t is c.caster and from_self:
             continue
-        if game.cover_between(c.caster, t) == "total":
+        if not is_creature(t):
+            out.append(t)
+            continue
+        if game.cover_between(origin, t) == "total":
             game.log.player(
                 "spell",
-                f"{t.name} is behind Total Cover and isn't affected",
+                f"{t.name} is behind Total Cover from the point of origin and isn't affected",
                 page=177,
                 rule="GLOSS.area-of-effect",
             )
             continue
-        if c.caster.distance_to(t) > size:
-            game.log.player(
-                "spell", f"{t.name} is outside the {size}-ft {shape}", page=177, rule="GLOSS.area-of-effect"
-            )
-            continue
+        dist = c.caster.distance_to(t) if from_self else dist_points(point, t.position)
         # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
-        if aim is not None and not in_cone_direction(c.caster.position, aim, t.position):
+        outside = dist > size or (
+            aim is not None and not in_cone_direction(c.caster.position, aim, t.position)
+        )
+        if outside:
             game.log.player(
                 "spell",
                 f"{t.name} is outside the {size}-ft {shape}",
-                page=106,
-                rule="SPELL.casting-spells.effects.targets#4",
-            )
-            continue
-        out.append(t)
-    return out
-
-
-def _sphere_targets(game, targets, size, point=None):
-    """Creatures named by the caller that are inside a Sphere of radius `size` centred on `point`
-    and not behind Total Cover from it; without a point the caller's list is taken as the
-    creatures inside it."""
-    if point is None:
-        return list(targets)
-    out = []
-    for t in targets:
-        # SRD[PLAY.combat.cover#3] a Sphere originates at its point, so Total Cover counts from there
-        if is_creature(t) and game.cover_between(point, t) == "total":
-            game.log.player(
-                "spell",
-                f"{t.name} is behind Total Cover from the point of origin and isn't affected",
-                page=15,
-                rule="PLAY.combat.cover#3",
-            )
-            continue
-        # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
-        if is_creature(t) and dist_points(point, t.position) > size:
-            game.log.player(
-                "spell",
-                f"{t.name} is outside the {size}-ft Sphere",
                 page=106,
                 rule="SPELL.casting-spells.effects.targets#4",
             )
@@ -1122,7 +1103,7 @@ def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
 
 
 def _burning_hands(game, c, targets, point=None, **kw):
-    ts = _area_targets(game, c, targets, "Cone", 15, point=point)
+    ts = _area_targets(game, c, targets, point=point)
     _save_for_half(game, c, ts, "dex", f"{3 + c.level - 1}d6", "fire")
     for name, obj in game.scene.objects.items():
         if obj.get("flammable") and obj.get("in_cone") and not obj.get("worn"):
@@ -1131,7 +1112,7 @@ def _burning_hands(game, c, targets, point=None, **kw):
 
 
 def _thunderwave(game, c, targets, **kw):
-    ts = _area_targets(game, c, targets, "Cube", 15)
+    ts = _area_targets(game, c, targets)
 
     def push(t):
         from .combat import move
@@ -1330,7 +1311,7 @@ def _shield_of_faith(game, c, targets, **kw):
 
 
 def _sleep(game, c, targets, point=None, **kw):
-    for t in _sphere_targets(game, targets, 5, point=point):
+    for t in _area_targets(game, c, targets, point=point):
         if "trance" in t.traits or "exhaustion" in t.cond_immune or t.notes.get("doesnt_sleep"):
             game.log.player(
                 "save",

@@ -4,12 +4,16 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "Area membership is split across two helpers: _area_targets (caster origin, Cone/Cube, with a Total Cover check) and _sphere_targets (Sphere at a point, no cover check). Each handler also hard-codes its size: _sleep passes 5 and _burning_hands passes 15, though SPELLS[...]['area'] already holds ('sphere', 5) and ('cone', 15). Merge them into one area-selection helper that takes the origin (caster or point) and reads shape and size from the spell's area data.",
   "tests": [],
-  "status": "parked",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "parked",
       "reason": "part of the area targeting feature (T-56)"
+    },
+    {
+      "event": "fixed",
+      "summary": "I merged `_area_targets` and `_sphere_targets` into one helper, `_area_targets(game, c, targets, point=None)` in `dungdra/spells.py`. It now reads the shape and size from `SPELLS[c.spell]['area']` instead of taking them as arguments. If the spell's range is Self, the area starts at the caster: the caster isn't included, and a Cone points toward `point` or else toward the first creature named. Any other area is centred on `point`, and with no point the caller's list is taken as the creatures inside it, as before. Total Cover is checked from the origin either way, so the Sphere and the Cone/Cube share that check now, and non-creature targets go through unchanged. `_burning_hands`, `_thunderwave` and `_sleep` no longer pass hard-coded shapes or sizes.\n\nTwo log events changed:\n- **Total Cover:** one event for both origins now, logged under `GLOSS.area-of-effect` (p.177). Sleep used to log it under `PLAY.combat.cover#3` (p.15), so I updated the one unit test that checked that rule.\n- **Outside the area:** this is logged under `SPELL.casting-spells.effects.targets#4` (p.106) for every shape. The Cone/Cube distance check used to log it under `GLOSS.area-of-effect`.\n\nI added three unit tests: Sleep's 5-ft Sphere edge and Thunderwave's 15-ft Cube are taken from the spell data, and a Self-origin area drops a creature behind Total Cover from the caster.\n\nThe full test suite passes (812 tests), `ruff check` and `ruff format --check` are clean, and dev-gate passes. The ticket listed no acceptance tests, so there were none to run with `--runxfail`."
     }
   ]
 }

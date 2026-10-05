@@ -468,7 +468,41 @@ def test_sleep_spares_a_creature_behind_total_cover_from_its_point_of_origin(gam
     game.dice.force_str("d20=[1]")
     cast(game, m, "sleep", [open_, walled], point=(40, 0))
     assert open_.has("incapacitated") and not walled.has("incapacitated")
-    game.log.assert_applied(rule="PLAY.combat.cover#3")
+    game.log.assert_applied(rule="GLOSS.area-of-effect")
+
+
+def test_sleep_reads_its_5_ft_sphere_from_the_spell_data(game):
+    m = pc(game, "MIALEE", (0, 0))
+    edge = mon(game, "goblin warrior", (45, 0), name="EDGE")
+    past = mon(game, "goblin warrior", (50, 0), name="PAST")
+    game.dice.force_str("d20=[1]")
+    cast(game, m, "sleep", [edge, past], point=(40, 0))
+    assert edge.has("incapacitated") and not past.has("incapacitated")
+    assert any("outside the 5-ft Sphere" in e.text for e in game.log.events)
+
+
+def test_thunderwave_reads_its_15_ft_cube_from_the_spell_data(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    near = mon(game, "goblin warrior", (15, 0), name="NEAR")
+    far = mon(game, "goblin warrior", (20, 0), name="FAR")
+    near.hp = far.hp = 30
+    game.dice.force_str("d8=[3,3]; d20=[1]")
+    cast(game, m, "thunderwave", [m, near, far])
+    assert near.hp == 24 and far.hp == 30 and m.hp == m.max_hp
+    assert any("outside the 15-ft Cube" in e.text for e in game.log.events)
+
+
+def test_a_self_area_drops_a_creature_behind_total_cover_from_the_caster(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.hp = 30
+    game.scene.cover[(m.id, gob.id)] = "total"
+    game.dice.force_str("d8=[3,3]")
+    cast(game, m, "thunderwave", [gob])
+    assert gob.hp == 30
+    game.log.assert_applied(rule="GLOSS.area-of-effect")
 
 
 def test_sleep_without_a_point_takes_the_named_creatures_as_inside(game):
