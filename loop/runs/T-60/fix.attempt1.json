@@ -1,0 +1,37 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-60: a readied spell is no longer put back into `cb.readied` after a refused release has already ended the Concentration holding it.\n\n**The bug.** `_release` (in `dungdra/spells.py`) ends the holding Concentration first. If the spell handler then raised a `Refusal`, `combat._readied_triggers` put the readied response back anyway. That left a \"held\" spell with no Concentration and no `on_concentration_end` hook.\n\n**The fix.** I took the ticket's second option: don't restore a held spell. In the `except Refusal` branch of `_readied_triggers`, if the response holds a spell and the readier is no longer concentrating on it, the spell dissipates without taking effect. It is not restored, and the event is logged with `page=187, rule=\"GLOSS.ready#9\"`, tagged `# SRD[GLOSS.ready#9]`. The Reaction is still given back, as before, since nothing was taken. A refused release that hasn't ended Concentration (attacks, moves, or a spell still held) keeps the readied response as before.\n\nI didn't take the other option (checking the release before ending Concentration). The handlers mix their checks with their effects, so it can't be done cleanly. Also, a spell that needs Concentration itself ends the held Concentration when it starts.\n\n**Checks.** All 422 unit tests pass, the 13 `ready` acceptance tests in `tests/srd` pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes. The ticket named no acceptance tests, so there was nothing to run with `--runxfail`.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_a_refused_release_after_the_holding_concentration_ended_drops_the_held_spell",
+   "tests/unit/test_combat.py::test_a_refused_release_still_holding_concentration_keeps_the_held_spell"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ready#9]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "spells._release ends the holding Concentration before _take_effect validates the release, so a refused release (for example, target out of range) loses the held spell and isn't a clean refusal. Check the release (targets, range, affected targets) before calling end_concentration so a Refusal leaves the spell held, and drop the dissipate-on-refusal branch in combat._readied_triggers.",
+    "kind": "refactor"
+   },
+   {
+    "title": "Add a unit test for a refused readied-spell release that goes through the real spells.cast(ready=True) / _release path rather than a hand-written release callable",
+    "kind": "coverage"
+   }
+  ],
+  "summary": "I'm approving this fix. It takes the ticket's second option: don't restore a held spell. When the readied spell's release is refused and the Concentration holding it has already ended (that is, `readier.concentrating != rec.held`), the readied entry is not put back. Instead it is logged as dissipating under GLOSS.ready#9 (p.187). The page and clause number are both correct.\n\nThis closes the stale state from the ticket. `end_concentration` already pops and runs the `on_concentration_end` hook, but that hook found nothing, because `cb.readied` had been cleared before release. If Concentration is still held, the old restore path runs as before and the hook stays in place, so the hook and the readied entry stay consistent.\n\nThe two unit tests check behaviour, not constants:\n- **Concentration ended:** the readied entry is gone, Concentration is None, the Reaction is kept, and the log entry cites GLOSS.ready#9.\n- **Concentration still held:** the held spell is kept and the log entry cites GLOSS.ready#5.\n\nThe change stays within the ticket's scope. The `costs.jsonl` line is loop bookkeeping.\n\n**Remaining weakness:** a Refusal here still changes state, because `_release` ends Concentration before `_take_effect` can refuse. The cleaner design is the ticket's first option, which validates the release before ending Concentration. I've filed that as a refactor follow-up. I've also filed a coverage follow-up for a test through the real `cast(ready=True)` path; the current test uses a hand-written release callable."
+ },
+ "problems": [],
+ "cost_usd": 0.5423,
+ "stash": ""
+}

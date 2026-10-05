@@ -521,6 +521,44 @@ def test_a_refused_release_keeps_the_reaction_and_the_readied_response(game):
     assert "can't take the readied" in str(game.log.last("ready"))
 
 
+def test_a_refused_release_after_the_holding_concentration_ended_drops_the_held_spell(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    held = "Fire Bolt (readied)"
+    game.start_concentration(brom, held)
+
+    def release(g):
+        g.end_concentration(brom, "Fire Bolt is released")
+        raise Refusal("the target is out of range")
+
+    ready(game, brom, gob.id, 5, lambda: ("Fire Bolt", release, held))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    move(game, gob, to=(5, 0))
+    assert brom.concentrating is None
+    assert brom.id not in game.combat.readied
+    assert brom.id not in game.combat.reaction_used
+    last = game.log.last("ready")
+    assert (str(last.page), last.rule) == ("187", "GLOSS.ready#9")
+    assert "dissipates" in str(last)
+
+
+def test_a_refused_release_still_holding_concentration_keeps_the_held_spell(game):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    held = "Fire Bolt (readied)"
+    game.start_concentration(brom, held)
+
+    def release(g):
+        raise Refusal("the target is out of range")
+
+    ready(game, brom, gob.id, 5, lambda: ("Fire Bolt", release, held))
+    end_turn(game)
+    game.answer("readied", True, who=brom)
+    move(game, gob, to=(5, 0))
+    assert brom.concentrating == held
+    assert game.combat.readied[brom.id].held == held
+    assert game.log.last("ready").rule == "GLOSS.ready#5"
+
+
 def test_readied_response_lapses_at_the_start_of_the_readiers_next_turn(game):
     brom, (gob,) = _brom_vs_goblins(game, (20, 0))
     ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))

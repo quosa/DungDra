@@ -1,0 +1,10 @@
+{
+  "id": "T-65",
+  "kind": "refactor",
+  "unit": "GLOSS.ready",
+  "title": "spells._release ends the holding Concentration before _take_effect validates the release, so a refused release (for example, target out of range) loses the held spell and isn't a clean refusal. Check the release (targets, range, affected targets) before calling end_concentration so a Refusal leaves the spell held, and drop the dissipate-on-refusal branch in combat._readied_triggers.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

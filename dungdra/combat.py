@@ -838,6 +838,16 @@ def _readied_triggers(game, mover, start):
         except Refusal as e:
             # nothing was taken: the Reaction and the readied response stay for a later trigger
             cb.reaction_used.discard(rid)
+            if rec.held and readier.concentrating != rec.held:
+                # SRD[GLOSS.ready#9] the Concentration holding the spell has ended: it dissipates
+                game.log.player(
+                    "ready",
+                    f"{readier.name} can't take the readied {rec.what}: {e.reason}; "
+                    f"the held spell dissipates without taking effect",
+                    page=187,
+                    rule="GLOSS.ready#9",
+                )
+                continue
             cb.readied[rid] = rec
             game.log.player(
                 "ready",

@@ -1,0 +1,10 @@
+{
+  "id": "T-66",
+  "kind": "coverage",
+  "unit": "GLOSS.ready",
+  "title": "Add a unit test for a refused readied-spell release that goes through the real spells.cast(ready=True) / _release path rather than a hand-written release callable",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
