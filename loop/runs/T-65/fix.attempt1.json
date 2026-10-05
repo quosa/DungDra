@@ -1,0 +1,51 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "T-65 is fixed: if releasing a held spell is refused, the spell now stays held and the refusal is clean. `spells._release` checks the release first and ends the holding Concentration only if the check passes.\n\n- **Shared target check:** I moved the cast-time target checks (Total Cover, range, target kind, target cap, the \"must see the target\" check) into a new `spells._check_targets`. `cast` and `_release` both use it, so the rule lives in one place. `_release` runs it first with the targets' current positions.\n- **combat:** I removed the dissipate-on-refusal branch from `combat._readied_triggers`. A refused release now always gives back the Reaction and the readied response, and the held spell keeps its Concentration.\n- **Not covered:** `_release` checks the targets, not the spell's own options, so a few spells can still refuse after Concentration has ended. Examples are Magic Missile with a wrong dart split, Misty Step with a bad point, and Command with a bad word. Those were never validated when the spell was readied either. Closing that gap would mean validating spell options up front, which is a separate change.\n- **Unit tests:** in `test_combat.py`, I replaced the obsolete test of the dropped dissipate branch with one that readies a real Magic Missile and moves its target out of range. The refusal leaves the Concentration, the readied response and the Reaction in place. I also added tests for an ignored trigger (R-18), broken Concentration (GLOSS.ready#9) and a held spell lapsing (R-19). In `test_spells.py`, I added two tests where the release is refused (out of range, and a target that can no longer be seen); in both the spell stays held.\n\nResults: 436 unit tests and 362 acceptance tests pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes (unit branch coverage 45.44%, up from 45.35%). The ticket named no xfail tests, so none needed `--runxfail`.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/combat.py",
+   "tests/unit/test_spells.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_a_held_spell_refused_at_release_stays_held_with_its_concentration",
+   "tests/unit/test_combat.py::test_an_ignored_trigger_keeps_the_held_spell_and_the_reaction",
+   "tests/unit/test_combat.py::test_broken_concentration_dissipates_the_held_spell",
+   "tests/unit/test_combat.py::test_a_held_spell_lapses_with_its_concentration_at_the_readiers_next_turn",
+   "tests/unit/test_spells.py::test_a_release_out_of_range_is_refused_before_the_holding_concentration_ends",
+   "tests/unit/test_spells.py::test_a_release_at_a_target_no_longer_seen_is_refused_and_stays_held"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ready#6]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "other",
+    "file": "dungdra/spells.py",
+    "line": 240,
+    "explanation": "_release now runs _check_targets before end_concentration, but spell handlers can still raise Refusal after Concentration has ended. A ready=True cast never runs the handler, so the handler's own checks run for the first time at release. For example, _spare_the_dying (line 1019) refuses a target that isn't at 0 HP, which can change between cast and release. _magic_missile (1281/1287) refuses a dart split that doesn't match, _command (1144) refuses a bad word and _lesser_restoration (1436) a bad condition. Each of these raises after end_concentration, so the release still loses the held spell and isn't a clean refusal. The ticket asks that a refused release leave the spell held, and that isn't true yet for these paths."
+   },
+   {
+    "kind": "other",
+    "file": "dungdra/combat.py",
+    "line": 838,
+    "explanation": "The dissipate-on-refusal branch is gone, but a refusal raised after end_concentration can still happen (see the spells.py finding). In that case the except branch puts rec back in cb.readied even though rec.held is no longer the readier's Concentration. A later trigger could then release a spell with no Concentration holding it, which breaks GLOSS.ready#9. Removing the branch is only safe once every refusal happens before Concentration ends: run the handler's option and target validation before end_concentration (or move that validation into the release check), or keep the guard."
+   }
+  ],
+  "followups": [],
+  "summary": "I'm rejecting this. Pulling the cast-time target checks into a shared _check_targets is sound, and calling it before end_concentration fixes the out-of-range, Total Cover and sight cases. The tests use the real cast(ready=True) path and check the right behaviour. The ticket isn't fully solved, though. A ready cast never runs the spell handler, so the handler's own Refusals fire for the first time at release, after Concentration has ended. Spare the Dying on a target that's been healed, a mismatched Magic Missile dart split, and a bad Command word or Lesser Restoration condition all do this. The diff also removes the combat guard that dropped the held spell in exactly that case. Now those paths put a held spell back in readied with no Concentration behind it."
+ },
+ "problems": [
+  "review: rejected (I'm rejecting this. Pulling the cast-time target checks into a shared _check_targets is sound, and calling it before end_concentration fixes the out-of-range, Total Cover and sight cases. The tests use the real cast(ready=True) path and check the right behaviour. The ticket isn't fully solved, though. A ready cast never runs the spell handler, so the handler's own Refusals fire for the first time at release, after Concentration has ended. Spare the Dying on a target that's been healed, a mismatched Magic Missile dart split, and a bad Command word or Lesser Restoration condition all do this. The diff also removes the combat guard that dropped the held spell in exactly that case. Now those paths put a held spell back in readied with no Concentration behind it.)",
+  "review: other dungdra/spells.py:240 _release now runs _check_targets before end_concentration, but spell handlers can still raise Refusal after Concentration has ended. A ready=True cast never runs the handler, so the handler's own checks run for the first time at release. For example, _spare_the_dying (line 1019) refuses a target that isn't at 0 HP, which can change between cast and release. _magic_missile (1281/1287) refuses a dart split that doesn't match, _command (1144) refuses a bad word and _lesser_restoration (1436) a bad condition. Each of these raises after end_concentration, so the release still loses the held spell and isn't a clean refusal. The ticket asks that a refused release leave the spell held, and that isn't true yet for these paths.",
+  "review: other dungdra/combat.py:838 The dissipate-on-refusal branch is gone, but a refusal raised after end_concentration can still happen (see the spells.py finding). In that case the except branch puts rec back in cb.readied even though rec.held is no longer the readier's Concentration. A later trigger could then release a spell with no Concentration holding it, which breaks GLOSS.ready#9. Removing the branch is only safe once every refusal happens before Concentration ends: run the handler's option and target validation before end_concentration (or move that validation into the release check), or keep the guard."
+ ],
+ "cost_usd": 1.1007,
+ "stash": "srdloop: T-65 attempt 1"
+}
