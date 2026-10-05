@@ -1,0 +1,10 @@
+{
+  "id": "T-64",
+  "kind": "refactor",
+  "unit": "GLOSS.ready",
+  "title": "class_actions.bonus_action still special-cases the \"cunning action\" name with its own startswith/split(':') parsing, and is_bonus_action now repeats that 'feature: option' parsing. The \"cunning action\" entry added to BONUS_ACTIONS is never used for dispatch. Parse the feature name and option once and dispatch every entry, Cunning Action included, through BONUS_ACTIONS.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

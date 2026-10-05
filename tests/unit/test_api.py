@@ -109,6 +109,15 @@ def test_ready_command_refuses_a_bonus_action_under_ruling_r20(game):
     assert game.combat.turn.actions_used == 0
 
 
+def test_ready_command_refuses_each_registered_bonus_action(game):
+    s, brom, gob = _ready_session(game)
+    for cmd in ("cunning_action", "steady_aim", "stonecunning"):
+        out = _ready(s, brom, gob, {"cmd": cmd})
+        assert not out["ok"] and f"{cmd} is a Bonus Action" in out["error"]
+        assert game.log.last("refused").rule == "GLOSS.ready#4"
+    assert game.combat.turn.actions_used == 0
+
+
 def test_ready_command_refuses_two_responses(game):
     s, brom, gob = _ready_session(game)
     out = _ready(s, brom, gob, [{"cmd": "attack", "target": gob.id}, {"cmd": "move", "to": [-5, 0]}])

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from . import actions
 from .effects import AdvNext, Flag
-from .rules import MINUTE, Refusal
+from .rules import MINUTE, Refusal, norm
 
 
 def _need(pc, feature):
@@ -152,7 +152,13 @@ BONUS_ACTIONS = {
     "second wind": second_wind,
     "steady aim": steady_aim,
     "stonecunning": stonecunning,
+    "cunning action": cunning_action,
 }
+
+
+def is_bonus_action(name) -> bool:
+    """Whether the feature `name` ("cunning action: dash", "second_wind", ...) costs a Bonus Action."""
+    return norm(str(name).split(":")[0]) in BONUS_ACTIONS
 
 
 def bonus_action(game, actor, name, *args, **kw):

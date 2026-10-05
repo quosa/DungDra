@@ -47,9 +47,6 @@ from .fixtures import make as make_fixture
 from .game import Game
 from .rules import OutOfScope, Refusal, norm
 
-# commands that take a Bonus Action, so can't be the response of a Ready action
-BONUS_ACTION_COMMANDS = {"second_wind", "cunning_action", "steady_aim"}
-
 
 def _enemy_state(e) -> str:
     if e.dead:
@@ -339,7 +336,7 @@ class Session:
                 c = self._cast(a, ready=True, **args)
                 return c.spell.title(), c.release, c.held
 
-        elif kind in BONUS_ACTION_COMMANDS or args.get("bonus"):
+        elif CA.is_bonus_action(kind) or args.get("bonus"):
             raise Refusal(
                 f"{kind} is a Bonus Action; Ready readies an action or a move",
                 page=187,

@@ -4,7 +4,12 @@
   "unit": "GLOSS.ready",
   "title": "dungdra/api.py BONUS_ACTION_COMMANDS duplicates which commands cost a Bonus Action. Derive the Ready refusal from the engine (for example, the action cost class_abilities spends) instead of a hand-kept list in the interface layer.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Removed the hand-kept BONUS_ACTION_COMMANDS list from the interface layer (dungdra/api.py). The Ready refusal now asks the engine through a new class_actions.is_bonus_action(name), which checks the existing BONUS_ACTIONS registry (the features whose handlers spend 'bonus'). That registry now also includes 'cunning action', so it is the one record of which features cost a Bonus Action. Stonecunning, which was missing from the old list, is now refused as a Ready response too. The bonus_action() dispatch works as before. ruff is clean; unit tests pass (415 passed); the Ready and bonus-action srd/scenario tests pass (19 passed); dev-gate PASS. The ticket names no acceptance tests."
+    }
+  ]
 }
