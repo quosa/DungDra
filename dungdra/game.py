@@ -119,6 +119,7 @@ class Game:
             creature.position = tuple(position)
         if creature.team == "party" and creature.id not in self.party:
             self.party.append(creature.id)
+        creature.on_added(self)
         return creature
 
     def remove(self, creature):

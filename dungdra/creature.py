@@ -103,6 +103,9 @@ class Creature:
     def conscious(self) -> bool:
         return not self.dead and not self.has("unconscious")
 
+    def on_added(self, game) -> None:
+        """Called by Game.add each time the creature joins a game; subclasses settle setup there."""
+
     def has_trait(self, t: str) -> bool:
         return t in self.traits
 

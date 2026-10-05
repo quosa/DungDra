@@ -93,7 +93,19 @@ class Monster(Creature):
         if "undead fortitude" in self.traits:
             self.add_effect(UndeadFortitude())
 
+    def on_added(self, game):
+        if self.notes.pop("roll_hp", False):
+            self.roll_hp(game.dice)
+            game.log.player(
+                "hp_rolled",
+                f"{self.name} rolls its Hit Points ({self.hd}): {self.hp}",
+                page=255,
+                rule="MONSTER.parts-of-a-stat-block.hit-points",
+            )
+
     def roll_hp(self, dice):
+        # SRD[MONSTER.parts-of-a-stat-block.hit-points] roll the die expression in parentheses
+        # instead of using the number; don't use both, so the roll replaces current and max HP
         n, s, m = parse_expr(self.hd)
         total = sum(dice.roll_many(n, s)) + m
         self.base_max_hp = self.hp = max(1, total)

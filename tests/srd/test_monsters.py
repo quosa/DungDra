@@ -134,10 +134,6 @@ def test_goblin_has_10_hit_points_and_rolled_hp_uses_3d6(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#4", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-68: Monster(hp='roll') only sets a note; nothing rolls the 3d6, so the goblin keeps 10 HP",
-)
 def test_a_goblin_added_with_rolled_hp_rolls_3d6(game):
     game.dice.force_str("d6=[1,2,3]")
     gob = mon(game, "goblin warrior", (5, 0), hp="roll")
