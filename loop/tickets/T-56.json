@@ -5,7 +5,7 @@
   "title": "R-16: area spells (Burning Hands Cone, Thunderwave Cube) still take the affected creatures from the caller's list. Select every creature in the area from scene positions, shape, origin and an explicit direction, so a caller can't leave out a creature inside an 'each creature' area. Once the direction is explicit, drop the 'aim at the first named creature' fallback in _area_targets.",
   "tests": [],
   "status": "open",
-  "attempts": 0,
+  "attempts": 1,
   "history": [
     {
       "event": "cap",
@@ -19,6 +19,13 @@
       "event": "reopened",
       "was": "dispute",
       "reason": "point= is the model; naming a creature is shorthand for its position (the Cone's direction, or the Sphere's centre). Geometry decides who is affected (R-16). Don't change the tests."
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The ticket's main problem is fixed. Area spells now take creatures from the scene: the shape, origin and aim come from `point`, or else from a named creature's position (R-16). Sleep's 'of your choice' rule is carried in data (`area_choice`). A missing placement is refused before the slot is spent. The geometry unit tests check real behaviour. One problem remains in the new code: the vertical limit of the area is a single `size` check written inline in spells.py rather than in each shape's geometry. That check duplicates how geometry.distance already handles elevation, and it lets a 15-ft Cube reach 15 ft up instead of 7.5. Move elevation into `in_area` and the per-shape tests.)",
+        "review: layering dungdra/spells.py:1086 The area's vertical extent is decided in the spell layer with a one-size-fits-all check, `abs(elevation - height) > size`. It sits beside `in_area`, which only does 2D. Shape geometry belongs in `dungdra/geometry.py`, which already folds elevation into distance via `distance()`'s dz term, so this is a second elevation mechanism. It also gives the wrong answer for the new Cube. Thunderwave's origin is the centre of one face, so the Cube reaches size/2 (7.5 ft) above and below the caster, not `size`. A creature 10 ft up and 5 ft ahead is counted inside. Pass elevation (3D points, or the creature) into `in_area`/`in_cube_direction`/`in_cone_direction` so each shape applies its own vertical bound. Then test that in tests/unit/test_geometry.py."
+      ]
     }
   ],
   "cap_usd": 9.0
