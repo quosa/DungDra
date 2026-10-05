@@ -504,7 +504,7 @@ def test_scimitar_with_disadvantage_adds_no_1d4(game):
     assert r.roll.mode == "disadvantage" and r.damage == 3
 
 
-@pytest.mark.srd(GW, clause=f"{GW}#20", kind="boundary", ruling="P-19")
+@pytest.mark.srd(GW, clause=f"{GW}#20", kind="boundary", ruling="R-23")
 def test_scimitar_with_cancelled_advantage_adds_no_1d4(game):
     b, gob = goblin_vs_brom(game)
     game.dice.force_str("d20=[19]; d6=[1]")
@@ -624,7 +624,7 @@ def test_shortbow_without_advantage_adds_no_1d4(game):
     assert C.attack(game, gob, b, attack_name="shortbow").damage == 3
 
 
-@pytest.mark.srd(GW, clause=f"{GW}#23", kind="boundary", ruling="P-19")
+@pytest.mark.srd(GW, clause=f"{GW}#23", kind="boundary", ruling="R-23")
 def test_shortbow_advantage_cancelled_by_long_range_adds_no_1d4(game):
     b, gob = goblin_vs_brom(game, gob_pos=(100, 0))
     game.dice.force_str("d20=[19]; d6=[1]")

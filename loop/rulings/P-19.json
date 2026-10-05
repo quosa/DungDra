@@ -7,8 +7,8 @@
     "tests/srd/test_monsters.py::test_scimitar_with_cancelled_advantage_adds_no_1d4",
     "tests/srd/test_monsters.py::test_shortbow_advantage_cancelled_by_long_range_adds_no_1d4"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-23",
+  "note": "Cancelled Advantage is no Advantage: 'the roll has neither of them'.",
   "reason": ""
 }
