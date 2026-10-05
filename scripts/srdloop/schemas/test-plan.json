@@ -6,6 +6,7 @@
   "abuse",
   "tests",
   "not_testable",
+  "kind_waivers",
   "scenario_changes",
   "rulings_proposed",
   "summary"
@@ -203,6 +204,33 @@
   },
   "summary": {
    "type": "string"
+  },
+  "kind_waivers": {
+   "type": "array",
+   "description": "a negative or boundary test that has no meaningful form for one clause, with why",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "kind",
+     "reason"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "negative",
+       "boundary"
+      ]
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
   }
  }
 }

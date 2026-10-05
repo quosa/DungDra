@@ -130,6 +130,10 @@ CHECK_HELPER = TEST_FILE.replace(
     "def check_speed(n):\n    assert n == 0\n\n\ndef test_grappled_speed_is_zero():\n    check_speed(0)\n",
 )
 ONLY_POSITIVE = plan_with(tests=[PLAN["tests"][0]])
+WAIVED_POSITIVE = plan_with(
+    tests=[PLAN["tests"][1]],
+    kind_waivers=[{"clause": "GLOSS.grappled#1", "kind": "positive", "reason": "obvious"}],
+)
 INVENTED_QUOTE = plan_with(
     tests=[{**PLAN["tests"][0], "rule_quote": "Grappled creatures can't move at all"}, PLAN["tests"][1]]
 )
@@ -218,6 +222,11 @@ GHOST_TEST = plan_with(
             "rule_quote is not a verbatim quote",
         ),
         ("C", designer({"tests/srd/test_glossary.py": TEST_FILE}, GHOST_TEST), "test_ghost: no such test"),
+        (
+            "C",
+            designer({"tests/srd/test_glossary.py": TEST_FILE}, WAIVED_POSITIVE),
+            "clause GLOSS.grappled#1: a positive test can't be waived",
+        ),
         # stage D: the test verifier
         ("D", lambda: {"verdicts": [], "summary": "looks fine"}, "no verdict for tests/srd/test_glossary.py"),
     ],
@@ -260,6 +269,14 @@ def test_a_scenario_verdict_may_quote_the_shared_fixtures(tmp_path, monkeypatch)
     assert run(ctx, agents("B", fixture_quote)) == "red"
     ctx2 = repo(tmp_path / "again", monkeypatch)
     assert run(ctx2, agents("B", fixture_quote)) == "incomplete"  # no fixtures: still not a quote
+
+
+def test_a_waived_negative_test_gets_through_and_is_recorded(tmp_path, monkeypatch):
+    ctx = repo(tmp_path, monkeypatch)
+    waiver = {"clause": "GLOSS.grappled#1", "kind": "negative", "reason": "a value, not a rule"}
+    plan = plan_with(tests=[PLAN["tests"][0]], kind_waivers=[waiver])
+    assert run(ctx, agents("C", designer({"tests/srd/test_glossary.py": TEST_FILE}, plan))) != "incomplete"
+    assert S.load("GLOSS.grappled")["kind_waivers"] == [waiver]
 
 
 def test_a_paused_retry_resumes_with_the_problems_and_keeps_the_designers_files(tmp_path, monkeypatch):

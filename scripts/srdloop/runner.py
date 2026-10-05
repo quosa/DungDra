@@ -123,7 +123,7 @@ def gate_tests(unit: dict, out: dict, analysis: dict, unit_ids: set[str], ref: s
         {**c, "not_testable": c["id"] in untestable, "reason": untestable.get(c["id"], {}).get("reason", "")}
         for c in analysis["clauses"]
     ]
-    problems += Gt.clause_coverage(clauses, out["tests"], out["abuse"])
+    problems += Gt.clause_coverage(clauses, out["tests"], out["abuse"], out.get("kind_waivers", []))
     problems += [f"{t['name']}: no such test" for t in out["tests"] if not _test_exists(t["name"])]
     changed = Gt.changed_files(ref)
     problems += Gt.zone_problems(changed, "test-designer")
@@ -468,6 +468,7 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
         for_review=for_review,
         tests=[t["name"] for t in kept],
         out_of_scope=[{"clause": n["clause"], "reason": n["reason"]} for n in out_of_scope],
+        kind_waivers=plan.get("kind_waivers", []),
         fingerprint=S.fingerprint(P.inputs(ctx, uid)),
     )
     st.pop("problems", None)

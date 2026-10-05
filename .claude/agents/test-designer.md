@@ -32,6 +32,12 @@ Method:
    - a helper that asserts for several tests is named `assert_*` (`assert_score_and_save`): the
      gate counts `assert`, `pytest.raises` and `assert_*` calls, so a test that only calls a
      `check_*` helper "asserts nothing";
+   - a stat-block value (`AC 15`, `Initiative +2`, `Speed 30 ft.`) is tested by its effect: the
+     positive uses it, the negative shows the 2014 value or a wrong formula isn't used (no
+     proficiency bonus on a save it lacks), the boundary is one below the AC or DC failing.
+     Where one of those has no meaningful form for a clause, don't pad: list it under
+     `kind_waivers` with the clause, the kind (`negative` or `boundary`) and why. A positive
+     test can't be waived;
    - where a command exists, test player-facing clauses through `Session.execute` too;
    - no mocks, no monkeypatching: the real engine only;
    - for multi-step interactions, write a journey in `tests/srd/journeys/`.

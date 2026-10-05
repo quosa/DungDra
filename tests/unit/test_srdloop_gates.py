@@ -67,6 +67,25 @@ def test_clause_coverage_requires_kinds_boundaries_and_reasons():
     ]
 
 
+def test_a_negative_or_boundary_test_may_be_waived_for_one_clause_with_a_reason():
+    clauses = [{"id": "ac", "threshold": True}, {"id": "init", "threshold": True}, {"id": "hp"}]
+    tests = [
+        {"name": n, "clause": c, "kind": "positive"} for n, c in (("a", "ac"), ("b", "init"), ("c", "hp"))
+    ]
+    waivers = [
+        {"clause": "ac", "kind": "negative", "reason": "AC 15 has no wrong formula to rule out"},
+        {"clause": "ac", "kind": "boundary", "reason": "14 misses, 15 hits is in the attack tests"},
+        {"clause": "init", "kind": "negative", "reason": " "},
+        {"clause": "hp", "kind": "positive", "reason": "it's just a number"},
+    ]
+    assert G.clause_coverage(clauses, tests, [], waivers) == [
+        "clause init: waiving its negative test needs a reason",
+        "clause hp: a positive test can't be waived",
+        "clause init: no boundary, negative test",
+        "clause hp: no negative test",
+    ]
+
+
 # ---------------------------------------------------------------- test files
 SRD_OK = """import pytest
 

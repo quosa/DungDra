@@ -82,12 +82,25 @@ def verification(unit: dict, plan: dict, problems: list[str] = ()) -> str:
     )
 
 
+def decisions(ticket: dict) -> str:
+    """A person's reasons for reopening the ticket (a settled dispute, a narrowed scope): they
+    override the title where the two differ."""
+    reasons = [
+        h["reason"] for h in ticket.get("history", []) if h.get("event") == "reopened" and h.get("reason")
+    ]
+    if not reasons:
+        return ""
+    lines = "\n".join(f"- {r}" for r in reasons)
+    head = "A person's decisions on this ticket (they override the title where the two differ)"
+    return f"\n\n## {head}\n\n{lines}"
+
+
 def fix(ticket: dict, unit: dict | None, failures: str, problems: list[str] = ()) -> str:
     rule = _unit_block(unit) if unit else "(no unit)"
     waived = "".join(f"\n- `{k}`: {v}" for k, v in ticket.get("waive", {}).items())
     waived = f"\n\n## Checks a person waived for this ticket\n{waived}" if waived else ""
     return (
-        f"Fix ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}{waived}\n\n"
+        f"Fix ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}{decisions(ticket)}{waived}\n\n"
         f"## Acceptance tests that must pass\n\n" + "\n".join(f"- `{t}`" for t in ticket["tests"]) + "\n\n"
         f"## The rule\n\n{rule}\n\n"
         "## Clause numbering (for rule= and SRD[...], from stage A)\n\n"
@@ -117,7 +130,8 @@ def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = (), fo
         else f"This is a {ticket['kind']} ticket: file no follow-ups (`followups: []`)."
     )
     return (
-        f"Review this fix for ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}\n\n"
+        f"Review this fix for ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}"
+        f"{decisions(ticket)}\n\n"
         f"## Gate results\n\n```\n{gate}\n```\n\n## The diff\n\n```diff\n{diff[-40000:]}\n```\n\n"
         "## Clause numbering (rule= and SRD[...] use stage A's numbers, not the SRD's labels)\n\n"
         f"{clause_lists(diff)}\n\n"

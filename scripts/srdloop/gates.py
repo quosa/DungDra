@@ -63,10 +63,24 @@ def quotes(items: list[dict], field: str, texts: list[str], what: str) -> list[s
     return out
 
 
-def clause_coverage(clauses: list[dict], tests: list[dict], abuse: list[dict]) -> list[str]:
+WAIVABLE_KINDS = ("negative", "boundary")  # every testable clause keeps at least a positive test
+
+
+def clause_coverage(
+    clauses: list[dict], tests: list[dict], abuse: list[dict], waivers: list[dict] = ()
+) -> list[str]:
     """Each clause has tests of every required kind (boundary when it has a threshold), or a
-    not_testable reason; each abuse case in the plan is implemented or justified."""
+    not_testable reason; a negative or boundary test may be waived for one clause with a reason
+    (a stat-block value has no meaningful negative); each abuse case is implemented or justified."""
     out = []
+    waived: dict[str, set[str]] = {}
+    for w in waivers:
+        if w.get("kind") not in WAIVABLE_KINDS:
+            out.append(f"clause {w.get('clause')}: a {w.get('kind')} test can't be waived")
+        elif not norm(w.get("reason", "")):
+            out.append(f"clause {w.get('clause')}: waiving its {w['kind']} test needs a reason")
+        else:
+            waived.setdefault(w.get("clause"), set()).add(w["kind"])
     ids = {c["id"] for c in clauses}
     for t in tests:
         if t.get("clause") not in ids:
@@ -80,7 +94,7 @@ def clause_coverage(clauses: list[dict], tests: list[dict], abuse: list[dict]) -
             continue
         kinds = {t.get("kind") for t in tests if t.get("clause") == c["id"]}
         need = set(REQUIRED_KINDS) | ({"boundary"} if c.get("threshold") else set())
-        missing = sorted(need - kinds)
+        missing = sorted(need - kinds - waived.get(c["id"], set()))
         if missing:
             out.append(f"clause {c['id']}: no {', '.join(missing)} test")
     for a in abuse:

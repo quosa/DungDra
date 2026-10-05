@@ -549,6 +549,27 @@ def test_a_fix_files_at_most_one_parked_followup_and_a_refactor_fix_none(
     assert allowed == (kind == "bug") and ("file no follow-ups" in prompts["fix-reviewer"]) != allowed
 
 
+def test_a_persons_reopen_reason_reaches_the_fixer_and_the_reviewer(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    tk = T.load("T-1")
+    tk["status"] = "dispute"
+    T.save(tk)
+    T.reopen("T-1", "Keep aiming by the named creature; don't change the tests.")
+    ctx = P.Context([GRAPPLED], U.by_id([GRAPPLED]), CONTENT, [], {}, {}, {}, {}, [])
+    prompts = {}
+    assert Run.run_ticket(ctx, T.load("T-1"), C.Budget(10.0), fake_dev(True, prompts=prompts)).startswith(
+        "fixed"
+    )
+    for role in ("fixer", "fix-reviewer"):
+        assert "## A person's decisions on this ticket" in prompts[role]
+        assert "- Keep aiming by the named creature; don't change the tests." in prompts[role]
+
+
+def test_a_ticket_nobody_reopened_has_no_decisions_section():
+    assert Run.Pr.decisions({"history": [{"event": "failed"}]}) == ""
+
+
 def test_the_audit_loop_breaker_counts_only_open_bugs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     ctx = P.Context([GRAPPLED], U.by_id([GRAPPLED]), CONTENT, [], {}, {}, {}, {}, [])

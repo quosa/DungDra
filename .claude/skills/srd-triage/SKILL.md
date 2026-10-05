@@ -85,6 +85,10 @@ favouring those that unblock the most rules; recommend `ticket park` for open in
 build soon, and `ticket void` for parked ones another fix made moot. When the person asks
 "which features should we tackle?", this section is the whole answer.
 
+**Kind waivers** (`kind_waivers` in `loop/state/<unit>.json`): the designer skipped a negative or
+boundary test for a clause, with a reason. Skim them; flag a reason that is really "I ran out of
+ideas" for a rule clause (as opposed to a stat-block value), and suggest the test it should have.
+
 **New tickets**: one line each. A bug ticket with more than about five tests, or one that says a
 command or action doesn't exist, is a feature: flag it so it is kept out of `dev` runs and planned
 deliberately. A ticket whose tests depend on a pending ruling waits for it.
