@@ -496,6 +496,29 @@ def test_an_attack_out_of_turn_is_still_refused(game):
     assert game.combat.turn.actions_used == 0
 
 
+def test_an_attack_out_of_turn_cites_the_order_of_combat(game):
+    brom, gob = _goblin_turn_at(game, (5, 0))
+    with pytest.raises(Refusal, match="isn't BROM's turn") as exc:
+        attack(game, brom, gob)
+    assert (exc.value.page, exc.value.rule) == (13, "PLAY.combat.the-order-of-combat")
+
+
+def test_a_bonus_action_out_of_turn_cites_the_bonus_action_rule(game):
+    gob, brom = _goblin_turn(game)
+    with pytest.raises(Refusal, match="isn't BROM's turn") as exc:
+        game.combat.spend(brom, "bonus", "Cunning Action")
+    assert (exc.value.page, exc.value.rule) == (10, "PLAY.actions.bonus-actions")
+    assert game.combat.turn.bonus_used is False
+
+
+def test_an_action_out_of_turn_cites_the_order_of_combat(game):
+    gob, brom = _goblin_turn(game)
+    with pytest.raises(Refusal, match="isn't BROM's turn") as exc:
+        game.combat.spend(brom, "action", "Dash")
+    assert (exc.value.page, exc.value.rule) == (13, "PLAY.combat.the-order-of-combat")
+    assert game.combat.turn.actions_used == 0
+
+
 # ---------------- the Ready action ----------------
 def _brom_vs_goblins(game, *positions):
     brom = pc(game, "BROM", (0, 0))

@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_monsters.py::test_nimble_escape_out_of_turn_is_refused"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Fixed. The out-of-turn refusal for spending a Bonus Action now cites p.10, `PLAY.actions.bonus-actions`, because a Bonus Action is taken on your own turn. The fix is in `Combat._require_turn` (`dungdra/combat.py`), which now gets the kind of spend from `Combat.spend`. Other out-of-turn spends, and the attack-path refusal in `combat.py`, now cite p.13, `PLAY.combat.the-order-of-combat`; before, neither cited anything. I tagged these with SRD markers that have no clause number, because neither unit has a stage-A `A.json` file. I added 3 unit tests that check the page and rule cited and that nothing gets spent. Results: unit tests 502 passed, the ticket's test passes with `--runxfail`, ruff is clean and dev-gate passes."
+    }
+  ]
 }

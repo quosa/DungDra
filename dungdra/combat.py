@@ -126,10 +126,14 @@ class Combat:
         self.turn.movement_left -= cost
         return True
 
-    def _require_turn(self, actor):
+    def _require_turn(self, actor, what="action"):
         """Refuse unless it is `actor`'s turn and it can act; returns the turn's budget."""
         if not self.is_turn(actor):
-            raise Refusal(f"It isn't {actor.name}'s turn")
+            if what == "bonus":
+                # SRD[PLAY.actions.bonus-actions]: a Bonus Action is "an additional action on your turn"
+                raise Refusal(f"It isn't {actor.name}'s turn", page=10, rule="PLAY.actions.bonus-actions")
+            # SRD[PLAY.combat.the-order-of-combat]: a combatant acts during its own turn
+            raise Refusal(f"It isn't {actor.name}'s turn", page=13, rule="PLAY.combat.the-order-of-combat")
         if not actor.can_act():
             raise Refusal(
                 f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
@@ -172,7 +176,7 @@ class Combat:
             t.actions_used += 1
             t.log.append(label or "action")
             return
-        t = self._require_turn(actor)
+        t = self._require_turn(actor, what)
         if what == "bonus":
             if t.bonus_used:
                 raise Refusal(
@@ -1203,7 +1207,8 @@ def _spend_attack(game, attacker, item, light_extra, nick, with_reaction):
         return
     t = cb.turn
     if not cb.is_turn(attacker):
-        raise Refusal(f"It isn't {attacker.name}'s turn")
+        # SRD[PLAY.combat.the-order-of-combat]: outside a Reaction, a combatant attacks on its own turn
+        raise Refusal(f"It isn't {attacker.name}'s turn", page=13, rule="PLAY.combat.the-order-of-combat")
     if light_extra:
         # Light property (p.89): extra attack with a different Light weapon after the Attack action
         if not t.attack_action_taken:

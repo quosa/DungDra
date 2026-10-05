@@ -667,11 +667,6 @@ def test_nimble_escape_only_once_per_turn(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#24", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-73: a Bonus Action taken out of turn is refused (\"It isn't Gob's turn\") "
-    "without citing a page",
-)
 def test_nimble_escape_out_of_turn_is_refused(game):
     b, gob = goblin_vs_brom(game)
     in_combat(game, b, gob)

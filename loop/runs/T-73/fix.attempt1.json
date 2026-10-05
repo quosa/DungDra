@@ -1,0 +1,30 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed. The out-of-turn refusal for spending a Bonus Action now cites p.10, `PLAY.actions.bonus-actions`, because a Bonus Action is taken on your own turn. The fix is in `Combat._require_turn` (`dungdra/combat.py`), which now gets the kind of spend from `Combat.spend`. Other out-of-turn spends, and the attack-path refusal in `combat.py`, now cite p.13, `PLAY.combat.the-order-of-combat`; before, neither cited anything. I tagged these with SRD markers that have no clause number, because neither unit has a stage-A `A.json` file. I added 3 unit tests that check the page and rule cited and that nothing gets spent. Results: unit tests 502 passed, the ticket's test passes with `--runxfail`, ruff is clean and dev-gate passes.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_an_attack_out_of_turn_cites_the_order_of_combat",
+   "tests/unit/test_combat.py::test_a_bonus_action_out_of_turn_cites_the_bonus_action_rule",
+   "tests/unit/test_combat.py::test_an_action_out_of_turn_cites_the_order_of_combat"
+  ],
+  "srd_tags": [
+   "SRD[PLAY.actions.bonus-actions]",
+   "SRD[PLAY.combat.the-order-of-combat]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The out-of-turn refusal in Combat._require_turn now gives a page and rule. A Bonus Action cites PLAY.actions.bonus-actions on p.10. Any other action cites PLAY.combat.the-order-of-combat on p.13. These are the same citations that spend() already uses for the bonus-action and free-interaction refusals next to it. The separate check in _spend_attack now gives the same citation, so attacks out of turn are covered too. The T-73 xfail was removed from the acceptance test because the test now passes; no assertion was dropped. The new unit tests check the citation on the Refusal and that nothing was spent (bonus_used and actions_used are unchanged), so they test behaviour. There is no hard-coding, no second mechanism and no out-of-scope change."
+ },
+ "problems": [],
+ "cost_usd": 0.4754,
+ "stash": ""
+}
