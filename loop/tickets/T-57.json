@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "_burning_hands ignites flammable objects from a hand-set obj['in_cone'] flag instead of testing the object's position with the same Cone geometry (in_cone_direction plus length) that creatures use. Use the one area test for both.",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "part of the area targeting feature (T-56)"
+    }
+  ]
 }
