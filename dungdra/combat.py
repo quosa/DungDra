@@ -126,15 +126,19 @@ class Combat:
         self.turn.movement_left -= cost
         return True
 
-    def require_action(self, actor, label=""):
-        """Refuse unless it is `actor`'s turn and its action is still free; spends nothing."""
+    def _require_turn(self, actor):
+        """Refuse unless it is `actor`'s turn and it can act; returns the turn's budget."""
         if not self.is_turn(actor):
             raise Refusal(f"It isn't {actor.name}'s turn")
         if not actor.can_act():
             raise Refusal(
                 f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
             )
-        t = self.turn
+        return self.turn
+
+    def require_action(self, actor, label=""):
+        """Refuse unless it is `actor`'s turn and its action is still free; spends nothing."""
+        t = self._require_turn(actor)
         if not t.action_available():
             raise Refusal(
                 f"{actor.name} has already taken their action this turn",
@@ -164,17 +168,12 @@ class Combat:
             return
         if what == "action":
             self.require_action(actor, label)
-        if not self.is_turn(actor):
-            raise Refusal(f"It isn't {actor.name}'s turn")
-        if not actor.can_act():
-            raise Refusal(
-                f"{actor.name} can't take actions (Incapacitated)", page=184, rule="GLOSS.incapacitated"
-            )
-        t = self.turn
-        if what == "action":
+            t = self.turn
             t.actions_used += 1
             t.log.append(label or "action")
-        elif what == "bonus":
+            return
+        t = self._require_turn(actor)
+        if what == "bonus":
             if t.bonus_used:
                 raise Refusal(
                     f"{actor.name} has already taken a Bonus Action this turn",

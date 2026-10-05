@@ -562,6 +562,32 @@ def test_require_action_refuses_off_turn_incapacitated_and_a_surged_magic_action
     assert exc.value.rule == "GLOSS.incapacitated"
 
 
+@pytest.mark.parametrize("what", ["action", "bonus", "free"])
+def test_spend_refuses_off_turn_and_incapacitated_without_spending(game, what):
+    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
+    cb = game.combat
+    before = (cb.turn.actions_used, cb.turn.bonus_used, cb.turn.free_interaction, list(cb.turn.log))
+    with pytest.raises(Refusal, match="isn't"):
+        cb.spend(gob, what, "Dash")
+    brom.add_condition("incapacitated", "test")
+    with pytest.raises(Refusal) as exc:
+        cb.spend(brom, what, "Dash")
+    assert exc.value.rule == "GLOSS.incapacitated"
+    assert (cb.turn.actions_used, cb.turn.bonus_used, cb.turn.free_interaction, cb.turn.log) == before
+
+
+@pytest.mark.parametrize(("what", "page"), [("bonus", 10), ("free", 13)])
+def test_spend_bonus_or_free_interaction_once_per_turn(game, what, page):
+    brom, _ = _brom_vs_goblins(game, (20, 0))
+    cb = game.combat
+    cb.spend(brom, what, "Second Wind")
+    assert (cb.turn.bonus_used, cb.turn.free_interaction) == (what == "bonus", what == "free")
+    with pytest.raises(Refusal) as exc:
+        cb.spend(brom, what, "Second Wind")
+    assert exc.value.page == page
+    assert cb.turn.actions_used == 0
+
+
 def test_readied_trigger_without_a_reaction_is_logged_and_not_asked(game):
     brom, (gob,) = _brom_vs_goblins(game, (20, 0))
     ready(game, brom, gob.id, 5, lambda: readied_attack(game, brom, gob))
