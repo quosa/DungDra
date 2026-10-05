@@ -20,6 +20,7 @@ from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.mounted import mount
 from dungdra.rules import Refusal
+from dungdra.spells import cast
 from tests.support.helpers import mon, pc
 from tests.unit.helpers import grappled_by
 
@@ -521,25 +522,29 @@ def test_a_refused_release_keeps_the_reaction_and_the_readied_response(game):
     assert "can't take the readied" in str(game.log.last("ready"))
 
 
-def test_a_refused_release_after_the_holding_concentration_ended_drops_the_held_spell(game):
-    brom, (gob,) = _brom_vs_goblins(game, (20, 0))
-    held = "Fire Bolt (readied)"
-    game.start_concentration(brom, held)
+def test_a_held_spell_refused_at_release_stays_held_with_its_concentration(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob, gob2 = (
+        mon(game, "goblin warrior", (20, 0), name="G0"),
+        mon(game, "goblin warrior", (100, 0), name="G1"),
+    )
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [mialee, gob, gob2])
 
-    def release(g):
-        g.end_concentration(brom, "Fire Bolt is released")
-        raise Refusal("the target is out of range")
+    def build():
+        c = cast(game, mialee, "magic missile", [gob2], ready=True)
+        return c.spell.title(), c.release, c.held
 
-    ready(game, brom, gob.id, 5, lambda: ("Fire Bolt", release, held))
+    ready(game, mialee, gob.id, 5, build)
+    gob2.position = (200, 0)  # now beyond Magic Missile's 120 ft
     end_turn(game)
-    game.answer("readied", True, who=brom)
+    game.answer("readied", True, who=mialee)
     move(game, gob, to=(5, 0))
-    assert brom.concentrating is None
-    assert brom.id not in game.combat.readied
-    assert brom.id not in game.combat.reaction_used
-    last = game.log.last("ready")
-    assert (str(last.page), last.rule) == ("187", "GLOSS.ready#9")
-    assert "dissipates" in str(last)
+    assert mialee.concentrating == "Magic Missile (readied)"
+    assert game.combat.readied[mialee.id].held == "Magic Missile (readied)"
+    assert mialee.id not in game.combat.reaction_used
+    assert "beyond Magic Missile's range" in str(game.log.last("ready"))
+    assert gob2.hp == 10
 
 
 def test_a_refused_release_still_holding_concentration_keeps_the_held_spell(game):

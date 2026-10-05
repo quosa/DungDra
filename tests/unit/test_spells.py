@@ -495,6 +495,104 @@ def test_releasing_a_held_spell_ends_the_holding_and_takes_effect(game):
     assert mialee.slots_left(1) == 1
 
 
+def test_a_release_out_of_range_is_refused_before_the_holding_concentration_ends(game):
+    mialee, gob = _in_combat(game, "MIALEE")
+    c = cast(game, mialee, "magic missile", [gob], ready=True)
+    gob.position = (200, 0)
+    with pytest.raises(Refusal) as exc:
+        c.release(game)
+    assert exc.value.rule == "SPELL.casting-spells.range"
+    assert mialee.concentrating == c.held
+    assert gob.hp == 10
+
+
+def test_a_release_the_spells_own_text_refuses_leaves_the_spell_held(game):
+    jozan, gob = _in_combat(game, "JOZAN", gob_pos=(5, 0))
+    gob.hp = 0
+    c = cast(game, jozan, "spare the dying", [gob], ready=True)
+    gob.hp = 3  # healed before the trigger: no longer a creature at 0 Hit Points
+    with pytest.raises(Refusal) as exc:
+        c.release(game)
+    assert exc.value.rule == "SPELL.spare-the-dying"
+    assert jozan.concentrating == c.held
+
+
+def test_a_spells_own_refusal_comes_before_its_slot_is_spent(game):
+    mialee, gob = _in_combat(game, "MIALEE")
+    with pytest.raises(Refusal, match="creates 3 darts"):
+        cast(game, mialee, "magic missile", [gob], option=[1, 1])
+    assert mialee.slots_left(1) == 2
+    assert game.combat.turn.actions_used == 0
+
+
+def test_fire_bolt_at_a_missing_object_is_refused_before_the_cast_and_burns_one_that_is_there(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    with pytest.raises(Refusal, match="No target 'crate'"):
+        cast(game, mialee, "fire bolt", ["crate"])
+    assert game.log.last("cast") is None
+    game.scene.objects["crate"] = {"flammable": True}
+    cast(game, mialee, "fire bolt", ["crate"])
+    assert game.scene.objects["crate"]["burning"]
+
+
+def test_a_target_the_caster_cant_see_is_refused_before_the_slot(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.add_condition("invisible")
+    with pytest.raises(Refusal, match="can't be seen") as exc:
+        cast(game, mialee, "magic missile", [gob])
+    assert exc.value.rule == "SPELL.magic-missile"
+    assert mialee.slots_left(1) == 2
+
+
+def _casting(spell, caster, level):
+    return Casting(spell, caster, level, "wis", 13, 5, None, False, "", None)
+
+
+def test_a_command_word_is_checked_and_a_bad_one_refused(game):
+    from dungdra.spells import CHECKS, IMPL
+
+    jozan = pc(game, "JOZAN", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    with pytest.raises(Refusal, match="Command words"):
+        CHECKS["command"](game, jozan, 1, [gob], None, "dance")
+    game.dice.force_str("d20=[1]")
+    IMPL["command"](game, _casting("command", jozan, 1), [gob], option="halt")
+    assert "doesn't move" in str(game.log.last("spell"))
+
+
+def test_lesser_restoration_refuses_a_condition_it_doesnt_end_and_ends_one_it_does(game):
+    from dungdra.spells import CHECKS, IMPL
+
+    jozan = pc(game, "JOZAN", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    brom.add_condition("poisoned")
+    with pytest.raises(Refusal, match="ends Blinded, Deafened, Paralyzed or Poisoned"):
+        CHECKS["lesser restoration"](game, jozan, 2, [brom], None, "charmed")
+    CHECKS["lesser restoration"](game, jozan, 2, [brom], None, None)
+    IMPL["lesser restoration"](game, _casting("lesser restoration", jozan, 2), [brom])
+    assert not brom.has("poisoned")
+
+
+@pytest.mark.parametrize(
+    ("point", "match"), [(None, "Choose an unoccupied space"), ((40, 0), "up to 30 feet")]
+)
+def test_misty_step_refuses_a_missing_or_far_point(game, point, match):
+    from dungdra.spells import CHECKS
+
+    mialee = pc(game, "MIALEE", (0, 0))
+    with pytest.raises(Refusal, match=match):
+        CHECKS["misty step"](game, mialee, 2, [], point, None)
+    CHECKS["misty step"](game, mialee, 2, [], (30, 0), None)
+
+
+def test_scorching_ray_needs_a_target(game):
+    from dungdra.spells import CHECKS
+
+    with pytest.raises(Refusal, match="Choose targets for the rays"):
+        CHECKS["scorching ray"](game, pc(game, "MIALEE", (0, 0)), 2, [], None, None)
+
+
 def test_releasing_a_concentration_spell_concentrates_on_the_spell_itself(game):
     jozan, _ = _in_combat(game, "JOZAN")
     c = cast(game, jozan, "bless", [jozan], ready=True)

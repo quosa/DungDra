@@ -1,0 +1,38 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-65 is fixed. A readied spell is now checked before its holding Concentration ends, so a refused release leaves the spell held and nothing has changed.\n\n- **Shared check (`dungdra/spells.py`):** the cast-time checks now live in one `_check`. It covers Total Cover, range, target kind, target cap and the \"a target you can see\" check. It also runs each spell's own refusals from a new `CHECKS` registry next to `IMPL`. `cast` calls it before anything is paid, and `_release` calls it before `end_concentration`.\n- **Handler refusals moved into `CHECKS`:** last attempt's reviewer flagged that handlers refuse after Concentration has ended. Those refusals now run in the check instead: Fire Bolt's missing object, Spare the Dying on a creature not at 0 HP, a bad Command word, a Magic Missile dart split that doesn't add up, a Lesser Restoration condition it can't end, Misty Step's point, and Scorching Ray with no targets.\n  - Handlers reuse the same helpers (`_command_word`, `_dart_counts`, `_restoration_condition`) and no longer raise anything themselves. None of the code a handler calls (`move` with teleport, `apply_command`, `spell_attack`, `heal`) raises a Refusal.\n  - Sacred Flame's and Healing Word's own \"must see the target\" checks were dropped because the `SIGHT_SPELLS` check already does the same thing.\n- **Side effect on normal casts:** a cast that one of these checks refuses now spends no slot and no action. Before, those refusals happened after paying.\n- **`dungdra/combat.py`:** I removed the dissipate-on-refusal branch from `_readied_triggers`. A refused release now always gives back the Reaction and the readied response.\n- **Unit tests:** I replaced the test for the dropped branch with one that readies a real Magic Missile and moves its target out of range. Concentration, the readied response and the Reaction all stay in place. New spell tests cover an out-of-range release, a Spare the Dying release on a target healed in the meantime, and each moved check refusing before anything is spent.\n- **Not checked:** I couldn't confirm that the new tests fail on the old engine. Stashing the engine changes to try it was denied.\n\n**Results:** all 803 tests pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes (unit branch coverage 46.1%). The ticket names no xfail tests, so there was nothing to run with `--runxfail`.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/combat.py",
+   "tests/unit/test_spells.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_a_held_spell_refused_at_release_stays_held_with_its_concentration",
+   "tests/unit/test_spells.py::test_a_release_out_of_range_is_refused_before_the_holding_concentration_ends",
+   "tests/unit/test_spells.py::test_a_release_the_spells_own_text_refuses_leaves_the_spell_held",
+   "tests/unit/test_spells.py::test_a_spells_own_refusal_comes_before_its_slot_is_spent",
+   "tests/unit/test_spells.py::test_fire_bolt_at_a_missing_object_is_refused_before_the_cast_and_burns_one_that_is_there",
+   "tests/unit/test_spells.py::test_a_target_the_caster_cant_see_is_refused_before_the_slot",
+   "tests/unit/test_spells.py::test_a_command_word_is_checked_and_a_bad_one_refused",
+   "tests/unit/test_spells.py::test_lesser_restoration_refuses_a_condition_it_doesnt_end_and_ends_one_it_does",
+   "tests/unit/test_spells.py::test_misty_step_refuses_a_missing_or_far_point",
+   "tests/unit/test_spells.py::test_scorching_ray_needs_a_target"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ready#6]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves T-65. All the checks `cast` used to run on targets (Total Cover, range, target kind, target cap, sight) now live in one function, `spells._check`. That function also runs a new `CHECKS` table holding each spell's own refusals. `_release` calls `_check` before `end_concentration`, so if a release is refused (for example, the target is out of range), nothing is let go and the spell stays held by its Concentration. Because no refused release can now have ended the Concentration first, dropping the dissipate-on-refusal branch in `combat._readied_triggers` is safe.\n\nMoving the spell-specific refusals out of the handlers and into `CHECKS` is in scope: the ticket asks for affected targets to be checked before release, and those refusals used to sit inside the handlers. Each moved check is a single shared function, not a copy:\n- the handlers still call `_command_word`, `_dart_counts` and `_restoration_condition` to get their values;\n- Sacred Flame and Healing Word lost their inline sight checks, but both are in `SIGHT_SPELLS`, so the shared sight check still covers them.\n\nA side benefit is that `cast` now refuses these cases before a slot is spent, and a test checks that.\n\nThe tests check real behaviour:\n- the rewritten combat test goes through the real `cast(ready=True)` and `_release` path and confirms the Concentration and the readied entry are kept and the target takes no damage;\n- the spells tests check refusals at release, the rule ids on those refusals, unspent slots, and the success paths."
+ },
+ "problems": [],
+ "cost_usd": 1.493,
+ "stash": ""
+}

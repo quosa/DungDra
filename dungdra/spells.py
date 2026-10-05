@@ -150,26 +150,7 @@ def cast(
             page=105,
             rule="SPELL.casting-spells.casting-time.longer-casting-times",
         )
-    # SRD[SPELL.casting-spells.effects.targets#2] targets behind Total Cover can't be targeted
-    for t in [] if sd.get("area") else targets:
-        if is_creature(t) and t is not caster and game.cover_between(caster, t) == "total":
-            raise Refusal(
-                f"{t.name} is behind Total Cover and can't be targeted",
-                page=106,
-                rule="SPELL.casting-spells.effects.targets#2",
-            )
-    _range_check(game, caster, spell, sd, targets)
-    _target_kind(spell, sd, targets)
-    _target_cap(spell, sd, level, targets)
-    if spell in SIGHT_SPELLS:
-        for t in targets:
-            if is_creature(t) and t is not caster and not can_see(caster, t):
-                raise Refusal(
-                    f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
-                    f"(try the Search action to find hidden creatures)",
-                    page=sd["page"],
-                    rule=spell_rule(spell),
-                )
+    _check(game, caster, spell, sd, level, targets, point, option)
     stow = _components(game, caster, spell, sd, scroll or item is not None)
     fn = IMPL.get(spell)
     if fn is None:
@@ -245,6 +226,34 @@ def cast(
     return c
 
 
+def _check(game, caster, spell, sd, level, targets, point, option):
+    """Refuses targets and options the spell can't take, before anything is paid or let go: run
+    when the spell is cast and again when a readied spell is released."""
+    # SRD[SPELL.casting-spells.effects.targets#2] targets behind Total Cover can't be targeted
+    for t in [] if sd.get("area") else targets:
+        if is_creature(t) and t is not caster and game.cover_between(caster, t) == "total":
+            raise Refusal(
+                f"{t.name} is behind Total Cover and can't be targeted",
+                page=106,
+                rule="SPELL.casting-spells.effects.targets#2",
+            )
+    _range_check(game, caster, spell, sd, targets)
+    _target_kind(spell, sd, targets)
+    _target_cap(spell, sd, level, targets)
+    if spell in SIGHT_SPELLS:
+        for t in targets:
+            if is_creature(t) and t is not caster and not can_see(caster, t):
+                raise Refusal(
+                    f"{spell.title()} needs a target {caster.name} can see, and {t.name} can't be seen "
+                    f"(try the Search action to find hidden creatures)",
+                    page=sd["page"],
+                    rule=spell_rule(spell),
+                )
+    check = CHECKS.get(spell)
+    if check is not None:
+        check(game, caster, level, targets, point, option)
+
+
 def _take_effect(game, c, sd, targets, fn, point, option, kw):
     if sd["concentration"]:
         game.start_concentration(c.caster, c.spell.title())
@@ -254,6 +263,9 @@ def _take_effect(game, c, sd, targets, fn, point, option, kw):
 
 
 def _release(game, c, sd, targets, fn, point, option, kw):
+    # SRD[GLOSS.ready#6] the release is checked as the cast was, while the energy is still held:
+    # a refused release lets nothing go, and the spell stays held by its Concentration
+    _check(game, c.caster, c.spell, sd, c.level, targets, point, option)
     # SRD[GLOSS.ready#6] the held energy is released with the Reaction, spending nothing more
     game.end_concentration(c.caster, f"{c.spell.title()} is released")
     game.log.player(
@@ -893,9 +905,7 @@ class SpiritualWeaponEffect(Effect):
 def _fire_bolt(game, c, targets, **kw):
     t = targets[0]
     if isinstance(t, str):
-        obj = game.scene.objects.get(t)
-        if obj is None:
-            raise Refusal(f"No target {t!r}")
+        obj = game.scene.objects[t]
         game.log.player("spell", f"The Fire Bolt strikes the {t}", page=132, rule="SPELL.fire-bolt")
         if obj.get("flammable") and not obj.get("worn"):
             obj["burning"] = True
@@ -945,8 +955,6 @@ def _ray_of_frost(game, c, targets, **kw):
 
 def _sacred_flame(game, c, targets, **kw):
     t = targets[0]
-    if not can_see(c.caster, t):
-        raise Refusal(f"{c.caster.name} must see the target of Sacred Flame")
     r = spell_save(game, c, t, "dex", ignore_cover=True)
     n = cantrip_dice(c.caster)
     if not r.success:
@@ -1007,12 +1015,6 @@ def _flavor(text):
 
 def _spare_the_dying(game, c, targets, **kw):
     t = targets[0]
-    if t.dead or t.hp > 0:
-        raise Refusal(
-            "Spare the Dying targets a creature with 0 Hit Points that isn't dead",
-            page=163,
-            rule="SPELL.spare-the-dying",
-        )
     from .damage import make_stable
 
     make_stable(game, t, f"Spare the Dying from {c.caster.name}")
@@ -1130,9 +1132,7 @@ def _thunderwave(game, c, targets, **kw):
 
 
 def _command(game, c, targets, option="grovel", **kw):
-    word = norm(option or "grovel")
-    if word not in ("approach", "drop", "flee", "grovel", "halt"):
-        raise Refusal("Command words: Approach, Drop, Flee, Grovel or Halt")
+    word = _command_word(option)
     for t in targets:
         r = spell_save(game, c, t, "wis")
         if not r.success:
@@ -1155,8 +1155,6 @@ def _cure_wounds(game, c, targets, **kw):
 
 def _healing_word(game, c, targets, **kw):
     t = targets[0]
-    if not can_see(c.caster, t):
-        raise Refusal(f"{c.caster.name} must see the target of Healing Word")
     heal(game, c, t, f"{2 * c.level}d4")
 
 
@@ -1267,15 +1265,7 @@ def _mage_armor(game, c, targets, **kw):
 
 
 def _magic_missile(game, c, targets, option=None, **kw):
-    darts = 3 + (c.level - 1)
-    if not targets:
-        raise Refusal("Choose targets for the darts")
-    # distribute: option may be a list of counts per target
-    counts = option if isinstance(option, (list, tuple)) else None
-    if counts is None:
-        counts = [darts // len(targets) + (1 if i < darts % len(targets) else 0) for i in range(len(targets))]
-    if sum(counts) != darts:
-        raise Refusal(f"Magic Missile at level {c.level} creates {darts} darts")
+    darts, counts = _dart_counts(c.level, targets, option)
     game.log.player(
         "spell", f"{darts} darts of magical force strike automatically", page=146, rule="SPELL.magic-missile"
     )
@@ -1418,23 +1408,13 @@ def _invisibility(game, c, targets, **kw):
 
 def _lesser_restoration(game, c, targets, option=None, **kw):
     t = targets[0]
-    cond = (
-        norm(option)
-        if option
-        else next((x for x in ("poisoned", "paralyzed", "blinded", "deafened") if t.has(x)), None)
-    )
-    if cond not in ("blinded", "deafened", "paralyzed", "poisoned"):
-        raise Refusal("Lesser Restoration ends Blinded, Deafened, Paralyzed or Poisoned")
+    cond = _restoration_condition(t, option)
     for e in list(t.effects):
         if e.condition == cond:
             t.remove_effect(e, "Lesser Restoration")
 
 
 def _misty_step(game, c, targets, point=None, **kw):
-    if point is None:
-        raise Refusal("Choose an unoccupied space within 30 ft that you can see")
-    if dist_points(c.caster.position, point) > 30:
-        raise Refusal("Misty Step teleports up to 30 feet")
     from .combat import move
 
     move(game, c.caster, to=point, teleport=True)
@@ -1442,8 +1422,6 @@ def _misty_step(game, c, targets, point=None, **kw):
 
 def _scorching_ray(game, c, targets, **kw):
     rays = 3 + (c.level - 2)
-    if len(targets) == 0:
-        raise Refusal("Choose targets for the rays")
     seq = targets if len(targets) == rays else [targets[i % len(targets)] for i in range(rays)]
     for t in seq:
         if t.dead:
@@ -1563,6 +1541,90 @@ def burn_web(game, web_name, creatures_in_fire=()):
             if e.condition == "restrained" and e.source == "Web":
                 t.remove_effect(e, "the web burned away")
 
+
+# ---------------------------------------------------------------------------
+# checks: what a spell's own text refuses, run by `_check` before anything is paid or let go
+# ---------------------------------------------------------------------------
+def _fire_bolt_check(game, caster, level, targets, point, option):
+    for t in targets:
+        if isinstance(t, str) and t not in game.scene.objects:
+            raise Refusal(f"No target {t!r}")
+
+
+def _spare_the_dying_check(game, caster, level, targets, point, option):
+    if targets and (targets[0].dead or targets[0].hp > 0):
+        raise Refusal(
+            "Spare the Dying targets a creature with 0 Hit Points that isn't dead",
+            page=163,
+            rule="SPELL.spare-the-dying",
+        )
+
+
+def _command_word(option):
+    word = norm(option or "grovel")
+    if word not in ("approach", "drop", "flee", "grovel", "halt"):
+        raise Refusal("Command words: Approach, Drop, Flee, Grovel or Halt")
+    return word
+
+
+def _dart_counts(level, targets, option):
+    darts = 3 + (level - 1)
+    if not targets:
+        raise Refusal("Choose targets for the darts")
+    # distribute: option may be a list of counts per target
+    counts = option if isinstance(option, (list, tuple)) else None
+    if counts is None:
+        counts = [darts // len(targets) + (1 if i < darts % len(targets) else 0) for i in range(len(targets))]
+    if sum(counts) != darts:
+        raise Refusal(f"Magic Missile at level {level} creates {darts} darts")
+    return darts, counts
+
+
+def _restoration_condition(t, option):
+    cond = (
+        norm(option)
+        if option
+        else next((x for x in ("poisoned", "paralyzed", "blinded", "deafened") if t.has(x)), None)
+    )
+    if cond not in ("blinded", "deafened", "paralyzed", "poisoned"):
+        raise Refusal("Lesser Restoration ends Blinded, Deafened, Paralyzed or Poisoned")
+    return cond
+
+
+def _command_check(game, caster, level, targets, point, option):
+    _command_word(option)
+
+
+def _magic_missile_check(game, caster, level, targets, point, option):
+    _dart_counts(level, targets, option)
+
+
+def _lesser_restoration_check(game, caster, level, targets, point, option):
+    if targets:
+        _restoration_condition(targets[0], option)
+
+
+def _misty_step_check(game, caster, level, targets, point, option):
+    if point is None:
+        raise Refusal("Choose an unoccupied space within 30 ft that you can see")
+    if dist_points(caster.position, point) > 30:
+        raise Refusal("Misty Step teleports up to 30 feet")
+
+
+def _scorching_ray_check(game, caster, level, targets, point, option):
+    if len(targets) == 0:
+        raise Refusal("Choose targets for the rays")
+
+
+CHECKS = {
+    "fire bolt": _fire_bolt_check,
+    "spare the dying": _spare_the_dying_check,
+    "command": _command_check,
+    "magic missile": _magic_missile_check,
+    "lesser restoration": _lesser_restoration_check,
+    "misty step": _misty_step_check,
+    "scorching ray": _scorching_ray_check,
+}
 
 IMPL = {
     "fire bolt": _fire_bolt,
