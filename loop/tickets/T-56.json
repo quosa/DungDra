@@ -4,7 +4,7 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "R-16: area spells (Burning Hands Cone, Thunderwave Cube) still take the affected creatures from the caller's list. Select every creature in the area from scene positions, shape, origin and an explicit direction, so a caller can't leave out a creature inside an 'each creature' area. Once the direction is explicit, drop the 'aim at the first named creature' fallback in _area_targets.",
   "tests": [],
-  "status": "dispute",
+  "status": "open",
   "attempts": 0,
   "history": [
     {
@@ -14,6 +14,11 @@
     {
       "event": "dispute",
       "reason": "To drop the 'aim at the first named creature' fallback entirely (so that only an explicit point= gives a Cone/Cube its direction), these acceptance tests must pass point= because they currently cast Burning Hands or Thunderwave with only a creature list: tests/srd/test_playing_the_game.py (mialee_burns helper -> point=(15, 0); test_cover_doesnt_help_other_saves thunderwave -> point=(20, 0); test_total_cover_doesnt_refuse_an_area_spell -> point=(15, 0)), tests/srd/test_spells.py (test_a_named_creature_outside_the_cone_isnt_affected -> point=(30, 0); test_one_cone_cant_reach_both_sides_of_the_caster -> point=(15, 0) or (-15, 0)), tests/scenarios/test_spells.py::test_spl05_burning_hands -> point=(15, 0), tests/scenarios/test_combat.py CMB-05 Burning Hands casts -> point=(215, 200). After that change, _area_aim would return only the point, and _area_aim_check would refuse a cast without one. The scene-based selection the ticket asks for is already in place and doesn't depend on this change."
+    },
+    {
+      "event": "reopened",
+      "was": "dispute",
+      "reason": "point= is the model; naming a creature is shorthand for its position (the Cone's direction, or the Sphere's centre). Geometry decides who is affected (R-16). Don't change the tests."
     }
   ],
   "cap_usd": 9.0
