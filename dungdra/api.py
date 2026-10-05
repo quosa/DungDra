@@ -365,7 +365,10 @@ class Session:
         actions.dash(self.game, self._c(actor), bonus=bonus)
 
     def cmd_disengage(self, actor=None, bonus=False):
-        actions.disengage(self.game, self._c(actor), bonus=bonus)
+        if bonus:
+            CA.bonus_disengage(self.game, self._c(actor))
+        else:
+            actions.disengage(self.game, self._c(actor))
 
     def cmd_dodge(self, actor=None):
         actions.dodge(self.game, self._c(actor))

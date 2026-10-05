@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_monsters.py::test_a_bandit_cant_disengage_as_a_bonus_action_through_the_session"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "The `disengage` command now refuses `bonus=True` unless the creature has a feature that grants it, so a bandit can no longer Disengage as a Bonus Action. The ticket's test passes with `--runxfail`.\n\n- **Engine change:** I added `class_actions.bonus_disengage`. It sends a bonus Disengage through Cunning Action if the creature has that feature, or through Nimble Escape if it has that trait. Otherwise it refuses with page 290 and `rule=\"MONSTER.goblins.goblin-warrior#24\"`, before any action is spent.\n- **Command change:** `Session.cmd_disengage` calls `bonus_disengage` when `bonus` is set. Without `bonus` it takes the plain Disengage action as before.\n- **Unit tests:** cover the refusal and its citation, both routes, and the command path through the session. The command-path test also checks that a plain Disengage spends the action, not the Bonus Action.\n\n**Test results:** unit tests all pass (507 before I added the last two `test_api` tests; those two and `test_class_actions` pass on a re-run). In the `tests/srd` + `tests/scenarios` run, 437 passed and the one failure was this ticket's strict xfail now passing, which is expected. `ruff check` and `ruff format --check` are clean, and dev-gate passes. Dev-gate failed on my first run because the changed lines in `api.py` weren't covered by unit tests; the two `test_api` tests fixed that.\n\n**For review:** no stage-A analysis exists for the general Bonus Action glossary rule (`GLOSS.bonus-action`), so the refusal cites the Nimble Escape clause the ticket names. Also, the `dash` command still accepts `bonus=True` from any creature, the same bug for Dash. I left it alone because no ticket covers it."
+    }
+  ]
 }

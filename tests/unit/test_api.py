@@ -46,6 +46,33 @@ def test_a_refusal_without_a_rule_logs_none(game):
     assert (ev.page, ev.rule, ev.ruling) == (None, None, None)
 
 
+# ---------------- the disengage command ----------------
+def test_disengage_command_as_a_bonus_action_is_refused_without_a_feature(game):
+    brom = pc(game, "BROM", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    game.dice.force_str("d20=[1,20]")
+    roll_initiative(game, [brom, bandit])
+    s = Session(game)
+    s.auto_gm = False
+    out = s.execute({"cmd": "disengage", "actor": bandit.id, "bonus": True})
+    assert not out["ok"]
+    assert game.log.last("refused").rule == "MONSTER.goblins.goblin-warrior#24"
+    assert not bandit.find_effects("disengage")
+    assert s.execute({"cmd": "disengage", "actor": bandit.id})["ok"]
+    assert game.combat.turn.bonus_used is False
+
+
+def test_disengage_command_as_a_bonus_action_uses_nimble_escape(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.dice.force_str("d20=[1,20]")
+    roll_initiative(game, [brom, gob])
+    s = Session(game)
+    s.auto_gm = False
+    assert s.execute({"cmd": "disengage", "actor": gob.id, "bonus": True})["ok"]
+    assert gob.find_effects("disengage")[0].source == "Nimble Escape"
+
+
 # ---------------- the ready command ----------------
 def _ready_session(game):
     brom = pc(game, "BROM", (0, 0))

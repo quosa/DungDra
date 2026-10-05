@@ -690,11 +690,6 @@ def test_a_bandit_has_no_nimble_escape(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#24", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-75: the disengage command takes bonus=True from anyone; a bandit without Nimble Escape "
-    "Disengages as a Bonus Action",
-)
 def test_a_bandit_cant_disengage_as_a_bonus_action_through_the_session(game):
     b = pc(game, "BROM", (0, 0))
     bandit = mon(game, "bandit", (5, 0))

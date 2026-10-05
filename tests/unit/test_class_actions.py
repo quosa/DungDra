@@ -62,3 +62,25 @@ def test_nimble_escape_allows_only_disengage_or_hide(game):
     assert e.value.rule == "MONSTER.goblins.goblin-warrior#24"
     CA.nimble_escape(game, gob, "Disengage")
     assert gob.find_effects("disengage")
+
+
+def test_bonus_disengage_is_refused_with_a_citation_without_a_granting_feature(game):
+    bandit = mon(game, "bandit")
+    with pytest.raises(Refusal) as e:
+        CA.bonus_disengage(game, bandit)
+    assert e.value.rule == "MONSTER.goblins.goblin-warrior#24"
+    assert e.value.page == 290
+    assert not bandit.find_effects("disengage")
+
+
+def test_bonus_disengage_goes_through_nimble_escape(game):
+    gob = mon(game, "goblin warrior")
+    CA.bonus_disengage(game, gob)
+    assert gob.find_effects("disengage")[0].source == "Nimble Escape"
+
+
+def test_bonus_disengage_goes_through_cunning_action(game):
+    lidda = pc(game, "LIDDA")
+    lidda.features.append("cunning action")
+    CA.bonus_disengage(game, lidda)
+    assert lidda.find_effects("disengage")[0].source == "Cunning Action (Disengage)"

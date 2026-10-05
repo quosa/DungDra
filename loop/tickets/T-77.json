@@ -1,0 +1,15 @@
+{
+  "id": "T-77",
+  "kind": "refactor",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "cmd_dash still passes bonus=True straight to actions.dash, so any creature can Dash as a Bonus Action. The bonus-action check is done command by command (disengage now goes through CA.bonus_disengage) and not once in the actions layer, so Dash and any later bonus-capable action need the same check through Cunning Action and similar features",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-75"
+    }
+  ]
+}

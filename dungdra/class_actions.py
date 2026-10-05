@@ -137,6 +137,20 @@ def nimble_escape(game, monster, what="disengage", **kw):
     return actions.hide(game, monster, bonus=True, source="Nimble Escape (Hide)", **kw)
 
 
+def bonus_disengage(game, creature):
+    # SRD[MONSTER.goblins.goblin-warrior#24]: Disengage is an action; only a feature such as
+    # Nimble Escape (or Cunning Action) lets a creature take it as a Bonus Action
+    if hasattr(creature, "has_feature") and creature.has_feature("cunning action"):
+        return cunning_action(game, creature, "disengage")
+    if "nimble escape" in creature.traits:
+        return nimble_escape(game, creature, "disengage")
+    raise Refusal(
+        f"{creature.name} has no feature (like Nimble Escape) to Disengage as a Bonus Action",
+        page=290,
+        rule="MONSTER.goblins.goblin-warrior#24",
+    )
+
+
 def stonecunning(game, pc, on_stone=True):
     if "stonecunning" not in pc.traits:
         raise Refusal(f"{pc.name} doesn't have Stonecunning")
