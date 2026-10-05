@@ -6,8 +6,8 @@
   "tests": [
     "tests/scenarios/test_spells.py::test_spl05_burning_hands"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "parked",
@@ -26,6 +26,10 @@
       "event": "reopened",
       "was": "dispute",
       "reason": "SPL-05 now places the hay by position; remove the in_cone flag."
+    },
+    {
+      "event": "fixed",
+      "summary": "Burning Hands now decides which flammable objects catch fire with the same Cone test it uses for creatures. The hand-set `in_cone` flag is gone, and SPL-05 (`test_spl05_burning_hands`) passes with `--runxfail`.\n\nHow it works now:\n- The area's shape, size, origin and direction are worked out in one new helper, `_area_placement` (`dungdra/spells.py`). `_area_targets` (creatures) and the new `_area_objects` (scene objects) both use it.\n- `_area_objects` lists the scene objects whose position, including any elevation, falls inside the area. It is tagged `SRD[SPELL.casting-spells.effects.targets#4]`.\n- `_burning_hands` sets fire only to objects that list returns and that are flammable and not worn. An object with no position is never in the area.\n\nI added two unit tests in `tests/unit/test_spells.py`. The first checks that only the hay inside the 15-ft cone catches fire; hay too far, off to the side, behind the caster, overhead, with no position, worn, or not flammable stays unlit. The second checks that `_area_objects` follows the cone's aim, including when the cone is aimed by an explicit point.\n\nChecks: ruff check and ruff format are clean, all 475 unit tests pass, and `python -m scripts.srdloop dev-gate` passes."
     }
   ]
 }

@@ -174,10 +174,6 @@ def test_spl04_components(game):
 
 
 # ---------------- SPL-05 · Areas ----------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-57: flammable objects are caught by a hand-set in_cone flag, not by the Cone's geometry",
-)
 def test_spl05_burning_hands(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")

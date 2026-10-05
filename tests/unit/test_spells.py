@@ -12,6 +12,7 @@ from dungdra.rules import Refusal
 from dungdra.spells import (
     Casting,
     _affected_targets,
+    _area_objects,
     _material,
     _save_for_half,
     cast,
@@ -447,6 +448,42 @@ def test_a_cone_aimed_at_the_first_named_creature_skips_one_behind_the_caster(ga
     cast(game, m, "burning hands", [west, east])
     assert west.hp == 24 and east.hp == 30
     game.log.assert_applied(rule="SPELL.casting-spells.effects.targets#4")
+
+
+def _hay_around_mialee(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    goblin = mon(game, "goblin warrior", (5, 0))
+    goblin.hp = 30
+    game.scene.objects.update(
+        {
+            "inside": {"flammable": True, "position": (10, 5)},
+            "too far": {"flammable": True, "position": (20, 0)},
+            "off to the side": {"flammable": True, "position": (10, 10)},
+            "behind": {"flammable": True, "position": (-5, 0)},
+            "overhead": {"flammable": True, "position": (10, 0), "elevation": 10},
+            "nowhere": {"flammable": True},
+            "worn": {"flammable": True, "position": (10, 0), "worn": True},
+            "stone": {"position": (10, 0)},
+        }
+    )
+    return m, goblin
+
+
+def test_burning_hands_ignites_only_flammable_objects_inside_its_cone(game):
+    m, goblin = _hay_around_mialee(game)
+    game.dice.force_str("d6=[1,1,1]; d20=[1]")
+    cast(game, m, "burning hands", [goblin])
+    burning = {k for k, v in game.scene.objects.items() if v.get("burning")}
+    assert burning == {"inside"}
+
+
+def test_area_objects_uses_the_same_cone_as_creatures(game):
+    m, goblin = _hay_around_mialee(game)
+    c = Casting("burning hands", m, level=1, ability="int", dc=13, attack=5)
+    assert set(_area_objects(game, c, [goblin])) == {"inside", "worn", "stone"}
+    # aimed the other way by an explicit point, only what lies west is reached
+    assert _area_objects(game, c, [goblin], point=(-5, 0, 0)) == ["behind"]
 
 
 def test_sleep_at_a_point_only_reaches_creatures_in_its_sphere(game):

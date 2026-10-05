@@ -1069,6 +1069,33 @@ def _area_point(spell, caster, targets, point):
     return None
 
 
+def _area_placement(c, targets, point=None):
+    """The spell's area as (shape, size, origin, toward): shape and size from its `area` data, the
+    origin at the caster for a spell with a range of Self (else at the placement point), and the
+    placement from `_area_point` as the direction of a Cone or Cube."""
+    sd = SPELLS[c.spell]
+    shape, size = sd["area"]
+    place = _area_point(c.spell, c.caster, targets, point)
+    caster = c.caster
+    origin = (*caster.position, caster.elevation) if sd["range"] == "self" else place
+    return shape, size, origin, place
+
+
+def _area_objects(game, c, targets, point=None):
+    """The names of scene objects whose position lies inside the spell's area, by the same geometry
+    `_area_targets` uses for creatures. An object without a position isn't anywhere in the area."""
+    shape, size, origin, place = _area_placement(c, targets, point)
+    out = []
+    for name, obj in game.scene.objects.items():
+        pos = obj.get("position")
+        # SRD[SPELL.casting-spells.effects.targets#4] the area decides which objects it reaches, too
+        if pos is not None and in_area(
+            shape, size, origin, (*pos[:2], obj.get("elevation", 0)), toward=place
+        ):
+            out.append(name)
+    return out
+
+
 def _area_targets(game, c, targets, point=None):
     """The creatures inside the spell's area, its shape and size read from the spell's `area` data
     and its placement from `_area_point`. A spell with a range of Self originates at the caster,
@@ -1077,11 +1104,9 @@ def _area_targets(game, c, targets, point=None):
     the named ones (R-16). Anyone behind Total Cover from the origin is dropped; named objects pass
     through to the spell."""
     sd = SPELLS[c.spell]
-    shape, size = sd["area"]
+    shape, size, origin, place = _area_placement(c, targets, point)
     from_self = sd["range"] == "self"
-    place = _area_point(c.spell, c.caster, targets, point)
     caster = c.caster
-    origin = (*caster.position, caster.elevation) if from_self else place
     named = [t for t in targets if is_creature(t) and not (from_self and t is caster)]
     if sd.get("area_choice"):
         candidates = named
@@ -1137,8 +1162,9 @@ def _save_for_half(game, c, targets, ability, dice, dtype, on_fail=None):
 def _burning_hands(game, c, targets, point=None, **kw):
     ts = _area_targets(game, c, targets, point=point)
     _save_for_half(game, c, ts, "dex", f"{3 + c.level - 1}d6", "fire")
-    for name, obj in game.scene.objects.items():
-        if obj.get("flammable") and obj.get("in_cone") and not obj.get("worn"):
+    for name in _area_objects(game, c, targets, point=point):
+        obj = game.scene.objects[name]
+        if obj.get("flammable") and not obj.get("worn"):
             obj["burning"] = True
             game.log.player("spell", f"The {name} catches fire", page=114, rule="SPELL.burning-hands")
 

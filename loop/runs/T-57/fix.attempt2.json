@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Burning Hands now decides which flammable objects catch fire with the same Cone test it uses for creatures. The hand-set `in_cone` flag is gone, and SPL-05 (`test_spl05_burning_hands`) passes with `--runxfail`.\n\nHow it works now:\n- The area's shape, size, origin and direction are worked out in one new helper, `_area_placement` (`dungdra/spells.py`). `_area_targets` (creatures) and the new `_area_objects` (scene objects) both use it.\n- `_area_objects` lists the scene objects whose position, including any elevation, falls inside the area. It is tagged `SRD[SPELL.casting-spells.effects.targets#4]`.\n- `_burning_hands` sets fire only to objects that list returns and that are flammable and not worn. An object with no position is never in the area.\n\nI added two unit tests in `tests/unit/test_spells.py`. The first checks that only the hay inside the 15-ft cone catches fire; hay too far, off to the side, behind the caster, overhead, with no position, worn, or not flammable stays unlit. The second checks that `_area_objects` follows the cone's aim, including when the cone is aimed by an explicit point.\n\nChecks: ruff check and ruff format are clean, all 475 unit tests pass, and `python -m scripts.srdloop dev-gate` passes.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_burning_hands_ignites_only_flammable_objects_inside_its_cone",
+   "tests/unit/test_spells.py::test_area_objects_uses_the_same_cone_as_creatures"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves the ticket. `_burning_hands` no longer reads a hand-set `in_cone` flag. It now gets objects from `_area_objects`, which tests each object's position with `in_area` using the same (shape, size, origin, toward) as `_area_targets`. The fixer moved that geometry into one shared helper, `_area_placement`, so creatures and objects can't drift apart. No reference to `in_cone` is left in the engine or the tests. SPL-05 already placed the hay by position, as the person decided, and only its T-57 xfail is removed, which the acceptance-suite rules allow. The unit tests check behaviour against real positions: inside the cone, too far, off to the side, behind, overhead, no position, worn, and not flammable. They also check that an explicit point turns the cone around. Nothing outside the ticket is changed."
+ },
+ "problems": [],
+ "cost_usd": 0.4741,
+ "stash": ""
+}
