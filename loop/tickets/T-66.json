@@ -4,7 +4,12 @@
   "unit": "GLOSS.ready",
   "title": "Add a unit test for a refused readied-spell release that goes through the real spells.cast(ready=True) / _release path rather than a hand-written release callable",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "The T-65 fix commit already added `test_a_held_spell_refused_at_release_stays_held_with_its_concentration`, which runs through the real `spells.cast(ready=True)` / `_release` path. To finish the coverage this ticket asks for, I added `test_a_held_spell_refused_at_release_is_released_by_a_later_trigger_for_its_one_slot`, which also uses the real path:\n- Mialee readies Magic Missile at G1, which spends one slot.\n- G1 is moved beyond 120 ft, so the first trigger's release is refused. The test checks that the log says \"beyond Magic Missile's range\" and that Concentration still holds the spell.\n- G1 is moved back in range, G0 steps away, and G0 comes within 5 ft again. This second trigger releases the held spell: G1 takes 6 damage, Concentration ends, the readied entry is gone and the Reaction is used.\n- No second slot is spent.\n\nNo engine change was needed. Results: unit tests 442 passed; `ruff check .` and `ruff format --check .` clean; `dev-gate` PASS. The ticket names no acceptance tests, so there was no `--runxfail` run."
+    }
+  ]
 }

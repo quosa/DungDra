@@ -547,6 +547,39 @@ def test_a_held_spell_refused_at_release_stays_held_with_its_concentration(game)
     assert gob2.hp == 10
 
 
+def test_a_held_spell_refused_at_release_is_released_by_a_later_trigger_for_its_one_slot(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    gob, gob2 = (
+        mon(game, "goblin warrior", (10, 0), name="G0"),
+        mon(game, "goblin warrior", (100, 0), name="G1"),
+    )
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [mialee, gob, gob2])
+
+    def build():
+        c = cast(game, mialee, "magic missile", [gob2], ready=True)
+        return c.spell.title(), c.release, c.held
+
+    ready(game, mialee, gob.id, 5, build)
+    assert mialee.slots_left(1) == 1
+    gob2.position = (200, 0)
+    end_turn(game)
+    game.answer("readied", True, who=mialee)
+    move(game, gob, to=(5, 0))  # refused: G1 is beyond range, and the spell stays held
+    assert "beyond Magic Missile's range" in str(game.log.last("ready"))
+    assert mialee.concentrating == "Magic Missile (readied)"
+    gob2.position = (100, 0)
+    move(game, gob, to=(10, 0))
+    game.answer("readied", True, who=mialee)
+    game.dice.force_str("d4=[1,1,1]")
+    move(game, gob, to=(5, 0))
+    assert gob2.hp == 4
+    assert mialee.concentrating is None
+    assert mialee.id not in game.combat.readied
+    assert mialee.id in game.combat.reaction_used
+    assert mialee.slots_left(1) == 1
+
+
 def test_a_refused_release_still_holding_concentration_keeps_the_held_spell(game):
     brom, (gob,) = _brom_vs_goblins(game, (20, 0))
     held = "Fire Bolt (readied)"
