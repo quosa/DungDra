@@ -95,7 +95,7 @@
       "summary": "I checked all 89 tests. 79 pass and 9 are expected failures; the totals cover tests outside this list too. I'm keeping 77 and refuting 12. None of the expected outcomes contradicts the SRD 5.2.1 text, including these 2024-specific points:\n- Hold Person only affects Humanoids, and the slot is still s"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_monsters.py::test_goblin_warrior_is_a_small_fey_goblinoid_that_can_grapple_a_medium_creature",
     "tests/srd/test_monsters.py::test_hold_person_does_nothing_to_a_goblin_warrior_which_isnt_humanoid",

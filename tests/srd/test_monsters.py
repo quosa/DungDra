@@ -290,7 +290,7 @@ def test_goblin_attacks_with_the_scimitar_and_shortbow_from_its_gear(game):
     assert C.attack(game, gob, b, attack_name="shortbow").roll is not None
 
 
-@pytest.mark.srd(GW, clause=f"{GW}#13", kind="positive", ruling="P-21")
+@pytest.mark.srd(GW, clause=f"{GW}#13", kind="positive", ruling="R-25")
 def test_goblin_shortbow_attack_needs_no_tracked_arrows(game):
     b, gob = goblin_vs_brom(game, gob_pos=(30, 0))
     in_combat(game, gob, b)
