@@ -4,12 +4,16 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "_burning_hands ignites flammable objects from a hand-set obj['in_cone'] flag instead of testing the object's position with the same Cone geometry (in_cone_direction plus length) that creatures use. Use the one area test for both.",
   "tests": [],
-  "status": "parked",
+  "status": "dispute",
   "attempts": 0,
   "history": [
     {
       "event": "parked",
       "reason": "part of the area targeting feature (T-56)"
+    },
+    {
+      "event": "dispute",
+      "reason": "In tests/scenarios/test_spells.py::test_spl05_burning_hands, change the hay object from `{\"flammable\": True, \"in_cone\": True}` to `{\"flammable\": True, \"position\": (10, 0)}`. That puts it inside the 15-ft Cone aimed east at G1, so the assertion stays the same. The point is to place the hay by its position, using the same Cone geometry that applies to creatures, instead of a hand-set flag. Once that's approved, I'll remove the position-less `in_cone` fallback in `_burning_hands` and only the geometry will remain."
     }
   ]
 }

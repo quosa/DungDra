@@ -1,0 +1,23 @@
+{
+ "result": "dispute",
+ "fixer": {
+  "summary": "I made the refactor, but only partly: one acceptance test still needs the old `in_cone` flag, and changing that test needs your approval.\n\n**What changed** (in `dungdra/spells.py`):\n- I pulled the Cone geometry out of `_area_targets` into two helpers. `_cone_aim` decides which way the Cone points: toward `point`, or else toward the first named creature other than the caster. `_in_cone` checks direction with `in_cone_direction`, and passes everything when there is no aim.\n- `_area_targets` uses both helpers for creatures. `_burning_hands` now uses the same aim, the same `_in_cone` check and the same 15-ft length for flammable objects. An object that has a `position` is judged by geometry alone, so a hand-set `in_cone` flag on it is ignored. The code is tagged `# SRD[SPELL.casting-spells.effects.targets#4]`.\n\n**What's left:** an object with no `position` still falls back to `obj['in_cone']`. I kept that because the acceptance test `tests/scenarios/test_spells.py::test_spl05_burning_hands` places \"dry hay\" with only `{\"flammable\": True, \"in_cone\": True}`. Once that test is changed (details in `test_change_request`), the fallback can be deleted.\n\n**Unit tests:** I added two in `tests/unit/test_spells.py`:\n- An object ahead of the caster in range catches fire, while ones behind, out of range or off to the side do not. A positioned object with `in_cone: True` behind the caster is also ignored.\n- A Cone aimed at a point lights objects on that side only, and never a worn object.\n\n**Results:** all 449 unit tests pass, all 24 tests in `tests/scenarios/test_spells.py` pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_a_cone_ignites_a_flammable_object_by_its_position_like_a_creature",
+   "tests/unit/test_spells.py::test_a_cone_aimed_at_a_point_ignites_objects_on_that_side"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": "In tests/scenarios/test_spells.py::test_spl05_burning_hands, change the hay object from `{\"flammable\": True, \"in_cone\": True}` to `{\"flammable\": True, \"position\": (10, 0)}`. That puts it inside the 15-ft Cone aimed east at G1, so the assertion stays the same. The point is to place the hay by its position, using the same Cone geometry that applies to creatures, instead of a hand-set flag. Once that's approved, I'll remove the position-less `in_cone` fallback in `_burning_hands` and only the geometry will remain."
+ },
+ "review": null,
+ "problems": [],
+ "cost_usd": 0.2963,
+ "stash": "srdloop: T-57 dispute"
+}
