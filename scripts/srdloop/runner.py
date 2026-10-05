@@ -33,7 +33,8 @@ from . import tickets as T
 from .gates import git
 
 RUNS = Path("loop/runs")
-MAX_OPEN_TICKETS = 15
+MAX_OPEN_BUGS = 15  # the audit loop's breaker; infra, refactor and coverage don't count
+FOLLOWUP_FROM = ("bug", "infra")  # a refactor or coverage fix files no follow-ups: no chains
 MAX_CONSECUTIVE_INCOMPLETE = 3
 STAGE_ROLE = {"A": "rule-analyst", "B": "scenario-auditor", "C": "test-designer", "D": "test-verifier"}
 AGENT_ZONES = ("tests", "docs/scenario-notes.md", "loop/abuse-catalogue.md")
@@ -276,10 +277,14 @@ def todo(states: dict[str, dict]) -> tuple[list[str], list[str]]:
     active = [t for t in T.all_tickets() if t["status"] in T.ACTIVE]
     open_ = [t for t in active if t["status"] == "open"]
     by_kind = ", ".join(f"{sum(t['kind'] == k for t in open_)} {k}" for k in T.PRIORITY)
-    full = ": run the dev loop first" if len(open_) > MAX_OPEN_TICKETS else ""
+    full = ": run the dev loop first" if len(T.open_bugs()) > MAX_OPEN_BUGS else ""
     backlog = [
-        f"{_n(len(open_), 'open ticket')} ({by_kind}); the audit loop stops above {MAX_OPEN_TICKETS}{full}"
+        f"{_n(len(open_), 'open ticket')} ({by_kind}); "
+        f"the audit loop stops above {MAX_OPEN_BUGS} open bugs{full}"
     ]
+    parked = T.parked()
+    if parked:
+        backlog.append(f"{len(parked)} parked (built only when named): ticket list --all")
     waiting_ruling = [t["id"] for t in open_ if waits_for_ruling(t)]
     if waiting_ruling:
         backlog.append(f"  {len(waiting_ruling)} of them wait for a ruling: {', '.join(waiting_ruling)}")
@@ -488,8 +493,8 @@ def run(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             if not queue:
                 log("audit loop: nothing left to do")
                 return 0
-            if len(T.open_tickets()) > MAX_OPEN_TICKETS:
-                raise Stop(f"more than {MAX_OPEN_TICKETS} open tickets; run the dev loop first")
+            if len(T.open_bugs()) > MAX_OPEN_BUGS:
+                raise Stop(f"more than {MAX_OPEN_BUGS} open bugs; run the dev loop first")
             uid = queue[0]["id"]
             if queue[0]["revisit"] or queue[0]["stale"]:  # start over from its first stage to redo
                 st = S.load(uid)
@@ -695,7 +700,13 @@ def run_ticket(
     problems += gate_problems
     verdict = None
     if not problems:
-        prompt = Pr.review(tk, git("diff", "HEAD"), "all gates pass", T.open_tickets())
+        prompt = Pr.review(
+            tk,
+            git("diff", "HEAD"),
+            "all gates pass",
+            T.open_tickets() + T.parked(),
+            tk["kind"] in FOLLOWUP_FROM,
+        )
         rev = invoke("fix-reviewer", prompt, budget=budget, about=tk["id"], stage="review")
         cost += rev.cost_usd
         verdict = rev.output or {"verdict": "reject", "findings": [], "followups": []}
@@ -713,8 +724,9 @@ def run_ticket(
         _attempt_record(tk, out, cost, problems, verdict, "failed", stashed)
         commit(f"dev: {tk['id']} attempt {tk['attempts']} failed", KEEP)
         return tk["status"]
-    for f in verdict.get("followups", []):
-        T.file(f["kind"], tk["unit"], f["title"], [])
+    if tk["kind"] in FOLLOWUP_FROM:  # at most one, parked: a menu for a person, not the loop's to-do
+        for f in verdict.get("followups", [])[:1]:
+            T.record(T.file(f["kind"], tk["unit"], f["title"], [], status=T.PARKED), "followup", of=tk["id"])
     tk["status"] = "fixed"
     T.record(tk, "fixed", summary=out.get("summary", ""))
     _attempt_record(tk, out, cost, [], verdict, "fixed", "")
@@ -759,9 +771,7 @@ def dev(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             raise Stop(f"the test suite is red before the dev loop starts: {red[:5]}")
         while True:
             ctx = P.Context.load()
-            todo = [
-                t for t in T.open_tickets() if (only is None or t["id"] in only) and not waits_for_ruling(t)
-            ]
+            todo = [t for t in T.workable(only) if not waits_for_ruling(t)]
             if not todo:
                 log("dev loop: no open tickets")
                 return 0

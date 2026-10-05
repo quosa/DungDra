@@ -126,6 +126,24 @@ def test_ticket_titles_lose_a_repeated_unit_id_and_file_reuses_an_open_one(tmp_p
     assert T.file("infra", "GLOSS.x", "no map", [], tmp_path)["id"] == "T-3"  # fixed ones aren't reused
 
 
+def test_parked_tickets_wait_until_named_and_dont_count_as_open_bugs(tmp_path):
+    T.create("refactor", "U", "tidy", [], tmp_path, status=T.PARKED)
+    T.create("infra", "U", "no map", [], tmp_path)
+    T.create("bug", "U", "wrong", ["t::a"], tmp_path)
+    assert [t["id"] for t in T.workable(None, tmp_path)] == ["T-3", "T-2"]  # a plain dev run
+    assert [t["id"] for t in T.workable(["T-1", "T-2"], tmp_path)] == ["T-2", "T-1"]  # named: parked too
+    assert [t["id"] for t in T.open_bugs(tmp_path)] == ["T-3"]
+    assert T.file("refactor", "U", "Tidy.", [], tmp_path)["id"] == "T-1"  # a parked one is reused
+    T.park("T-2", "later", tmp_path)
+    assert [t["id"] for t in T.parked(tmp_path)] == ["T-2", "T-1"]
+    assert T.load("T-2", tmp_path)["history"] == [{"event": "parked", "reason": "later"}]
+    with pytest.raises(ValueError, match="only an open ticket"):
+        T.park("T-2", "again", tmp_path)
+    with pytest.raises(ValueError, match="needs a reason"):
+        T.park("T-3", " ", tmp_path)
+    assert T.reopen("T-2", "build it", tmp_path)["status"] == "open"
+
+
 # ---------------------------------------------------------------- editing test files
 SRC = """import pytest
 
@@ -471,8 +489,10 @@ def dev_repo(tmp_path):
     subprocess.run(["git", "commit", "-q", "-m", "ticket"], check=True)
 
 
-def fake_dev(fix: bool, review: str = "approve"):
+def fake_dev(fix: bool, review: str = "approve", followups=(), prompts=None):
     def invoke(role, prompt, *, budget, about, stage, cap=None):
+        if prompts is not None:
+            prompts[role] = prompt
         if role == "fixer":
             if fix:
                 fixed = "def grappled_speed(bonus):\n    return 0  # SRD[GLOSS.grappled#1]\n"
@@ -480,7 +500,8 @@ def fake_dev(fix: bool, review: str = "approve"):
             out = {"summary": "Speed stays 0", "files": ["dungdra/rule.py"], "unit_tests": [], "srd_tags": []}
             out |= {"dispute": None, "test_change_request": None}
             return C.Result(out, 0.5, "f")
-        return C.Result({"verdict": review, "findings": [], "followups": [], "summary": ""}, 0.1, "r")
+        verdict = {"verdict": review, "findings": [], "followups": list(followups), "summary": ""}
+        return C.Result(verdict, 0.1, "r")
 
     return invoke
 
@@ -501,6 +522,54 @@ def test_run_ticket_fixes_removes_the_marker_and_commits(tmp_path, monkeypatch, 
     assert T.load("T-1")["status"] == "fixed" and "xfail" not in Path("tests/srd/test_rule.py").read_text()
     log = subprocess.run(["git", "log", "--format=%s"], capture_output=True, text=True, check=True).stdout
     assert log.splitlines()[0] == "fix: T-1 a Speed bonus still applies"
+
+
+TWO_FOLLOWUPS = [
+    {"kind": "refactor", "title": "rule in two places"},
+    {"kind": "coverage", "title": "untested"},
+]
+
+
+@pytest.mark.parametrize(("kind", "filed"), [("bug", ["rule in two places"]), ("refactor", [])])
+def test_a_fix_files_at_most_one_parked_followup_and_a_refactor_fix_none(
+    tmp_path, monkeypatch, no_quality_gate, kind, filed
+):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    tk = T.load("T-1")
+    tk["kind"] = kind
+    T.save(tk)
+    ctx = P.Context([GRAPPLED], U.by_id([GRAPPLED]), CONTENT, [], {}, {}, {}, {}, [])
+    prompts = {}
+    assert Run.run_ticket(ctx, tk, C.Budget(10.0), fake_dev(True, followups=TWO_FOLLOWUPS, prompts=prompts))
+    new = [t for t in T.all_tickets() if t["id"] != "T-1"]
+    assert [t["title"] for t in new] == filed
+    assert all(t["status"] == T.PARKED and t["history"] == [{"event": "followup", "of": "T-1"}] for t in new)
+    allowed = "You may file at most one follow-up" in prompts["fix-reviewer"]
+    assert allowed == (kind == "bug") and ("file no follow-ups" in prompts["fix-reviewer"]) != allowed
+
+
+def test_the_audit_loop_breaker_counts_only_open_bugs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    ctx = P.Context([GRAPPLED], U.by_id([GRAPPLED]), CONTENT, [], {}, {}, {}, {}, [])
+    monkeypatch.setattr(Run, "preflight", lambda: None)
+    monkeypatch.setattr(Run, "suite_red", lambda: [])
+    monkeypatch.setattr(Run.P.Context, "load", classmethod(lambda cls: ctx))
+    monkeypatch.setattr(
+        Run.P,
+        "build",
+        lambda c: [{"id": "GLOSS.grappled", "revisit": False, "stale": False, "next_stage": "A"}],
+    )
+    ran = []
+    monkeypatch.setattr(Run, "run_unit", lambda c, uid, budget, invoke: ran.append(uid) or "green")
+    for i in range(Run.MAX_OPEN_BUGS + 1):
+        T.create("infra", "U", f"gap {i}", [])
+    logs = []
+    assert Run.run(5.0, ["GLOSS.grappled"], log=logs.append) == 0 and ran == ["GLOSS.grappled"]
+    for i in range(Run.MAX_OPEN_BUGS + 1):
+        T.create("bug", "U", f"wrong {i}", [])
+    assert Run.run(5.0, ["GLOSS.grappled"], log=logs.append) == 3
+    assert logs[-1] == f"stopped: more than {Run.MAX_OPEN_BUGS} open bugs; run the dev loop first"
 
 
 def test_run_ticket_rolls_back_a_failed_attempt(tmp_path, monkeypatch, no_quality_gate):

@@ -51,6 +51,19 @@ def test_ticket_list_hides_finished_ones_unless_all(repo, capsys):
     assert "T-2 " in out and "T-1 " not in out
 
 
+def test_parking_a_ticket_hides_it_from_the_list_and_shows_it_in_the_status(repo, capsys):
+    from scripts.srdloop import runner as Run
+
+    T.create("refactor", "GLOSS.x", "tidy", [])
+    code, out = cli(capsys, "ticket", "park", "T-1", "--reason", "style only")
+    assert code == 0 and T.load("T-1")["status"] == T.PARKED
+    log = subprocess.run(["git", "log", "--format=%s"], capture_output=True, text=True, check=True).stdout
+    assert log.splitlines()[0] == "ticket: T-1 parked: style only"
+    _, out = cli(capsys, "ticket", "list")
+    assert "T-1 " not in out and "(1 parked, 0 fixed or void not shown" in out
+    assert Run.todo({})[0][1] == "1 parked (built only when named): ticket list --all"
+
+
 def test_person_decisions_on_tickets_are_committed_with_their_reason(repo, capsys):
     code, out = cli(
         capsys, "ticket", "create", "bug", "SPELL.bless", "SRD: once; engine: twice", "--test", "t::a"
@@ -106,7 +119,7 @@ def test_todo_lists_the_backlog_and_everything_waiting_for_a_person(repo):
     from scripts.srdloop import runner as Run
 
     assert Run.todo({}) == (
-        ["0 open tickets (0 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15"],
+        ["0 open tickets (0 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15 open bugs"],
         [],
     )
     for kind in ("bug", "infra", "infra"):
@@ -128,7 +141,7 @@ def test_todo_lists_the_backlog_and_everything_waiting_for_a_person(repo):
     (repo / "notes.txt").write_text("mine\n")
     backlog, you = Run.todo(states)
     assert backlog == [
-        "1 open ticket (1 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15"
+        "1 open ticket (1 bug, 0 infra, 0 refactor, 0 coverage); the audit loop stops above 15 open bugs"
     ]
     assert you == [
         "1 ruling to decide (P-1): ruling list",

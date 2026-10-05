@@ -73,9 +73,15 @@ def _ticket(a) -> int:
         for t in shown:
             if a.only in (None, t["kind"]):
                 print(_ticket_row(t))
-        hidden = len(T.all_tickets()) - len(shown)
+        hidden = [t for t in T.all_tickets() if t not in shown]
+        parked = sum(t["status"] == T.PARKED for t in hidden)
         if hidden:
-            print(f"({hidden} fixed or void not shown; --all shows them)")
+            what = (
+                f"{parked} parked, {len(hidden) - parked} fixed or void"
+                if parked
+                else f"{len(hidden)} fixed or void"
+            )
+            print(f"({what} not shown; --all shows them)")
         return 0
     if a.action == "create":
         t = T.create(a.kind, a.unit, a.title, a.test or [])
@@ -89,9 +95,9 @@ def _ticket(a) -> int:
     if a.action == "show":
         return _ticket_show(tid)
     try:
-        if a.action in ("reopen", "void"):
-            t = (T.reopen if a.action == "reopen" else T.void)(tid, a.reason)
-            message = f"ticket: {tid} {t['status'] if a.action == 'void' else 'reopened'}: {a.reason}"
+        if a.action in ("reopen", "park", "void"):
+            t = {"reopen": T.reopen, "park": T.park, "void": T.void}[a.action](tid, a.reason)
+            message = f"ticket: {tid} {'reopened' if a.action == 'reopen' else t['status']}: {a.reason}"
         elif a.action == "waive":
             check = a.check
             if not a.reason.strip():
@@ -190,7 +196,7 @@ def _parser() -> argparse.ArgumentParser:
     tk = cmd(sub, "ticket", "tickets: work for the dev loop", "See `ticket <action> --help`.")
     tks = tk.add_subparsers(dest="action", required=True, metavar="<action>")
     ls = cmd(tks, "list", "open, stuck and disputed tickets")
-    ls.add_argument("--all", action="store_true", help="fixed and void too")
+    ls.add_argument("--all", action="store_true", help="parked, fixed and void too")
     ls.add_argument("--kind", dest="only", choices=sorted(T.PRIORITY), help="only this kind")
     cmd(tks, "show", "a ticket, its history and each fix attempt").add_argument("id", metavar="T-n")
     cr = cmd(tks, "create", "file a ticket by hand")
@@ -199,7 +205,8 @@ def _parser() -> argparse.ArgumentParser:
     cr.add_argument("title", help="what is wrong, as the rule versus the engine")
     cr.add_argument("--test", action="append", metavar="NODEID", help="a test it must make pass (repeatable)")
     for name, summary in (
-        ("reopen", "back to the dev loop with fresh attempts (a settled dispute, a stuck ticket)"),
+        ("reopen", "back to the dev loop with fresh attempts (a settled dispute, a stuck or parked ticket)"),
+        ("park", "off the dev loop's list; built only when named (dev --tickets T-n)"),
         ("void", "no longer wanted (a duplicate, superseded)"),
     ):
         p = cmd(tks, name, summary)

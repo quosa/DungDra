@@ -75,6 +75,16 @@ keep after strengthening (write the stronger version out).
   recommend a re-run (`run --budget <n> --units <unit>`; an incomplete unit re-queues itself).
 - A set-aside attempt is in `git stash list` (`srdloop: <unit> incomplete at stage <X>`).
 
+**Parked tickets and features** (`ticket list --all`, status `parked`; open infra tickets too):
+this is the menu of engine work the loop won't do by itself. Group it by engine area (geometry and
+areas, awareness, movement, Ready, …), not by ticket. For each group say which audited units it
+would unblock or turn green, how many tests are waiting on it (`xfail` reasons naming its tickets),
+how big it is (one helper, or a new model), and whether open tickets are really parts of it
+(say so, and suggest building them together). Recommend at most one or two groups to build next,
+favouring those that unblock the most rules; recommend `ticket park` for open infra nobody will
+build soon, and `ticket void` for parked ones another fix made moot. When the person asks
+"which features should we tackle?", this section is the whole answer.
+
 **New tickets**: one line each. A bug ticket with more than about five tests, or one that says a
 command or action doesn't exist, is a feature: flag it so it is kept out of `dev` runs and planned
 deliberately. A ticket whose tests depend on a pending ruling waits for it.
@@ -107,6 +117,9 @@ Write `loop/triage/<YYYY-MM-DD-HHMM>.md`:
 
 ## Tickets
 <table: id, kind, one line, ready / waits for P-n / feature: keep out of dev>
+
+## Features (parked and infra)
+<per engine area: tickets, what it unblocks, size; the one or two to build next>
 
 ## Next commands
 <every recommended command in the order to run them: decisions, then dev on the ready bugs

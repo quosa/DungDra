@@ -31,8 +31,15 @@ The **dev loop** is separate. It takes one open ticket at a time:
 1. The `fixer` writes code and unit tests.
 2. The quality checks run: ruff, no suppressions, the coverage ratchet and ≥ 90% diff coverage,
    import layers, duplication, dead code, and the full suite.
-3. The `fix-reviewer` approves or rejects the change.
+3. The `fix-reviewer` approves or rejects the change. A problem in the diff, or a ticket whose
+   own problem isn't solved, is a rejection: the boy scout rule happens inside the fix.
 4. If approved, the harness removes the ticket's xfail marks and commits.
+
+The reviewer may file **one follow-up** per bug or infra fix (none for a refactor or coverage
+fix), only for a problem outside the diff that could lead to a wrong rule result. Follow-ups are
+**parked**: the dev loop takes a parked ticket only when it is named (`dev --tickets T-n`), so
+they are a menu to choose from, not the loop's to-do list. `ticket park T-n --reason "…"` parks
+an open ticket, and `ticket reopen` puts a parked one back on the list.
 
 A failed attempt is stashed and recorded. After three failed attempts the ticket is `stuck`.
 
@@ -81,7 +88,7 @@ The plan's estimate is ≈ $5.40 per unit, so far an overestimate.
 | 0 | Done, or nothing left in the queue or the ticket list |
 | 1 | `dev --recheck`: the ticket wasn't fixed |
 | 2 | `docs/srd/units.jsonl` doesn't match its approved hash |
-| 3 | Stopped by a circuit breaker: the suite was red before starting; more than 15 open tickets ("run the dev loop first"); or 3 units in a row failed their gates (`incomplete`) |
+| 3 | Stopped by a circuit breaker: the suite was red before starting; more than 15 open **bugs** ("run the dev loop first"; infra, refactor and coverage tickets don't count); or 3 units in a row failed their gates (`incomplete`) |
 | 4 | Paused; run the same command again |
 
 ## What only a person decides
@@ -95,7 +102,7 @@ The plan's estimate is ≈ $5.40 per unit, so far an overestimate.
 | A test the verifier doubted ("Tests to review" in `loop/COVERAGE.md`) | `review list` numbers them; then `review keep 1 3 --reason "…"` or `review remove 2 --reason "…"` (numbers or node ids; one commit; the harness removes the tests). Evidence: `mutate dungdra/<file> <line> <old> <new> <node id>` shows whether the test catches a broken engine |
 | Removing or weakening any other acceptance test | By hand, in a commit of its own |
 | Changing a golden scenario | By hand, together with `docs/dnd-golden-scenarios-srd521.md` |
-| Which infra tickets to build | They are large engine features (geometry, awareness, surfaces); pick them deliberately (see open questions) |
+| Which infra tickets to build | They are large engine features (geometry, awareness, surfaces); pick them deliberately. Park the ones you won't build soon (`ticket park`), and name the ones you will (`dev --tickets`). `/srd-triage` helps choose |
 | Re-extracting or approving the SRD text | `python scripts/srd/extract.py`, review, `--approve` |
 
 ## Investigating a ticket
@@ -142,7 +149,7 @@ Example, T-16 in the trial:
 | `loop/state/<unit>.json` | A unit's stages, status, tests, tickets, relations, for_review, out_of_scope |
 | `loop/runs/<unit>/` | Stage checkpoints `A.json`…`D.json`, `<stage>.attempt<n>.json`, `<stage>.pending.json` |
 | `loop/runs/<T-n>/` | `fix.attempt<n>.json` per dev-loop attempt |
-| `loop/tickets/T-n.json` | Kinds bug, infra, refactor, coverage; statuses open, fixed, stuck, dispute, void |
+| `loop/tickets/T-n.json` | Kinds bug, infra, refactor, coverage; statuses open, parked, fixed, stuck, dispute, void |
 | `loop/rulings/P-n.json` | Proposals; the accepted ones are rows R-nn in `README.md` |
 | `loop/requests/` | The fixer's notes to a person (disputes, test-change requests) |
 | `loop/costs.jsonl` | One line per agent call |
@@ -206,9 +213,9 @@ Then run the dev loop on the bugs it opens. Always name the tickets with `--tick
 infra tickets stay parked until the infra-approval question is settled.
 
 **Open questions for the person:**
-- **Infra approval:** should infra tickets start as `proposed` and wait for an approval before
-  the dev loop builds them? Should the circuit breaker count only open bugs? Without this, a
-  `dev` run without `--tickets` starts building geometry and awareness models depth-first.
+- **Infra approval (partly settled 2026-10-05):** the breaker counts only open bugs, and
+  follow-ups are parked. Infra tickets from the audit loop still start open, so a `dev` run
+  without `--tickets` would build them; park the ones you won't build soon.
 - **Edits during a run:** a person's edit made during a run is still treated as the agent's.
   The plan is to snapshot the dirty files at start and leave later non-agent edits alone, or
   just keep the rule "don't edit during a run".

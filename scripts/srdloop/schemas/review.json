@@ -69,7 +69,8 @@
       ]
      }
     }
-   }
+   },
+   "maxItems": 1
   },
   "summary": {
    "type": "string"

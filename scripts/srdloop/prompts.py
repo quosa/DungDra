@@ -107,14 +107,21 @@ def clause_lists(text: str, runs: Path = Path("loop/runs")) -> str:
     return "\n".join(out) or "(no analysed unit mentioned)"
 
 
-def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = ()) -> str:
+def review(ticket: dict, diff: str, gate: str, open_tickets: list[dict] = (), followups: bool = True) -> str:
     others = "\n".join(
         f"- {t['id']} ({t['kind']}): {t['title']}" for t in open_tickets if t["id"] != ticket["id"]
+    )
+    rule = (
+        "You may file at most one follow-up (see your instructions)."
+        if followups
+        else f"This is a {ticket['kind']} ticket: file no follow-ups (`followups: []`)."
     )
     return (
         f"Review this fix for ticket {ticket['id']} ({ticket['kind']}): {ticket['title']}\n\n"
         f"## Gate results\n\n```\n{gate}\n```\n\n## The diff\n\n```diff\n{diff[-40000:]}\n```\n\n"
         "## Clause numbering (rule= and SRD[...] use stage A's numbers, not the SRD's labels)\n\n"
         f"{clause_lists(diff)}\n\n"
-        f"## Open tickets (don't file a follow-up one of these already covers)\n\n{others or '(none)'}"
+        f"## Follow-ups\n\n{rule}\n\n"
+        "## Open and parked tickets (don't file a follow-up one of these already covers)\n\n"
+        f"{others or '(none)'}"
     )

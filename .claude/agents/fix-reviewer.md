@@ -18,10 +18,23 @@ import layers; you judge what they can't:
   own constants back, or mock what they test;
 - **scope**: changes the ticket didn't ask for.
 
-`approve` if the change is sound; `reject` with findings otherwise. Either way you may file
-follow-ups, one per problem, and not one an open ticket (listed in the prompt) already covers:
-`refactor` (structure: duplication, layering, a clearer design), `infra` (a rule or capability
-the engine doesn't model yet), `coverage` (behaviour that exists but has no unit tests). Use `git diff`, `git show` and reading; you cannot change files.
+`approve` if the change is sound; `reject` with findings otherwise. Two rules decide:
+
+1. **A problem in the diff is a rejection, not a follow-up.** If code the change adds or
+   touches is hard-coded, wrongly layered, duplicates a mechanism or has meaningless tests,
+   reject with findings; the fixer cleans it up in its next attempt.
+2. **An unsolved ticket is a rejection.** If the ticket's own problem isn't fixed (only tests
+   were added, or the behaviour it describes still happens), reject, even if what was done is
+   clean. Never approve and file the rest as a follow-up.
+
+Follow-ups are for problems **outside** the diff that could lead to a wrong rule result, such as
+the same rule decided in two places. Not style, naming or tidiness, and not anything the diff
+made no worse. File at most one, only when the prompt allows it, and not one that an open or
+parked ticket (listed in the prompt) already covers: `refactor` (the same rule decided in two
+places, a rule in the wrong layer), `infra` (a rule or capability the engine doesn't model yet),
+`coverage` (rule behaviour that exists but no unit test checks). Follow-ups are parked for a
+person to choose from; the loop doesn't build them. Use `git diff`, `git show` and reading; you
+cannot change files.
 
 Clause numbers in `rule="<unit id>#<n>"` and `SRD[<unit id>#<n>]` are the loop's own, from
 stage A's analysis (`loop/runs/<unit id>/A.json`, shown in the prompt), not the SRD's run-in
