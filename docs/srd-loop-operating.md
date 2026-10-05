@@ -65,7 +65,8 @@ python -m scripts.srdloop report                    # loop/COVERAGE.md
   counts your files as the agent's, fails the attempt and stashes your edit with it.
 - **Budget:** `--budget` is a cap per run in USD; whatever isn't used isn't spent. Exit 4 means
   paused (budget, usage limit or a transient error); the same command resumes, including a
-  half-done retry.
+  half-done retry. Each run's budget starts at $0. A budget pause prints a hint: run the same command again, or a
+  `--budget` big enough for the next call (a ticket's `ticket cap` is that call's worst case, not its cost).
 - **Login:** the loop runs on the claude.ai login, so `cost_usd` in `loop/costs.jsonl` is
   Claude Code's estimate, not a bill.
 

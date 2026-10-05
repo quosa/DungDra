@@ -512,7 +512,7 @@ def run(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             if only is not None:
                 only = [u for u in only if u != uid]
     except C.Paused as e:
-        log(f"paused: {e}. Run again to resume.")
+        log(f"paused: {e}. {e.hint}")
         return 4
     except Stop as e:
         log(f"stopped: {e}")
@@ -757,7 +757,7 @@ def recheck(tid: str, budget_usd: float, invoke: Invoke = C.invoke, log=print) -
     try:
         result = run_ticket(P.Context.load(), T.load(tid), budget, invoke, recheck=True)
     except C.Paused as e:
-        log(f"paused: {e}")
+        log(f"paused: {e}. {e.hint}")
         return 4
     log("\n".join(outcome(tid)) if not result.startswith("fixed") else f"  {tid}: {result}")
     return 0 if result.startswith("fixed") else 1
@@ -781,7 +781,7 @@ def dev(budget_usd: float, only: list[str] | None = None, invoke: Invoke = C.inv
             result = run_ticket(ctx, tk, budget, invoke)
             log("\n".join(outcome(tk["id"])) if not result.startswith("fixed") else f"  {tk['id']}: {result}")
     except C.Paused as e:
-        log(f"paused: {e}. Run again to resume.")
+        log(f"paused: {e}. {e.hint}")
         return 4
     except Stop as e:
         log(f"stopped: {e}")

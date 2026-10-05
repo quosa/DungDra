@@ -75,6 +75,38 @@ def test_invoke_parses_output_logs_cost_and_sets_the_role(tmp_path, monkeypatch)
     assert (row["about"], row["stage"], row["cost_usd"], row["session_id"]) == ("GLOSS.x", "A", 0.42, "s1")
 
 
+def test_a_budget_pause_says_how_to_resume():
+    with pytest.raises(C.Paused) as e:
+        C.Budget(10.0, 1.64).check(9.0)
+    assert str(e.value) == "budget: $1.64 of $10.00 spent; the next call may cost up to $9.00"
+    assert e.value.hint == (
+        "Run the same command again to resume (a new run's budget starts at $0), "
+        "or give one run room for it with --budget 11."
+    )
+    with pytest.raises(C.Paused) as e:
+        C.Budget(5.0).check(9.0)
+    assert e.value.hint == "That's more than this run's whole budget: run it again with --budget 9 or more."
+    assert C.Paused("transient failure").hint == "Run again to resume."
+
+
+def test_the_dev_loop_prints_the_pause_hint(tmp_path, monkeypatch, no_quality_gate):
+    monkeypatch.chdir(tmp_path)
+    dev_repo(tmp_path)
+    monkeypatch.setattr(Run, "preflight", lambda: None)
+    monkeypatch.setattr(Run, "suite_red", lambda: [])
+    ctx = P.Context([GRAPPLED], U.by_id([GRAPPLED]), CONTENT, [], {}, {}, {}, {}, [])
+    monkeypatch.setattr(Run.P.Context, "load", classmethod(lambda cls: ctx))
+    agent = fake_dev(fix=True)
+
+    def checked(role, prompt, *, budget, about, stage, cap=None):  # what C.invoke does first
+        budget.check(cap or 6.0)
+        return agent(role, prompt, budget=budget, about=about, stage=stage, cap=cap)
+
+    logs = []
+    assert Run.dev(0.5, ["T-1"], checked, log=logs.append) == 4
+    assert logs[-1].startswith("paused: budget: $0.00 of $0.50 spent") and logs[-1].endswith("or more.")
+
+
 def test_invoke_pauses_before_overspending_and_on_transient_failures(tmp_path, monkeypatch):
     monkeypatch.chdir(REPO)
     run, calls = fake_run({})

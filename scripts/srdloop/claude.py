@@ -8,6 +8,7 @@ the loop pauses cleanly between calls and resumes where it stopped.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import subprocess
@@ -92,7 +93,12 @@ ROLES: dict[str, Role] = {
 
 
 class Paused(Exception):
-    """The run stopped between calls (budget spent, or a transient failure). Resume later."""
+    """The run stopped between calls (budget spent, or a transient failure). Resume later;
+    `hint` says how."""
+
+    def __init__(self, message: str, hint: str = "Run again to resume."):
+        super().__init__(message)
+        self.hint = hint
 
 
 @dataclass
@@ -105,7 +111,17 @@ class Budget:
     def check(self, cap: float) -> None:
         if self.spent_usd + cap > self.limit_usd:
             spent = f"${self.spent_usd:.2f} of ${self.limit_usd:.2f}"
-            raise Paused(f"budget: {spent} spent; the next call may cost up to ${cap:.2f}")
+            if cap > self.limit_usd:  # the same command would pause again at once
+                hint = (
+                    "That's more than this run's whole budget: "
+                    f"run it again with --budget {math.ceil(cap)} or more."
+                )
+            else:
+                hint = (
+                    "Run the same command again to resume (a new run's budget starts at $0), "
+                    f"or give one run room for it with --budget {math.ceil(self.spent_usd + cap)}."
+                )
+            raise Paused(f"budget: {spent} spent; the next call may cost up to ${cap:.2f}", hint)
 
 
 @dataclass
