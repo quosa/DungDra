@@ -12,7 +12,13 @@ def distance(a, b) -> int:
 
 
 def dist_points(p, q) -> int:
-    return max(abs(p[0] - q[0]), abs(p[1] - q[1]))
+    """Distance between two points (x, y) or (x, y, elevation); a point without an elevation is
+    on the ground."""
+    return max(abs(a - b) for a, b in zip(_xyz(p), _xyz(q), strict=True))
+
+
+def _xyz(p) -> tuple:
+    return (p[0], p[1], p[2] if len(p) > 2 else 0)
 
 
 def step_toward(p, q, feet) -> tuple[int, int]:
@@ -37,18 +43,59 @@ def step_away(p, q, feet) -> tuple[int, int]:
     return (x + dx * 5 * steps, y + dy * 5 * steps)
 
 
+def _along_across(origin, toward, p):
+    """p's distance along the axis from `origin` through `toward`, and its distance from that axis
+    (None for an axis of no length). Points are (x, y) or (x, y, elevation)."""
+    o, t, q = _xyz(origin), _xyz(toward), _xyz(p)
+    u = [b - a for a, b in zip(o, t, strict=True)]
+    norm = sum(x * x for x in u) ** 0.5
+    if norm == 0:
+        return None
+    v = [b - a for a, b in zip(o, q, strict=True)]
+    along = sum(a * b for a, b in zip(v, u, strict=True)) / norm
+    cross = (v[1] * u[2] - v[2] * u[1], v[2] * u[0] - v[0] * u[2], v[0] * u[1] - v[1] * u[0])
+    return along, sum(x * x for x in cross) ** 0.5 / norm
+
+
 def in_cone_direction(origin, toward, p) -> bool:
     """Is p inside the (unbounded) Cone from `origin` aimed at `toward`? A Cone's width at any point
     equals that point's distance from the origin, so p may stray at most half its distance along
-    the axis from it. The origin itself isn't included. Length is checked by the caller."""
-    ux, uy = toward[0] - origin[0], toward[1] - origin[1]
-    norm = (ux * ux + uy * uy) ** 0.5
-    if norm == 0:
+    the axis from it, up and down as well as sideways. The origin itself isn't included. Length is
+    checked by the caller."""
+    aa = _along_across(origin, toward, p)
+    if aa is None:
         return False
-    vx, vy = p[0] - origin[0], p[1] - origin[1]
-    along = (vx * ux + vy * uy) / norm
-    across = abs(vx * uy - vy * ux) / norm
+    along, across = aa
     return along > 0 and across <= along / 2
+
+
+def in_cube_direction(origin, toward, p, side) -> bool:
+    """Is p inside the level Cube whose `origin` is the centre of one face, extending `side` feet
+    toward `toward` and half of `side` to either side of the axis and above and below the origin?
+    The origin itself isn't included."""
+    o, t, q = _xyz(origin), _xyz(toward), _xyz(p)
+    aa = _along_across(o[:2], t[:2], q[:2])
+    if aa is None:
+        return False
+    along, across = aa
+    return 0 < along <= side and across <= side / 2 and abs(q[2] - o[2]) <= side / 2
+
+
+# SRD[SPELL.casting-spells.effects.targets#5] the area shapes the engine has geometry for
+def in_area(shape, size, origin, p, toward=None) -> bool:
+    """Is p inside an area of `shape` ("cone", "cube" or "sphere") and `size` (a Cone's length, a
+    Cube's side, a Sphere's radius) from `origin`? A Cone or Cube points at `toward`; a Sphere is
+    centred on `origin`. Points are (x, y) or (x, y, elevation)."""
+    shape = shape.lower()
+    if shape == "sphere":
+        return dist_points(origin, p) <= size
+    if toward is None:
+        raise ValueError(f"a {shape} needs a direction")
+    if shape == "cone":
+        return dist_points(origin, p) <= size and in_cone_direction(origin, toward, p)
+    if shape == "cube":
+        return in_cube_direction(origin, toward, p, size)
+    raise ValueError(f"no geometry for a {shape}")
 
 
 def segment_crosses_square(p, q, corner, side) -> bool:

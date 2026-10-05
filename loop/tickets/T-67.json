@@ -1,0 +1,15 @@
+{
+  "id": "T-67",
+  "kind": "infra",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "title": "Cube placement: SRD says a Cube's point of origin lies anywhere on a face, but in_cube_direction always puts the origin at the face's centre. Let the caster offset the Cube along the face (e.g. Thunderwave shifted to leave out an ally).",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-56"
+    }
+  ]
+}

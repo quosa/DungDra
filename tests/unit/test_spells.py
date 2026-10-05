@@ -505,12 +505,81 @@ def test_a_self_area_drops_a_creature_behind_total_cover_from_the_caster(game):
     game.log.assert_applied(rule="GLOSS.area-of-effect")
 
 
-def test_sleep_without_a_point_takes_the_named_creatures_as_inside(game):
+def test_sleep_without_a_point_is_centred_on_the_first_named_creature(game):
     m = pc(game, "MIALEE", (0, 0))
-    gob = mon(game, "goblin warrior", (30, 0))
+    gob = mon(game, "goblin warrior", (30, 0), name="GOB")
+    near = mon(game, "goblin warrior", (35, 0), name="NEAR")
+    far = mon(game, "goblin warrior", (40, 0), name="FAR")
+    game.dice.force_str("d20=[1]; d20=[1]")
+    cast(game, m, "sleep", [gob, near, far])
+    assert gob.has("incapacitated") and near.has("incapacitated") and not far.has("incapacitated")
+    assert any("FAR is outside the 5-ft Sphere" in e.text for e in game.log.events)
+
+
+def test_sleep_only_takes_the_creatures_of_the_casters_choice_in_its_sphere(game):
+    m = pc(game, "MIALEE", (0, 0))
+    chosen = mon(game, "goblin warrior", (40, 0), name="CHOSEN")
+    spared = mon(game, "goblin warrior", (45, 0), name="SPARED")
     game.dice.force_str("d20=[1]")
-    cast(game, m, "sleep", [gob])
-    assert gob.has("incapacitated")
+    cast(game, m, "sleep", [chosen], point=(40, 0))
+    assert chosen.has("incapacitated") and not spared.has("incapacitated")
+
+
+def test_a_cone_hits_each_creature_inside_it_named_or_not(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    named = mon(game, "goblin warrior", (5, 0), name="NAMED")
+    unnamed = mon(game, "goblin warrior", (10, 5), name="UNNAMED")
+    aside = mon(game, "goblin warrior", (0, 10), name="ASIDE")
+    named.hp = unnamed.hp = aside.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]; d20=[1]")
+    cast(game, m, "burning hands", [named])
+    assert named.hp == 24 and unnamed.hp == 24 and aside.hp == 30
+
+
+def test_a_dead_creature_in_the_area_isnt_affected(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    gob = mon(game, "goblin warrior", (5, 0), name="GOB")
+    corpse = mon(game, "goblin warrior", (10, 0), name="CORPSE")
+    corpse.take_damage(corpse.hp, "slashing")
+    assert corpse.dead
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    cast(game, m, "burning hands", [gob])
+    assert len([e for e in game.log.events if e.kind == "save"]) == 1
+
+
+def test_a_cube_doesnt_reach_a_flyer_above_half_its_side(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    gob = mon(game, "goblin warrior", (5, 0), name="GOB")
+    flyer = mon(game, "goblin warrior", (5, 5), name="FLYER")
+    flyer.elevation = 10
+    gob.hp = flyer.hp = 30
+    game.dice.force_str("d8=[3,3]; d20=[1]")
+    cast(game, m, "thunderwave", [gob])
+    assert gob.hp == 24 and flyer.hp == 30
+
+
+def test_a_point_aims_a_cube_from_the_caster(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    north = mon(game, "goblin warrior", (0, 10), name="NORTH")
+    east.hp = north.hp = 30
+    game.dice.force_str("d8=[3,3]; d20=[1]")
+    cast(game, m, "thunderwave", [east], point=(0, 15))
+    assert north.hp == 24 and east.hp == 30
+
+
+def test_an_area_with_nothing_to_place_it_is_refused_before_the_slot_is_spent(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    slots = m.slots_left(1)
+    with pytest.raises(Refusal, match="needs a point or a creature") as e:
+        cast(game, m, "burning hands", [m])
+    assert e.value.rule == "SPELL.casting-spells.effects.targets#4" and e.value.page == 106
+    assert m.slots_left(1) == slots
 
 
 def test_a_cone_aimed_at_a_point_follows_the_point(game):

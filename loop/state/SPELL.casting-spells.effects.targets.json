@@ -84,6 +84,7 @@
       "test": "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
     }
   ],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1790931700,

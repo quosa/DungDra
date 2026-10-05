@@ -282,6 +282,8 @@ SPELLS = {
         page=163,
         save="wis",
         area=("sphere", 5),
+        # 'each creature of your choice' in the Sphere: the caller's list narrows the area (R-16)
+        area_choice=True,
     ),
     "thunderwave": _s(
         1,

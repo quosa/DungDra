@@ -1,6 +1,15 @@
-"""Unit tests for dungdra.geometry: does a line pass through a creature's square."""
+"""Unit tests for dungdra.geometry: does a line pass through a creature's square, and is a point
+inside an area."""
 
-from dungdra.geometry import in_cone_direction, segment_crosses_square
+import pytest
+
+from dungdra.geometry import (
+    dist_points,
+    in_area,
+    in_cone_direction,
+    in_cube_direction,
+    segment_crosses_square,
+)
 
 
 def test_a_line_through_the_middle_of_a_square_crosses_it():
@@ -37,3 +46,53 @@ def test_a_cones_width_equals_the_distance_from_its_origin():
 
 def test_a_cone_with_no_direction_contains_nothing():
     assert not in_cone_direction((0, 0), (0, 0), (5, 0))
+
+
+def test_a_cone_narrows_upward_as_it_does_sideways():
+    assert in_cone_direction((0, 0, 0), (5, 0, 0), (10, 0, 5))
+    assert not in_cone_direction((0, 0, 0), (5, 0, 0), (10, 0, 10))
+
+
+def test_a_cone_aimed_up_at_a_flyer_follows_it():
+    assert in_cone_direction((0, 0, 0), (5, 0, 10), (5, 0, 10))
+    assert not in_cone_direction((0, 0, 0), (5, 0, 10), (10, 0, 0))
+
+
+def test_a_cube_extends_its_side_from_the_origin_and_half_of_it_to_each_side():
+    assert in_cube_direction((0, 0), (5, 0), (15, 0), 15)
+    assert in_cube_direction((0, 0), (5, 0), (5, 5), 15)
+    assert not in_cube_direction((0, 0), (5, 0), (20, 0), 15)
+    assert not in_cube_direction((0, 0), (5, 0), (5, 10), 15)
+
+
+def test_a_cube_doesnt_contain_its_origin_or_anything_behind_it():
+    assert not in_cube_direction((0, 0), (5, 0), (0, 0), 15)
+    assert not in_cube_direction((0, 0), (5, 0), (-5, 0), 15)
+    assert not in_cube_direction((0, 0), (0, 0), (5, 0), 15)
+
+
+def test_a_cube_reaches_half_its_side_above_and_below_its_origin():
+    assert in_cube_direction((0, 0, 0), (5, 0, 0), (5, 0, 5), 15)
+    assert not in_cube_direction((0, 0, 0), (5, 0, 0), (5, 0, 10), 15)
+    assert not in_cube_direction((0, 0, 20), (5, 0, 20), (5, 0, 0), 15)
+
+
+def test_a_point_without_an_elevation_is_on_the_ground():
+    assert dist_points((0, 0), (5, 0, 20)) == 20
+    assert dist_points((0, 0), (10, 5)) == 10
+
+
+def test_in_area_measures_each_shape_from_its_origin():
+    assert in_area("sphere", 5, (40, 0), (45, 5))
+    assert not in_area("sphere", 5, (40, 0), (40, 0, 10))
+    assert in_area("cone", 15, (0, 0), (15, 0), toward=(5, 0))
+    assert not in_area("cone", 15, (0, 0), (20, 0), toward=(5, 0))
+    assert in_area("Cube", 15, (0, 0), (15, 5), toward=(5, 0))
+    assert not in_area("cube", 15, (0, 0), (-5, 0), toward=(5, 0))
+
+
+def test_in_area_refuses_a_shape_without_a_direction_or_geometry():
+    with pytest.raises(ValueError, match="direction"):
+        in_area("cone", 15, (0, 0), (5, 0))
+    with pytest.raises(ValueError, match="geometry"):
+        in_area("line", 30, (0, 0), (5, 0), toward=(5, 0))

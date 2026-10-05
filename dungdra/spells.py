@@ -8,7 +8,7 @@ from .d20 import D20Roll, roll_d20_test
 from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
-from .geometry import dist_points, in_cone_direction
+from .geometry import dist_points, in_area
 from .rules import ABILITY_NAMES, HOUR, MINUTE, ROUND, OutOfScope, Refusal, div, norm
 
 # spells whose text says "that you can see"
@@ -237,6 +237,14 @@ def _check(game, caster, spell, sd, level, targets, point, option):
                 page=106,
                 rule="SPELL.casting-spells.effects.targets#2",
             )
+    if sd.get("area") and _area_point(spell, caster, targets, point) is None:
+        # SRD[SPELL.casting-spells.effects.targets#4] the area must be placed to determine its targets
+        raise Refusal(
+            f"{spell.title()} needs a point or a creature to place its {sd['area'][0].title()}",
+            page=106,
+            rule="SPELL.casting-spells.effects.targets#4",
+            ruling="R-16",
+        )
     _range_check(game, caster, spell, sd, targets)
     _target_kind(spell, sd, targets)
     _target_cap(spell, sd, level, targets)
@@ -1036,48 +1044,60 @@ def _bless(game, c, targets, **kw):
     )
 
 
-def _area_targets(game, c, targets, point=None):
-    """Creatures named by the caller that are inside the spell's area, its shape and size read from
-    the spell's `area` data. A spell with a range of Self originates at the caster (who isn't
-    included), and a Cone points one way: toward `point` if given, else toward the first creature
-    named other than the caster. Any other area is centred on `point`; without one the caller's
-    list is taken as the creatures inside it. Anyone behind Total Cover from the origin is dropped."""
-    shape, size = SPELLS[c.spell]["area"]
-    shape = shape.title()
-    from_self = SPELLS[c.spell]["range"] == "self"
-    if not from_self and point is None:
-        return list(targets)
-    # SRD[PLAY.combat.cover#3] cover counts from where the area originates: the caster or its point
-    origin = c.caster if from_self else point
-    aim = None
-    if shape == "Cone":
-        aim = point or next((t.position for t in targets if is_creature(t) and t is not c.caster), None)
-    out = []
+def _area_point(spell, caster, targets, point):
+    """Where the area is placed: `point` if given, else the position of the first creature named
+    (other than the caster for a spell with a range of Self), as (x, y, elevation). It's the
+    direction of a Cone or Cube from the caster, or the centre of any other area (R-16)."""
+    if point is not None:
+        return tuple(point)
+    from_self = SPELLS[spell]["range"] == "self"
     for t in targets:
-        if t is c.caster and from_self:
+        if is_creature(t) and not (from_self and t is caster):
+            return (*t.position, t.elevation)
+    return None
+
+
+def _area_targets(game, c, targets, point=None):
+    """The creatures inside the spell's area, its shape and size read from the spell's `area` data
+    and its placement from `_area_point`. A spell with a range of Self originates at the caster,
+    who isn't included. Every living creature in the scene inside the area is affected, whether
+    named or not; a spell whose data says `area_choice` ('each creature of your choice') takes only
+    the named ones (R-16). Anyone behind Total Cover from the origin is dropped; named objects pass
+    through to the spell."""
+    sd = SPELLS[c.spell]
+    shape, size = sd["area"]
+    from_self = sd["range"] == "self"
+    place = _area_point(c.spell, c.caster, targets, point)
+    caster = c.caster
+    origin = (*caster.position, caster.elevation) if from_self else place
+    named = [t for t in targets if is_creature(t) and not (from_self and t is caster)]
+    if sd.get("area_choice"):
+        candidates = named
+    else:
+        # SRD[SPELL.casting-spells.effects.targets#4] 'each creature': the scene, not the caller's list
+        candidates = named + [x for x in game.creatures.values() if x not in named]
+    out = [t for t in targets if not is_creature(t)]
+    for t in candidates:
+        if t.dead or (from_self and t is caster):
             continue
-        if not is_creature(t):
-            out.append(t)
+        # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
+        if not in_area(shape, size, origin, (*t.position, t.elevation), toward=place):
+            if t in named:
+                game.log.player(
+                    "spell",
+                    f"{t.name} is outside the {size}-ft {shape.title()}",
+                    page=106,
+                    rule="SPELL.casting-spells.effects.targets#4",
+                    ruling="R-16",
+                )
             continue
-        if game.cover_between(origin, t) == "total":
+        # SRD[PLAY.combat.cover#3] cover counts from where the area originates: the caster or its point
+        if game.cover_between(caster if from_self else place[:2], t) == "total":
             game.log.player(
                 "spell",
                 f"{t.name} is behind Total Cover from the point of origin and isn't affected",
                 page=177,
                 rule="GLOSS.area-of-effect",
-            )
-            continue
-        dist = c.caster.distance_to(t) if from_self else dist_points(point, t.position)
-        # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
-        outside = dist > size or (
-            aim is not None and not in_cone_direction(c.caster.position, aim, t.position)
-        )
-        if outside:
-            game.log.player(
-                "spell",
-                f"{t.name} is outside the {size}-ft {shape}",
-                page=106,
-                rule="SPELL.casting-spells.effects.targets#4",
             )
             continue
         out.append(t)
@@ -1111,8 +1131,8 @@ def _burning_hands(game, c, targets, point=None, **kw):
             game.log.player("spell", f"The {name} catches fire", page=114, rule="SPELL.burning-hands")
 
 
-def _thunderwave(game, c, targets, **kw):
-    ts = _area_targets(game, c, targets)
+def _thunderwave(game, c, targets, point=None, **kw):
+    ts = _area_targets(game, c, targets, point=point)
 
     def push(t):
         from .combat import move
