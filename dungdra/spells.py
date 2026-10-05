@@ -245,7 +245,7 @@ def _check(game, caster, spell, sd, level, targets, point, option):
             rule="SPELL.casting-spells.effects.targets#4",
             ruling="R-16",
         )
-    _range_check(game, caster, spell, sd, targets)
+    _range_check(game, caster, spell, sd, targets, point)
     _target_kind(spell, sd, targets)
     _target_cap(spell, sd, level, targets)
     if spell in SIGHT_SPELLS:
@@ -464,8 +464,20 @@ def _held_focus(caster):
     return None
 
 
-def _range_check(game, caster, spell, sd, targets):
+def _range_check(game, caster, spell, sd, targets, point=None):
     rng = sd["range"]
+    if sd.get("area") and isinstance(rng, int):
+        # SRD[SPELL.casting-spells.range] an area placed at a point: the point must be within range,
+        # and the area, not the range, decides who inside it is affected
+        place = _area_point(spell, caster, targets, point)
+        d = dist_points((*caster.position, caster.elevation), place)
+        if d > rng:
+            raise Refusal(
+                f"The point of origin is {d} ft away, beyond {spell.title()}'s range of {rng} ft",
+                page=105,
+                rule="SPELL.casting-spells.range",
+            )
+        targets = [t for t in targets if not is_creature(t)]
     for t in targets:
         if not hasattr(t, "position"):
             continue

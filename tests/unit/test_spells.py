@@ -516,6 +516,42 @@ def test_sleep_without_a_point_is_centred_on_the_first_named_creature(game):
     assert any("FAR is outside the 5-ft Sphere" in e.text for e in game.log.events)
 
 
+def test_sleep_at_a_point_beyond_its_range_is_refused_before_the_slot_is_spent(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (65, 0))
+    slots = m.slots_left(1)
+    with pytest.raises(Refusal) as exc:
+        cast(game, m, "sleep", [gob], point=(65, 0))
+    assert (exc.value.rule, exc.value.page) == ("SPELL.casting-spells.range", 105)
+    assert "60 ft" in str(exc.value) and m.slots_left(1) == slots and not gob.has("incapacitated")
+
+
+def test_sleep_aimed_at_a_creature_beyond_its_range_is_refused(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (65, 0))
+    with pytest.raises(Refusal) as exc:
+        cast(game, m, "sleep", [gob])
+    assert exc.value.rule == "SPELL.casting-spells.range"
+
+
+def test_sleep_reaches_a_creature_past_its_range_inside_a_sphere_placed_within_it(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (65, 0))
+    game.dice.force_str("d20=[1]")
+    cast(game, m, "sleep", [gob], point=(60, 0))
+    assert gob.has("incapacitated")
+
+
+def test_web_at_a_point_beyond_its_range_is_refused(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.award_xp(900)  # level 3: level 2 slots
+    m.prepared.append("web")
+    with pytest.raises(Refusal) as exc:
+        cast(game, m, "web", [], point=(0, 70))
+    assert exc.value.rule == "SPELL.casting-spells.range"
+    assert not any(o.get("web") for o in game.scene.objects.values() if isinstance(o, dict))
+
+
 def test_sleep_only_takes_the_creatures_of_the_casters_choice_in_its_sphere(game):
     m = pc(game, "MIALEE", (0, 0))
     chosen = mon(game, "goblin warrior", (40, 0), name="CHOSEN")

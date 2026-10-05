@@ -1,0 +1,30 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Sleep, Web and other area spells placed at a point now refuse a point beyond the spell's range, as you decided. A point isn't required. If none is given, the area is centred on the first named creature, using the existing `_area_point` default that T-56 added.\n\nWhat changed in `dungdra/spells.py`:\n- **Point check:** `_check` now passes `point` to `_range_check`. For a spell with an `area` and a range in feet (Sleep, Web), `_range_check` finds the placement with `_area_point` and measures its distance from the caster. If it's beyond range, it refuses with `rule=\"SPELL.casting-spells.range\"`, `page=105`. Because this happens in `_check`, the refusal comes before any slot is spent, both when the spell is cast and when a readied spell is released.\n- **Creatures inside the area:** for these spells, named creatures are no longer checked one by one against the range. The area decides who is affected, so a creature inside a Sphere placed within range can be past the range and still be caught.\n- **Self-range areas:** Burning Hands and Thunderwave have a range of Self, so they're unchanged.\n\nThe old Sleep fallback (\"every listed creature is inside\") was already removed by T-56/T-58.\n\nNot in scope: Web still takes the creatures it catches from the caller's list, not from its 20-ft Cube.\n\nThe ticket names no acceptance tests, so there was no `--runxfail` run. Results:\n- Full suite: 834 passed, 1 xfailed (another ticket's marker).\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_sleep_at_a_point_beyond_its_range_is_refused_before_the_slot_is_spent",
+   "tests/unit/test_spells.py::test_sleep_aimed_at_a_creature_beyond_its_range_is_refused",
+   "tests/unit/test_spells.py::test_sleep_reaches_a_creature_past_its_range_inside_a_sphere_placed_within_it",
+   "tests/unit/test_spells.py::test_web_at_a_point_beyond_its_range_is_refused"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.range]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix follows the person's decision. `_check` now passes `point` to `_range_check`. For any spell whose data has an `area` and a numeric range, `_range_check` finds where the area goes with the existing `_area_point` helper: `point=` when one is given, otherwise the first named creature. It then refuses an origin beyond the range with `SPELL.casting-spells.range`, p.105, which matches the existing range refusals (that unit has no stage-A clause numbering). Creatures are then left out of the per-target range check, because the area decides who is affected; that keeps the T-56 geometry model intact. A point is not required, and no existing tests changed. The rule is driven by the spell data (`area` plus an int range), not by spell names, and it sits in the right place before anything is paid. The four new unit tests check real behaviour. A point beyond range is refused and the slot is kept. Aiming at a far creature with no point is also refused. A Sphere placed within range still reaches a creature past the range. A Web point beyond range is refused and no web object is created; the `web` key that check looks for matches how `_web` stores the web. The targeted tests pass."
+ },
+ "problems": [],
+ "cost_usd": 0.5646,
+ "stash": ""
+}
