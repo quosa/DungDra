@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-64. Cunning Action no longer has its own code path: `bonus_action` now reads the feature name and option once and dispatches every entry through `BONUS_ACTIONS`, Cunning Action included.\n\n- **One parser:** a new `class_actions.parse_feature(name)` turns \"Cunning Action: Disengage\" into the feature (\"cunning action\", via `rules.norm`) and the option (\"Disengage\"), or no option if there is no colon. `is_bonus_action` and `bonus_action` both use it, so the startswith/split(':') parsing is gone from both.\n- **Dispatch:** `bonus_action` looks the feature up in `BONUS_ACTIONS` and, when there is an option, passes it as the handler's first argument. Unknown names are still refused with the p.10 `PLAY.actions.bonus-actions` refusal.\n- **Default of \"dash\":** the old special case used Dash when no option was given. To keep that behaviour without the special case, `cunning_action` now has `what=\"dash\"` as its default.\n- **One behaviour change:** names now go through the same normalisation in `bonus_action` as in `is_bonus_action`, so \"second_wind\" or \"Cunning-Action: hide\" now dispatch too.\n\nThere are no acceptance tests on this ticket, and I added no SRD tags because no rule logic changed. I added four unit tests in `tests/unit/test_class_actions.py`: the parser, Cunning Action Disengage going through `bonus_action` (checks the effect and the log line), a refused option (\"dodge\") carrying the Cunning Action rule, and a refused unknown name.\n\nAll checks pass: `ruff check` and `ruff format --check` are clean, unit tests 431 passed, `tests/srd` plus `tests/scenarios` 362 passed, and `dev-gate` passed.",
+  "files": [
+   "dungdra/class_actions.py",
+   "tests/unit/test_class_actions.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_class_actions.py::test_parse_feature_splits_the_feature_from_its_option",
+   "tests/unit/test_class_actions.py::test_bonus_action_dispatches_cunning_action_with_its_option",
+   "tests/unit/test_class_actions.py::test_bonus_action_refuses_an_option_the_feature_does_not_allow",
+   "tests/unit/test_class_actions.py::test_bonus_action_refuses_a_name_no_feature_grants"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The change fixes T-64. `parse_feature` now splits the feature name from its option in one place, and both `is_bonus_action` and `bonus_action` use it. The special case for the \"cunning action\" name is gone, so Cunning Action goes through `BONUS_ACTIONS` like every other entry, and any option after the colon is passed to it as the first argument. `cunning_action` now defaults `what` to \"dash\", which keeps the old fallback behaviour, and a `what=` keyword still works. The only other caller of `bonus_action` (`tests/scenarios/test_combat.py` with \"dash\") still gets the generic refusal. The new unit tests check real behaviour: the Disengage effect and its log line, the refusal rule for an option Cunning Action doesn't allow, and the refusal rule for a name no feature grants. Nothing in the diff is hard-coded, wrongly layered or outside the ticket."
+ },
+ "problems": [],
+ "cost_usd": 0.615,
+ "stash": ""
+}

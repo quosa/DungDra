@@ -78,7 +78,7 @@ def action_surge(game, pc):
     )
 
 
-def cunning_action(game, pc, what):
+def cunning_action(game, pc, what="dash"):
     _need(pc, "cunning action")
     what = what.lower()
     if what == "dash":
@@ -156,23 +156,31 @@ BONUS_ACTIONS = {
 }
 
 
+def parse_feature(name) -> tuple[str, str | None]:
+    """Split "cunning action: dash" into the feature ("cunning action") and its option ("dash")."""
+    feature, sep, option = str(name).partition(":")
+    return norm(feature), (option.strip() if sep else None)
+
+
 def is_bonus_action(name) -> bool:
     """Whether the feature `name` ("cunning action: dash", "second_wind", ...) costs a Bonus Action."""
-    return norm(str(name).split(":")[0]) in BONUS_ACTIONS
+    return parse_feature(name)[0] in BONUS_ACTIONS
 
 
 def bonus_action(game, actor, name, *args, **kw):
-    """Generic entry point: a Bonus Action exists only when a feature grants one (p.10)."""
-    n = name.lower()
-    if n.startswith("cunning action"):
-        return cunning_action(game, actor, n.split(":")[-1].strip() if ":" in n else kw.pop("what", "dash"))
-    fn = BONUS_ACTIONS.get(n)
+    """Generic entry point: a Bonus Action exists only when a feature grants one (p.10).
+
+    An option after a colon ("cunning action: dash") is passed as the feature's first argument."""
+    feature, option = parse_feature(name)
+    fn = BONUS_ACTIONS.get(feature)
     if fn is None:
         raise Refusal(
             f"{actor.name} has no feature that grants a Bonus Action to {name}",
             page=10,
             rule="PLAY.actions.bonus-actions",
         )
+    if option is not None:
+        args = (option, *args)
     return fn(game, actor, *args, **kw)
 
 
