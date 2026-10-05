@@ -296,11 +296,6 @@ def test_goblin_shortbow_attack_needs_no_tracked_arrows(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#13", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-69: an attack the stat block doesn't have (a goblin's longsword) is refused "
-    "without citing a page",
-)
 def test_goblin_cant_attack_with_a_weapon_not_in_its_stat_block(game):
     b, gob = goblin_vs_brom(game)
     in_combat(game, gob, b)

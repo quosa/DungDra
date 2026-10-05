@@ -119,9 +119,13 @@ class Monster(Creature):
                 return a
         from .rules import Refusal
 
+        # SRD[MONSTER.parts-of-a-stat-block.actions] a monster takes the actions its stat block
+        # lists (or one available to all creatures); carried gear isn't an attack of its own
         raise Refusal(
             f"{self.name} has no attack called {name!r}; it has "
-            f"{', '.join(a['name'] for a in self.attacks)} (the GM can't invent stat-block abilities)"
+            f"{', '.join(a['name'] for a in self.attacks)} (the GM can't invent stat-block abilities)",
+            page=256,
+            rule="MONSTER.parts-of-a-stat-block.actions",
         )
 
     def check_modifier_parts(self, ability, skill=None, tool=None):

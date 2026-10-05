@@ -1,6 +1,9 @@
 """Unit tests for dungdra.monster: rolling a monster's Hit Points from its Hit Dice."""
 
+import pytest
+
 from dungdra.monster import Monster
+from dungdra.rules import Refusal
 from tests.support.helpers import mon
 
 
@@ -37,3 +40,17 @@ def test_average_and_fixed_hp_roll_nothing(game):
 def test_a_monster_keeps_the_average_until_it_joins_a_game():
     gob = Monster("goblin warrior", hp="roll")
     assert gob.hp == gob.max_hp == 10
+
+
+def test_attack_named_finds_a_listed_attack_by_name_or_defaults_to_the_first():
+    gob = Monster("goblin warrior")
+    assert gob.attack_named("Shortbow")["name"] == "Shortbow"
+    assert gob.attack_named(None) is gob.attacks[0]
+
+
+def test_an_attack_the_stat_block_doesnt_list_is_refused_citing_the_actions_rule():
+    gob = Monster("goblin warrior", name="Gob")
+    with pytest.raises(Refusal) as exc:
+        gob.attack_named("longsword")
+    assert exc.value.page == 256 and exc.value.rule == "MONSTER.parts-of-a-stat-block.actions"
+    assert "Scimitar, Shortbow" in exc.value.reason

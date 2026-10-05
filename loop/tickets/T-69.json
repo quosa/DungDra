@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_monsters.py::test_goblin_cant_attack_with_a_weapon_not_in_its_stat_block"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Fixed T-69: when a monster tries an attack its stat block doesn't list (for example a goblin's longsword), `Monster.attack_named` still refuses it, but the refusal now cites page 256 and rule \"MONSTER.parts-of-a-stat-block.actions\". That rule says a monster takes the actions in its stat block or one available to all creatures, so it covers every monster rather than just the goblin. The code carries an SRD tag for it. There's no stage-A analysis for that unit, so the tag and `rule=` have no clause number, the same as the existing hit-points citation. I added two unit tests: one for looking up a listed attack and one for the refusal's page, rule and message. The unit suite passes (489 tests), the ticket's test passes with `--runxfail`, ruff check and ruff format are clean, and the dev gate passes."
+    }
+  ]
 }

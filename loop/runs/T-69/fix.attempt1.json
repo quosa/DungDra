@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed T-69: when a monster tries an attack its stat block doesn't list (for example a goblin's longsword), `Monster.attack_named` still refuses it, but the refusal now cites page 256 and rule \"MONSTER.parts-of-a-stat-block.actions\". That rule says a monster takes the actions in its stat block or one available to all creatures, so it covers every monster rather than just the goblin. The code carries an SRD tag for it. There's no stage-A analysis for that unit, so the tag and `rule=` have no clause number, the same as the existing hit-points citation. I added two unit tests: one for looking up a listed attack and one for the refusal's page, rule and message. The unit suite passes (489 tests), the ticket's test passes with `--runxfail`, ruff check and ruff format are clean, and the dev gate passes.",
+  "files": [
+   "dungdra/monster.py",
+   "tests/unit/test_monster.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_monster.py::test_attack_named_finds_a_listed_attack_by_name_or_defaults_to_the_first",
+   "tests/unit/test_monster.py::test_an_attack_the_stat_block_doesnt_list_is_refused_citing_the_actions_rule"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.parts-of-a-stat-block.actions]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving the fix for T-69. When a monster is asked to attack with something its stat block doesn't list, the existing refusal in `Monster.attack_named` now cites `page=256` and `rule=\"MONSTER.parts-of-a-stat-block.actions\"`. That is the right unit and page: the SRD says \"A monster can take the actions in this section or take one of the actions available to all creatures\" on pp. 256–257. The citation has no clause number. That's fine here, because no stage-A analysis exists for this unit, and the engine already cites MONSTER.parts-of-a-stat-block.* units the same way elsewhere. The fix extends the existing refusal rather than adding a second check, and the rule sits in the monster layer where it belongs. Nothing is special-cased for the goblin or the longsword. The ticket's acceptance test (GW#13) now runs without its xfail marker. Removing that marker is the intended outcome, and the test has no other edits. Of the two new unit tests, the refusal test checks that a real `Monster` refuses with the citation and lists the attacks it does have. The other covers the existing lookup by name and the default to the first attack. That one is small extra coverage beyond the ticket, but it's harmless and asserts real behaviour. I found nothing outside the diff that needs a follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.4806,
+ "stash": ""
+}
