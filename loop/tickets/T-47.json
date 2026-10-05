@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "Light with no target, or with any string, still makes a new 'glowing object' at the caster's position. SRD: Light needs a touched object that is Large or smaller and not worn or carried by someone else. Model those limits and light the object that is actually there.",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
 }
