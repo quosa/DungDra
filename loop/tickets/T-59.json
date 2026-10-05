@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "The point of origin of a point-placed area spell (Sleep, Web, ...) isn't checked against the spell's range: _range_check only looks at the targets. Sleep also falls back to 'every listed creature is inside' when no point is given. Require a point for spells whose area sits at a point, and refuse one beyond the spell's range under SPELL.casting-spells.range.",
   "tests": [],
-  "status": "open",
+  "status": "dispute",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "dispute",
+      "reason": "The ticket asks to require a point for point-placed area spells, but these acceptance scenarios cast Sleep or Web without one: `tests/scenarios/test_spells.py:158`, `:256` and `:401`, `tests/scenarios/test_magic_items.py:127` and `:133`, and the natural-language Web cast in `tests/scenarios/test_journeys.py:340`. A strict requirement would break them. I implemented a default instead: with no point, the area is centred on the first named creature, and it's refused only when there's no creature either. If a person wants an explicit point required, those scenarios would first need a `point=` (and the natural-language parser a way to name one)."
+    }
+  ]
 }
