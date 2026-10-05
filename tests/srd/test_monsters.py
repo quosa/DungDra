@@ -682,10 +682,6 @@ def test_nimble_escape_while_incapacitated_is_refused(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#24", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-74: Nimble Escape for a creature without the trait is refused without citing a page",
-)
 def test_a_bandit_has_no_nimble_escape(game):
     b = pc(game, "BROM", (0, 0))
     bandit = mon(game, "bandit", (5, 0))

@@ -118,8 +118,20 @@ def steady_aim(game, pc):
 
 
 def nimble_escape(game, monster, what="disengage", **kw):
+    # SRD[MONSTER.goblins.goblin-warrior#24]: a stat-block Bonus Action, Disengage or Hide only
     if "nimble escape" not in monster.traits:
-        raise Refusal(f"{monster.name} doesn't have Nimble Escape")
+        raise Refusal(
+            f"{monster.name} doesn't have Nimble Escape",
+            page=290,
+            rule="MONSTER.goblins.goblin-warrior#24",
+        )
+    what = what.lower()
+    if what not in ("disengage", "hide"):
+        raise Refusal(
+            "Nimble Escape allows only the Disengage or Hide action",
+            page=290,
+            rule="MONSTER.goblins.goblin-warrior#24",
+        )
     if what == "disengage":
         return actions.disengage(game, monster, bonus=True, source="Nimble Escape")
     return actions.hide(game, monster, bonus=True, source="Nimble Escape (Hide)", **kw)

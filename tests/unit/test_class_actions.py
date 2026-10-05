@@ -2,7 +2,7 @@ import pytest
 
 from dungdra import class_actions as CA
 from dungdra.rules import Refusal
-from tests.support.helpers import pc
+from tests.support.helpers import mon, pc
 
 
 def test_is_bonus_action_comes_from_the_bonus_action_registry():
@@ -44,3 +44,21 @@ def test_bonus_action_refuses_a_name_no_feature_grants(game):
     with pytest.raises(Refusal) as e:
         CA.bonus_action(game, lidda, "dash")
     assert e.value.rule == "PLAY.actions.bonus-actions"
+
+
+def test_nimble_escape_is_refused_with_a_citation_for_a_creature_without_the_trait(game):
+    bandit = mon(game, "bandit")
+    with pytest.raises(Refusal) as e:
+        CA.nimble_escape(game, bandit, "disengage")
+    assert e.value.rule == "MONSTER.goblins.goblin-warrior#24"
+    assert e.value.page == 290
+    assert not bandit.find_effects("disengage")
+
+
+def test_nimble_escape_allows_only_disengage_or_hide(game):
+    gob = mon(game, "goblin warrior")
+    with pytest.raises(Refusal) as e:
+        CA.nimble_escape(game, gob, "dash")
+    assert e.value.rule == "MONSTER.goblins.goblin-warrior#24"
+    CA.nimble_escape(game, gob, "Disengage")
+    assert gob.find_effects("disengage")

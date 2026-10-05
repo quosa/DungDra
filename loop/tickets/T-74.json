@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_monsters.py::test_a_bandit_has_no_nimble_escape"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "nimble_escape now refuses a creature without the trait with page=290, rule=MONSTER.goblins.goblin-warrior#24 (tagged SRD[...#24]). It also refuses any option other than Disengage or Hide, where before anything else silently became a Hide. Unit tests added. Unit suite, ticket test (--runxfail), ruff and dev-gate all pass."
+    }
+  ]
 }
