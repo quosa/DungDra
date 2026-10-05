@@ -1,0 +1,49 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "Creating a monster with `Monster(hp=\"roll\")` now rolls its HP when it joins a game; before, it only set a note and nothing rolled, so the goblin kept 10 HP. `Game.add` now calls a new `Creature.on_added(game)` hook once, the first time a creature joins (re-adding it doesn't call it again). The base hook does nothing. `Monster.on_added` uses up the note and calls `roll_hp(game.dice)`, which rolls the monster's Hit Dice (3d6 for the goblin) and sets both current and max HP. It also logs an `hp_rolled` event with page=290 and rule=\"MONSTER.goblins.goblin-warrior#4\". The hook is needed because the game layer sits below the monster layer and can't import `Monster`. One judgement call: `roll_hp` works for every monster, but the tag and log event cite the goblin warrior's clause #4. That's because the generic unit (`MONSTER.parts-of-a-stat-block.hit-points`, p.255) has no stage-A clause numbering yet. Results: the ticket's test passes with `--runxfail`, the unit suite passes (486 tests, run before the 4 new ones were collected), and ruff and dev-gate are clean. In the full acceptance run the only failure is this test reporting XPASS under its strict xfail marker, which is expected until the harness removes it. The other 8 xfails in `test_monsters.py` belong to other tickets and are unchanged.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/game.py",
+   "dungdra/monster.py",
+   "tests/unit/test_monster.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_monster.py::test_rolled_hp_is_rolled_when_the_monster_joins_the_game",
+   "tests/unit/test_monster.py::test_rolled_hp_is_not_rolled_again_when_re_added",
+   "tests/unit/test_monster.py::test_average_and_fixed_hp_roll_nothing",
+   "tests/unit/test_monster.py::test_a_monster_not_in_a_game_keeps_average_hp_until_added"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.goblins.goblin-warrior#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "hard-coding",
+    "file": "dungdra/monster.py",
+    "line": 101,
+    "explanation": "`Monster.roll_hp` is the generic HP roll for every monster, but both its `# SRD[...]` tag and the `hp_rolled` event are hard-coded to the goblin's stat block (`rule=\"MONSTER.goblins.goblin-warrior#4\"`, `page=290`). An ogre or skeleton created with hp='roll' would log that it rolled HP under the goblin warrior rule on p.290. The general rule is `MONSTER.parts-of-a-stat-block.hit-points` (p.255): 'Either use the number ... or roll the die expression in parentheses ... don't use both.' Cite that rule. If the stat block's own clause is also wanted, build it from the monster's own unit id and page. Don't use the fixture's constants."
+   },
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_monster.py",
+    "line": 12,
+    "explanation": "The unit test checks `ev.rule == \"MONSTER.goblins.goblin-warrior#4\" and ev.page == \"290\"`, which just repeats the hard-coded constants. It would still pass if a different monster rolled HP and cited the goblin. Have the test check the general rule's citation, or add a non-goblin monster whose event cites the correct source."
+   }
+  ],
+  "followups": [],
+  "summary": "The behaviour is fixed: hp='roll' now rolls the Hit Dice when the monster joins the game, only once, and the xfail is removed. The citation is the problem. The generic `roll_hp`, used by every monster, cites the goblin warrior's clause and page 290 in both its SRD tag and its log event. It should cite the general rule `MONSTER.parts-of-a-stat-block.hit-points` (p.255), or the monster's own stat block. The new unit test checks those goblin constants, so it wouldn't catch a wrong citation for any other monster."
+ },
+ "problems": [
+  "review: rejected (The behaviour is fixed: hp='roll' now rolls the Hit Dice when the monster joins the game, only once, and the xfail is removed. The citation is the problem. The generic `roll_hp`, used by every monster, cites the goblin warrior's clause and page 290 in both its SRD tag and its log event. It should cite the general rule `MONSTER.parts-of-a-stat-block.hit-points` (p.255), or the monster's own stat block. The new unit test checks those goblin constants, so it wouldn't catch a wrong citation for any other monster.)",
+  "review: hard-coding dungdra/monster.py:101 `Monster.roll_hp` is the generic HP roll for every monster, but both its `# SRD[...]` tag and the `hp_rolled` event are hard-coded to the goblin's stat block (`rule=\"MONSTER.goblins.goblin-warrior#4\"`, `page=290`). An ogre or skeleton created with hp='roll' would log that it rolled HP under the goblin warrior rule on p.290. The general rule is `MONSTER.parts-of-a-stat-block.hit-points` (p.255): 'Either use the number ... or roll the die expression in parentheses ... don't use both.' Cite that rule. If the stat block's own clause is also wanted, build it from the monster's own unit id and page. Don't use the fixture's constants.",
+  "review: test-meaningfulness tests/unit/test_monster.py:12 The unit test checks `ev.rule == \"MONSTER.goblins.goblin-warrior#4\" and ev.page == \"290\"`, which just repeats the hard-coded constants. It would still pass if a different monster rolled HP and cited the goblin. Have the test check the general rule's citation, or add a non-goblin monster whose event cites the correct source."
+ ],
+ "cost_usd": 0.7072,
+ "stash": "srdloop: T-68 attempt 1"
+}
