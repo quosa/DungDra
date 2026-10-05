@@ -4,7 +4,12 @@
   "unit": "GLOSS.grappled",
   "title": "Movement has no 'carry' mode distinct from drag for a grappled creature",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
 }
