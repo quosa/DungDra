@@ -1,0 +1,12 @@
+{
+  "id": "T-72",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: with Advantage the hit adds 2 (1d4), static 2 when the GM uses static damage; engine: static monster damage drops the rider and deals 5 instead of 7",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_7"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

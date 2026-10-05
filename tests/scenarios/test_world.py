@@ -326,6 +326,18 @@ def test_mon02_traits(game):
     game.dice.force_str("d20=[3,15]; d6=[1]; d4=[2]")
     r = C.attack(game, gob, b, attack_name="scimitar", adv=["test"])
     assert r.damage == 1 + 2 + 2
+    mia = pc(game, "MIALEE", (10, 5))  # a standing target (BROM is Prone from the bite)
+    mia.hp = mia.base_max_hp = 100
+    game.dice.force_str("d20=[15]; d6=[1]")
+    r = C.attack(game, gob, mia, attack_name="scimitar")
+    assert r.roll.mode == "normal" and r.damage == 1 + 2  # no Advantage: no 1d4
+    game.dice.force_str("d20=[15]; d6=[1]")
+    r = C.attack(game, gob, mia, attack_name="scimitar", adv=["test"], dis=["test"])
+    assert r.roll.mode == "normal" and r.damage == 1 + 2  # cancelled Advantage: no 1d4
+    gob.position = (40, 5)
+    game.dice.force_str("d20=[3,15]; d6=[1]; d4=[3]")
+    r = C.attack(game, gob, mia, attack_name="shortbow", adv=["test"])
+    assert r.damage == 1 + 2 + 3  # the Shortbow has the same rider
     z = mon(game, "zombie", (5, -5))
     z.hp = 5
     game.dice.force_str("d20=[12]")

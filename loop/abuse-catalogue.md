@@ -30,6 +30,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
   movement beyond your Speed.
 - Readying out of turn, or after the turn's action is already spent.
 - Casting two slot spells in one turn.
+- Taking an action as a Bonus Action (Disengage, Hide, Dash) through a command flag without a
+  feature that grants it (Nimble Escape, Cunning Action).
+- An attack refused as out of reach or range that has already spent the Attack action.
 
 ## Resources
 - Spending spell slots, Hit Dice, class-feature uses or ammunition that don't exist.
@@ -74,6 +77,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Naming creatures for an area spell that the area can't hold: far from the point of origin,
   or on both sides of the caster for one Cone or Cube. Leaving creatures that are in the area
   off the list to spare them from a spell that hits every creature in it.
+- Claiming an "if the attack roll had Advantage" rider (a Goblin's extra 1d4) when Advantage and
+  Disadvantage cancelled, or dropping it when the GM uses static damage numbers.
+- A monster using an action its stat block doesn't list (a weapon from its Gear line it has no
+  attack for, a trait like Nimble Escape that another monster has).
 
 ## Equipment
 - Two shields; armor you lack training in with no penalty; wielding more weapons than hands.

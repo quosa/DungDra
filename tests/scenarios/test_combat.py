@@ -251,6 +251,7 @@ def test_cmb06_grapple_shove(game):
     assert gob.has("grappled") and gob.speed() == 0
     save = game.log.last("save")
     assert "DC 13" in save.text and "Dexterity" in save.text
+    assert "= 11 vs DC 13" in save.text  # 9 + Dex save +2 fails DC 13
     lidda = pc(game, "LIDDA", (10, 5))
     game.dice.force_str("d20=[10,10]")
     r = C.attack(game, gob, lidda, attack_name="shortbow")

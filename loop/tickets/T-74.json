@@ -1,0 +1,12 @@
+{
+  "id": "T-74",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: Nimble Escape belongs to the goblin's stat block; engine: refusing it for a creature without the trait cites no page or rule",
+  "tests": [
+    "tests/srd/test_monsters.py::test_a_bandit_has_no_nimble_escape"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

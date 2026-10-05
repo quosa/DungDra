@@ -1,0 +1,12 @@
+{
+  "id": "T-73",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: a Bonus Action is taken on your own turn; engine: the out-of-turn refusal (\"It isn't Gob's turn\") cites no page or rule",
+  "tests": [
+    "tests/srd/test_monsters.py::test_nimble_escape_out_of_turn_is_refused"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

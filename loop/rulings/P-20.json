@@ -1,0 +1,13 @@
+{
+  "id": "P-20",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "ambiguity": "is the conditional 1d4 doubled on a Critical Hit?",
+  "ruling": "Reading A. The 1d4 is a damage die of the attack, so a Critical Hit rolls it twice like the 1d6.",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

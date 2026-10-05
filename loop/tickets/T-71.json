@@ -1,0 +1,13 @@
+{
+  "id": "T-71",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: a refused attack costs nothing; engine: an attack refused as out of reach or out of range has already spent the Attack action",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_cant_reach_a_target_10_feet_away",
+    "tests/srd/test_monsters.py::test_shortbow_reaches_320_feet_but_not_325"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

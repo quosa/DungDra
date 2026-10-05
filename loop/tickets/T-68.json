@@ -1,0 +1,12 @@
+{
+  "id": "T-68",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: a monster's HP can be rolled from its Hit Dice (3d6); engine: Monster(hp='roll') only sets a note and nothing rolls, so the goblin keeps 10 HP",
+  "tests": [
+    "tests/srd/test_monsters.py::test_a_goblin_added_with_rolled_hp_rolls_3d6"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

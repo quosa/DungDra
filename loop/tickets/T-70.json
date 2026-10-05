@@ -1,0 +1,12 @@
+{
+  "id": "T-70",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: Passive Perception drops by 5 with Disadvantage on Perception checks (Poisoned); engine: a monster's Passive Perception is always the printed number",
+  "tests": [
+    "tests/srd/test_monsters.py::test_a_poisoned_goblins_passive_perception_drops_to_4"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

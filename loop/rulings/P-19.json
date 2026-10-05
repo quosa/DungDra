@@ -1,0 +1,14 @@
+{
+  "id": "P-19",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "ambiguity": "'if the attack roll had Advantage' when Advantage and Disadvantage cancel",
+  "ruling": "Reading A. The extra 1d4 applies only when the roll is made with Advantage. If Advantage and Disadvantage cancel, the roll has neither, so the 1d4 isn't added.",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_with_cancelled_advantage_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_shortbow_advantage_cancelled_by_long_range_adds_no_1d4"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

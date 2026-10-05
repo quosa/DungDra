@@ -1,0 +1,12 @@
+{
+  "id": "T-69",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: a monster attacks only with the actions its stat block lists; engine: refusing an unlisted attack (a goblin's longsword) cites no page or rule",
+  "tests": [
+    "tests/srd/test_monsters.py::test_goblin_cant_attack_with_a_weapon_not_in_its_stat_block"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

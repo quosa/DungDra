@@ -170,3 +170,4 @@
 {"at": 1791215108, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 2.6674, "seconds": 478.0, "session_id": "884806bd-3514-4796-86cd-4ddbd90e4f2f", "exit": 0}
 {"at": 1791215588, "about": "MONSTER.goblins.goblin-warrior", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.4089, "seconds": 14.5, "session_id": "153453af-397a-43ee-a5c0-0543aca930a0", "exit": 1}
 {"at": 1791215603, "about": "MONSTER.goblins.goblin-warrior", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.0, "seconds": 2.5, "session_id": "e5e93fa9-e768-4b4c-8b62-6b7eebfd3e9c", "exit": 1}
+{"at": 1791230674, "about": "MONSTER.goblins.goblin-warrior", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 1.2007, "seconds": 331.4, "session_id": "e61dc075-f212-45c1-87e3-d75daca0e6d1", "exit": 0}

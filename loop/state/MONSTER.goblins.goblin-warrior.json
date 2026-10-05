@@ -1,13 +1,81 @@
 {
-  "fingerprint": null,
+  "fingerprint": "fe6f7ebf946c3e6d",
+  "for_review": [],
   "id": "MONSTER.goblins.goblin-warrior",
-  "problems": {
-    "problems": [
-      "no structured output (success)"
-    ],
-    "stage": "D"
-  },
-  "relations": [],
+  "kind_waivers": [
+    {
+      "clause": "MONSTER.goblins.goblin-warrior#16",
+      "kind": "boundary",
+      "reason": "Languages is a list of names with no threshold, and the engine has no mechanic that depends on a shared language."
+    },
+    {
+      "clause": "MONSTER.goblins.goblin-warrior#13",
+      "kind": "boundary",
+      "reason": "The Gear line is a list of items with no number or threshold. Its effects (AC 15, the two attacks) are tested under #2, #18 and #21."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_monsters.py::test_firing_the_two_handed_shortbow_doesnt_cost_the_goblin_its_shield_ac",
+    "tests/srd/test_monsters.py::test_goblin_initiative_doesnt_add_its_proficiency_bonus_or_stealth",
+    "tests/srd/test_monsters.py::test_rolled_goblin_hp_is_three_dice_not_the_2014_two",
+    "tests/srd/test_monsters.py::test_goblin_strength_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_dexterity_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_constitution_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_intelligence_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_wisdom_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_charisma_save_has_no_proficiency_bonus",
+    "tests/srd/test_monsters.py::test_goblin_doesnt_speak_other_languages",
+    "tests/srd/test_monsters.py::test_the_printed_attack_bonus_isnt_increased_by_the_proficiency_bonus_again",
+    "tests/srd/test_monsters.py::test_nimble_escape_disengage_through_the_session"
+  ],
+  "relations": [
+    {
+      "evidence": "The goblin takes the Disengage or Hide action.",
+      "target": "GLOSS.disengage",
+      "type": "requires"
+    },
+    {
+      "evidence": "The goblin takes the Disengage or Hide action.",
+      "target": "GLOSS.hide",
+      "type": "requires"
+    },
+    {
+      "evidence": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+      "target": "GLOSS.advantage",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "Melee Attack Roll: +4, reach 5 ft.",
+      "target": "GLOSS.attack-roll",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "Senses Darkvision 60 ft.",
+      "target": "GLOSS.darkvision",
+      "type": "requires"
+    },
+    {
+      "evidence": "Your Initiative score equals 10 plus your Dexterity modifier.",
+      "target": "GLOSS.initiative",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A creature’s Passive Perception equals 10 plus the creature’s Wisdom (Perception) check bonus.",
+      "target": "GLOSS.passive-perception",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "Speed 30 ft.",
+      "target": "GLOSS.speed",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "| Dex | 15 | +2 | +2 |",
+      "target": "GLOSS.save",
+      "type": "interacts_with"
+    }
+  ],
   "revisit": false,
   "stages": {
     "A": {
@@ -21,8 +89,100 @@
     "C": {
       "at": 1791215588,
       "summary": "I wrote 88 tests for the Goblin Warrior stat block: 87 in tests/srd/test_monsters.py (a new file) plus one journey in tests/srd/journeys/test_goblin_warrior_journey.py. Every clause has a positive, negative and boundary test unless waived below. Abuse tests cover Nimble Escape and the attacks. Final"
+    },
+    "D": {
+      "at": 1791231005,
+      "summary": "I checked all 89 tests. 79 pass and 9 are expected failures; the totals cover tests outside this list too. I'm keeping 77 and refuting 12. None of the expected outcomes contradicts the SRD 5.2.1 text, including these 2024-specific points:\n- Hold Person only affects Humanoids, and the slot is still s"
     }
   },
-  "status": "incomplete",
-  "tickets": []
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_monsters.py::test_goblin_warrior_is_a_small_fey_goblinoid_that_can_grapple_a_medium_creature",
+    "tests/srd/test_monsters.py::test_hold_person_does_nothing_to_a_goblin_warrior_which_isnt_humanoid",
+    "tests/srd/test_monsters.py::test_a_small_goblin_cant_grapple_a_large_ogre",
+    "tests/srd/test_monsters.py::test_an_attack_total_of_15_hits_the_goblin",
+    "tests/srd/test_monsters.py::test_an_attack_total_of_14_misses_the_goblin",
+    "tests/srd/test_monsters.py::test_goblin_initiative_roll_adds_2",
+    "tests/srd/test_monsters.py::test_goblin_rolling_11_for_initiative_takes_its_place_at_13_in_the_order",
+    "tests/srd/test_monsters.py::test_goblin_has_10_hit_points_and_rolled_hp_uses_3d6",
+    "tests/srd/test_monsters.py::test_a_goblin_added_with_rolled_hp_rolls_3d6",
+    "tests/srd/test_monsters.py::test_9_damage_leaves_the_goblin_at_1_hp_and_10_kills_it",
+    "tests/srd/test_monsters.py::test_goblin_moves_30_feet_on_its_turn",
+    "tests/srd/test_monsters.py::test_goblin_cant_move_35_feet",
+    "tests/srd/test_monsters.py::test_goblin_has_no_fly_speed",
+    "tests/srd/test_monsters.py::test_goblin_strength_8_gives_minus_1_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_strength_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "tests/srd/test_monsters.py::test_goblin_dexterity_15_gives_plus_2_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_dexterity_save_meets_dc_12_on_a_10_and_fails_dc_13",
+    "tests/srd/test_monsters.py::test_goblin_constitution_10_gives_plus_0_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_constitution_save_meets_dc_10_on_a_10_and_fails_dc_11",
+    "tests/srd/test_monsters.py::test_goblin_intelligence_10_gives_plus_0_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_intelligence_save_meets_dc_10_on_a_10_and_fails_dc_11",
+    "tests/srd/test_monsters.py::test_goblin_wisdom_8_gives_minus_1_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_wisdom_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "tests/srd/test_monsters.py::test_goblin_charisma_8_gives_minus_1_to_checks_and_saves",
+    "tests/srd/test_monsters.py::test_goblin_charisma_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "tests/srd/test_monsters.py::test_goblin_stealth_check_adds_6",
+    "tests/srd/test_monsters.py::test_the_stealth_bonus_doesnt_apply_to_other_dexterity_checks",
+    "tests/srd/test_monsters.py::test_goblin_hides_on_a_9_against_dc_15_and_fails_on_an_8",
+    "tests/srd/test_monsters.py::test_goblin_attacks_with_the_scimitar_and_shortbow_from_its_gear",
+    "tests/srd/test_monsters.py::test_goblin_shortbow_attack_needs_no_tracked_arrows",
+    "tests/srd/test_monsters.py::test_goblin_cant_attack_with_a_weapon_not_in_its_stat_block",
+    "tests/srd/test_monsters.py::test_goblin_sees_a_creature_60_feet_away_in_darkness",
+    "tests/srd/test_monsters.py::test_goblin_cant_see_a_creature_65_feet_away_in_darkness",
+    "tests/srd/test_monsters.py::test_darkvision_doesnt_let_the_goblin_see_an_invisible_creature",
+    "tests/srd/test_monsters.py::test_goblin_passive_perception_9_finds_a_hide_total_of_9",
+    "tests/srd/test_monsters.py::test_goblin_passive_perception_9_misses_a_hide_total_of_10",
+    "tests/srd/test_monsters.py::test_a_poisoned_goblins_passive_perception_drops_to_4",
+    "tests/srd/test_monsters.py::test_goblin_speaks_common_and_goblin",
+    "tests/srd/test_monsters.py::test_defeating_a_goblin_warrior_is_worth_50_xp",
+    "tests/srd/test_monsters.py::test_goblin_grapple_dc_is_9_from_str_minus_1_and_pb_2",
+    "tests/srd/test_monsters.py::test_scimitar_attack_adds_4_and_hits_at_equal_ac",
+    "tests/srd/test_monsters.py::test_scimitar_attack_isnt_strength_based",
+    "tests/srd/test_monsters.py::test_scimitar_cant_reach_a_target_10_feet_away",
+    "tests/srd/test_monsters.py::test_goblin_gets_one_scimitar_attack_per_action",
+    "tests/srd/test_monsters.py::test_goblin_scimitar_attack_through_the_session_out_of_reach_is_refused",
+    "tests/srd/test_monsters.py::test_scimitar_hit_deals_1d6_plus_2_slashing",
+    "tests/srd/test_monsters.py::test_scimitar_critical_hit_doubles_the_d6_not_the_2",
+    "tests/srd/test_monsters.py::test_scimitar_static_damage_is_5",
+    "tests/srd/test_monsters.py::test_scimitar_with_advantage_adds_1d4_slashing",
+    "tests/srd/test_monsters.py::test_scimitar_without_advantage_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_scimitar_with_disadvantage_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_scimitar_with_cancelled_advantage_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too",
+    "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_7",
+    "tests/srd/test_monsters.py::test_an_unseen_goblins_scimitar_attack_has_advantage_and_adds_1d4",
+    "tests/srd/test_monsters.py::test_shortbow_at_80_feet_adds_4_with_no_range_disadvantage",
+    "tests/srd/test_monsters.py::test_shortbow_at_85_feet_has_long_range_disadvantage",
+    "tests/srd/test_monsters.py::test_shortbow_reaches_320_feet_but_not_325",
+    "tests/srd/test_monsters.py::test_shortbow_fired_next_to_an_enemy_has_disadvantage",
+    "tests/srd/test_monsters.py::test_shortbow_hit_deals_1d6_plus_2_piercing",
+    "tests/srd/test_monsters.py::test_shortbow_critical_hit_doubles_the_d6_not_the_2",
+    "tests/srd/test_monsters.py::test_shortbow_minimum_damage_is_3",
+    "tests/srd/test_monsters.py::test_shortbow_with_advantage_adds_1d4_piercing",
+    "tests/srd/test_monsters.py::test_shortbow_without_advantage_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_shortbow_advantage_cancelled_by_long_range_adds_no_1d4",
+    "tests/srd/test_monsters.py::test_nimble_escape_disengages_as_a_bonus_action_and_leaves_the_action",
+    "tests/srd/test_monsters.py::test_nimble_escape_hides_as_a_bonus_action",
+    "tests/srd/test_monsters.py::test_without_nimble_escape_the_goblin_moving_away_provokes",
+    "tests/srd/test_monsters.py::test_nimble_escape_hide_needs_cover_or_heavy_obscurement",
+    "tests/srd/test_monsters.py::test_nimble_escape_hide_fails_on_a_stealth_total_of_14_and_spends_the_bonus_action",
+    "tests/srd/test_monsters.py::test_nimble_escape_only_once_per_turn",
+    "tests/srd/test_monsters.py::test_nimble_escape_out_of_turn_is_refused",
+    "tests/srd/test_monsters.py::test_nimble_escape_while_incapacitated_is_refused",
+    "tests/srd/test_monsters.py::test_a_bandit_has_no_nimble_escape",
+    "tests/srd/test_monsters.py::test_a_bandit_cant_disengage_as_a_bonus_action_through_the_session",
+    "tests/srd/journeys/test_goblin_warrior_journey.py::test_goblin_hides_shoots_from_hiding_then_disengages"
+  ],
+  "tickets": [
+    "T-68",
+    "T-69",
+    "T-70",
+    "T-71",
+    "T-72",
+    "T-73",
+    "T-74",
+    "T-75",
+    "T-76"
+  ]
 }

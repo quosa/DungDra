@@ -1,0 +1,12 @@
+{
+  "id": "T-75",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: only a feature like Nimble Escape makes Disengage a Bonus Action; engine: the disengage command accepts bonus=True from any creature",
+  "tests": [
+    "tests/srd/test_monsters.py::test_a_bandit_cant_disengage_as_a_bonus_action_through_the_session"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
