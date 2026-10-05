@@ -3,37 +3,20 @@
   "id": "MONSTER.goblins.goblin-warrior",
   "problems": {
     "problems": [
-      "clause MONSTER.goblins.goblin-warrior#3: no negative test",
-      "tests/srd/test_monsters.py::test_goblin_strength_8_mod_and_save_minus_1: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_strength_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_strength_save_adds_no_proficiency_bonus: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_dexterity_15_mod_and_save_plus_2: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_dexterity_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_dexterity_save_adds_no_proficiency_bonus: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_constitution_10_mod_and_save_plus_0: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_constitution_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_constitution_save_adds_no_proficiency_bonus: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_intelligence_10_mod_and_save_plus_0: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_intelligence_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_intelligence_save_adds_no_proficiency_bonus: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_wisdom_8_mod_and_save_minus_1: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_wisdom_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_wisdom_save_adds_no_proficiency_bonus: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_charisma_8_mod_and_save_minus_1: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_charisma_save_one_below_the_dc_fails: asserts nothing",
-      "tests/srd/test_monsters.py::test_goblin_charisma_save_adds_no_proficiency_bonus: asserts nothing"
+      "clause MONSTER.goblins.goblin-warrior#3: no negative test"
     ],
     "stage": "C"
   },
   "relations": [],
+  "revisit": false,
   "stages": {
     "A": {
-      "at": 1790933878,
-      "summary": "The Goblin Warrior stat block, split into 24 clauses. The checkable figures all agree with the glossary rules:\n- Initiative score 12 is 10 + Dex +2.\n- Passive Perception 9 is 10 + Wis −1.\n- The Save column equals each modifier, so the goblin has no save proficiencies.\n\nThe rules needing an engine ar"
+      "at": 1791198237,
+      "summary": "This is the stat block for the Goblin Warrior, a CR 1/4 Small Fey (Goblinoid): AC 15, HP 10 (3d6), Speed 30 ft., and Stealth +6. It has a Scimitar attack and a Shortbow attack. Each hits with +4 for 1d6+2 damage, plus 1d4 if the attack roll had Advantage. Nimble Escape lets it take the Disengage or "
     },
     "B": {
-      "at": 1790933962,
-      "summary": "The goblin warrior's data entry at dungdra/data/monsters.py matches the stat block. No item contradicts the SRD. MON-02 and its test only check the 1d4 bonus die when the goblin has Advantage, so I marked both under-asserts: no case without Advantage or with Advantage cancelled. The CMB-03, CMB-06 a"
+      "at": 1791198273,
+      "summary": "I found nothing that contradicts the SRD. The goblin warrior data entry at monsters.py:166 matches the stat block on every value I checked, including both attacks with their 1d4 Advantage riders. Of the six scenarios, CLS-ROG-01, CLS-WIZ-02, CMB-03, CMB-06, SPELLS-02 and MON-02 are consistent and us"
     }
   },
   "status": "incomplete",

@@ -2,20 +2,92 @@
  "output": {
   "verdicts": [
    {
-    "item": "dungdra/data/monsters.py:166",
-    "kind": "code",
+    "item": "CLS-ROG-01",
+    "kind": "scenario",
     "verdict": "consistent",
-    "evidence": "page=290,",
-    "rule_quote": "Small Fey (Goblinoid), Chaotic Neutral",
-    "explanation": "The goblin warrior entry (lines 133-167) matches the stat block. It has size small, type fey, tag goblinoid, chaotic neutral, AC 15, HP 10 (3d6), speed 30, abilities 8/15/10/10/8/8 with saves equal to the modifiers, Stealth +6, darkvision 60, passive 9, CR 1/4, XP 50 and the Nimble Escape trait. Scimitar and Shortbow are +4, 1d6+2, with adv_extra 1d4. The bow range is 80/320. It has no Advantage-cancel test, but the code doesn't depend on that ambiguity here."
+    "evidence": "LIDDA attacks a Goblin Warrior (AC 15). Every hit uses `d20=[15]; d6=[4,5]`.",
+    "rule_quote": "AC 15",
+    "explanation": "The goblin is only the target. AC 15 matches the stat block, and the d20=15 roll meets it."
    },
    {
-    "item": "tests/scenarios/test_world.py::test_mon02_traits",
+    "item": "tests/scenarios/test_combat.py::test_rog01a_ally_adjacent",
     "kind": "test",
-    "verdict": "under-asserts",
-    "evidence": "r = C.attack(game, gob, b, attack_name=\"scimitar\", adv=[\"test\"])",
-    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
-    "explanation": "The Advantage case is right: d20 [3,15] with adv gives 1d6=1 + 2 + 1d4=2 = 5. It never checks that the 1d4 is absent without Advantage or when Advantage and Disadvantage cancel (clauses #19/#20, and the stage A ambiguity). It doesn't test the Shortbow clause #23 either. It also doesn't assert the +4 to hit."
+    "verdict": "consistent",
+    "evidence": "game.dice.force_str(\"d20=[15]; d6=[4,5]\")",
+    "rule_quote": "AC 15",
+    "explanation": "A 15 meets the goblin's AC 15, and the test uses the real stat block."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01b_no_ally",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert C.attack(game, lidda, gob, weapon=\"shortsword\").damage == 7",
+    "rule_quote": "AC 15",
+    "explanation": "Uses the goblin as a target with AC 15, and the hit lands on a 15."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01c_greatclub",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "C.attack(game, lidda, gob, weapon=\"greatclub\", adv=[\"test\"])",
+    "rule_quote": "AC 15",
+    "explanation": "It tests Sneak Attack eligibility and asserts nothing about the goblin's stats."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01d_disadvantage",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "r = C.attack(game, lidda, gob, weapon=\"shortsword\", dis=[\"test\"])",
+    "rule_quote": "AC 15",
+    "explanation": "It tests Sneak Attack with Disadvantage. The goblin is just a target."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01e_incapacitated_ally",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "b.add_condition(\"incapacitated\", \"test\")",
+    "rule_quote": "AC 15",
+    "explanation": "It tests the Incapacitated-ally condition for Sneak Attack, not the goblin's stats."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01f_once_per_turn_and_crit",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert r.crit and r.damage == 1 + 2 + 3 + 4 + 3",
+    "rule_quote": "AC 15",
+    "explanation": "It tests once-per-turn Sneak Attack and crit doubling. The goblin is only a target."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_rog01_level3_2d6",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert sneak_attack_dice(lidda) == 2",
+    "rule_quote": "AC 15",
+    "explanation": "No goblin is used."
+   },
+   {
+    "item": "CLS-WIZ-02",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "She casts Ray of Frost at a Goblin Warrior and misses; then `d8=[6]`.",
+    "rule_quote": "Speed 30 ft.",
+    "explanation": "The goblin is the target. The expected unchanged Speed and the half damage of 3 against 10 HP fit the stat block."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_cls_wiz02",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert gob.hp == 7 and gob.speed() == 30",
+    "rule_quote": "HP 10 (3d6)",
+    "explanation": "10 HP minus 3 is 7, and Speed stays at the stat block's 30 ft."
+   },
+   {
+    "item": "CMB-03",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "BROM vs a Goblin Warrior (AC 15, HP 10).",
+    "rule_quote": "HP 10 (3d6)",
+    "explanation": "The AC and HP match the stat block. The 10+5=15 hit, the 3 HP left, and the death at 0 all follow from them."
    },
    {
     "item": "tests/scenarios/test_combat.py::test_cmb03",
@@ -23,111 +95,7 @@
     "verdict": "consistent",
     "evidence": "assert r.hit and r.roll.total == 15 and gob.hp == 3",
     "rule_quote": "AC 15",
-    "explanation": "The test uses the goblin warrior as a target. A total of 15 meets AC 15 and the goblin goes from HP 10 to 3 after 7 damage, which agrees with AC 15 and HP 10 (clauses #2, #4). The test is about crits, not the stat block."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_cmb06_grapple_shove",
-    "kind": "test",
-    "verdict": "consistent",
-    "evidence": "assert \"DC 13\" in save.text and \"Dexterity\" in save.text",
-    "rule_quote": "| Dex | 15 | +2 | +2 |",
-    "explanation": "The goblin's Dex save and Acrobatics of +2 are used: d20=[9] gives 11 against DC 13, and d20=[14] gives total 16. Both agree with Dex +2 (clause #7). The goblin attacks with a Shortbow and a Scimitar, which exist on the stat block. The test is about Grapple, so the stat block is only incidental."
-   },
-   {
-    "item": "tests/scenarios/test_spells.py::test_spells02_sleep",
-    "kind": "test",
-    "verdict": "consistent",
-    "evidence": "game.dice.force_str(\"d20=[10]; d20=[14]\")",
-    "rule_quote": "| Wis | 8 | −1 | −1 |",
-    "explanation": "The scenario expects Wis save totals of 9 (fails) and 13 (succeeds) against DC 13, which agrees with the Wis save of −1 (clause #10). The test is about Sleep."
-   },
-   {
-    "item": "tests/scenarios/test_spells.py::test_cls_wiz02",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "gob = mon(game, \"goblin warrior\", (30, 0))",
-    "rule_quote": "HP 10 (3d6)",
-    "explanation": "The test is about Ritual Adept, Scholar and Potent Cantrip. The goblin is only a dummy target. The HP 7 and Speed 30 it ends with happen to match, but the test isn't about this stat block."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01a_ally_adjacent",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "gob = mon(game, \"goblin warrior\", (5, 0))",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack eligibility. The goblin is a dummy target with its HP set to 100 in the fixture."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01b_no_ally",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01b_no_ally(game, rog):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack test using the goblin only as a target."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01c_greatclub",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01c_greatclub(game, rog):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack weapon restriction. The goblin is only a target."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01d_disadvantage",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01d_disadvantage(game, rog):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack and Disadvantage on the rogue's attack. The goblin is only a target."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01e_incapacitated_ally",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01e_incapacitated_ally(game, rog):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack and an incapacitated ally. The goblin is only a target."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01f_once_per_turn_and_crit",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01f_once_per_turn_and_crit(game, rog):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack once per turn and crit. The goblin is only a target."
-   },
-   {
-    "item": "tests/scenarios/test_combat.py::test_rog01_level3_2d6",
-    "kind": "test",
-    "verdict": "not-related",
-    "evidence": "def test_rog01_level3_2d6(game):",
-    "rule_quote": "AC 15",
-    "explanation": "Sneak Attack dice count. It doesn't involve a goblin at all."
-   },
-   {
-    "item": "CLS-ROG-01",
-    "kind": "scenario",
-    "verdict": "not-related",
-    "evidence": "LIDDA attacks a Goblin Warrior (AC 15). Every hit uses `d20=[15]; d6=[4,5]`.",
-    "rule_quote": "AC 15",
-    "explanation": "The scenario is about Sneak Attack eligibility. It matched only on the term 'goblin'."
-   },
-   {
-    "item": "CLS-WIZ-02",
-    "kind": "scenario",
-    "verdict": "not-related",
-    "evidence": "MIALEE at level 3 (Evoker). She casts Ray of Frost at a Goblin Warrior and misses; then `d8=[6]`.",
-    "rule_quote": "HP 10 (3d6)",
-    "explanation": "The scenario is about Ritual Adept, Scholar and Evoker. The goblin is only a target."
-   },
-   {
-    "item": "CMB-03",
-    "kind": "scenario",
-    "verdict": "consistent",
-    "evidence": "BROM vs a Goblin Warrior (AC 15, HP 10).",
-    "rule_quote": "AC 15",
-    "explanation": "The scenario's AC 15 and HP 10, and its note that the goblin dies at 0 HP, agree with the stat block (clauses #2, #4)."
+    "explanation": "The total of 15 hits AC 15, and 10 HP minus 7 leaves 3. The crit then kills the goblin."
    },
    {
     "item": "CMB-06",
@@ -135,7 +103,15 @@
     "verdict": "consistent",
     "evidence": "The goblin's Dex save is `d20=[9]` (9 + 2 = 11, which fails DC 13).",
     "rule_quote": "| Dex | 15 | +2 | +2 |",
-    "explanation": "The scenario's Dex save +2 and Acrobatics +2 both match Dex 15 (+2)."
+    "explanation": "The Dex save of +2 matches the stat block. Acrobatics +2 for the escape matches the Dex modifier, since the goblin has no Acrobatics entry."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb06_grapple_shove",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert \"DC 13\" in save.text and \"Dexterity\" in save.text",
+    "rule_quote": "| Dex | 15 | +2 | +2 |",
+    "explanation": "The goblin's Dex save and the escape total of 16 (14+2) agree with Dex +2. It also uses the goblin's Shortbow and Scimitar attacks."
    },
    {
     "item": "SPELLS-02",
@@ -143,22 +119,76 @@
     "verdict": "consistent",
     "evidence": "The goblins' Wis saves (−1) are `d20=[10]` and `d20=[14]`.",
     "rule_quote": "| Wis | 8 | −1 | −1 |",
-    "explanation": "A Wis save of −1 matches the stat block. Totals of 9 and 13 against DC 13 follow from it."
+    "explanation": "Wis save −1 matches, so 10−1=9 and 14−1=13."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spells02_sleep",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "a = mon(game, \"goblin warrior\", (30, 0), name=\"A\")",
+    "rule_quote": "| Wis | 8 | −1 | −1 |",
+    "explanation": "The forced d20 rolls of 10 and 14 with Wis save −1 give the expected outcomes: A fails, B succeeds."
    },
    {
     "item": "MON-02",
     "kind": "scenario",
-    "verdict": "under-asserts",
-    "evidence": "| Goblin Warrior | AC 15, HP 10, Initiative +2, Stealth +6, Dex save +2, Wis save −1. Scimitar +4, 1d6+2 (+1d4 if the attack had Advantage). **Nimble Escape** (Bonus Action: Disengage or Hide). CR 1/4, 50 XP. |",
+    "verdict": "consistent",
+    "evidence": "(c) A Goblin Warrior with Advantage hits.",
     "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
-    "explanation": "The description matches the stat block. It leaves out the Shortbow (+4, 80/320, 1d6+2 plus 1d4 on Advantage), Darkvision 60, Passive Perception 9, Speed 30 and Fey type. The monster traits scenario test only exercises the Scimitar's Advantage rider."
+    "explanation": "The goblin adds +1d4 with Advantage, as the stat block says. The Advantage and Disadvantage cancelling case is not covered, so the ambiguity stays open."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_mon02_traits",
+    "kind": "test",
+    "verdict": "under-asserts",
+    "evidence": "r = C.attack(game, gob, b, attack_name=\"scimitar\", adv=[\"test\"])",
+    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "explanation": "It checks only the Scimitar rider when Advantage applies (1+2+2). It doesn't check the Shortbow rider (clause 21) or that the rider is absent without Advantage. It doesn't check the Advantage/Disadvantage cancelling case (the ambiguity, reading A) either."
+   },
+   {
+    "item": "dungdra/data/monsters.py:166",
+    "kind": "code",
+    "verdict": "consistent",
+    "evidence": "page=290,",
+    "rule_quote": "Skills Stealth +6",
+    "explanation": "This closes the goblin warrior entry. Its values match the stat block: ac=15, init=2, hp=10, 3d6, Stealth 6, Scimitar and Shortbow at +4 with 1d6+2 and adv_extra 1d4, Shortbow range 80/320."
+   },
+   {
+    "item": "dungdra/data/monsters.py:131",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=290,",
+    "rule_quote": "AC 15",
+    "explanation": "This is the goblin minion entry, matched only by page."
+   },
+   {
+    "item": "dungdra/data/monsters.py:202",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=290,",
+    "rule_quote": "AC 15",
+    "explanation": "This is the goblin boss entry, matched only by page."
+   },
+   {
+    "item": "dungdra/combat.py:1389",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=290,",
+    "rule_quote": "AC 15",
+    "explanation": "This is Redirect Attack of the goblin boss. It cites rule MONSTER.goblins.goblin-boss."
+   },
+   {
+    "item": "dungdra/combat.py:1399",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=290,",
+    "rule_quote": "AC 15",
+    "explanation": "This is Redirect Attack of the goblin boss. It cites rule MONSTER.goblins.goblin-boss."
    }
   ],
-  "summary": "The engine's goblin warrior data (monsters.py:133-167) matches the SRD stat block and I found no contradictions. Four scenarios (CMB-03, CMB-06, SPELLS-02, MON-02) use the goblin and agree with the stat block. The test for MON-02 doesn't check that the 1d4 is absent without Advantage or when Advantage is cancelled, or the Shortbow rider. The CLS-ROG-01 and CLS-WIZ-02 scenarios use the goblin only as a dummy target, so they are not-related. The code lines at combat.py:1135 and 1145 and monsters.py:131 and 202 cite the goblin boss or minion, not this unit, so I gave them no verdicts. No srd_tests were listed. I did not check the Nimble Escape implementation, because no related item covers it."
+  "summary": "I found nothing that contradicts the SRD. The goblin warrior data entry at monsters.py:166 matches the stat block on every value I checked, including both attacks with their 1d4 Advantage riders. Of the six scenarios, CLS-ROG-01, CLS-WIZ-02, CMB-03, CMB-06, SPELLS-02 and MON-02 are consistent and use the goblin only as a target or fixture. Five of the tests are consistent and four of the seven CLS-ROG-01 tests are unrelated. test_mon02_traits under-asserts: it covers only the Scimitar rider when Advantage applies. It misses the Shortbow rider, the no-Advantage case and the cancel case behind the stage A ambiguity. Of the code lines found only by page number, monsters.py:131 is the goblin minion and :202 the goblin boss. combat.py:1389 and :1399 are the boss's Redirect Attack. All four are unrelated. I did not check the engine's Nimble Escape or the Advantage-rider logic itself, because no related code lines pointed to it. There are no SRD tests for this unit."
  },
- "problems": [
-  "verdict on MON-02 #1: evidence is not a verbatim quote: '| Goblin Warrior | AC 15, HP 10, Initiative +2, Stealth +6, Dex save +2, Wis sav'"
- ],
- "cost_usd": 0.1725508,
- "session": "d9500f9e-a38c-4dc7-97b0-fa95e363313e"
+ "problems": [],
+ "cost_usd": 0.1967854,
+ "session": "cc0320c7-591b-43e6-b09a-d9e8178faebe"
 }
