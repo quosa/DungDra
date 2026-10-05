@@ -741,3 +741,34 @@ def test_readied_move_is_released_off_turn_without_a_movement_budget(game):
     game.answer("opportunity_attack", False, who=gob)
     move(game, gob, to=(5, 0))
     assert brom.position == (-30, 0)
+
+
+# ---------------- static monster damage ----------------
+def _static_goblin_vs_brom(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.hp = brom.base_max_hp = 100
+    gob = mon(game, "goblin warrior", (5, 0), name="Gob")
+    game.fixed_monster_damage = True
+    return brom, gob
+
+
+def test_static_damage_with_advantage_adds_the_riders_static_number(game):
+    brom, gob = _static_goblin_vs_brom(game)
+    game.dice.force_str("d20=[3,19]")
+    r = attack(game, gob, brom, attack_name="scimitar", adv=["test"])
+    assert r.damage == 5 + 2
+    assert brom.hp == 100 - 7
+
+
+def test_static_damage_without_advantage_omits_the_rider(game):
+    brom, gob = _static_goblin_vs_brom(game)
+    game.dice.force_str("d20=[19]")
+    r = attack(game, gob, brom, attack_name="scimitar")
+    assert r.damage == 5
+
+
+def test_static_damage_with_advantage_cancelled_by_disadvantage_omits_the_rider(game):
+    brom, gob = _static_goblin_vs_brom(game)
+    game.dice.force_str("d20=[19]")
+    r = attack(game, gob, brom, attack_name="scimitar", adv=["test"], dis=["test"])
+    assert r.roll.mode == "normal" and r.damage == 5

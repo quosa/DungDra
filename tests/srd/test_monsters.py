@@ -503,11 +503,6 @@ def test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#20", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-72: with static monster damage the Advantage rider's static 2 is dropped; "
-    "the hit deals 5, not 7",
-)
 def test_scimitar_static_damage_with_advantage_is_7(game):
     b, gob = goblin_vs_brom(game)
     game.fixed_monster_damage = True

@@ -7,7 +7,7 @@
     "srd": 0
   },
   "coverage": {
-    "unit_suite_branch_pct": 48.02,
+    "unit_suite_branch_pct": 48.19,
     "reference_all_suites_branch_pct": 82.0
   },
   "ruff": {

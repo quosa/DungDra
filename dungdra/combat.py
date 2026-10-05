@@ -1607,11 +1607,17 @@ def deal_attack_damage(
         dtype = matk["dtype"]
         total = average(matk["damage"])
         parts.append(f"fixed {total} ({matk['damage']})")
+        # SRD[MONSTER.goblins.goblin-warrior#20]: the Advantage rider has its own static number
+        if matk.get("adv_extra") and roll.mode == "advantage":
+            x = average(matk["adv_extra"])
+            total += x
+            parts.append(f"+fixed {x} ({matk['adv_extra']}, attack had Advantage)")
     else:
         dtype = matk["dtype"]
         dice_total, dice = roll_damage_dice(game, attacker, matk["damage"], crit)
         total = dice_total
         parts.append(f"{matk['damage']}{' (crit dice x2)' if crit else ''}: {dice}")
+        # SRD[MONSTER.goblins.goblin-warrior#20]
         if matk.get("adv_extra") and roll.mode == "advantage":
             x, xd = roll_damage_dice(game, None, matk["adv_extra"], crit)
             total += x
