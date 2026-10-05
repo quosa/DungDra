@@ -174,6 +174,10 @@ def test_spl04_components(game):
 
 
 # ---------------- SPL-05 · Areas ----------------
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-57: flammable objects are caught by a hand-set in_cone flag, not by the Cone's geometry",
+)
 def test_spl05_burning_hands(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")
@@ -181,7 +185,7 @@ def test_spl05_burning_hands(game):
     g2 = mon(game, "goblin warrior", (10, 0), name="G2")  # G1 stands in the line: Half Cover (R-09)
     g3 = mon(game, "goblin warrior", (15, 0), name="G3")
     game.scene.cover_all[g3.id] = "total"
-    game.scene.objects["dry hay"] = {"flammable": True, "in_cone": True}
+    game.scene.objects["dry hay"] = {"flammable": True, "position": (10, 0)}  # in the Cone aimed at G1
     game.dice.force_str("d6=[3,4,5]; d20=[9]; d20=[9]")
     S.cast(game, m, "burning hands", [m, g1, g2, g3])
     assert g1.dead and g2.hp == 10 - 6 and g3.hp == 10

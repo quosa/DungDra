@@ -937,7 +937,7 @@ Creature types matter: **goblins are Fey (Goblinoid)** in SRD 5.2.1 (p.290), not
 #### SPL-05 · Areas of effect and saving throws
 - **Tests:** SPL (Areas of Effect p.106), Glossary (Cone p.179; Area of Effect p.177), DMG (Damage against Multiple Targets; Half Damage p.16), SPELLS (Burning Hands p.114)
 - **Depends on:** SPL-01, CMB-05
-- **Setup:** Three Goblin Warriors in a row inside a 15-ft Cone from MIALEE: G1 at 5 ft, G2 at 10 ft (behind G1), and G3 behind Total Cover inside the cone's area. `d6=[3,4,5]`; Dex saves `d20=[9]` and `d20=[9]`.
+- **Setup:** Three Goblin Warriors in a row inside a 15-ft Cone from MIALEE: G1 at 5 ft, G2 at 10 ft (behind G1), and G3 behind Total Cover inside the cone's area. Unattended dry hay lies 10 ft away in the cone. `d6=[3,4,5]`; Dex saves `d20=[9]` and `d20=[9]`.
 - **Pass:**
   - [H] Only the two exposed goblins are affected.
   - [H] Damage is rolled **once** for all targets: 12.
