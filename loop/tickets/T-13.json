@@ -4,7 +4,12 @@
   "unit": "GLOSS.tremorsense",
   "title": "Surface/liquid contact model: each creature (and moving object) records the surface or body of liquid it touches: ground, wall, ceiling, a separate structure such as a boat, a creature it rides, a lake. Tremorsense detection requires a shared surface or liquid.",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
 }
