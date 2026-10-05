@@ -165,3 +165,8 @@
 {"at": 1791212684, "about": "T-59", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1556, "seconds": 21.5, "session_id": "8bda6365-5e2d-4fe2-b604-9c79dd252eec", "exit": 0}
 {"at": 1791212707, "about": "T-57", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.3486, "seconds": 178.5, "session_id": "0cf4f7c7-f6de-419c-bdc9-8347e866fab4", "exit": 0}
 {"at": 1791213080, "about": "T-57", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1255, "seconds": 13.8, "session_id": "d3dae983-3a98-4d54-981c-8785e5330191", "exit": 0}
+{"at": 1791215001, "about": "MONSTER.goblins.goblin-warrior", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.2051, "seconds": 45.2, "session_id": "cbb9a679-eb3f-4c1b-9e21-0e7646de501e", "exit": 0}
+{"at": 1791215047, "about": "MONSTER.goblins.goblin-warrior", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.2495, "seconds": 61.5, "session_id": "8e72b5a4-7bfb-4073-ae9a-4260d3d648fa", "exit": 0}
+{"at": 1791215108, "about": "MONSTER.goblins.goblin-warrior", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 2.6674, "seconds": 478.0, "session_id": "884806bd-3514-4796-86cd-4ddbd90e4f2f", "exit": 0}
+{"at": 1791215588, "about": "MONSTER.goblins.goblin-warrior", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.4089, "seconds": 14.5, "session_id": "153453af-397a-43ee-a5c0-0543aca930a0", "exit": 1}
+{"at": 1791215603, "about": "MONSTER.goblins.goblin-warrior", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.0, "seconds": 2.5, "session_id": "e5e93fa9-e768-4b4c-8b62-6b7eebfd3e9c", "exit": 1}

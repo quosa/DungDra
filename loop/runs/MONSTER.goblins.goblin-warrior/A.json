@@ -67,7 +67,7 @@
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#14",
-   "text": "Darkvision 60 ft.",
+   "text": "Senses Darkvision 60 ft.",
    "threshold": true
   },
   {
@@ -87,41 +87,41 @@
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#18",
-   "text": "Melee Attack Roll: +4, reach 5 ft.",
+   "text": "Scimitar. Melee Attack Roll: +4, reach 5 ft.",
    "threshold": true
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#19",
-   "text": "Hit: 5 (1d6 + 2) Slashing damage, plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+   "text": "Hit: 5 (1d6 + 2) Slashing damage",
    "threshold": true
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#20",
-   "text": "Ranged Attack Roll: +4, range 80/320 ft.",
+   "text": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
    "threshold": true
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#21",
-   "text": "Hit: 5 (1d6 + 2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+   "text": "Shortbow. Ranged Attack Roll: +4, range 80/320 ft.",
    "threshold": true
   },
   {
    "id": "MONSTER.goblins.goblin-warrior#22",
+   "text": "Hit: 5 (1d6 + 2) Piercing damage",
+   "threshold": true
+  },
+  {
+   "id": "MONSTER.goblins.goblin-warrior#23",
+   "text": "plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+   "threshold": true
+  },
+  {
+   "id": "MONSTER.goblins.goblin-warrior#24",
    "text": "Nimble Escape. The goblin takes the Disengage or Hide action.",
    "threshold": false
   }
  ],
  "relations": [
-  {
-   "type": "interacts_with",
-   "target": "GLOSS.advantage",
-   "evidence": "plus 2 (1d4) Slashing damage if the attack roll had Advantage"
-  },
-  {
-   "type": "interacts_with",
-   "target": "GLOSS.attack-roll",
-   "evidence": "Melee Attack Roll: +4, reach 5 ft."
-  },
   {
    "type": "requires",
    "target": "GLOSS.disengage",
@@ -134,13 +134,18 @@
   },
   {
    "type": "interacts_with",
-   "target": "GLOSS.hide",
-   "evidence": "you must succeed on a DC 15 Dexterity (Stealth) check"
+   "target": "GLOSS.advantage",
+   "evidence": "plus 2 (1d4) Slashing damage if the attack roll had Advantage."
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.attack-roll",
+   "evidence": "Melee Attack Roll: +4, reach 5 ft."
   },
   {
    "type": "requires",
    "target": "GLOSS.darkvision",
-   "evidence": "Darkvision 60 ft."
+   "evidence": "Senses Darkvision 60 ft."
   },
   {
    "type": "interacts_with",
@@ -156,49 +161,64 @@
    "type": "interacts_with",
    "target": "GLOSS.speed",
    "evidence": "Speed 30 ft."
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.save",
+   "evidence": "| Dex | 15 | +2 | +2 |"
   }
  ],
  "ambiguities": [
   {
    "quote": "if the attack roll had Advantage",
-   "reading_a": "The roll 'had Advantage' only if Advantage actually applied, so it was rolled with two d20s. If Advantage and Disadvantage cancel, the rider doesn't apply.",
-   "reading_b": "The roll 'had Advantage' whenever any source granted Advantage, even if Disadvantage cancelled it.",
-   "proposed_ruling": "Reading A. GLOSS.advantage says the two 'cancel each other', so the roll has neither, and the extra 1d4 is not added.",
+   "reading_a": "The extra 1d4 applies only when the roll was actually made with Advantage. If Advantage and Disadvantage cancel, there's no extra damage.",
+   "reading_b": "The extra 1d4 applies whenever any effect gave the roll Advantage, even when Disadvantage cancelled it.",
+   "proposed_ruling": "Reading A. Advantage and Disadvantage 'cancel each other', so the roll didn't have Advantage and the 1d4 isn't added.",
    "confidence": 0.75
+  },
+  {
+   "quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+   "reading_a": "On a Critical Hit, the conditional 1d4 is an attack damage die and is rolled twice, like the 1d6.",
+   "reading_b": "Only the weapon's base 1d6 is doubled on a Critical Hit; the conditional 1d4 rider isn't.",
+   "proposed_ruling": "Reading A. The 1d4 is damage dealt by the hit, so a Critical Hit doubles it too.",
+   "confidence": 0.7
+  },
+  {
+   "quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+   "reading_a": "The stat block is authoritative. The Shortbow attack can be used while AC stays 15, even though the Shortbow is Two-Handed and the goblin carries a Shield.",
+   "reading_b": "The goblin has to doff the Shield (and lose its AC bonus) before it can fire the Two-Handed Shortbow.",
+   "proposed_ruling": "Reading A. Stat block actions and AC are used exactly as printed. Gear doesn't add equip/doff limits to a monster's own actions.",
+   "confidence": 0.6
   }
  ],
  "conflicts": [],
  "gaps": [
   {
    "quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
-   "explanation": "AC 15 equals Leather Armor (11) + Dex (+2) + Shield (+2), but the unit doesn't say whether AC is recalculated if the goblin loses or drops its Shield or armor. The listed Shortbow also has no Ammunition, and no rule here says whether a monster's ammunition is tracked."
+   "explanation": "The Gear line lists a Shortbow (Ammunition property) but no arrows. The unit doesn't say whether the goblin's Shortbow attacks use up ammunition or how much it carries. That needs a register ruling, for example that monster stat-block ranged attacks don't track ammunition."
   }
  ],
  "traps": [
   {
    "quote": "Small Fey (Goblinoid), Chaotic Neutral",
-   "note": "In 2014 the goblin was a Small Humanoid (goblinoid), Neutral Evil. In 2024 it is Fey, so effects keyed to creature type (Humanoid vs Fey) resolve differently."
+   "note": "In 2014 the goblin was a Small humanoid (goblinoid), Neutral Evil. In 2024 it is Fey, so effects limited to Humanoids (e.g. Charm Person, Hold Person) don't affect it, and effects aimed at Fey do."
   },
   {
    "quote": "HP 10 (3d6)",
-   "note": "The 2014 Goblin had 7 (2d6) HP."
+   "note": "The 2014 goblin had 7 (2d6) HP."
   },
   {
-   "quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage",
-   "note": "The 2014 goblin attacks had no Advantage damage rider. Both the Scimitar and the Shortbow need the conditional 1d4."
+   "quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+   "note": "The extra 1d4 on Advantage is new in 2024. The 2014 Scimitar/Shortbow attacks did a flat 1d6 + 2."
   },
   {
    "quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
-   "note": "The wording matches 2014, but the 2024 Hide action is a DC 15 Dexterity (Stealth) check that needs Heavy Obscurement or Three-Quarters/Total Cover and grants the Invisible condition. In 2014 it was a check contested against Perception."
+   "note": "Same wording as 2014, but the 2024 Hide action needs a DC 15 Stealth check while Heavily Obscured or behind Three-Quarters/Total Cover and out of enemy sight. Success gives the Invisible condition. The 2014 Hide was a contest against passive Perception with no fixed DC."
   },
   {
    "quote": "Initiative +2 (12)",
-   "note": "2014 stat blocks had no Initiative entry. 2024 lists a modifier and a score (10 + Dex modifier), and the score can be used instead of rolling."
-  },
-  {
-   "quote": "Skills Stealth +6",
-   "note": "+6 is more than Dex (+2) + PB (+2). The listed bonus must be used as written, not recomputed from proficiency."
+   "note": "2014 stat blocks had no Initiative line. In 2024 the score of 12 (10 + Dex) can be used instead of rolling."
   }
  ],
- "summary": "This is the stat block for the Goblin Warrior, a CR 1/4 Small Fey (Goblinoid): AC 15, HP 10 (3d6), Speed 30 ft., and Stealth +6. It has a Scimitar attack and a Shortbow attack. Each hits with +4 for 1d6+2 damage, plus 1d4 if the attack roll had Advantage. Nimble Escape lets it take the Disengage or Hide action as a Bonus Action. The derived numbers check out: Initiative 12 = 10 + Dex modifier, and Passive Perception 9 = 10 + Wis modifier (−1). The one real ambiguity is whether the Advantage rider applies when Advantage and Disadvantage cancel. The main 2014 traps are the change from Humanoid to Fey, the higher HP, the new Advantage damage rider, and the 2024 Hide mechanics behind Nimble Escape."
+ "summary": "The Goblin Warrior stat block (CR 1/4, 50 XP) splits into 24 testable clauses. Its derived values check out against the referenced rules: Initiative 12 = 10 + Dex 2; Passive Perception 9 = 10 + Wis −1; AC 15 = Leather 11 + Dex 2 + Shield 2; attack +4 = Dex 2 + PB 2. The 2024 changes are the Fey type, HP 10 (3d6) and the extra 1d4 damage when the attack roll had Advantage. Nimble Escape relies on the 2024 Disengage and Hide actions. Open questions: whether cancelled Advantage still adds the 1d4, whether a crit doubles it, a Two-Handed Shortbow alongside a Shield, and ammunition tracking (a gap)."
 }
