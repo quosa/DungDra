@@ -6,5 +6,11 @@
   "tests": [],
   "status": "open",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "cap",
+      "usd": 9.0
+    }
+  ],
+  "cap_usd": 9.0
 }
