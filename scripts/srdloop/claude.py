@@ -21,7 +21,12 @@ AGENTS = Path(".claude/agents")
 SCHEMAS = Path(__file__).parent / "schemas"
 LEDGER = Path("loop/costs.jsonl")
 SETTINGS = Path(__file__).parent / "settings.json"  # loop-only: sandbox, deny rules, the write guard
-TRANSIENT = re.compile(r"rate.?limit|usage limit|overloaded|529|503|timed? ?out|ECONN|network", re.I)
+TRANSIENT = re.compile(
+    r"rate.?limit|usage limit|hit your limit|limit reached|resets? at"
+    r"|overloaded|529|503|timed? ?out|ECONN|network",
+    re.I,
+)
+CALL_TIMEOUT_S = 3600  # one agent call; json output gives no progress to reset a timer on
 
 READ = ("Read", "Grep", "Glob")
 PYTEST = ("Bash(python -m pytest:*)", "Bash(pytest:*)")
@@ -195,7 +200,29 @@ def invoke(
     budget.check(cap)
     env = {**os.environ, "SRDLOOP_ROLE": role}
     started = time.time()
-    proc = run(argv(role, prompt, cap), capture_output=True, text=True, env=env, check=False)
+    try:
+        proc = run(
+            argv(role, prompt, cap),
+            capture_output=True,
+            text=True,
+            env=env,
+            check=False,
+            timeout=CALL_TIMEOUT_S,
+        )
+    except subprocess.TimeoutExpired:
+        log_cost(
+            {"at": round(started), "about": about, "stage": stage, "role": role, "model": ROLES[role].model}
+            | {
+                "cost_usd": 0.0,
+                "seconds": round(time.time() - started, 1),
+                "session_id": None,
+                "exit": "timeout",
+            },
+            ledger,
+        )
+        raise Paused(
+            f"{role} ran for {CALL_TIMEOUT_S // 60} minutes without finishing; its cost is unknown"
+        ) from None
     try:
         raw = json.loads(proc.stdout or "{}")
     except json.JSONDecodeError:
@@ -216,11 +243,15 @@ def invoke(
         },
         ledger,
     )
-    text = f"{raw.get('result', '')} {proc.stderr}"
-    if proc.returncode != 0 and not raw.get("structured_output") and TRANSIENT.search(text):
-        raise Paused(f"transient failure in {role}: {text.strip()[:200]}")
+    text = f"{raw.get('result', '')} {proc.stderr}".strip()
+    detail = f"exit {proc.returncode}, {raw.get('subtype') or 'no subtype'}" + (
+        f": {text[:300]}" if text else ""
+    )
+    if proc.returncode != 0:
+        # A call that failed without doing anything (cost 0) or names a limit didn't really run: a usage
+        # or rate limit, an outage. Pause instead of spending one of the stage's attempts on it.
+        if cost == 0 or TRANSIENT.search(text):
+            raise Paused(f"{role} didn't run ({detail})")
+        return Result(None, cost, raw.get("session_id"), detail, raw)  # a non-zero exit is never a result
     output = raw.get("structured_output")
-    error = None
-    if output is None:
-        error = raw.get("subtype") or (proc.stderr.strip()[:300] or "no structured output")
-    return Result(output, cost, raw.get("session_id"), error, raw)
+    return Result(output, cost, raw.get("session_id"), None if output is not None else detail, raw)

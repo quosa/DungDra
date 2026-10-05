@@ -43,7 +43,9 @@ an open ticket, and `ticket reopen` puts a parked one back on the list.
 
 A failed attempt is stashed and recorded. After three failed attempts the ticket is `stuck`.
 
-Units are not re-queued when code changes, only when their SRD text or scope does. A fixed infra
+Units are not re-queued when code changes, only when their SRD text or scope does. An `incomplete`
+unit resumes at the stage that failed (a resume at D first brings back C's set-aside test files;
+if they're gone, C runs again). A fixed infra
 ticket marks the unit that opened it for a **revisit**, queued last and starting at stage C.
 
 ## A session, step by step
@@ -63,6 +65,10 @@ python -m scripts.srdloop report                    # loop/COVERAGE.md
 - **Before a run:** commit your own work. `preflight` refuses to start on a tree with changes
   that belong to no agent zone. Don't edit the working tree while a run is going: the zone check
   counts your files as the agent's, fails the attempt and stashes your edit with it.
+- **Failed calls:** an agent call that exits non-zero never counts as a result. If it cost
+  nothing or names a limit (usage, rate, overload), the run pauses (exit 4) instead of spending an
+  attempt; the attempt record keeps the CLI's exit code, subtype and message (`error`). A call
+  that runs 60 minutes is stopped and the run pauses.
 - **Budget:** `--budget` is a cap per run in USD; whatever isn't used isn't spent. Exit 4 means
   paused (budget, usage limit or a transient error); the same command resumes, including a
   half-done retry. Each run's budget starts at $0. A budget pause prints a hint: run the same command again, or a

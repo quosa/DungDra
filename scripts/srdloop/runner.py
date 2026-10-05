@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import json
 import re
+import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -236,6 +237,21 @@ def stash(paths: tuple[str, ...], message: str) -> None:
         git("stash", "push", "--include-untracked", "-m", message, "--", *present)
 
 
+def restore_set_aside(uid: str, stage: str) -> bool:
+    """Bring back the files a unit's failed stage set aside (the test files stage C wrote, for a
+    resume at D). False when there is no such stash or it doesn't apply cleanly."""
+    message = f"srdloop: {uid} incomplete at stage {stage}"
+    for line in git("stash", "list").splitlines():
+        ref, _, rest = line.partition(": ")
+        if rest.endswith(message):
+            popped = subprocess.run(["git", "stash", "pop", ref], capture_output=True, check=False)
+            if popped.returncode != 0:  # a conflicted pop keeps the stash; undo what it half applied
+                git("checkout", "--", ".")
+                return False
+            return True
+    return False
+
+
 def set_aside(message: str) -> str:
     """After failed work: stash every change except the loop's own files and the fixer's
     requests to a person, wherever the agent put it (a gate caught it writing outside its zone;
@@ -369,6 +385,8 @@ def run_unit(ctx: P.Context, uid: str, budget: C.Budget, invoke: Invoke = C.invo
     loop/runs/<unit>/<stage>.attempt<n>.json; a failed attempt leaves <stage>.pending.json, so a
     run that pauses before the retry resumes with the retry (and the agent's files), not from scratch."""
     st = S.load(uid)
+    if st["status"] == "incomplete" and S.next_stage(st) == "D" and not restore_set_aside(uid, "D"):
+        st["stages"].pop("C", None)  # D verifies C's test files; without them, C writes them again
     st["status"] = "in-progress"
     S.save(st)
     for stage in [s for s in S.STAGES if s not in st["stages"]]:
@@ -395,6 +413,7 @@ def run_unit(ctx: P.Context, uid: str, budget: C.Budget, invoke: Invoke = C.invo
                 "problems": problems,
                 "cost_usd": res.cost_usd,
                 "session": res.session_id,
+                "error": res.error,  # the CLI's exit code, subtype and message when there was no output
             }
             (runs / uid / f"{stage}.attempt{attempt}.json").write_text(
                 json.dumps(record, indent=1, ensure_ascii=False)
@@ -407,7 +426,13 @@ def run_unit(ctx: P.Context, uid: str, budget: C.Budget, invoke: Invoke = C.invo
         else:
             pending.unlink(missing_ok=True)
             st = S.load(uid)
-            st.update(status="incomplete", problems={"stage": stage, "problems": problems[:40]})
+            st.update(
+                status="incomplete",
+                problems={"stage": stage, "problems": problems[:40]},
+                fingerprint=S.fingerprint(
+                    P.inputs(ctx, uid)
+                ),  # a re-run resumes here unless the rule changed
+            )
             S.save(st)
             set_aside(f"srdloop: {uid} incomplete at stage {stage}")
             commit(f"srd: {uid} incomplete at stage {stage}", Gt.HARNESS)
@@ -680,6 +705,8 @@ def run_ticket(
         prompt = Pr.fix(tk, unit, failures, problems)
         res = invoke("fixer", prompt, budget=budget, about=tk["id"], stage="fix", cap=cap)
         out, cost = res.output or {}, res.cost_usd
+        if res.output is None:
+            problems.append(f"fixer: no structured output ({res.error})")
     if out.get("dispute") or out.get("test_change_request"):
         tk["status"] = "dispute"
         T.record(tk, "dispute", reason=out.get("dispute") or out.get("test_change_request"))

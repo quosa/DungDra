@@ -279,6 +279,38 @@ def test_a_waived_negative_test_gets_through_and_is_recorded(tmp_path, monkeypat
     assert S.load("GLOSS.grappled")["kind_waivers"] == [waiver]
 
 
+def counting(stage_bad: str, bad, calls: list[str]):
+    inner = agents(stage_bad, bad)
+
+    def invoke(role, prompt, *, budget, about, stage, cap):
+        calls.append(stage)
+        return inner(role, prompt, budget=budget, about=about, stage=stage, cap=cap)
+
+    return invoke
+
+
+def test_a_unit_that_failed_at_d_resumes_at_d_with_cs_test_files(tmp_path, monkeypatch):
+    ctx = repo(tmp_path, monkeypatch)
+    calls: list[str] = []
+    assert run(ctx, counting("D", lambda: None, calls)) == "incomplete"
+    assert not Path("tests/srd/test_glossary.py").exists()  # C's tests were set aside with the failure
+    calls.clear()
+    assert run(ctx, counting("none", lambda: None, calls)) == "red"
+    assert calls == ["D"]  # A, B and C are not paid for again
+    assert "test_grappled_speed_is_zero" in Path("tests/srd/test_glossary.py").read_text()
+    stashes = subprocess.run(["git", "stash", "list"], capture_output=True, text=True, check=True).stdout
+    assert "incomplete at stage D" not in stashes
+
+
+def test_a_resume_at_d_without_cs_files_writes_them_again(tmp_path, monkeypatch):
+    ctx = repo(tmp_path, monkeypatch)
+    assert run(ctx, agents("D", lambda: None)) == "incomplete"
+    subprocess.run(["git", "stash", "drop", "-q"], check=True)  # a person dropped the set-aside files
+    calls: list[str] = []
+    assert run(ctx, counting("none", lambda: None, calls)) == "red"
+    assert calls == ["C", "D"]
+
+
 def test_a_paused_retry_resumes_with_the_problems_and_keeps_the_designers_files(tmp_path, monkeypatch):
     ctx = repo(tmp_path, monkeypatch)
     prompts: list[str] = []

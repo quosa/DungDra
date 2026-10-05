@@ -122,7 +122,9 @@ def test_invoke_pauses_before_overspending_and_on_transient_failures(tmp_path, m
         )
     assert calls == []  # nothing started
     run, _ = fake_run({"result": "API Error: rate limit exceeded"}, code=1)
-    with pytest.raises(C.Paused, match="transient"):
+    with pytest.raises(
+        C.Paused, match=r"rule-analyst didn't run \(exit 1, no subtype: API Error: rate limit"
+    ):
         C.invoke(
             "rule-analyst", "p", budget=C.Budget(9.0), about="u", stage="A", run=run, ledger=tmp_path / "c"
         )
@@ -130,7 +132,43 @@ def test_invoke_pauses_before_overspending_and_on_transient_failures(tmp_path, m
     res = C.invoke(
         "rule-analyst", "p", budget=C.Budget(9.0), about="u", stage="A", run=run, ledger=tmp_path / "c"
     )
-    assert res.output is None and res.error == "error_max_budget_usd"
+    assert res.output is None and res.error == "exit 1, error_max_budget_usd"
+
+
+def test_a_failed_call_that_did_nothing_pauses_and_a_non_zero_exit_is_never_a_result(tmp_path, monkeypatch):
+    monkeypatch.chdir(REPO)
+    ledger = tmp_path / "c"
+
+    def call(stdout, code, stderr=""):
+        run, _ = fake_run(stdout, code, stderr)
+        return C.invoke(
+            "test-verifier", "p", budget=C.Budget(9.0), about="u", stage="D", run=run, ledger=ledger
+        )
+
+    # the goblin's stage D: exit 1, subtype "success", nothing spent, a limit message nobody matched before
+    limit = {"subtype": "success", "is_error": True, "result": "You've hit your limit · resets 7pm"}
+    with pytest.raises(C.Paused, match=r"didn't run \(exit 1, success: You've hit your limit"):
+        call(limit, 1)
+    with pytest.raises(C.Paused, match="exit 2"):  # cost 0 with any wording: it never really ran
+        call({"result": "unknown flag"}, 2)
+    res = call({"structured_output": {"verdicts": []}, "total_cost_usd": 0.4, "result": "boom"}, 1)
+    assert res.output is None and res.error == "exit 1, no subtype: boom"  # spent money, failed: an attempt
+    res = call({"subtype": "success", "total_cost_usd": 0.4}, 0)
+    assert res.output is None and res.error == "exit 0, success"
+
+
+def test_a_call_that_runs_past_the_timeout_pauses(tmp_path, monkeypatch):
+    monkeypatch.chdir(REPO)
+    seen = {}
+
+    def run(args, **kw):
+        seen.update(kw)
+        raise subprocess.TimeoutExpired(args, kw["timeout"])
+
+    with pytest.raises(C.Paused, match="ran for 60 minutes"):
+        C.invoke("fixer", "p", budget=C.Budget(9.0), about="T-1", stage="fix", run=run, ledger=tmp_path / "c")
+    assert seen["timeout"] == C.CALL_TIMEOUT_S == 3600
+    assert json.loads((tmp_path / "c").read_text())["exit"] == "timeout"
 
 
 # ---------------------------------------------------------------- tickets

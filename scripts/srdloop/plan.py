@@ -79,9 +79,13 @@ def build(ctx: Context) -> list[dict]:
     first, revisit = [], []
     for uid in G.queue(ctx.units, ctx.edges, include):
         st = ctx.state(uid)
-        stale = S.is_stale(st, S.fingerprint(inputs(ctx, uid))) if st["status"] in S.TERMINAL else False
+        current = S.fingerprint(inputs(ctx, uid))
+        if st["status"] == "incomplete":  # resume at the failed stage, unless its text or scope changed
+            stale = st.get("fingerprint") is not None and st["fingerprint"] != current
+        else:
+            stale = S.is_stale(st, current) if st["status"] in S.TERMINAL else False
         item = {"id": uid, "scope": ctx.scope(uid), "status": st["status"], "stale": stale, "revisit": False}
-        if st["status"] not in S.TERMINAL or stale:
+        if st["status"] in ("incomplete", *[s for s in S.STATUSES if s not in S.TERMINAL]) or stale:
             first.append({**item, "next_stage": S.next_stage(st) if not stale else "A"})
         elif st.get("revisit"):
             revisit.append({**item, "revisit": True, "next_stage": "C"})

@@ -285,6 +285,28 @@ def test_plan_queues_unfinished_and_stale_units_and_skips_done_and_out_of_scope(
     ]
 
 
+def test_an_incomplete_unit_resumes_at_the_failed_stage_unless_its_rule_changed():
+    us = [unit("GLOSS.a", title="A"), unit("GLOSS.b", title="B"), unit("GLOSS.c", title="C")]
+    ctx = _ctx(us)
+    fp = S.fingerprint(P.inputs(ctx, "GLOSS.a"))
+    abc = {"A": {}, "B": {}, "C": {}}
+    ctx.states = {
+        "GLOSS.a": {"id": "GLOSS.a", "status": "incomplete", "stages": abc, "fingerprint": fp},
+        "GLOSS.b": {
+            "id": "GLOSS.b",
+            "status": "incomplete",
+            "stages": {"A": {}},
+        },  # failed before fingerprints
+        "GLOSS.c": {"id": "GLOSS.c", "status": "incomplete", "stages": abc, "fingerprint": "old text"},
+    }
+    q = P.build(ctx)
+    assert [(x["id"], x["next_stage"], x["stale"]) for x in q] == [
+        ("GLOSS.a", "D", False),
+        ("GLOSS.b", "B", False),
+        ("GLOSS.c", "A", True),
+    ]
+
+
 def test_only_rule_text_or_scope_make_a_finished_unit_stale():
     us = [unit("GLOSS.a", title="A", text="old"), unit("GLOSS.b", title="B")]
     ctx = _ctx(us, edges=[G.Edge("GLOSS.a", "GLOSS.b", "requires")])
