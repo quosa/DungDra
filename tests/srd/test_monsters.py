@@ -408,10 +408,6 @@ def test_scimitar_attack_isnt_strength_based(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#18", kind="boundary")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-71: an attack refused as out of reach or range has already spent the Attack action",
-)
 def test_scimitar_cant_reach_a_target_10_feet_away(game):
     b, gob = goblin_vs_brom(game, gob_pos=(10, 0))
     in_combat(game, gob, b)
@@ -548,10 +544,6 @@ def test_shortbow_at_85_feet_has_long_range_disadvantage(game):
 
 
 @pytest.mark.srd(GW, clause=f"{GW}#21", kind="boundary")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-71: an attack refused as out of reach or range has already spent the Attack action",
-)
 def test_shortbow_reaches_320_feet_but_not_325(game):
     b, gob = goblin_vs_brom(game, gob_pos=(320, 0))
     in_combat(game, gob, b)

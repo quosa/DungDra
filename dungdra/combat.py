@@ -978,11 +978,6 @@ def attack(
         ranged = matk["kind"] == "ranged" or (matk["kind"] == "both" and dist > matk["reach"])
         melee = not ranged
         reach = matk["reach"]
-    # --- action economy ---
-    if cb is not None:
-        _spend_attack(game, attacker, item, light_extra, nick, opportunity or reaction)
-    elif opportunity:
-        pass
     # --- range ---
     ctx = Ctx(
         "attack",
@@ -1044,6 +1039,11 @@ def attack(
             dtype = wd["dtype"] if wd else (matk["dtype"] if matk else "bludgeoning")
             if dtype != "piercing":
                 dis.append("melee weapon attack underwater without a Swim Speed (p.16)")
+    # --- action economy ---
+    if cb is not None:
+        # SRD[MONSTER.goblins.goblin-warrior#18] SRD[MONSTER.goblins.goblin-warrior#21] the attack
+        # is spent only once its reach or range allows it: a refused attack costs nothing
+        _spend_attack(game, attacker, item, light_extra, nick, opportunity or reaction)
     # heavy weapons (p.89): Str/Dex below 13
     if is_pc and wd and "heavy" in wd["props"]:
         if melee and attacker.score("str") < 13:

@@ -453,6 +453,49 @@ def test_move_refused_over_budget_names_the_cost_and_changes_nothing(game):
     assert game.combat.turn.movement_left == gob.speed()
 
 
+# ---------------- a refused attack costs nothing ----------------
+def _goblin_turn_at(game, gob_pos):
+    gob, brom = _goblin_turn(game)
+    brom.position = (0, 0)
+    gob.position = gob_pos
+    return brom, gob
+
+
+def test_an_attack_out_of_reach_spends_no_action(game):
+    brom, gob = _goblin_turn_at(game, (10, 0))
+    with pytest.raises(Refusal, match="reach") as exc:
+        attack(game, gob, brom, attack_name="scimitar")
+    assert exc.value.page == 15
+    t = game.combat.turn
+    assert (t.actions_used, t.attack_action_taken) == (0, False)
+
+
+def test_an_attack_beyond_long_range_spends_no_action(game):
+    brom, gob = _goblin_turn_at(game, (325, 0))
+    with pytest.raises(Refusal, match="long range") as exc:
+        attack(game, gob, brom, attack_name="shortbow")
+    assert exc.value.page == 90
+    t = game.combat.turn
+    assert (t.actions_used, t.attack_action_taken) == (0, False)
+
+
+def test_the_action_refused_attack_leaves_is_spent_by_an_attack_in_range(game):
+    brom, gob = _goblin_turn_at(game, (325, 0))
+    with pytest.raises(Refusal):
+        attack(game, gob, brom, attack_name="shortbow")
+    gob.position = (320, 0)
+    game.dice.force_str("d20=[2,2]")
+    attack(game, gob, brom, attack_name="shortbow")
+    assert game.combat.turn.actions_used == 1
+
+
+def test_an_attack_out_of_turn_is_still_refused(game):
+    brom, gob = _goblin_turn_at(game, (5, 0))
+    with pytest.raises(Refusal, match="turn"):
+        attack(game, brom, gob)
+    assert game.combat.turn.actions_used == 0
+
+
 # ---------------- the Ready action ----------------
 def _brom_vs_goblins(game, *positions):
     brom = pc(game, "BROM", (0, 0))
