@@ -4,7 +4,12 @@
   "unit": "SPELL.casting-spells.effects.targets",
   "title": "Guidance (dungdra/spells.py:911) and the handler at :1237 still pick the caster by hand with `targets[0] if targets else c.caster`. Mark those spells `default_self=True` in dungdra/data/spells.py and remove the fallback from the handlers, so every self-default comes from the data.",
   "tests": [],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Guidance and Shield of Faith are now marked `default_self=True` in dungdra/data/spells.py. `_guidance` and `_shield_of_faith` no longer fall back to `c.caster` when no target is named; they just use `targets[0]`. So every self-default now comes from the existing `sd[\"default_self\"]` check in `cast()`, which is tagged SRD[SPELL.casting-spells.effects.targets#3]. I added unit tests for three things: the data flag, casting with no target landing on the caster, and a named target taking precedence over the default. The ticket names no acceptance tests. All 774 tests pass, ruff check and format are clean, and dev-gate passes."
+    }
+  ]
 }

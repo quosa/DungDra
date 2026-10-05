@@ -78,6 +78,7 @@ SPELLS = {
         conc=True,
         page=138,
         targets="creature",
+        default_self=True,
     ),
     "light": _s(
         0,
@@ -266,6 +267,7 @@ SPELLS = {
         material="a prayer scroll",
         page=161,
         targets="creature",
+        default_self=True,
     ),
     "sleep": _s(
         1,

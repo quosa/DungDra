@@ -86,6 +86,7 @@ def cast(
             rule="GLOSS.ready#7",
         )
     targets = _as_list(game, targets)
+    # SRD[SPELL.casting-spells.effects.targets#3] a spell that can target you defaults to you
     if not targets and sd["default_self"]:
         targets = [caster]
     g = game
@@ -957,7 +958,7 @@ def _sacred_flame(game, c, targets, **kw):
 
 
 def _guidance(game, c, targets, option=None, **kw):
-    t = targets[0] if targets else c.caster
+    t = targets[0]
     skill = norm(option or "perception")
     t.add_effect(Guidance(skill, caster=c.caster, concentration=True, until=game.clock + MINUTE))
     game.log.player(
@@ -1316,7 +1317,7 @@ def _shield(game, c, targets, **kw):
 
 
 def _shield_of_faith(game, c, targets, **kw):
-    t = targets[0] if targets else c.caster
+    t = targets[0]
     t.add_effect(
         ACBonus("Shield of Faith", 2, caster=c.caster, concentration=True, until=game.clock + 10 * MINUTE)
     )

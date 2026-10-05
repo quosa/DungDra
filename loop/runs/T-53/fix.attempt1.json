@@ -1,0 +1,37 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Guidance and Shield of Faith are now marked `default_self=True` in dungdra/data/spells.py. `_guidance` and `_shield_of_faith` no longer fall back to `c.caster` when no target is named; they just use `targets[0]`. So every self-default now comes from the existing `sd[\"default_self\"]` check in `cast()`, which is tagged SRD[SPELL.casting-spells.effects.targets#3]. I added unit tests for three things: the data flag, casting with no target landing on the caster, and a named target taking precedence over the default. The ticket names no acceptance tests. All 774 tests pass, ruff check and format are clean, and dev-gate passes.",
+  "files": [
+   "dungdra/data/spells.py",
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_self_defaulting_spells_say_so_in_their_data",
+   "tests/unit/test_spells.py::test_guidance_and_shield_of_faith_with_no_target_named_affect_the_caster",
+   "tests/unit/test_spells.py::test_a_named_target_overrides_the_self_default"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_spells.py",
+    "line": 388,
+    "explanation": "test_self_defaulting_spells_say_so_in_their_data only reads the data flags back. Not a blocker, because the next two tests check the actual behaviour: with no target named, the spell lands on the caster, and a named target overrides that."
+   }
+  ],
+  "followups": [],
+  "summary": "I approve this fix. Guidance and Shield of Faith now set `default_self=True` in their data, and their handlers no longer fall back to the caster by hand. The self-default is now applied in one place, `cast()` in `dungdra/spells.py`, which also carries the right SRD tag (SPELL.casting-spells.effects.targets#3). Readied release reuses the targets `cast()` already resolved, so taking out the handler fallback doesn't break that path. No other handler still has `targets[0] if targets else c.caster`; the one remaining `if targets else` at spells.py:1459 picks a position for an area spell, which is a separate mechanism. The new unit tests check the behaviour: with no target, the caster gets the effect, and a named target overrides the default. The data-set test on its own is weak but harmless. Nothing in the diff goes beyond the ticket."
+ },
+ "problems": [],
+ "cost_usd": 0.5506,
+ "stash": ""
+}

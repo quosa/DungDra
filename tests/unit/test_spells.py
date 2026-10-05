@@ -385,6 +385,30 @@ def test_mage_armor_with_no_target_named_wards_the_caster(game):
     assert mialee.notes.get("mage_armor") and mialee.find_effects("Mage Armor")
 
 
+def test_self_defaulting_spells_say_so_in_their_data():
+    assert {n for n, sd in SPELLS.items() if sd["default_self"]} >= {
+        "mage armor",
+        "guidance",
+        "shield of faith",
+    }
+
+
+def test_guidance_and_shield_of_faith_with_no_target_named_affect_the_caster(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    jozan.prepared.append("shield of faith")
+    cast(game, jozan, "guidance")
+    assert jozan.find_effects("Guidance")
+    cast(game, jozan, "shield of faith")
+    assert jozan.find_effects("Shield of Faith")
+
+
+def test_a_named_target_overrides_the_self_default(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    cast(game, jozan, "guidance", [brom])
+    assert brom.find_effects("Guidance") and not jozan.find_effects("Guidance")
+
+
 def test_restricted_spells_carry_the_restriction_in_their_data():
     restricted = {n for n, sd in SPELLS.items() if sd["restrict"] is not None}
     assert restricted >= {"mage armor", "hold person"}
