@@ -4,7 +4,12 @@
   "unit": "GLOSS.prone",
   "title": "Creature spaces: give Large and bigger creatures a footprint, and measure distance and adjacency between the nearest occupied squares",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
 }
