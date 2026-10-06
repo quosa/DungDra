@@ -1,0 +1,10 @@
+{
+  "id": "T-80",
+  "kind": "infra",
+  "unit": "GLOSS.cube",
+  "title": "A way to place an area's point of origin off the centre of the Cube's face (sideways and vertically), through spells.cast and the Session cast command",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

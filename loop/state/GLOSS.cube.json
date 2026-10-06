@@ -1,0 +1,61 @@
+{
+  "fingerprint": "f9e1bb0d4d3a23bd",
+  "for_review": [],
+  "id": "GLOSS.cube",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.cube#3",
+      "kind": "boundary",
+      "reason": "The point of origin is either included or not. There is no threshold to probe one step past."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_the_size_is_the_side_not_a_radius_or_half_width",
+    "tests/srd/test_glossary.py::test_a_diagonal_cube_holds_no_more_than_3_by_3_squares",
+    "tests/srd/test_glossary.py::test_leaving_out_the_origin_doesnt_spare_the_creature_next_to_it"
+  ],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1791277443,
+      "summary": "GLOSS.cube defines the Cube area of effect: the point of origin lies anywhere on one face, the effect sets the size as the length of each side, and the origin is excluded unless the creator chooses otherwise. The wording matches the 2014 rules in substance, so there are no traps. The open questions "
+    },
+    "B": {
+      "at": 1791277450,
+      "summary": "No scenarios or SRD tests relate to GLOSS.cube. The three code lines share only page 179 with it and are Concentration code (rule GLOSS.concentration), so they are not related. The engine has no Cube area-of-effect implementation or tests yet."
+    },
+    "C": {
+      "at": 1791277633,
+      "summary": "I added 19 GLOSS.cube tests to tests/srd/test_glossary.py, using Thunderwave as the 15-ft Cube from Self and Web as the 20-ft Cube. The new tests ran with 17 passing and 2 failing because of the engine; the 2 are marked xfail and ruff is clean. The first red test: a diagonally aimed Cube is turned 4"
+    },
+    "D": {
+      "at": 1791277823,
+      "summary": "I ran all 19 GLOSS.cube tests (15 pass, 2 red as expected; 2 more passed in a separate run) and tried to break the engine under each one with srdloop mutate. A harmless mutation passed, so the harness reports correctly.\n\nRefuted (3):\n- test_a_diagonal_cube_holds_no_more_than_3_by_3_squares (wrong or"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_a_cube_extends_from_its_origin_in_the_chosen_direction",
+    "tests/srd/test_glossary.py::test_a_cube_aimed_through_the_session_follows_the_chosen_point",
+    "tests/srd/test_glossary.py::test_a_cube_doesnt_reach_behind_the_face_its_origin_is_on",
+    "tests/srd/test_glossary.py::test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube",
+    "tests/srd/test_glossary.py::test_one_cube_cant_cover_both_sides_of_its_origin_by_naming_them",
+    "tests/srd/test_glossary.py::test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it",
+    "tests/srd/test_glossary.py::test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across",
+    "tests/srd/test_glossary.py::test_a_15_ft_cube_stops_short_of_20_ft",
+    "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cube",
+    "tests/srd/test_glossary.py::test_a_cube_reaches_a_creature_above_the_ground_inside_its_height",
+    "tests/srd/test_glossary.py::test_a_15_ft_cube_doesnt_reach_a_flyer_20_ft_up",
+    "tests/srd/test_glossary.py::test_upcasting_doesnt_enlarge_the_cube",
+    "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cube",
+    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it",
+    "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
+    "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it"
+  ],
+  "tickets": [
+    "T-79",
+    "T-80",
+    "T-81"
+  ]
+}

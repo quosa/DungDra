@@ -1516,3 +1516,160 @@ def test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it(game):
     assert gob.hp == 24
     assert m.hp == m.max_hp
     assert len(game.log.of_kind("save")) == 1
+
+
+# ================ GLOSS.cube ================
+CU = "GLOSS.cube"
+
+
+def wave(game, spots, hits, point=None, named=(0,), slot=None, dice="d8=[2,2]", level=None, elev=None):
+    """MIALEE at (0, 0) casts Thunderwave (a 15-foot Cube originating from her) with goblins
+    (30 HP) at `spots`, aimed at `point` or else the first goblin named (`named` indexes into
+    `spots`). Every creature in the Cube fails its Constitution save, so exactly `hits` d20s are
+    forced; `hits=None` forces none (the saves roll freely, and any creature in the Cube still
+    takes at least half damage). `elev` gives the goblins' elevations."""
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    if level is not None:
+        m.level = level
+    gobs = []
+    for i, p in enumerate(spots):
+        g = mon(game, "goblin warrior", p, name=f"G{i}")
+        g.hp = 30
+        if elev is not None:
+            g.elevation = elev[i]
+        gobs.append(g)
+    game.dice.force_str(dice + "".join("; d20=[1]" for _ in range(hits or 0)))
+    S.cast(game, m, "thunderwave", [gobs[i] for i in named], point=point, slot=slot)
+    return m, gobs
+
+
+# ---------------- #1 · extends in straight lines from a point of origin on a face ----------------
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="positive")
+def test_a_cube_extends_from_its_origin_in_the_chosen_direction(game):
+    _, gobs = wave(game, [(5, 0), (0, 10)], hits=1, point=(0, 15))
+    assert hit(gobs) == [False, True]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="positive")
+def test_a_cube_aimed_through_the_session_follows_the_chosen_point(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    west = mon(game, "goblin warrior", (-5, 0), name="WEST")
+    east.hp = west.hp = 30
+    game.dice.force_str("d8=[2,2]; d20=[1]")
+    out = Session(game).execute(
+        {"cmd": "cast", "spell": "thunderwave", "actor": m.id, "targets": [east.id], "point": [-15, 0]}
+    )
+    assert out.get("ok") is not False, out
+    assert west.hp == 26 and east.hp == 30
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="negative")
+def test_a_cube_doesnt_reach_behind_the_face_its_origin_is_on(game):
+    _, gobs = wave(game, [(5, 0), (-5, 0), (-10, 5)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="boundary", ruling="P-26")
+def test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube(game):
+    # Aimed east, the Cube starts at the caster's face: the squares north and south of her aren't in it.
+    _, gobs = wave(game, [(5, 0), (0, 5), (0, -5)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="abuse")
+def test_one_cube_cant_cover_both_sides_of_its_origin_by_naming_them(game):
+    _, gobs = wave(game, [(5, 0), (-5, 0)], hits=1, named=(0, 1))
+    assert hit(gobs) == [True, False]
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="abuse")
+def test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it(game):
+    _, gobs = wave(game, [(5, 0), (10, 5)], hits=2, named=(0,))
+    assert hit(gobs) == [True, True]
+
+
+# ---------------- #2 · the effect gives the size: the length of each side ----------------
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="positive", ruling="P-26")
+def test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across(game):
+    spots = [(5, -5), (5, 0), (5, 5), (10, -5), (10, 0), (10, 5), (15, -5), (15, 0), (15, 5)]
+    _, gobs = wave(game, spots, hits=9, named=(4,))
+    assert hit(gobs) == [True] * 9
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="boundary")
+def test_a_15_ft_cube_stops_short_of_20_ft(game):
+    _, gobs = wave(game, [(15, 0), (20, 0)], hits=1)
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="boundary", ruling="P-26")
+def test_the_squares_just_past_the_15_ft_width_arent_in_the_cube(game):
+    # Three 5-ft squares make the 15-ft side; the squares either side of them are outside.
+    _, gobs = wave(game, [(10, 5), (10, 10), (10, -10)], hits=1, point=(15, 0))
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="positive")
+def test_a_cube_reaches_a_creature_above_the_ground_inside_its_height(game):
+    _, gobs = wave(game, [(5, 0), (10, 0)], hits=2, elev=[0, 5])
+    assert hit(gobs) == [True, True]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="boundary")
+def test_a_15_ft_cube_doesnt_reach_a_flyer_20_ft_up(game):
+    _, gobs = wave(game, [(5, 0), (10, 0)], hits=1, elev=[0, 20])
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="abuse")
+def test_upcasting_doesnt_enlarge_the_cube(game):
+    _, gobs = wave(game, [(15, 0), (20, 0), (10, 10)], hits=1, slot=2, dice="d8=[2,2,2]", level=3)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="abuse")
+def test_aiming_at_a_far_point_doesnt_stretch_the_cube(game):
+    _, gobs = wave(game, [(10, 0), (25, 0)], hits=1, point=(60, 0))
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-79: Web takes the caller's list and makes a creature 100 ft from its 20-ft Cube "
+    "save against being Restrained; the Cube's size isn't checked at all",
+)
+def test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.level = 3
+    m.prepared.append("web")
+    far = mon(game, "goblin warrior", (30, 100), name="FAR")
+    S.cast(game, m, "web", [far], point=(30, 0), slot=2)
+    assert not far.has("restrained")
+    assert all("FAR" not in s.text for s in game.log.of_kind("save"))
+
+
+# ---------------- #3 · the point of origin isn't included ----------------
+@pytest.mark.srd(CU, clause=f"{CU}#3", kind="positive", ruling="P-27")
+def test_the_caster_at_the_cubes_origin_isnt_affected(game):
+    m, gobs = wave(game, [(5, 0)], hits=1)
+    assert hit(gobs) == [True]
+    assert m.hp == m.max_hp and tuple(m.position) == (0, 0)
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(CU, clause=f"{CU}#3", kind="abuse", ruling="P-27")
+def test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    gob = mon(game, "goblin warrior", (5, 0), name="GOB")
+    gob.hp = 30
+    game.dice.force_str("d8=[2,2]; d20=[1]")
+    S.cast(game, m, "thunderwave", [m, gob])
+    assert gob.hp == 26
+    assert m.hp == m.max_hp
+    assert len(game.log.of_kind("save")) == 1

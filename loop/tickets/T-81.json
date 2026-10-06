@@ -1,0 +1,10 @@
+{
+  "id": "T-81",
+  "kind": "infra",
+  "unit": "GLOSS.cube",
+  "title": "A choice hook on area spells to include the point of origin (the creator's own space) in a Cone or Cube",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

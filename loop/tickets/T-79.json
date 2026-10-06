@@ -1,0 +1,12 @@
+{
+  "id": "T-79",
+  "kind": "bug",
+  "unit": "GLOSS.cube",
+  "title": "SRD: Web's effect is a 20-ft Cube at a point; engine: Web uses the caller's list, so a creature 100 ft away saves and can be Restrained",
+  "tests": [
+    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

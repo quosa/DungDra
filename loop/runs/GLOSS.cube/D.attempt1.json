@@ -1,0 +1,144 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "test": "tests/srd/test_glossary.py::test_a_cube_extends_from_its_origin_in_the_chosen_direction",
+    "verdict": "keep",
+    "reason": "Follows from #1: the Cube goes in the direction its creator picks. Aimed north, it hits the goblin at (0,10) and misses the one at (5,0).",
+    "mutation": "spells.py:1063 `if point is not None:` → `if False:` (the aim point is ignored) → FAILED.",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_cube_aimed_through_the_session_follows_the_chosen_point",
+    "verdict": "keep",
+    "reason": "Same rule, reached through the Session/api command path, which is separate code (api.py:301). No other acceptance test aims a Cube through the session.",
+    "mutation": "api.py:301 `point=tuple(point) if point else None,` → `point=None,` → FAILED; spells.py:1063 aim point ignored → FAILED.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_cube_doesnt_reach_behind_the_face_its_origin_is_on",
+    "verdict": "keep",
+    "reason": "The origin is on a face and the Cube extends away from it, so nothing behind that face is inside. This follows from the words.",
+    "mutation": "geometry.py:81 `0 < along` → `-side < along` (the Cube reaches behind its origin) → FAILED.",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube",
+    "verdict": "keep",
+    "reason": "The squares beside the caster lie in the face plane, so they aren't inside the Cube. This is the only test that pins the exclusive `0 < along` edge.",
+    "mutation": "geometry.py:81 `0 < along` → `0 <= along` → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_one_cube_cant_cover_both_sides_of_its_origin_by_naming_them",
+    "verdict": "keep",
+    "reason": "An abuse test: naming creatures on both sides doesn't widen the area to cover them, and exactly one save is checked. It overlaps the 'behind' test but adds the case where both creatures are named.",
+    "mutation": "geometry.py:81 `0 < along` → `-side < along` → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it",
+    "verdict": "keep",
+    "reason": "Thunderwave says 'each creature in a 15-foot Cube', so the area decides who is hit, not the caller's list (R-16).",
+    "mutation": "spells.py:1115 `candidates = named + [...]` → `candidates = named` → FAILED.",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across",
+    "verdict": "keep",
+    "reason": "A 15-ft side covers 3 squares deep and 3 across. All 9 are asserted hit, which pins the inclusive far edge.",
+    "mutation": "geometry.py:81 `along <= side` → `along < side` → FAILED.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_15_ft_cube_stops_short_of_20_ft",
+    "verdict": "keep",
+    "reason": "The size is the length of each side, so a 15-ft Cube doesn't reach 20 ft.",
+    "mutation": "geometry.py:81 `along <= side` → `along <= side + 5` → FAILED.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cube",
+    "verdict": "keep",
+    "reason": "Width is 15 ft, so the squares 10 ft off the axis are out and the ones 5 ft off are in. This follows from the side length.",
+    "mutation": "geometry.py:81 `across <= side / 2` → `across <= side` → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_the_size_is_the_side_not_a_radius_or_half_width",
+    "verdict": "refute",
+    "reason": "Duplicate of test_the_squares_just_past_the_15_ft_width_arent_in_the_cube. Both assert that (10,10) is outside a Cube aimed at (15,0). The extra (5,±15) points only catch the same 'across <= side' mistake. Every width or radius mutation I tried (across<=side, across<=0.75*side, across<=9) gives the same result in both tests. The Chebyshev and Euclidean readings are reasoned from the coordinates, not run.",
+    "mutation": "geometry.py:81 `across <= side / 2` → `across <= side` → FAILED, same as the sibling test. No mutation I tried separates the two.",
+    "confidence": 0.55
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_cube_reaches_a_creature_above_the_ground_inside_its_height",
+    "verdict": "keep",
+    "reason": "A cube has height equal to its side. Elevation 5 is inside both under the engine's centred origin (±7.5) and under an origin on the bottom edge (0–15), so the test doesn't pick a side in that ambiguity.",
+    "mutation": "geometry.py:81 `abs(q[2] - o[2]) <= side / 2` → `q[2] == o[2]` (a flat Cube) → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_15_ft_cube_doesnt_reach_a_flyer_20_ft_up",
+    "verdict": "keep",
+    "reason": "20 ft up is outside a 15-ft Cube wherever the origin sits on the face. A unit test (test_spells.py:625) covers this, but no acceptance test does.",
+    "mutation": "geometry.py:81 height check → `True` → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_a_diagonal_cube_holds_no_more_than_3_by_3_squares",
+    "verdict": "refute",
+    "reason": "Wrong oracle. GLOSS.cube only fixes the side length and an origin anywhere on a face. It says nothing about orientation or about counting grid squares. I searched units.jsonl and found no SRD rule for how a grid counts squares in an area, and the register has no ruling. A Cube turned 45° still has 15-ft sides. Whether 10 square centres 'exceed' it is a grid-discretisation reading the test invents. It does fail for its stated reason (10 <= 9), but that is a ruling for a person to propose, not something the words give.",
+    "mutation": "Red test. Run with --runxfail it fails at `assert sum(hit(gobs)) <= 9` (10 hit), which matches the T-new reason. No SRD text backs the expected value.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_upcasting_doesnt_enlarge_the_cube",
+    "verdict": "keep",
+    "reason": "Thunderwave's higher-level text raises only the damage. The size comes from the effect, so the Cube stays 15 ft.",
+    "mutation": "spells.py:1077 size → `sd[\"area\"][1] + 5 * ((c.slot or 1) - 1)` (size grows with the slot) → FAILED.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cube",
+    "verdict": "keep",
+    "reason": "The size is fixed by the effect. The aim point only gives the direction.",
+    "mutation": "geometry.py:81 `along <= side` → `along <= max(side, |toward - origin|)` → FAILED.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it",
+    "verdict": "keep",
+    "reason": "Fails for its stated reason: _web (spells.py:1552) saves every named target and never checks the 20-ft Cube, so FAR rolls a save. The size clause clearly forbids catching a creature 100 ft away. Minor issue: no dice are forced, so while the bug stands the first assertion depends on a random roll. The test still fails strictly either way.",
+    "mutation": "Red test. Run with --runxfail it fails at `assert all(\"FAR\" not in s.text ...)` because FAR made a Web save, which matches the T-new reason.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
+    "verdict": "keep",
+    "reason": "The oracle is right (#3: the origin isn't included, so the caster at it isn't affected). But origin exclusion is guarded twice in the engine: the from_self skip and the geometry's `0 < along`. Breaking either one alone leaves the test green. It only catches an engine that breaks both. Kept at low confidence so a person decides.",
+    "mutation": "spells.py:1118 `if t.dead or (from_self and t is caster):` → `if t.dead:` → PASSED. geometry.py:81 `0 < along` → `(0 < along or (along == 0 and across == 0))` → PASSED. Neither single break is caught.",
+    "confidence": 0.45
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_leaving_out_the_origin_doesnt_spare_the_creature_next_to_it",
+    "verdict": "refute",
+    "reason": "Duplicate with a confused premise. For Thunderwave the origin is the caster at (0,0); point=(5,0) is only the direction. Hitting a goblin at (5,0) aimed at itself is the default path of wave(). test_the_caster_at_the_cubes_origin_isnt_affected already asserts it (hit == [True] at the same placement), and so does test_a_cube_doesnt_reach_behind. Nothing about leaving out the origin is exercised.",
+    "mutation": "Harmless check: spells.py:1066 `for t in targets:` → `for t in list(targets):` → PASSED (the harness works). I found no origin-rule mutation that this test catches and its duplicates miss.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it",
+    "verdict": "keep",
+    "reason": "With range Self, the caster is the origin. Naming yourself first must not become the aim point or put you in the area.",
+    "mutation": "spells.py:1067 `if is_creature(t) and not (from_self and t is caster):` → `if is_creature(t):` (the caster becomes the aim point) → FAILED.",
+    "confidence": 0.75
+   }
+  ],
+  "summary": "I ran all 19 GLOSS.cube tests (15 pass, 2 red as expected; 2 more passed in a separate run) and tried to break the engine under each one with srdloop mutate. A harmless mutation passed, so the harness reports correctly.\n\nRefuted (3):\n- test_a_diagonal_cube_holds_no_more_than_3_by_3_squares (wrong oracle). The SRD has no rule for counting grid squares in an area and the register has no ruling, so \"nine squares\" is an invented reading.\n- test_leaving_out_the_origin_doesnt_spare_the_creature_next_to_it (duplicate). Its premise is confused: the Thunderwave origin is the caster, not (5,0), and other tests already check the default placement.\n- test_the_size_is_the_side_not_a_radius_or_half_width (likely duplicate, confidence 0.55). Every mutation I tried gives the same result here and in test_the_squares_just_past_the_15_ft_width_arent_in_the_cube.\n\nSent to a person (confidence 0.45):\n- test_the_caster_at_the_cubes_origin_isnt_affected. The oracle is right, but the engine excludes the origin in two places, and breaking either one alone leaves the test green.\n\nKept (15):\n- Every other green test failed under a targeted mutation: behind the origin, the face plane, width, depth, height, aim point (direct and through the session), the caller's list, upcasting, stretching to a far aim point, and naming yourself.\n- The red Web test fails for its stated reason: the 20-ft Cube is never checked. Its dice aren't forced, so one assertion depends on a random roll while the bug stands."
+ },
+ "problems": [],
+ "cost_usd": 0.7847763999999999,
+ "session": "7f8fd90c-aa54-48fc-a651-b3bb1d05b182",
+ "error": null
+}

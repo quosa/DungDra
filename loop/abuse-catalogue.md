@@ -82,6 +82,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Widening a Cone into a quarter-circle (width measured from the axis out to each side) by
   naming two creatures on its flanks, or aiming between them.
 - Naming yourself for an area that starts from you, to aim it or to be in it.
+- Aiming a Cube diagonally so a rotated Cube takes in more squares than its side allows on the
+  grid (ten instead of 3×3 for 15 feet).
+- Naming a far-off creature for an area spell that takes the caller's list instead of working out
+  the area (Web's 20-foot Cube catching a creature 100 feet away).
 - Claiming an "if the attack roll had Advantage" rider (a Goblin's extra 1d4) when Advantage and
   Disadvantage cancelled, or dropping it when the GM uses static damage numbers.
 - A monster using an action its stat block doesn't list (a weapon from its Gear line it has no
