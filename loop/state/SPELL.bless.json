@@ -1,16 +1,24 @@
 {
   "fingerprint": "0a61521170900f0d",
-  "for_review": [],
+  "for_review": [
+    "tests/srd/test_spells.py::test_a_holy_symbol_worth_exactly_5_gp_is_enough"
+  ],
   "id": "SPELL.bless",
+  "kind_waivers": [],
   "out_of_scope": [
     {
       "clause": "SPELL.bless#8",
       "reason": "Slots of level 3 and above (6+ targets) need class levels above 3."
+    },
+    {
+      "clause": "SPELL.bless#1",
+      "reason": "The Paladin half of the class list: paladin is in OUT_OF_SCOPE_CLASSES, so no Paladin can be made to cast Bless. The Cleric half is tested."
     }
   ],
   "refuted": [
-    "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
-    "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_60_feet_away"
+    "tests/srd/test_spells.py::test_a_creature_60_feet_away_cant_be_blessed",
+    "tests/srd/test_spells.py::test_a_wizard_cant_cast_bless",
+    "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_blesses_nobody"
   ],
   "relations": [
     {
@@ -34,7 +42,7 @@
       "type": "interacts_with"
     }
   ],
-  "revisit": true,
+  "revisit": false,
   "stages": {
     "A": {
       "at": 1790836710,
@@ -45,27 +53,27 @@
       "summary": "Of 5 scenarios, 6 tests and 2 code lines, I found no contradictions. SPL-02, SPL-04, test_spl02_bless_duration, test_spl04_components, and both `page=113` code lines are consistent with the unit. SPL-06 and test_spl06_targeting depend on an unresolved gap: how two Bless castings on one creature comb"
     },
     "C": {
-      "at": 1790837062,
-      "summary": "I wrote 46 tests for SPELL.bless in tests/srd/test_spells.py. When I ran the file, 40 passed and 6 were xfailed as expected. Those 6 are red tests that point at 4 engine defects:\n1. The target cap (3, plus 1 for each slot level above 1) is enforced inside `_bless`, after the slot has been spent and "
+      "at": 1791280761,
+      "summary": "This pass fixes the one problem the last check found: clause SPELL.bless#3 (Range: 30 feet) had no negative test. I added two to tests/srd/test_spells.py, and both pass:\n- test_bless_range_is_measured_from_the_caster_not_from_another_target: BROM stands 30 ft from JOZAN and LIDDA 10 ft beyond BROM, "
     },
     "D": {
-      "at": 1790837277,
-      "summary": "I checked all 46 Bless tests. 44 are keeps and 2 are refutes. Baseline: 40 green tests pass and the 6 red tests are strict xfails. I ran the red tests with --runxfail, and each one fails for the reason its ticket gives:\n- the Mace is stowed and logged before the Holy Symbol refusal;\n- the target-cap"
+      "at": 1791281064,
+      "summary": "I ran one engine mutation per test with `srdloop mutate` (a no-op control mutation passed, as it should). 53 of the 57 tests failed when the rule they cover was broken, so I keep them. I refute 3 and send 1 to a person.\n\n**Refuted:**\n- `test_a_wizard_cant_cast_bless` (0.65): the engine refuses becau"
     }
   },
-  "status": "red",
+  "status": "green",
   "tests": [
-    "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
-    "tests/srd/test_spells.py::test_a_wizard_cant_cast_bless",
-    "tests/srd/test_spells.py::test_bless_needs_a_slot_when_none_are_left",
-    "tests/srd/test_spells.py::test_casting_bless_takes_the_action",
-    "tests/srd/test_spells.py::test_bless_cant_be_cast_after_the_action_is_spent",
-    "tests/srd/test_spells.py::test_bless_through_the_session_when_the_action_is_spent_is_refused",
+    "tests/srd/test_spells.py::test_bless_range_is_measured_from_the_caster_not_from_another_target",
     "tests/srd/test_spells.py::test_bless_reaches_a_creature_exactly_30_feet_away",
     "tests/srd/test_spells.py::test_bless_cant_reach_a_creature_35_feet_away",
     "tests/srd/test_spells.py::test_one_out_of_range_target_refuses_the_whole_casting",
     "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed",
     "tests/srd/test_spells.py::test_out_of_range_through_the_session_is_refused",
+    "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
+    "tests/srd/test_spells.py::test_bless_needs_a_slot_when_none_are_left",
+    "tests/srd/test_spells.py::test_casting_bless_takes_the_action",
+    "tests/srd/test_spells.py::test_bless_cant_be_cast_after_the_action_is_spent",
+    "tests/srd/test_spells.py::test_bless_through_the_session_when_the_action_is_spent_is_refused",
     "tests/srd/test_spells.py::test_bless_with_a_holy_symbol_works",
     "tests/srd/test_spells.py::test_bless_without_a_holy_symbol_is_refused",
     "tests/srd/test_spells.py::test_a_component_pouch_doesnt_replace_the_costed_holy_symbol",
@@ -73,6 +81,13 @@
     "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon",
     "tests/srd/test_spells.py::test_bless_cant_be_cast_while_gagged",
     "tests/srd/test_spells.py::test_bless_cant_be_cast_in_magical_silence",
+    "tests/srd/test_spells.py::test_a_holy_symbol_worth_exactly_5_gp_is_enough",
+    "tests/srd/test_spells.py::test_a_holy_symbol_worth_4_gp_isnt_enough",
+    "tests/srd/test_spells.py::test_a_holy_symbol_worth_more_than_5_gp_works",
+    "tests/srd/test_spells.py::test_bless_doesnt_consume_the_holy_symbol",
+    "tests/srd/test_spells.py::test_cheap_holy_symbols_dont_add_up_to_5_gp",
+    "tests/srd/test_spells.py::test_a_component_pouch_doesnt_top_up_a_cheap_holy_symbol",
+    "tests/srd/test_spells.py::test_a_cheap_holy_symbol_through_the_session_is_refused",
     "tests/srd/test_spells.py::test_bless_is_a_concentration_spell",
     "tests/srd/test_spells.py::test_bless_lasts_up_to_one_minute",
     "tests/srd/test_spells.py::test_losing_concentration_ends_bless_on_every_target",
@@ -83,7 +98,6 @@
     "tests/srd/test_spells.py::test_only_the_chosen_creatures_are_blessed",
     "tests/srd/test_spells.py::test_bless_can_target_a_monster",
     "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
-    "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_blesses_nobody",
     "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
     "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
     "tests/srd/test_spells.py::test_bless_cant_target_an_object",
@@ -96,7 +110,10 @@
     "tests/srd/test_spells.py::test_a_creature_that_wasnt_targeted_gets_no_d4",
     "tests/srd/test_spells.py::test_no_d4_after_the_spell_ends",
     "tests/srd/test_spells.py::test_bless_adds_one_d4_to_an_attack_with_advantage",
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_spell_attack_roll",
+    "tests/srd/test_spells.py::test_bless_adds_nothing_to_a_damage_roll",
     "tests/srd/test_spells.py::test_a_level_2_slot_blesses_four_creatures",
+    "tests/srd/test_spells.py::test_upcasting_bless_without_a_level_2_slot_is_refused",
     "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly",
     "tests/srd/test_spells.py::test_a_level_2_slot_doesnt_raise_the_d4"
   ],

@@ -70,6 +70,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
   readying a spell with no slot left; readying a Bonus Action or Reaction spell.
 - Replacing a costed material component (Bless: a Holy Symbol worth 5+ GP) with a Component Pouch,
   a different focus, or the 2014 component (holy water).
+- Meeting a costed component's minimum price with a cheaper copy of the item (a 4 GP Holy
+  Symbol), by pooling several cheap copies, or by topping one up with a Component Pouch.
+- Upcasting with a slot level the caster doesn't have, to buy extra targets.
 - Naming the same creature twice in a multi-target spell to double its benefit (two Bless d4s).
 - Pointing a creature-targeting spell at an object or a name that isn't a creature.
 - Going over a spell's target cap, hoping the refusal only comes after the slot is spent and

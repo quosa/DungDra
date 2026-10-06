@@ -1,153 +1,185 @@
 {
  "output": {
+  "summary": "Revisit of SPELL.bless at stage C after infra ticket T-25 was fixed (the costed material check now uses the spell's own component item and its GP value). The 44 existing Bless tests from the first pass still pass, and their earlier tickets T-20 to T-23 are fixed. I added 10 tests to tests/srd/test_spells.py, all green:\n- #4: the 5 GP boundary (exactly 5 GP works, 4 GP is refused); a 25 GP symbol works; the symbol isn't consumed; abuse tests showing that cheap symbols can't be pooled, a Component Pouch can't top up a cheap symbol, and the cheap-symbol refusal holds through the Session too.\n- #7: a spell attack roll (Guiding Bolt from a caster who blessed themself) gets the d4; a damage roll doesn't.\n- #8: upcasting with a level-2 slot the caster doesn't have is refused cleanly.\nThe whole file passes (76 passed) and ruff is clean. No new engine defects. I added two cheats to loop/abuse-catalogue.md: meeting a costed component's price with cheap copies, pooled copies or a pouch top-up, and upcasting with a slot level you don't have. Paladin casting and slots of level 3 and above are out of scope. The R-12, R-13 and R-14 rulings already cover the ambiguities, so no new ones are proposed.",
   "interactions": [
    {
-    "clause": "SPELL.bless#7",
-    "with": "GLOSS.death-saving-throw",
+    "clause": "SPELL.bless#4",
+    "with": "SPELL.casting-spells.components.material-m (Component Pouch / Spellcasting Focus can't replace a costed component)",
     "risk": "high",
-    "note": "death_save() never gathers effects, so no d4. This depends on ambiguity 1 (proposed: a Death Saving Throw counts). Red."
+    "note": "The T-25 change: the cost check now reads the item's price. Tested with symbols worth 4, 5 and 25 GP, pooled cheap symbols, and a pouch plus a cheap symbol."
    },
    {
-    "clause": "SPELL.bless#7",
-    "with": "GLOSS.concentration (Constitution save to keep Concentration)",
-    "risk": "high",
-    "note": "A caster who blesses themself adds the d4 to their own Concentration save. Green."
+    "clause": "SPELL.bless#4",
+    "with": "Holy Symbol item (equipment price 5 GP, cost prop)",
+    "risk": "medium",
+    "note": "JOZAN carries two symbols (class kit and background). Each test sets up exactly the symbols it needs."
    },
    {
     "clause": "SPELL.bless#5",
     "with": "GLOSS.concentration",
     "risk": "high",
-    "note": "Losing Concentration (Incapacitated, a second Concentration spell, recasting) must strip Bless from every target. Green."
-   },
-   {
-    "clause": "SPELL.bless#6",
-    "with": "SPELL.casting-spells (pay before resolve)",
-    "risk": "high",
-    "note": "The target cap is checked in _bless after the slot is spent and Concentration starts, and the refusal cites no page. Red (#6, #8, and through the Session)."
-   },
-   {
-    "clause": "SPELL.bless#4",
-    "with": "SPELL.casting-spells.components.somatic-s / material-m",
-    "risk": "high",
-    "note": "Without the Holy Symbol and with a weapon in hand, the engine stows the weapon (log entry, free interaction) and only then refuses. Red."
-   },
-   {
-    "clause": "SPELL.bless#4",
-    "with": "Component Pouch / holy water (2014 trap)",
-    "risk": "medium",
-    "note": "A costed component can't be replaced by a pouch, and holy water isn't the component. Green."
-   },
-   {
-    "clause": "SPELL.bless#6",
-    "with": "scene objects / non-creature names",
-    "risk": "medium",
-    "note": "_as_list passes an unknown name through as a str, and _bless crashes with AttributeError instead of refusing. Red."
-   },
-   {
-    "clause": "SPELL.bless#6",
-    "with": "Combining spell effects (p.106)",
-    "risk": "medium",
-    "note": "Naming one creature twice must not give two d4s. Green. Same gap as SPL-06."
-   },
-   {
-    "clause": "SPELL.bless#3",
-    "with": "Movement after casting",
-    "risk": "medium",
-    "note": "Range is checked only when the spell is cast (ambiguity 3). Green."
+    "note": "Losing Concentration, or starting a second Concentration spell, ends Bless on every target. Covered by existing tests."
    },
    {
     "clause": "SPELL.bless#7",
-    "with": "Ability checks, initiative, Advantage",
+    "with": "Concentration save / Death Saving Throw (R-12)",
+    "risk": "high",
+    "note": "Both get the d4. Covered by existing tests; T-23 is fixed."
+   },
+   {
+    "clause": "SPELL.bless#7",
+    "with": "SPELL.guiding-bolt spell attack roll",
     "risk": "medium",
-    "note": "No d4 on checks or initiative; one d4 even with Advantage. Green."
+    "note": "A spell attack is an attack roll, so it gets the d4. New test."
    },
    {
-    "clause": "SPELL.bless#2",
-    "with": "GLOSS.action / one slot spell per turn",
+    "clause": "SPELL.bless#7",
+    "with": "Damage rolls, ability checks, Initiative",
     "risk": "medium",
-    "note": "Bless spends the action; it can't be cast with the action already spent or twice in one turn. Green."
+    "note": "None of these get the d4. New test for damage; checks and Initiative were already covered."
    },
    {
-    "clause": "SPELL.bless#4",
-    "with": "Gagged / magical Silence (Verbal)",
+    "clause": "SPELL.bless#7",
+    "with": "Advantage (Prone target)",
     "risk": "low",
-    "note": "Refused cleanly. Green."
+    "note": "Only one d4, whichever d20 is kept. Already covered."
    },
    {
-    "clause": "SPELL.bless#1",
-    "with": "Paladin class",
-    "risk": "low",
-    "note": "Paladin is in OUT_OF_SCOPE_CLASSES. Only the Cleric path is tested."
+    "clause": "SPELL.bless#6",
+    "with": "SPELL.casting-spells.effects.targets (Total Cover, object targets)",
+    "risk": "medium",
+    "note": "Covered by the Targets unit tests and by the Bless object-target test."
+   },
+   {
+    "clause": "SPELL.bless#8",
+    "with": "Spell slots by character level",
+    "risk": "medium",
+    "note": "A level 1 cleric has no level 2 slot. The upcast is refused cleanly. New test."
    }
   ],
   "abuse": [
    {
-    "case": "More targets than a spell allows (4 at level 1, 5 at level 2)",
-    "test": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly",
-    "reason": "The refusal comes after the slot is spent, with no page."
+    "case": "Meeting the 5 GP price with a 4 GP Holy Symbol",
+    "test": "tests/srd/test_spells.py::test_a_holy_symbol_worth_4_gp_isnt_enough",
+    "reason": "A costed component must be worth at least the listed price."
    },
    {
-    "case": "A refused command that still costs a slot or a log entry (via Session)",
-    "test": "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
-    "reason": "The Session restores the turn but not the spent slot or the cast log entry."
+    "case": "Pooling cheap Holy Symbols (3 GP x3) to reach 5 GP",
+    "test": "tests/srd/test_spells.py::test_cheap_holy_symbols_dont_add_up_to_5_gp",
+    "reason": "A single item has to be worth 5+ GP; prices don't add up across items."
    },
    {
-    "case": "Casting two slot spells in one turn",
-    "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
-    "reason": "Bless is an action spell that uses a slot."
+    "case": "Topping up a cheap Holy Symbol with a Component Pouch",
+    "test": "tests/srd/test_spells.py::test_a_component_pouch_doesnt_top_up_a_cheap_holy_symbol",
+    "reason": "A pouch can't replace a costed component."
    },
    {
-    "case": "Acting with the action already spent (via Session)",
-    "test": "tests/srd/test_spells.py::test_bless_through_the_session_when_the_action_is_spent_is_refused",
-    "reason": "The casting time is an Action."
+    "case": "Cheap Holy Symbol through the Session command path",
+    "test": "tests/srd/test_spells.py::test_a_cheap_holy_symbol_through_the_session_is_refused",
+    "reason": "The player-facing path must refuse cleanly too."
    },
    {
-    "case": "Targeting an out-of-range creature, or slipping one in among valid targets",
-    "test": "tests/srd/test_spells.py::test_one_out_of_range_target_refuses_the_whole_casting",
-    "reason": "Range is 30 feet."
+    "case": "Upcasting with a slot level the caster doesn't have to get a fourth target",
+    "test": "tests/srd/test_spells.py::test_upcasting_bless_without_a_level_2_slot_is_refused",
+    "reason": "Spending a spell slot the caster doesn't have."
    },
    {
-    "case": "Spending spell slots that don't exist",
-    "test": "tests/srd/test_spells.py::test_bless_needs_a_slot_when_none_are_left",
-    "reason": "Level 1 spell needs a slot."
-   },
-   {
-    "case": "Keeping Concentration on two spells",
-    "test": "tests/srd/test_spells.py::test_a_second_concentration_spell_ends_bless",
-    "reason": "Bless is Concentration."
-   },
-   {
-    "case": "Dropping and recasting to keep old targets blessed",
-    "test": "tests/srd/test_spells.py::test_recasting_bless_on_new_targets_ends_the_first_casting",
-    "reason": "Recasting starts new Concentration and ends the first casting."
-   },
-   {
-    "case": "Casting while unable to speak (gagged, Silence)",
-    "test": "tests/srd/test_spells.py::test_bless_cant_be_cast_in_magical_silence",
-    "reason": "Bless has a V component."
-   },
-   {
-    "case": "NEW: costed material component replaced by a pouch or the 2014 component",
+    "case": "Component Pouch or holy water in place of the Holy Symbol; stowing a weapon before the refusal",
     "test": "tests/srd/test_spells.py::test_holy_water_isnt_the_material_component",
-    "reason": "The material component is a Holy Symbol worth 5+ GP."
+    "reason": "Existing tests (with test_a_component_pouch_doesnt_replace_the_costed_holy_symbol and test_a_refused_bless_doesnt_stow_the_casters_weapon)."
    },
    {
-    "case": "NEW: naming the same creature twice in a multi-target spell",
-    "test": "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
-    "reason": "Effects of the same spell don't combine."
+    "case": "Going over the target cap / naming a target twice",
+    "test": "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing",
+    "reason": "Existing tests (with test_naming_a_target_twice_gives_only_one_d4)."
    },
    {
-    "case": "NEW: pointing a creature-targeting spell at an object",
-    "test": "tests/srd/test_spells.py::test_bless_cant_target_an_object",
-    "reason": "Bless targets creatures. The engine crashes instead of refusing."
-   },
-   {
-    "case": "NEW: a refused command with side effects on the way to the refusal (weapon stowed)",
-    "test": "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon",
-    "reason": "The engine frees a hand before it checks the material component."
+    "case": "Keeping Bless with a second Concentration spell",
+    "test": "tests/srd/test_spells.py::test_a_second_concentration_spell_ends_bless",
+    "reason": "Existing test."
    }
   ],
   "tests": [
+   {
+    "name": "tests/srd/test_spells.py::test_a_holy_symbol_worth_exactly_5_gp_is_enough",
+    "clause": "SPELL.bless#4",
+    "kind": "boundary",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_holy_symbol_worth_4_gp_isnt_enough",
+    "clause": "SPELL.bless#4",
+    "kind": "boundary",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_holy_symbol_worth_more_than_5_gp_works",
+    "clause": "SPELL.bless#4",
+    "kind": "positive",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_doesnt_consume_the_holy_symbol",
+    "clause": "SPELL.bless#4",
+    "kind": "positive",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_cheap_holy_symbols_dont_add_up_to_5_gp",
+    "clause": "SPELL.bless#4",
+    "kind": "abuse",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_component_pouch_doesnt_top_up_a_cheap_holy_symbol",
+    "clause": "SPELL.bless#4",
+    "kind": "abuse",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_cheap_holy_symbol_through_the_session_is_refused",
+    "clause": "SPELL.bless#4",
+    "kind": "abuse",
+    "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_spell_attack_roll",
+    "clause": "SPELL.bless#7",
+    "kind": "positive",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_bless_adds_nothing_to_a_damage_roll",
+    "clause": "SPELL.bless#7",
+    "kind": "negative",
+    "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_upcasting_bless_without_a_level_2_slot_is_refused",
+    "clause": "SPELL.bless#8",
+    "kind": "abuse",
+    "rule_quote": "You can target one additional creature for each spell slot level above 1.",
+    "claim": "green",
+    "ticket_title": null
+   },
    {
     "name": "tests/srd/test_spells.py::test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot",
     "clause": "SPELL.bless#1",
@@ -184,14 +216,6 @@
     "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_after_the_action_is_spent",
     "clause": "SPELL.bless#2",
     "kind": "negative",
-    "rule_quote": "Casting Time: Action",
-    "claim": "green",
-    "ticket_title": null
-   },
-   {
-    "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_twice_in_one_turn",
-    "clause": "SPELL.bless#2",
-    "kind": "abuse",
     "rule_quote": "Casting Time: Action",
     "claim": "green",
     "ticket_title": null
@@ -281,8 +305,8 @@
     "clause": "SPELL.bless#4",
     "kind": "abuse",
     "rule_quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
-    "claim": "red",
-    "ticket_title": "Casting a V,S,M spell without its material component stows the held weapon (uses the free object interaction, logs it) before refusing"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_bless_cant_be_cast_while_gagged",
@@ -357,6 +381,14 @@
     "ticket_title": null
    },
    {
+    "name": "tests/srd/test_spells.py::test_only_the_chosen_creatures_are_blessed",
+    "clause": "SPELL.bless#6",
+    "kind": "negative",
+    "rule_quote": "You bless up to three creatures within range.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
     "name": "tests/srd/test_spells.py::test_bless_can_target_a_monster",
     "clause": "SPELL.bless#6",
     "kind": "positive",
@@ -369,8 +401,8 @@
     "clause": "SPELL.bless#6",
     "kind": "boundary",
     "rule_quote": "You bless up to three creatures within range.",
-    "claim": "red",
-    "ticket_title": "Bless's target cap is checked after the slot is spent and Concentration starts, and the refusal cites no page"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_blesses_nobody",
@@ -385,8 +417,8 @@
     "clause": "SPELL.bless#6",
     "kind": "abuse",
     "rule_quote": "You bless up to three creatures within range.",
-    "claim": "red",
-    "ticket_title": "A Bless command refused for too many targets still spends the slot and logs the cast through Session.execute"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4",
@@ -401,8 +433,8 @@
     "clause": "SPELL.bless#6",
     "kind": "abuse",
     "rule_quote": "You bless up to three creatures within range.",
-    "claim": "red",
-    "ticket_title": "Bless with a non-creature target (an object name) crashes with AttributeError instead of a clean refusal"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_bless_adds_1d4_to_an_attack_roll",
@@ -433,8 +465,8 @@
     "clause": "SPELL.bless#7",
     "kind": "positive",
     "rule_quote": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
-    "claim": "red",
-    "ticket_title": "Death Saving Throws don't gather effects, so Bless adds no 1d4 to them"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_bless_adds_nothing_to_an_ability_check",
@@ -489,8 +521,8 @@
     "clause": "SPELL.bless#8",
     "kind": "boundary",
     "rule_quote": "You can target one additional creature for each spell slot level above 1.",
-    "claim": "red",
-    "ticket_title": "Bless's upcast target cap (4 at level 2) is checked after the slot is spent, and the refusal cites no page"
+    "claim": "green",
+    "ticket_title": null
    },
    {
     "name": "tests/srd/test_spells.py::test_a_level_2_slot_doesnt_raise_the_d4",
@@ -503,65 +535,26 @@
   ],
   "not_testable": [
    {
-    "clause": "SPELL.bless#1",
+    "clause": "SPELL.bless#8",
     "kind": "out-of-scope",
-    "reason": "Paladin is in OUT_OF_SCOPE_CLASSES, so only the Cleric half of the class list can be exercised.",
+    "reason": "Slots of level 3 and above (6+ targets) need class levels above 3.",
     "infra_ticket": ""
    },
    {
-    "clause": "SPELL.bless#4",
-    "kind": "missing",
-    "reason": "The 5+ GP threshold can't be tested. The costed-component check looks only for an item named 'holy symbol' and ignores its value, so a cheaper Holy Symbol (an improvised or damaged one) can't be expressed.",
-    "infra_ticket": "Items carry a per-instance GP value, and costed material components check that the value meets the minimum cost"
+    "clause": "SPELL.bless#1",
+    "kind": "out-of-scope",
+    "reason": "The Paladin half of the class list: paladin is in OUT_OF_SCOPE_CLASSES, so no Paladin can be made to cast Bless. The Cleric half is tested.",
+    "infra_ticket": ""
    }
   ],
+  "kind_waivers": [],
   "scenario_changes": [],
-  "rulings_proposed": [
-   {
-    "ambiguity": "SPELL.bless#7: “Whenever a target makes an attack roll or a saving throw”: do Death Saving Throws and Concentration saves count?",
-    "ruling": "Any roll the rules call a saving throw gets the 1d4, including Death Saving Throws and the Constitution save to keep Concentration.",
-    "tests": [
-     "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw",
-     "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save"
-    ]
-   },
-   {
-    "ambiguity": "SPELL.bless#6: “You bless up to three creatures within range.”: can the caster be one of the targets?",
-    "ruling": "Yes. The caster is a creature within range and can bless themself as one of the targets.",
-    "tests": [
-     "tests/srd/test_spells.py::test_the_caster_can_bless_themself",
-     "tests/srd/test_spells.py::test_bless_adds_1d4_to_the_casters_concentration_save",
-     "tests/srd/test_spells.py::test_losing_concentration_ends_bless_on_every_target",
-     "tests/srd/test_spells.py::test_a_level_2_slot_blesses_four_creatures"
-    ]
-   },
-   {
-    "ambiguity": "SPELL.bless#6: “within range”: is range checked only at casting?",
-    "ruling": "Range is checked only when the spell is cast. A target that later moves beyond 30 feet keeps the benefit until the spell ends.",
-    "tests": [
-     "tests/srd/test_spells.py::test_a_target_that_moves_beyond_30_feet_stays_blessed"
-    ]
-   },
-   {
-    "ambiguity": "SPELL.bless#6 (gap): the same creature named twice in one casting, or blessed twice.",
-    "ruling": "Effects of the same spell don't combine (p.106). A creature named twice, or blessed by two overlapping castings, adds only one 1d4.",
-    "tests": [
-     "tests/srd/test_spells.py::test_naming_a_target_twice_gives_only_one_d4"
-    ]
-   }
-  ],
-  "summary": "I wrote 44 tests for SPELL.bless in tests/srd/test_spells.py, covering all 8 clauses. 38 pass and 6 are marked expected-to-fail (red). I ran each red test with xfail disabled to confirm it fails for the reason claimed. The engine gets the basics right: casting with a level 1 slot as an Action, 30 ft range with the 35 ft boundary, the Holy Symbol requirement (a Component Pouch or holy water doesn't replace it), V blocked by a gag or Silence, Concentration lasting up to 1 minute and ending on every target, the automatic d4 on attack rolls, ordinary saves and Concentration saves, no d4 on ability checks or initiative, only one d4 per creature, and 4 targets with a level 2 slot. The red tests are 5 bugs: (1) the target cap is checked inside _bless after the slot is spent and Concentration starts, and the refusal cites no page (level 1, level 2 and through Session.execute); (2) Death Saving Throws never gather effects, so they get no Bless d4 (under proposed ruling 1); (3) naming an object as a target crashes with AttributeError instead of a refusal; (4) a V,S,M cast without its material component stows the held weapon and logs it before refusing. The Paladin half of the class list is out of scope. The 5+ GP threshold needs per-item values, which the engine doesn't have. No scenario changes, since stage B found nothing that under-asserts or contradicts the SRD. I added 5 new cheats to loop/abuse-catalogue.md."
+  "rulings_proposed": []
  },
  "problems": [
-  "clause SPELL.bless#3: no negative test",
-  "clause SPELL.bless#6: no negative test",
-  "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon: pytest.mark.xfail(strict=True, reason=STOWS_BEFORE_REFUSING) (only an xfail naming a ticket T-<n> is allowed)",
-  "tests/srd/test_spells.py::test_four_targets_with_a_level_1_slot_is_refused_cleanly: pytest.mark.xfail(strict=True, reason=REFUSED_AFTER_PAYING) (only an xfail naming a ticket T-<n> is allowed)",
-  "tests/srd/test_spells.py::test_four_targets_through_the_session_costs_nothing: pytest.mark.xfail(strict=True, reason=REFUSED_AFTER_PAYING) (only an xfail naming a ticket T-<n> is allowed)",
-  "tests/srd/test_spells.py::test_bless_cant_target_an_object: pytest.mark.xfail(strict=True, reason=OBJECT_TARGET) (only an xfail naming a ticket T-<n> is allowed)",
-  "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw: pytest.mark.xfail(strict=True, reason=NO_D4_ON_DEATH_SAVES) (only an xfail naming a ticket T-<n> is allowed)",
-  "tests/srd/test_spells.py::test_five_targets_with_a_level_2_slot_is_refused_cleanly: pytest.mark.xfail(strict=True, reason=REFUSED_AFTER_PAYING) (only an xfail naming a ticket T-<n> is allowed)"
+  "clause SPELL.bless#3: no negative test"
  ],
- "cost_usd": 1.1712234000000001,
- "session": "30b6a13c-5869-4eaa-b061-3578449b6c45"
+ "cost_usd": 1.2408692000000001,
+ "session": "f2cd9dbe-12e2-4f2e-8598-a7b1a7c0272e",
+ "error": null
 }

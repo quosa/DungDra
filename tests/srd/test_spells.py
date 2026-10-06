@@ -57,13 +57,6 @@ def test_bless_is_a_level_1_cleric_spell_cast_with_a_level_1_slot(game):
     assert {"cleric", "paladin"} <= set(S.SPELLS["bless"]["lists"])
 
 
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#1", kind="negative")
-def test_a_wizard_cant_cast_bless(game):
-    j, b, _, m = party(game)
-    assert "wizard" not in S.SPELLS["bless"]["lists"]
-    assert_refused_cleanly(game, S.cast, game, m, "bless", [b])
-
-
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#1", kind="abuse")
 def test_bless_needs_a_slot_when_none_are_left(game):
     j, b, _, _ = party(game)
@@ -150,6 +143,16 @@ def test_out_of_range_through_the_session_is_refused(game):
     )
 
 
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#3", kind="negative")
+def test_bless_range_is_measured_from_the_caster_not_from_another_target(game):
+    # LIDDA is 10 ft from BROM but 40 ft from JOZAN: range runs from the caster only
+    j = pc(game, "JOZAN", (0, 0))
+    b = pc(game, "BROM", (30, 0))
+    li = pc(game, "LIDDA", (40, 0))
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [b, li], match="range")
+    assert not b.find_effects("Bless") and not li.find_effects("Bless")
+
+
 # ---------------------------------------------------------------- #4 Components: V, S, M (Holy Symbol 5+ GP)
 def drop_holy_symbol(j, free_hands=True):
     if free_hands:
@@ -211,6 +214,76 @@ def test_bless_cant_be_cast_in_magical_silence(game):
     j, b, _, _ = party(game)
     game.scene.silence = True
     assert_refused_cleanly(game, S.cast, game, j, "bless", [b], match="Silence")
+
+
+def holy_symbol_worth(j, gp, qty=1):
+    """Replace JOZAN's Holy Symbol with one worth `gp` GP (a `cost` in CP)."""
+    drop_holy_symbol(j)
+    return j.inventory.add("holy symbol", qty, cost=gp * 100)
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="boundary")
+def test_a_holy_symbol_worth_exactly_5_gp_is_enough(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 5)
+    S.cast(game, j, "bless", [b])
+    assert b.find_effects("Bless")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="boundary")
+def test_a_holy_symbol_worth_4_gp_isnt_enough(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 4)
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [b], match="Holy Symbol")
+    assert not b.find_effects("Bless")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="positive")
+def test_a_holy_symbol_worth_more_than_5_gp_works(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 25)
+    S.cast(game, j, "bless", [b])
+    assert b.find_effects("Bless")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="positive")
+def test_bless_doesnt_consume_the_holy_symbol(game):
+    # the component has a cost but the spell doesn't say it consumes it
+    j, b, li, _ = party(game)
+    level3(j)
+    holy_symbol_worth(j, 5)
+    assert j.inventory.count("holy symbol") == 1
+    S.cast(game, j, "bless", [b])
+    assert j.inventory.count("holy symbol") == 1
+    S.cast(game, j, "bless", [li])
+    assert li.find_effects("Bless")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="abuse")
+def test_cheap_holy_symbols_dont_add_up_to_5_gp(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 3, qty=2)
+    j.inventory.add("holy symbol", 1, cost=300)
+    assert j.inventory.count("holy symbol") == 3  # 9 GP in all, but none is worth 5 GP
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [b], match="Holy Symbol")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="abuse")
+def test_a_component_pouch_doesnt_top_up_a_cheap_holy_symbol(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 4)
+    j.inventory.add("component pouch")
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [b], match="Holy Symbol")
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#4", kind="abuse")
+def test_a_cheap_holy_symbol_through_the_session_is_refused(game):
+    j, b, _, _ = party(game)
+    holy_symbol_worth(j, 4)
+    s = Session(game)
+    assert_refused_cleanly(
+        game, s.execute, {"cmd": "cast", "spell": "bless", "actor": j.id, "targets": [b.id]}
+    )
 
 
 # ---------------------------------------------------------------- #5 Duration: Concentration, up to 1 minute
@@ -300,14 +373,6 @@ def test_bless_can_target_a_monster(game):
 def test_four_targets_with_a_level_1_slot_is_refused_cleanly(game):
     j, b, li, m = party(game)
     assert_refused_cleanly(game, S.cast, game, j, "bless", [j, b, li, m], match="up to 3")
-
-
-@pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="boundary")
-def test_four_targets_with_a_level_1_slot_blesses_nobody(game):
-    j, b, li, m = party(game)
-    with pytest.raises(S.Refusal):
-        S.cast(game, j, "bless", [j, b, li, m])
-    assert not any(c.find_effects("Bless") for c in (j, b, li, m))
 
 
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#6", kind="abuse")
@@ -443,6 +508,37 @@ def test_bless_adds_one_d4_to_an_attack_with_advantage(game):
     assert bless_mods(r.roll) == [(1, "Bless (1d4=[1])")]
 
 
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="positive", ruling="R-13")
+def test_bless_adds_1d4_to_a_spell_attack_roll(game):
+    # a spell attack is an attack roll: Guiding Bolt from a blessed caster gets the d4
+    j = pc(game, "JOZAN", (0, 0))
+    gob = mon(game, "goblin warrior", (20, 0))
+    gob.base_max_hp = gob.hp = 500
+    S.cast(game, j, "bless", [j])
+    d20 = GOBLIN_AC - j.spell_attack_bonus() - 3  # misses by 3 alone; the d4's 3 makes it a hit
+    start = len(game.log.events)
+    game.dice.force_str(f"d20=[{d20}]; d4=[3]; d6=[1,1,1,1]")
+    S.cast(game, j, "guiding bolt", gob)
+    attack = [e for e in game.log.since(start) if "Guiding Bolt" in e.text and "Bless" in e.text]
+    assert attack, "the spell attack roll shows the Bless d4"
+    assert gob.hp == 500 - 4
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#7", kind="negative")
+def test_bless_adds_nothing_to_a_damage_roll(game):
+    j, b, _, _ = party(game)
+    gob = mon(game, "goblin warrior", (10, 0))
+    gob.base_max_hp = gob.hp = 500
+    S.cast(game, j, "bless", [b])
+    b.position = (gob.position[0] - 5, 0)
+    rolled = len(game.dice.history)
+    game.dice.force_str("d20=[15]; d4=[1]; d8=[4]")
+    r = C.attack(game, b, gob, weapon="longsword")
+    assert r.hit and bless_mods(r.roll) == [(1, "Bless (1d4=[1])")]
+    d4s = [v for sides, v, _ in game.dice.history[rolled:] if sides == 4]
+    assert d4s == [1], "only the attack roll gets a d4"
+
+
 # ---------------------------------------------------- #8 one additional creature per slot level above 1
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#8", kind="positive")
 def test_a_level_2_slot_blesses_four_creatures(game):
@@ -451,6 +547,15 @@ def test_a_level_2_slot_blesses_four_creatures(game):
     S.cast(game, j, "bless", [j, b, li, m], slot=2)
     assert all(c.find_effects("Bless") for c in (j, b, li, m))
     assert j.slots_left(2) == 1 and j.slots_left(1) == 4
+
+
+@pytest.mark.srd(BLESS, clause=f"{BLESS}#8", kind="abuse")
+def test_upcasting_bless_without_a_level_2_slot_is_refused(game):
+    # a level 1 cleric has no level 2 slot to buy the fourth target with
+    j, b, li, m = party(game)
+    assert j.slots_left(2) == 0
+    assert_refused_cleanly(game, S.cast, game, j, "bless", [j, b, li, m], slot=2)
+    assert not any(c.find_effects("Bless") for c in (j, b, li, m))
 
 
 @pytest.mark.srd(BLESS, clause=f"{BLESS}#8", kind="boundary")
