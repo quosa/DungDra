@@ -4,12 +4,21 @@
   "unit": "MONSTER.goblins.goblin-warrior",
   "title": "cmd_dash still passes bonus=True straight to actions.dash, so any creature can Dash as a Bonus Action. The bonus-action check is done command by command (disengage now goes through CA.bonus_disengage) and not once in the actions layer, so Dash and any later bonus-capable action need the same check through Cunning Action and similar features",
   "tests": [],
-  "status": "parked",
-  "attempts": 0,
+  "status": "open",
+  "attempts": 1,
   "history": [
     {
       "event": "followup",
       "of": "T-75"
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The ticket's behaviour is fixed. Dash, Disengage and Hide taken as a Bonus Action are now refused in actions.py unless the creature has a granting feature, and cmd_dash or cmd_disengage with bonus=True no longer bypasses the check. The way it was done adds a second mechanism, though. A new BONUS_GRANTS table in the actions layer names Cunning Action and Nimble Escape and their allowed actions. That repeats the allowed-action lists and feature checks that cunning_action and nimble_escape still enforce, and sits beside the existing class_actions.BONUS_ACTIONS/bonus_action dispatcher. The same rule is now decided in two places, and those can drift apart, which goes against the ticket's own aim of a single check. Nimble Escape's Disengage also gets two different source labels depending on how it is called. Rejected so the grant check can be unified into one mechanism. The tests themselves check real behaviour (refusal, no Bonus Action used, no movement added, the effect's source).)",
+        "review: orthogonality dungdra/actions.py:165 BONUS_GRANTS adds a second table of which feature grants which Bonus Action, next to the mechanisms that already exist: class_actions.BONUS_ACTIONS/bonus_action (the generic 'a Bonus Action exists only when a feature grants one' entry point, p.10), and cunning_action/nimble_escape, which still check the feature themselves and still check the allowed actions themselves ('Cunning Action allows only Dash, Disengage or Hide', 'Nimble Escape allows only the Disengage or Hide action'). So the same rule is now decided in two places, and they can drift apart: add Hide to one list and not the other, and the two entry points give different answers. Every granted call is also checked twice, first by _need/the trait check in class_actions and then again by bonus_grant. Make one mechanism the single place that decides. Either the actions layer asks the feature registry that already exists (for example, each grant declares its allowed actions once and cunning_action/nimble_escape use that), or bonus requests from the commands are sent through the existing class_actions dispatcher. Don't keep a parallel list.",
+        "review: layering dungdra/actions.py:177 The generic actions layer now hard-codes class and monster content by name ('cunning action', 'nimble escape') and uses duck typing (hasattr(actor, 'has_feature')) to tell PCs from monsters. Which features grant which Bonus Actions belongs with the feature definitions in class_actions, or in data the features carry. The actions layer should only need to know 'is this bonus use granted', not the names of the features that grant it.",
+        "review: other dungdra/class_actions.py:136 The same Nimble Escape Disengage now gives two different effect sources depending on how it is called: CA.nimble_escape passes source='Nimble Escape', but the disengage command (and actions.disengage(bonus=True) called directly) gives 'Nimble Escape (Disengage)'. With two ways to reach the grant, the log and effect source for one rule event are inconsistent. Unifying the grant mechanism (finding 1) should also give a single source label."
+      ]
     }
   ]
 }
