@@ -1,0 +1,12 @@
+{
+  "id": "T-83",
+  "kind": "bug",
+  "unit": "GLOSS.area-of-effect",
+  "title": "SRD: a location cut off from the point of origin by Total Cover isn't in the area; engine: Burning Hands sets fire to a flammable object behind Total Cover because scene objects are placed in the area by geometry alone",
+  "tests": [
+    "tests/srd/test_glossary.py::test_an_object_cut_off_from_the_origin_isnt_in_the_area"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

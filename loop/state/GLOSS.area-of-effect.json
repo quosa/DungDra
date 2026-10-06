@@ -1,0 +1,105 @@
+{
+  "fingerprint": "0fdf009930b066cd",
+  "for_review": [],
+  "id": "GLOSS.area-of-effect",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.area-of-effect#1",
+      "kind": "boundary",
+      "reason": "No threshold: a point of origin is a single location, with no quantity to sit one step past."
+    },
+    {
+      "clause": "GLOSS.area-of-effect#2",
+      "kind": "boundary",
+      "reason": "No threshold: it delegates origin placement to the shape units, whose own boundary tests (cone/cube/sphere) cover distances."
+    },
+    {
+      "clause": "GLOSS.area-of-effect#3",
+      "kind": "boundary",
+      "reason": "The engine's only way to express blocked lines is a cover-degree label. The degree threshold (Three-Quarters vs Total) is the boundary, and it is tested under #4."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_an_areas_lines_are_judged_from_its_point_of_origin"
+  ],
+  "relations": [
+    {
+      "evidence": "To block a line, an obstruction must provide Total Cover.",
+      "target": "GLOSS.cover",
+      "type": "requires"
+    },
+    {
+      "evidence": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+      "target": "GLOSS.cone",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Cylinder is an area of effect that extends in straight lines from a point of origin located at the center of the circular top or bottom of the Cylinder.",
+      "target": "GLOSS.cylinder",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Line is an area of effect that extends from a point of origin in a straight path along its length and covers an area defined by its width.",
+      "target": "GLOSS.line",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+      "target": "GLOSS.cube",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+      "target": "GLOSS.emanation",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+      "target": "GLOSS.sphere",
+      "type": "interacts_with"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1791278312,
+      "summary": "GLOSS.area-of-effect splits into five clauses. #1: an area has a point of origin. #2: each shape's own rule says where that origin goes. #3: a location is excluded only if every straight line to it from the origin is blocked. #4: only an obstruction that gives Total Cover blocks a line. #5: if the c"
+    },
+    "B": {
+      "at": 1791278331,
+      "summary": "I checked 5 items against GLOSS.area-of-effect. The SPL-05 scenario and its test agree with clauses #3 and #4 (a target behind Total Cover is excluded, and a creature gives only Half Cover). The spells.py cover check at line 1136 follows reading A of the stage-A ambiguities. The two combat.py lines "
+    },
+    "C": {
+      "at": 1791278536,
+      "summary": "Added 18 tests for GLOSS.area-of-effect to tests/srd/test_glossary.py. 16 pass and 2 are red (xfail strict). Clauses #1–#4 are covered with Sleep (Sphere at a point), Burning Hands (Cone from the caster) and Thunderwave (Cube from the caster). #1/#2: the blocked-lines check uses each shape's own poi"
+    },
+    "D": {
+      "at": 1791278662,
+      "summary": "I checked all 17 tests (15 green, 2 red) against the engine's area-of-effect code at `dungdra/spells.py:1132`. Each test was run against at least one deliberate break of the rule, applied in a scratch copy. Breaks covered: always judging cover from the caster; judging cover from the point the area i"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_total_cover_from_some_other_point_doesnt_cut_a_creature_off",
+    "tests/srd/test_glossary.py::test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere",
+    "tests/srd/test_glossary.py::test_a_cone_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+    "tests/srd/test_glossary.py::test_a_cube_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+    "tests/srd/test_glossary.py::test_a_cone_doesnt_originate_at_the_point_it_is_aimed_at",
+    "tests/srd/test_glossary.py::test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing",
+    "tests/srd/test_glossary.py::test_the_exclusion_is_logged_against_the_blocked_lines_clause",
+    "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_leaves_out_a_creature_cut_off_from_its_origin",
+    "tests/srd/test_glossary.py::test_an_object_cut_off_from_the_origin_isnt_in_the_area",
+    "tests/srd/test_glossary.py::test_a_creature_in_the_area_with_no_cover_is_affected",
+    "tests/srd/test_glossary.py::test_naming_a_creature_cut_off_from_the_origin_doesnt_put_it_in_the_area",
+    "tests/srd/test_glossary.py::test_an_obstruction_giving_total_cover_blocks_the_area",
+    "tests/srd/test_glossary.py::test_half_cover_from_the_origin_doesnt_block_the_area",
+    "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
+    "tests/srd/test_glossary.py::test_a_creature_in_the_line_doesnt_block_the_area",
+    "tests/srd/test_glossary.py::test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area"
+  ],
+  "tickets": [
+    "T-82",
+    "T-83",
+    "T-84"
+  ]
+}

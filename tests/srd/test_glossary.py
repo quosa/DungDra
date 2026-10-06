@@ -1838,3 +1838,241 @@ def test_the_caster_isnt_in_a_sphere_placed_away_from_them(game):
     S.cast(game, m, "sleep", [m, gob], point=(30, 0))
     assert gob.has("incapacitated") and not m.has("incapacitated")
     assert len(save_texts(game)) == 1 and "MIALEE" not in save_texts(game)[0]
+
+
+# ================ GLOSS.area-of-effect ================
+AOE = "GLOSS.area-of-effect"
+
+
+def aoe_exclusions(game):
+    """The log events that drop a creature from an area because it is cut off from the origin."""
+    return [e for e in game.log.events if "point of origin" in e.text and "isn't affected" in e.text]
+
+
+# ---------------- #1 · an area has a point of origin, where its energy erupts ----------------
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#1", kind="negative")
+def test_total_cover_from_some_other_point_doesnt_cut_a_creature_off(game):
+    # Cover from (40, 0) isn't cover from the origin at (30, 0): G0 is still in the Sphere.
+    m = sleeper(game)
+    g = mon(game, "goblin warrior", (35, 0), name="G0")
+    game.scene.cover[((40, 0), g.id)] = "total"
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [g], point=(30, 0))
+    assert g.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#1", kind="abuse")
+def test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere(game):
+    # The energy erupts at the chosen point, not at the caster: a wall between caster and goblin
+    # doesn't stand between the goblin and the Sphere's origin.
+    m = sleeper(game)
+    g = mon(game, "goblin warrior", (35, 0), name="G0")
+    game.scene.cover[(m.id, g.id)] = "total"
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [g], point=(30, 0))
+    assert g.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+# ---------------- #2 · each shape's rules position its point of origin ----------------
+@pytest.mark.srd(AOE, clause=f"{AOE}#2", kind="positive", ruling="R-10")
+def test_a_cone_from_the_caster_is_cut_off_by_total_cover_from_the_caster(game):
+    # Burning Hands' Cone originates at the caster, so cover from her is cover from the origin.
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g0 = mon(game, "goblin warrior", (5, 0), name="G0")
+    g1 = mon(game, "goblin warrior", (10, 5), name="G1")
+    g0.hp = g1.hp = 30
+    game.scene.cover[(m.id, g1.id)] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g0, g1])
+    assert hit([g0, g1]) == [True, False]
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#2", kind="positive", ruling="R-10")
+def test_a_cube_from_the_caster_is_cut_off_by_total_cover_from_the_caster(game):
+    # Thunderwave's Cube has its origin on the caster's face: a creature walled off from her
+    # neither saves, takes damage, nor is pushed.
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    g0 = mon(game, "goblin warrior", (5, 0), name="G0")
+    g1 = mon(game, "goblin warrior", (10, 5), name="G1")
+    g0.hp = g1.hp = 30
+    game.scene.cover[(m.id, g1.id)] = "total"
+    game.dice.force_str("d8=[2,2]; d20=[1]")
+    S.cast(game, m, "thunderwave", [g0, g1])
+    assert hit([g0, g1]) == [True, False]
+    assert tuple(g1.position) == (10, 5)
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#2", kind="negative")
+def test_a_cone_doesnt_originate_at_the_point_it_is_aimed_at(game):
+    # The point (15, 0) only sets the Cone's direction; Total Cover from it doesn't matter.
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g = mon(game, "goblin warrior", (10, 0), name="G0")
+    g.hp = 30
+    game.scene.cover[((15, 0), g.id)] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g], point=(15, 0))
+    assert g.hp == 24
+    assert len(game.log.of_kind("save")) == 1
+
+
+# ---------------- #3 · a location cut off by blocked lines isn't in the area ----------------
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive", ruling="R-10")
+def test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g0 = mon(game, "goblin warrior", (5, 0), name="G0")
+    g1 = mon(game, "goblin warrior", (10, -5), name="G1")
+    g0.hp = g1.hp = 30
+    game.scene.cover_all[g1.id] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g0, g1])
+    assert hit([g0, g1]) == [True, False]
+    texts = save_texts(game)
+    assert len(texts) == 1 and "G1" not in texts[0]
+    (e,) = aoe_exclusions(game)
+    assert "G1" in e.text and str(e.page) == "177"
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-82: the exclusion of a creature cut off from the point of origin is logged as "
+    "rule='GLOSS.area-of-effect' with no clause number, so the log doesn't say which rule applied",
+)
+def test_the_exclusion_is_logged_against_the_blocked_lines_clause(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g0 = mon(game, "goblin warrior", (5, 0), name="G0")
+    g1 = mon(game, "goblin warrior", (10, 0), name="G1")
+    g0.hp = g1.hp = 30
+    game.scene.cover[(m.id, g1.id)] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g0, g1])
+    assert hit([g0, g1]) == [True, False]
+    (e,) = aoe_exclusions(game)
+    assert e.rule == f"{AOE}#3" and str(e.page) == "177"
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive", ruling="R-10")
+def test_a_sphere_placed_through_the_session_leaves_out_a_creature_cut_off_from_its_origin(game):
+    m = sleeper(game)
+    open_ = mon(game, "goblin warrior", (30, 0), name="OPEN")
+    walled = mon(game, "goblin warrior", (30, 5), name="WALLED")
+    game.scene.cover[((30, 0), walled.id)] = "total"
+    game.dice.force_str("d20=[1]")
+    out = Session(game).execute(
+        {"cmd": "cast", "spell": "sleep", "actor": m.id, "targets": [open_.id, walled.id], "point": [30, 0]}
+    )
+    assert out.get("ok") is not False, out
+    assert open_.has("incapacitated") and not walled.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-83: Burning Hands sets fire to a flammable object inside its Cone even when the "
+    "object is behind Total Cover; scene objects are placed in the area by geometry alone and "
+    "the blocked-lines check is made only for creatures",
+)
+def test_an_object_cut_off_from_the_origin_isnt_in_the_area(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g = mon(game, "goblin warrior", (5, 0), name="G0")
+    g.hp = 30
+    game.scene.objects["open hay"] = {"flammable": True, "position": (10, 5)}
+    game.scene.objects["walled hay"] = {"flammable": True, "position": (10, 0)}
+    game.scene.cover_all["walled hay"] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g])
+    assert game.scene.objects["open hay"].get("burning")
+    assert not game.scene.objects["walled hay"].get("burning")
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="negative")
+def test_a_creature_in_the_area_with_no_cover_is_affected(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g = mon(game, "goblin warrior", (10, 5), name="G0")
+    g.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g])
+    assert g.hp == 24
+    assert aoe_exclusions(game) == []
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="abuse", ruling="R-10")
+def test_naming_a_creature_cut_off_from_the_origin_doesnt_put_it_in_the_area(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    g0 = mon(game, "goblin warrior", (5, 0), name="G0")
+    g1 = mon(game, "goblin warrior", (10, 5), name="G1")
+    g0.hp = g1.hp = 30
+    game.scene.cover[(m.id, g1.id)] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [g1, g0], point=(15, 0))
+    assert hit([g0, g1]) == [True, False]
+    assert len(game.log.of_kind("save")) == 1
+
+
+# ---------------- #4 · only an obstruction giving Total Cover blocks a line ----------------
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="positive", ruling="R-10")
+def test_an_obstruction_giving_total_cover_blocks_the_area(game):
+    m = sleeper(game)
+    g = mon(game, "goblin warrior", (35, 5), name="G0")
+    game.scene.cover_all[g.id] = "total"
+    S.cast(game, m, "sleep", [g], point=(30, 0))
+    assert not g.has("incapacitated")
+    assert save_texts(game) == []
+    assert m.slots_left(1) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="negative", ruling="P-30")
+def test_half_cover_from_the_origin_doesnt_block_the_area(game):
+    m = sleeper(game)
+    g = mon(game, "goblin warrior", (35, 0), name="G0")
+    game.scene.cover[((30, 0), g.id)] = "half"
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [g], point=(30, 0))
+    assert g.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="boundary", ruling="P-30")
+def test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does(game):
+    # An arrow slit's Three-Quarters Cover leaves lines through it: the creature is still in the Cone.
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    slit = mon(game, "goblin warrior", (10, 0), name="SLIT")
+    wall = mon(game, "goblin warrior", (10, 5), name="WALL")
+    slit.hp = wall.hp = 30
+    game.scene.cover[(m.id, slit.id)] = "three-quarters"
+    game.scene.cover[(m.id, wall.id)] = "total"
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [slit, wall], point=(15, 0))
+    assert hit([slit, wall]) == [True, False]
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="negative", ruling="R-09")
+def test_a_creature_in_the_line_doesnt_block_the_area(game):
+    # A creature gives at most Half Cover, so G0 in front of G1 leaves G1 in the Cube.
+    _, gobs = wave(game, [(5, 0), (10, 0)], hits=2)
+    assert hit(gobs) == [True, True]
+    assert len(game.log.of_kind("save")) == 2
+
+
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="abuse", ruling="R-09")
+def test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area(game):
+    _, gobs = burn(game, [(5, 0), (10, 0), (15, 0)], hits=3)
+    assert hit(gobs) == [True, True, True]
+    assert aoe_exclusions(game) == []

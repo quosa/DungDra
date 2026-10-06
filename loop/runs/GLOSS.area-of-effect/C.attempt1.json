@@ -1,0 +1,277 @@
+{
+ "output": {
+  "summary": "Added 18 tests for GLOSS.area-of-effect to tests/srd/test_glossary.py. 16 pass and 2 are red (xfail strict). Clauses #1–#4 are covered with Sleep (Sphere at a point), Burning Hands (Cone from the caster) and Thunderwave (Cube from the caster). #1/#2: the blocked-lines check uses each shape's own point of origin: the chosen point for a Sphere, the caster for a Cone or Cube, never the aim point and never the caster for a placed Sphere. #3: a creature cut off by Total Cover rolls no save, takes nothing, isn't pushed and is logged with p.177. This also works through Session.execute and when the creature is named. #4: Half and Three-Quarters Cover don't block, and neither do creatures in the line (R-09). Total Cover does. Red findings: (1) Burning Hands sets fire to a flammable object behind Total Cover, because `_area_objects` never checks blocked lines; (2) the exclusion log event has no clause number. Clause #5 (unseen point behind a wall) can't be tested: the engine has no obstruction geometry and no visibility of points. Added four cheats to the abuse catalogue. Stage B found no scenario that needs a change.",
+  "interactions": [
+   {
+    "clause": "GLOSS.area-of-effect#4",
+    "with": "GLOSS.cover / PLAY.combat.cover (Total vs Three-Quarters vs Half)",
+    "risk": "high",
+    "note": "Only Total Cover blocks a line. Covered by Half, Three-Quarters (boundary) and Total tests."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#4",
+    "with": "R-09 (creatures give at most Half Cover)",
+    "risk": "high",
+    "note": "A creature, or a column of them, never blocks an area. Tested with a Cube and a Cone."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#3",
+    "with": "R-10 (Total Cover doesn't refuse an area spell)",
+    "risk": "high",
+    "note": "The spell is cast and the slot spent. The walled-off creature is just left out."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#3",
+    "with": "R-16 / SPELL.casting-spells.effects.targets#4 (the engine works out the area)",
+    "risk": "high",
+    "note": "Naming a walled-off creature mustn't add it to the area. Tested."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#3",
+    "with": "SPELL.burning-hands (flammable objects in the Cone)",
+    "risk": "medium",
+    "note": "Objects are placed in the area without the blocked-lines check. Red test."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#1",
+    "with": "GLOSS.sphere / SPELL.sleep (origin at the chosen point)",
+    "risk": "high",
+    "note": "Cover is judged from the Sphere's origin, not from the caster or another point."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#2",
+    "with": "GLOSS.cone / GLOSS.cube (origin at the caster for Self-range spells)",
+    "risk": "medium",
+    "note": "The aim point only sets the direction. Cover from it is ignored, and cover from the caster counts."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#3",
+    "with": "SPELL.thunderwave push",
+    "risk": "low",
+    "note": "A creature cut off from the origin isn't pushed either."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#1",
+    "with": "GLOSS.emanation",
+    "risk": "low",
+    "note": "Stage-A gap (where blocking lines start for an Emanation). No in-scope Emanation spell, so not tested."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#5",
+    "with": "vision / unseen points, walls",
+    "risk": "medium",
+    "note": "The engine has no wall geometry and no visibility of points: not testable."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Naming a creature that is walled off from the point of origin so the caller's list puts it in the area",
+    "test": "tests/srd/test_glossary.py::test_naming_a_creature_cut_off_from_the_origin_doesnt_put_it_in_the_area",
+    "reason": "#3: a location with every line blocked isn't in the area, named or not"
+   },
+   {
+    "case": "Claiming cover from the caster against a Sphere placed elsewhere",
+    "test": "tests/srd/test_glossary.py::test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere",
+    "reason": "#1: the energy erupts at the point of origin"
+   },
+   {
+    "case": "Using a column of creatures as a wall against an area",
+    "test": "tests/srd/test_glossary.py::test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area",
+    "reason": "#4 + R-09: creatures never give Total Cover"
+   },
+   {
+    "case": "Using a Three-Quarters obstruction (an arrow slit) to keep an area out",
+    "test": "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
+    "reason": "#4: only Total Cover blocks a line"
+   },
+   {
+    "case": "Placing an area at an unseen point behind a wall so it erupts on the far side",
+    "test": null,
+    "reason": "#5 needs wall geometry and visibility of points, which the engine lacks (see not_testable)"
+   },
+   {
+    "case": "Leaving creatures in the area off the list (existing catalogue entry)",
+    "test": "tests/srd/test_glossary.py::test_a_creature_in_the_line_doesnt_block_the_area",
+    "reason": "G1 isn't named and is still hit through G0"
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_an_areas_lines_are_judged_from_its_point_of_origin",
+    "clause": "GLOSS.area-of-effect#1",
+    "kind": "positive",
+    "rule_quote": "An area of effect has a point of origin, a location from which the effect’s energy erupts.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_total_cover_from_some_other_point_doesnt_cut_a_creature_off",
+    "clause": "GLOSS.area-of-effect#1",
+    "kind": "negative",
+    "rule_quote": "An area of effect has a point of origin, a location from which the effect’s energy erupts.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere",
+    "clause": "GLOSS.area-of-effect#1",
+    "kind": "abuse",
+    "rule_quote": "An area of effect has a point of origin, a location from which the effect’s energy erupts.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+    "clause": "GLOSS.area-of-effect#2",
+    "kind": "positive",
+    "rule_quote": "The rules for each shape specify how to position its point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cube_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+    "clause": "GLOSS.area-of-effect#2",
+    "kind": "positive",
+    "rule_quote": "The rules for each shape specify how to position its point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_doesnt_originate_at_the_point_it_is_aimed_at",
+    "clause": "GLOSS.area-of-effect#2",
+    "kind": "negative",
+    "rule_quote": "The rules for each shape specify how to position its point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "positive",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_exclusion_is_logged_against_the_blocked_lines_clause",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "positive",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "red",
+    "ticket_title": "SRD: a creature whose lines from the point of origin are all blocked is left out under clause #3; engine: the exclusion is logged as rule='GLOSS.area-of-effect' with no clause number"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_leaves_out_a_creature_cut_off_from_its_origin",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "positive",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_an_object_cut_off_from_the_origin_isnt_in_the_area",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "positive",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "red",
+    "ticket_title": "SRD: a location cut off from the point of origin by Total Cover isn't in the area; engine: Burning Hands sets fire to a flammable object behind Total Cover because scene objects are placed in the area by geometry alone"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_creature_in_the_area_with_no_cover_is_affected",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "negative",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_naming_a_creature_cut_off_from_the_origin_doesnt_put_it_in_the_area",
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "abuse",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_an_obstruction_giving_total_cover_blocks_the_area",
+    "clause": "GLOSS.area-of-effect#4",
+    "kind": "positive",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_half_cover_from_the_origin_doesnt_block_the_area",
+    "clause": "GLOSS.area-of-effect#4",
+    "kind": "negative",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
+    "clause": "GLOSS.area-of-effect#4",
+    "kind": "boundary",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_creature_in_the_line_doesnt_block_the_area",
+    "clause": "GLOSS.area-of-effect#4",
+    "kind": "negative",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area",
+    "clause": "GLOSS.area-of-effect#4",
+    "kind": "abuse",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.area-of-effect#5",
+    "kind": "missing",
+    "reason": "The scene has no obstruction geometry: cover is per-target labels and no_los is creature pairs. Nothing records whether the creator can see a point. So the engine can't express 'an unseen point with a wall between the creator and it', and can't move the origin to the near side.",
+    "infra_ticket": "Walls/obstructions placed between points in the scene, plus visibility of a point from a creature, so that an area placed at an unseen point behind an obstruction gets its point of origin on the near side (GLOSS.area-of-effect#5)"
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.area-of-effect#1",
+    "kind": "boundary",
+    "reason": "No threshold: a point of origin is a single location, with no quantity to sit one step past."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#2",
+    "kind": "boundary",
+    "reason": "No threshold: it delegates origin placement to the shape units, whose own boundary tests (cone/cube/sphere) cover distances."
+   },
+   {
+    "clause": "GLOSS.area-of-effect#3",
+    "kind": "boundary",
+    "reason": "The engine's only way to express blocked lines is a cover-degree label. The degree threshold (Three-Quarters vs Total) is the boundary, and it is tested under #4."
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.area-of-effect ambiguity 2: 'To block a line, an obstruction must provide Total Cover': judged per location (cut off only when a target there has Total Cover from the origin) or per line (any line through a solid part is blocked)?",
+    "ruling": "Per location: a location is cut off from the area exactly when a creature or object there has Total Cover from the point of origin. A Three-Quarters obstruction such as an arrow slit never cuts anything off. With R-09, creatures never block an area.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
+     "tests/srd/test_glossary.py::test_half_cover_from_the_origin_doesnt_block_the_area"
+    ]
+   }
+  ]
+ },
+ "problems": [],
+ "cost_usd": 1.0944710000000002,
+ "session": "a9d4cd12-064a-4751-9cea-416c3e2e362b",
+ "error": null
+}

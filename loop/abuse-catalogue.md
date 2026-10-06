@@ -87,6 +87,15 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Reading a Sphere's radius as its diameter or stretching it with a higher slot (Sleep's 5-foot
   radius reaching 10 feet), or using its "origin is included" rule to put the caster in a
   Sphere placed elsewhere, as if it were an Emanation from them.
+- Naming a creature that is walled off (Total Cover) from an area's point of origin, so that the
+  caller's list puts it in the area anyway.
+- Judging an area's blocked lines from the wrong place: cover from the caster used against a
+  Sphere placed elsewhere, or cover from a Cone's aim point used against a Cone that starts at the
+  caster.
+- Using a column of creatures, or a Three-Quarters obstruction (an arrow slit), as a wall that
+  keeps an area out (only Total Cover blocks a line).
+- Placing an area at an unseen point behind a wall so it erupts on the far side, instead of on
+  the near side of the obstruction.
 - Naming a far-off creature for an area spell that takes the caller's list instead of working out
   the area (Web's 20-foot Cube catching a creature 100 feet away).
 - Claiming an "if the attack roll had Advantage" rider (a Goblin's extra 1d4) when Advantage and

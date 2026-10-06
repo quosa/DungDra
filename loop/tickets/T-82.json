@@ -1,0 +1,12 @@
+{
+  "id": "T-82",
+  "kind": "bug",
+  "unit": "GLOSS.area-of-effect",
+  "title": "SRD: a creature whose lines from the point of origin are all blocked is left out under clause #3; engine: the exclusion is logged as rule='GLOSS.area-of-effect' with no clause number",
+  "tests": [
+    "tests/srd/test_glossary.py::test_the_exclusion_is_logged_against_the_blocked_lines_clause"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

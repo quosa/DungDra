@@ -1,0 +1,124 @@
+{
+ "summary": "I checked all 17 tests (15 green, 2 red) against the engine's area-of-effect code at `dungdra/spells.py:1132`. Each test was run against at least one deliberate break of the rule, applied in a scratch copy. Breaks covered: always judging cover from the caster; judging cover from the point the area is aimed at; judging it from some other point; removing the Total Cover exclusion; letting Half, Three-Quarters or any cover block the area; and excluding everyone. Every test failed under the breaks aimed at it. I ran both red tests with `--runxfail`, and each fails exactly where its ticket says: the log entry reads `rule='GLOSS.area-of-effect'` with no `#3`, and the walled-off hay still catches fire. The rulebook reading looks right in every test: a line is blocked only by Total Cover (clause #4), cover is judged from the point of origin rather than the caster (#1/#2), and a creature in the way gives only Half Cover (ruling R-09). I'm refuting one test as a duplicate. `test_an_areas_lines_are_judged_from_its_point_of_origin` is a line-for-line copy of the existing `test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin` (`test_glossary.py:1753`): same Sleep cast at (30,0), same OPEN/WALLED goblins, same cover entry, dice and assertions. `test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing` overlaps with the existing `test_total_cover_doesnt_refuse_an_area_spell` (which tests the Cover rule's clause #9), but it also checks that no save is rolled, the name in the log entry and the page number, so I kept it.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_an_areas_lines_are_judged_from_its_point_of_origin",
+   "verdict": "refute",
+   "reason": "Exact duplicate of the existing test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin (test_glossary.py:1753, GLOSS.sphere#1): same caster, goblins at (25,0)/(35,0), the same total-cover entry from (30,0), forced d20=[1] and identical assertions. Only the marker and comment differ. The test itself is sound (it fails when cover is judged from the caster), but it adds nothing.",
+   "mutation": "spells.py:1132 'caster if from_self else place[:2], t)' -> 'caster, t)': test failed. The existing sphere test checks the same thing.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_total_cover_from_some_other_point_doesnt_cut_a_creature_off",
+   "verdict": "keep",
+   "reason": "Follows from #1: the lines that count start at the point of origin, so Total Cover from another point doesn't remove the creature.",
+   "mutation": "Changed the origin to '(40, 0)' (the point the cover was set from): test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere",
+   "verdict": "keep",
+   "reason": "A Sphere's energy erupts at its chosen point, not at the caster. Cover from the caster must not exclude the goblin; no existing test covers this.",
+   "mutation": "Changed the origin to always be the caster: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+   "verdict": "keep",
+   "reason": "A Cone's rules put its origin at the caster (#2), so Total Cover from the caster excludes the goblin.",
+   "mutation": "Changed the origin to 'place[:2]' (the aim point) for every area: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cube_from_the_caster_is_cut_off_by_total_cover_from_the_caster",
+   "verdict": "keep",
+   "reason": "Same check for Thunderwave's Cube, and it also checks the walled-off goblin isn't pushed.",
+   "mutation": "Changed the origin to the aim point: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_doesnt_originate_at_the_point_it_is_aimed_at",
+   "verdict": "keep",
+   "reason": "The point given only sets the Cone's direction. Cover from it must not exclude the goblin.",
+   "mutation": "Changed the origin to the aim point: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing",
+   "verdict": "keep",
+   "reason": "Directly tests clause #3, including that no save is rolled and the page number in the log entry. It partly overlaps the existing COVER#9 test test_total_cover_doesnt_refuse_an_area_spell, but asserts more.",
+   "mutation": "spells.py:1132 't) == \"total\"' -> 't) == \"never\"' (exclusion removed): test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_the_exclusion_is_logged_against_the_blocked_lines_clause",
+   "verdict": "keep",
+   "reason": "Red for the stated reason. CLAUDE.md requires the rule field to carry the clause number, and the engine logs rule='GLOSS.area-of-effect' with no '#3'. With --runxfail the hit check passes and the rule check fails exactly on the missing '#3'.",
+   "mutation": "Red test: ran it with --runxfail and it failed on the rule field ('GLOSS.area-of-effect' != 'GLOSS.area-of-effect#3'), as its reason says.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_leaves_out_a_creature_cut_off_from_its_origin",
+   "verdict": "keep",
+   "reason": "Same rule, but goes through the Session command interface; no existing test does that for this rule.",
+   "mutation": "Changed the origin to the caster: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_an_object_cut_off_from_the_origin_isnt_in_the_area",
+   "verdict": "keep",
+   "reason": "Red for the stated reason. Clause #3 talks about locations, not creatures, so hay behind Total Cover isn't in the area. The engine's object-placement code (_area_objects) never checks cover. With --runxfail the open hay burns and the walled hay burns too. Small caveat: putting an object's name in cover_all is a convention the test invents, so the fix has to support it.",
+   "mutation": "Red test: with --runxfail, 'assert not walled hay burning' failed (burning=True), as its reason says.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_creature_in_the_area_with_no_cover_is_affected",
+   "verdict": "keep",
+   "reason": "Control case: no cover means the goblin is affected and nothing is logged as excluded.",
+   "mutation": "Inverted the check to '!= \"total\"': test failed. ('is not None' passed, as expected with no cover.)",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_naming_a_creature_cut_off_from_the_origin_doesnt_put_it_in_the_area",
+   "verdict": "keep",
+   "reason": "Naming the walled-off goblin first and aiming at a point must not bring it into the area.",
+   "mutation": "Removed the Total Cover exclusion: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_an_obstruction_giving_total_cover_blocks_the_area",
+   "verdict": "keep",
+   "reason": "Clause #4, positive case; also checks the cast isn't refused (the slot is spent).",
+   "mutation": "Removed the Total Cover exclusion: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_half_cover_from_the_origin_doesnt_block_the_area",
+   "verdict": "keep",
+   "reason": "'Must provide Total Cover': Half Cover doesn't block the area.",
+   "mutation": "Changed the check to 'in (\"total\", \"half\")': test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
+   "verdict": "keep",
+   "reason": "Boundary between Three-Quarters and Total Cover; follows directly from the wording of #4.",
+   "mutation": "Changed the check to 'in (\"total\", \"three-quarters\")': test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_creature_in_the_line_doesnt_block_the_area",
+   "verdict": "keep",
+   "reason": "Ruling R-09 says a creature gives only Half Cover, so a creature in the line doesn't block the area (#4). Not covered for areas elsewhere in tests/srd.",
+   "mutation": "Changed the check to 'is not None' (any cover blocks): test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area",
+   "verdict": "keep",
+   "reason": "Abuse case: under R-09 several creatures still give only Half Cover, so they can't wall off a Cone. Differs from the previous test (Cone, three creatures, and it checks nothing is logged as excluded).",
+   "mutation": "Changed the check to 'is not None': test failed.",
+   "confidence": 0.65
+  }
+ ]
+}

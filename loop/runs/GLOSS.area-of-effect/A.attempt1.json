@@ -1,0 +1,117 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.area-of-effect#1",
+    "text": "An area of effect has a point of origin, a location from which the effect’s energy erupts.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.area-of-effect#2",
+    "text": "The rules for each shape specify how to position its point of origin.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.area-of-effect#3",
+    "text": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.area-of-effect#4",
+    "text": "To block a line, an obstruction must provide Total Cover.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.area-of-effect#5",
+    "text": "If the creator of an area of effect places it at an unseen point and an obstruction—such as a wall— is between the creator and that point, the point of origin comes into being on the near side of the obstruction.",
+    "threshold": false
+   }
+  ],
+  "relations": [
+   {
+    "type": "requires",
+    "target": "GLOSS.cover",
+    "evidence": "To block a line, an obstruction must provide Total Cover."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cone",
+    "evidence": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cylinder",
+    "evidence": "A Cylinder is an area of effect that extends in straight lines from a point of origin located at the center of the circular top or bottom of the Cylinder."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.line",
+    "evidence": "A Line is an area of effect that extends from a point of origin in a straight path along its length and covers an area defined by its width."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cube",
+    "evidence": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.emanation",
+    "evidence": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.sphere",
+    "evidence": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions."
+   }
+  ],
+  "ambiguities": [
+   {
+    "quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked",
+    "reading_a": "The 'location' is the creature's whole space. It stays in the area if any straight line from the point of origin reaches any part of that space unblocked.",
+    "reading_b": "The 'location' is a single point, the centre of the creature's space (as P-23/P-28 use for membership). That gives exactly one line, and the creature is excluded if that one line is blocked.",
+    "proposed_ruling": "Reading A: a creature in the area's shape (decided by P-23/P-28 membership) is excluded only if every line from the point of origin to its space is blocked. Equivalently, it has Total Cover from the point of origin. This keeps the 'all straight lines' wording meaningful and matches R-10.",
+    "confidence": 0.55
+   },
+   {
+    "quote": "To block a line, an obstruction must provide Total Cover.",
+    "reading_a": "Judge it per location: a location is cut off exactly when a target there would have Total Cover from the point of origin. A Three-Quarters obstruction such as an arrow slit never cuts anything off.",
+    "reading_b": "Judge it per line: any line passing through a solid part of an obstruction that could give Total Cover is blocked, even if other lines through gaps reach the location.",
+    "proposed_ruling": "Reading A, which is consistent with R-10. By R-09, creatures never give Total Cover, so creatures never block an area of effect.",
+    "confidence": 0.65
+   },
+   {
+    "quote": "the point of origin comes into being on the near side of the obstruction",
+    "reading_a": "The origin appears where the straight line from the creator to the chosen point first meets the obstruction, just on the creator's side.",
+    "reading_b": "The GM picks any point on the near side of the obstruction.",
+    "proposed_ruling": "Reading A: the last unobstructed point (on a grid, the last open space) along the line from the creator to the chosen point.",
+    "confidence": 0.6
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "An area of effect has a point of origin, a location from which the effect’s energy erupts.",
+    "explanation": "An Emanation has a creature or object as its origin, not a point. No rule says where the blocking lines of #3 start for an Emanation: from the centre of the origin's space, or from any point of it."
+   },
+   {
+    "quote": "If the creator of an area of effect places it at an unseen point",
+    "explanation": "The rule covers only unseen points. It doesn't say what happens when the creator can see the chosen point but a transparent obstruction (a window, for example) lies between them. Whether the origin is placed beyond the obstruction, moved to its near side, or the placement is refused is left to the targeting rules' clear-path requirement."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "which typically has one of six shapes",
+    "note": "The 2014 rules had five shapes: cone, cube, cylinder, line and sphere. Emanation is new. It moves with its origin creature, and that creature isn't included unless the creator decides otherwise. A 2014-style implementation would model auras as moving Spheres, which include their origin."
+   },
+   {
+    "quote": "The rules for each shape specify how to position its point of origin.",
+    "note": "The 2014 DMG grid convention puts the origin on a square intersection or corner and counts a square as covered when half of it is covered. That convention isn't in the SRD 5.2.1. Use the per-shape rules and the register/proposals (P-23, P-28) instead."
+   }
+  ],
+  "summary": "GLOSS.area-of-effect splits into five clauses. #1: an area has a point of origin. #2: each shape's own rule says where that origin goes. #3: a location is excluded only if every straight line to it from the origin is blocked. #4: only an obstruction that gives Total Cover blocks a line. #5: if the creator picks an unseen point behind an obstruction, the origin appears on the near side. The rule depends on GLOSS.cover for clause #4, and the six shape units supply where the origin goes. Three ambiguities: whether 'location' means a creature's whole space or one point; whether blocking is judged per location or per line (proposed: per location, consistent with R-10 and R-09); and exactly where 'near side' is. Two gaps: where an Emanation's blocking lines start, since its origin is a creature or object; and a visible point behind a transparent barrier. Two traps from the 2014 rules: Emanation is a new sixth shape, and the 2014 DMG grid convention isn't in the SRD."
+ },
+ "problems": [],
+ "cost_usd": 0.1607092,
+ "session": "3d5f66f9-50f1-4ab7-8227-07d6e47c9db1",
+ "error": null
+}
