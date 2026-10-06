@@ -52,6 +52,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
   (Half + Half as +4, Half + Three-Quarters as +7).
 - Using an obstruction that only covers a target from one attacker to protect it from all of them.
 - Using a creature as Three-Quarters or Total Cover (a creature gives at most Half Cover).
+- Shooting past a small creature (a Giant Rat in front of an Ogre) as if it gave no cover; or
+  claiming a creature's Half Cover from one that stands behind the attacker, behind the target or
+  off to the side instead of in the line between them.
+- Keeping creature cover against every attacker once one attacker's line runs through a creature.
 - Using the Sacred Flame exception (ignores Half and Three-Quarters Cover) to reach a target
   behind Total Cover.
 - Using Tremorsense to detect a creature in the air (flying, jumping, falling), on a separate

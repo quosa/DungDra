@@ -420,3 +420,117 @@ def test_creature_in_the_way_never_gives_total_cover(game):
     mon(game, "goblin warrior", (15, 0), name="Screen")
     r = shoot(game, lidda, gob)  # the attack can be made: a creature never gives Total Cover
     assert r.roll.target < 20
+
+
+# ---------------- revisit: creature cover on every path, cover for PCs ----------------
+OGRE_AC = 11  # Ogre stat block
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="boundary", ruling="R-09")
+def test_small_creature_in_front_of_a_large_one_gives_half_cover(game):
+    """A Small Giant Rat covers far less than half of a Large Ogre, yet still gives Half Cover."""
+    lidda = pc(game, "LIDDA", (0, 0))
+    ogre = mon(game, "ogre", (30, 0))
+    ogre.base_max_hp = ogre.hp = 500
+    mon(game, "giant rat", (15, 0), name="Rat")
+    assert shoot(game, lidda, ogre, d20=1).roll.target == OGRE_AC + 2
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
+def test_creature_on_a_diagonal_line_gives_half_cover(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 30))
+    gob.base_max_hp = gob.hp = 500
+    mon(game, "goblin warrior", (15, 15), name="Screen")
+    assert shoot(game, lidda, gob, d20=1).roll.target == GOBLIN_AC + 2
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="negative")
+def test_creature_behind_the_attacker_gives_no_cover(game):
+    lidda, gob = lidda_and_goblin(game, dist=30)
+    pc(game, "BROM", (-15, 0))
+    assert shoot(game, lidda, gob, d20=1).roll.target == GOBLIN_AC
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#3", kind="negative")
+def test_creature_cover_is_worked_out_per_attacker(game):
+    """The Screen stands between LIDDA and the goblin, not between the goblin and a second archer."""
+    lidda, gob = lidda_and_goblin(game, dist=30)
+    mon(game, "goblin warrior", (15, 0), name="Screen")
+    other = pc(game, "LIDDA", (30, 30))
+    assert shoot(game, lidda, gob, d20=1).roll.target == GOBLIN_AC + 2
+    assert shoot(game, other, gob, d20=1).roll.target == GOBLIN_AC
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#3", kind="positive")
+def test_creature_cover_protects_a_pc_from_a_monster(game):
+    """The same creature in the line covers whichever side is the target."""
+    lidda, gob = lidda_and_goblin(game, dist=30)
+    pc(game, "BROM", (15, 0))
+    lidda_ac = sum(v for v, _ in lidda.ac_parts())
+    game.dice.force_str("d20=[1]")
+    r = C.attack(game, gob, lidda, attack_name="Shortbow")
+    assert r.roll.target == lidda_ac + 2 and not r.hit
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#5", kind="positive")
+def test_half_cover_raises_a_pcs_ac_against_a_monster(game):
+    lidda, gob = lidda_and_goblin(game, dist=30)
+    game.scene.cover[(gob.id, lidda.id)] = "half"
+    lidda_ac = sum(v for v, _ in lidda.ac_parts())
+    game.dice.force_str("d20=[1]")
+    assert C.attack(game, gob, lidda, attack_name="Shortbow").roll.target == lidda_ac + 2
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
+def test_creature_in_the_way_gives_half_cover_to_a_spell_attack(game):
+    m = pc(game, "MIALEE", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.base_max_hp = gob.hp = 500
+    pc(game, "BROM", (15, 0))
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "fire bolt", gob)
+    assert f"AC {GOBLIN_AC + 2}" in game.log.last("attack").text, game.log.last("attack").text
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
+def test_creature_in_the_way_gives_half_cover_to_a_dex_save(game):
+    """BROM stands between MIALEE and the goblin inside the Cone: the goblin's 9 + 2 = 11 becomes 13
+    and meets DC 13. BROM saves too (he's in the area) with the second d20."""
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    brom = pc(game, "BROM", (5, 0))
+    brom.base_max_hp = brom.hp = 100
+    gob = mon(game, "goblin warrior", (10, 0))
+    gob.base_max_hp = gob.hp = 50
+    game.dice.force_str("d6=[3,4,5]; d20=[9,9]")
+    S.cast(game, m, "burning hands", [m, brom, gob])
+    save = next(e for e in reversed(game.log.events) if e.kind == "save" and gob.name in e.text)
+    assert "Half Cover" in save.text and "→ success" in save.text, save.text
+    assert gob.hp == 50 - 6
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#6", kind="positive")
+def test_creature_cover_applies_through_the_session(game):
+    lidda, gob = lidda_and_goblin(game, dist=30)
+    mon(game, "goblin warrior", (15, 0), name="Screen")
+    in_combat(game, lidda, gob)
+    s = Session(game)
+    s.auto_gm = False
+    game.dice.force_str("d20=[1]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": gob.id, "weapon": "shortbow"})
+    assert out["ok"], out
+    assert f"AC {GOBLIN_AC + 2}" in game.log.last("attack").text, game.log.last("attack").text
+    game.log.assert_applied(rule=f"{COVER}#5")
+
+
+# ---------------- revisit: every degree and source by its effect ----------------
+
+
+@pytest.mark.srd(COVER, clause=f"{COVER}#8", kind="positive")
+def test_object_covering_three_quarters_gives_plus_five(game):
+    lidda, gob = lidda_and_goblin(game)
+    game.scene.cover[(lidda.id, gob.id)] = "three-quarters"  # an arrow slit between them
+    r = shoot(game, lidda, gob, d20=13)  # 13 + 5 = 18: hits AC 15 or 17, misses AC 20
+    assert r.roll.target == GOBLIN_AC + 5 and not r.hit
+    game.log.assert_applied(rule=f"{COVER}#7")

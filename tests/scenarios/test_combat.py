@@ -239,6 +239,14 @@ def test_cmb05_ranged_cover(game):
     S.cast(game, mialee, "burning hands", [mialee, singed])
     save = game.log.last("save").text
     assert "+5 Three-Quarters Cover" in save and "= 13" in save and "success" in save
+    # another creature in the line gives Half Cover: the Adjacent goblin stands between LIDDA and gob
+    game.scene.cover.clear()
+    game.scene.cover_all.clear()
+    game.dice.force_str("d20=[10]")
+    assert C.attack(game, lidda, gob, weapon="shortbow").roll.target == 17
+    adj.position = (5, 30)
+    game.dice.force_str("d20=[10]")
+    assert C.attack(game, lidda, gob, weapon="shortbow").roll.target == 15
 
 
 # ---------------- CMB-06 · Grapple and Shove ----------------
