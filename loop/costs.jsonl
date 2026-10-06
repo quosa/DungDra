@@ -215,3 +215,6 @@
 {"at": 1791280484, "about": "SPELL.bless", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.2409, "seconds": 192.2, "session_id": "f2cd9dbe-12e2-4f2e-8598-a7b1a7c0272e", "exit": 0}
 {"at": 1791280678, "about": "SPELL.bless", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.6175, "seconds": 81.3, "session_id": "b9ee56a1-35cd-436c-b88f-add4838d36dc", "exit": 0}
 {"at": 1791280761, "about": "SPELL.bless", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 1.491, "seconds": 302.8, "session_id": "7743f187-6bcc-4068-a3c9-df0ad48776cd", "exit": 0}
+{"at": 1791283361, "about": "SPELL.casting-spells.effects.targets", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.3789, "seconds": 187.0, "session_id": "07f03e2b-ca08-44d5-a45f-a99420b93a0b", "exit": 1}
+{"at": 1791283548, "about": "SPELL.casting-spells.effects.targets", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.0, "seconds": 2.3, "session_id": "e15ef548-198d-4955-9952-98a7cbb2ee22", "exit": 1}
+{"at": 1791301501, "about": "SPELL.casting-spells.effects.targets", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.6481, "seconds": 69.8, "session_id": "a3d1c252-f259-432c-8f63-7313949487b8", "exit": 0}
