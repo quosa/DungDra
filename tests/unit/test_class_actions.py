@@ -64,23 +64,64 @@ def test_nimble_escape_allows_only_disengage_or_hide(game):
     assert gob.find_effects("disengage")
 
 
-def test_bonus_disengage_is_refused_with_a_citation_without_a_granting_feature(game):
+def test_take_as_bonus_disengage_is_refused_with_a_citation_without_a_granting_feature(game):
     bandit = mon(game, "bandit")
     with pytest.raises(Refusal) as e:
-        CA.bonus_disengage(game, bandit)
-    assert e.value.rule == "MONSTER.goblins.goblin-warrior#24"
-    assert e.value.page == 290
+        CA.take_as_bonus(game, bandit, "disengage")
+    assert (e.value.page, e.value.rule) == (10, "PLAY.actions.bonus-actions")
     assert not bandit.find_effects("disengage")
 
 
-def test_bonus_disengage_goes_through_nimble_escape(game):
+def test_take_as_bonus_disengage_goes_through_nimble_escape(game):
     gob = mon(game, "goblin warrior")
-    CA.bonus_disengage(game, gob)
-    assert gob.find_effects("disengage")[0].source == "Nimble Escape"
+    CA.take_as_bonus(game, gob, "disengage")
+    assert gob.find_effects("disengage")[0].source == "Nimble Escape (Disengage)"
 
 
-def test_bonus_disengage_goes_through_cunning_action(game):
+def test_nimble_escape_gives_the_same_source_whichever_way_it_is_reached(game):
+    gob = mon(game, "goblin warrior")
+    CA.nimble_escape(game, gob, "disengage")
+    assert gob.find_effects("disengage")[0].source == "Nimble Escape (Disengage)"
+
+
+def test_take_as_bonus_disengage_goes_through_cunning_action(game):
     lidda = pc(game, "LIDDA")
     lidda.features.append("cunning action")
-    CA.bonus_disengage(game, lidda)
+    CA.take_as_bonus(game, lidda, "disengage")
     assert lidda.find_effects("disengage")[0].source == "Cunning Action (Disengage)"
+
+
+def test_take_as_bonus_dash_is_refused_for_a_goblin_whose_grant_does_not_allow_it(game):
+    gob = mon(game, "goblin warrior")
+    with pytest.raises(Refusal) as e:
+        CA.take_as_bonus(game, gob, "dash")
+    assert e.value.rule == "PLAY.actions.bonus-actions"
+    assert "Bonus Action" in e.value.reason
+
+
+def test_take_as_bonus_dash_goes_through_cunning_action(game):
+    lidda = pc(game, "LIDDA")
+    lidda.features.append("cunning action")
+    CA.take_as_bonus(game, lidda, "Dash")
+    assert "Dash action as a Bonus Action" in game.log.last("action").text
+
+
+def test_cunning_action_hide_takes_the_hide_action(game):
+    lidda = pc(game, "LIDDA")
+    lidda.features.append("cunning action")
+    game.dice.force_str("d20=[20]")
+    r = CA.cunning_action(game, lidda, "hide", cover="three-quarters")
+    assert r.success
+    assert lidda.hidden_total == r.total
+
+
+def test_cunning_action_is_refused_with_a_citation_without_the_feature(game):
+    lidda = pc(game, "LIDDA")
+    with pytest.raises(Refusal) as e:
+        CA.cunning_action(game, lidda, "dash")
+    assert (e.value.page, e.value.rule) == (62, "CLASS.rogue.level-2-cunning-action")
+
+
+def test_every_action_a_grant_allows_can_be_taken():
+    for grant in CA.ACTION_GRANTS.values():
+        assert set(grant["allows"]) <= set(CA._BONUS_TAKEABLE)

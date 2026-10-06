@@ -56,7 +56,7 @@ def test_disengage_command_as_a_bonus_action_is_refused_without_a_feature(game):
     s.auto_gm = False
     out = s.execute({"cmd": "disengage", "actor": bandit.id, "bonus": True})
     assert not out["ok"]
-    assert game.log.last("refused").rule == "MONSTER.goblins.goblin-warrior#24"
+    assert game.log.last("refused").rule == "PLAY.actions.bonus-actions"
     assert not bandit.find_effects("disengage")
     assert s.execute({"cmd": "disengage", "actor": bandit.id})["ok"]
     assert game.combat.turn.bonus_used is False
@@ -70,7 +70,73 @@ def test_disengage_command_as_a_bonus_action_uses_nimble_escape(game):
     s = Session(game)
     s.auto_gm = False
     assert s.execute({"cmd": "disengage", "actor": gob.id, "bonus": True})["ok"]
-    assert gob.find_effects("disengage")[0].source == "Nimble Escape"
+    assert gob.find_effects("disengage")[0].source == "Nimble Escape (Disengage)"
+
+
+# ---------------- the dash command ----------------
+def test_dash_command_as_a_bonus_action_is_refused_without_a_feature(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[1,20]")
+    roll_initiative(game, [brom, gob])
+    s = Session(game)
+    s.auto_gm = False
+    before = game.combat.turn.movement_left
+    out = s.execute({"cmd": "dash", "actor": gob.id, "bonus": True})
+    assert not out["ok"]
+    assert game.log.last("refused").rule == "PLAY.actions.bonus-actions"
+    assert game.combat.turn.bonus_used is False
+    assert game.combat.turn.movement_left == before
+
+
+def test_dash_command_as_a_bonus_action_uses_cunning_action(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    lidda.features.append("cunning action")
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, gob])
+    s = Session(game)
+    s.auto_gm = False
+    before = game.combat.turn.movement_left
+    assert s.execute({"cmd": "dash", "actor": lidda.id, "bonus": True})["ok"]
+    assert game.combat.turn.bonus_used is True
+    assert game.combat.turn.movement_left == before + lidda.speed()
+
+
+def test_dash_command_without_bonus_uses_the_action(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [brom, gob])
+    s = Session(game)
+    s.auto_gm = False
+    assert s.execute({"cmd": "dash", "actor": brom.id})["ok"]
+    assert game.combat.turn.actions_used == 1
+    assert game.combat.turn.bonus_used is False
+
+
+# ---------------- the cunning_action command ----------------
+def test_cunning_action_command_hides_behind_three_quarters_cover_by_default(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    lidda.features.append("cunning action")
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, gob])
+    s = Session(game)
+    s.auto_gm = False
+    game.dice.force_str("d20=[15]")
+    assert s.execute({"cmd": "cunning_action", "what": "hide", "actor": lidda.id})["ok"]
+    assert game.combat.turn.bonus_used is True
+    assert lidda.hidden_total is not None
+
+
+def test_cunning_action_command_refuses_an_action_it_does_not_allow(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    lidda.features.append("cunning action")
+    s = Session(game)
+    out = s.execute({"cmd": "cunning_action", "what": "dodge", "actor": lidda.id})
+    assert not out["ok"] and "Dash, Disengage or Hide" in out["error"]
+    assert game.log.last("refused").rule == "CLASS.rogue.level-2-cunning-action"
 
 
 # ---------------- the ready command ----------------

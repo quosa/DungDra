@@ -362,11 +362,14 @@ class Session:
         )
 
     def cmd_dash(self, actor=None, bonus=False):
-        actions.dash(self.game, self._c(actor), bonus=bonus)
+        if bonus:
+            CA.take_as_bonus(self.game, self._c(actor), "dash")
+        else:
+            actions.dash(self.game, self._c(actor))
 
     def cmd_disengage(self, actor=None, bonus=False):
         if bonus:
-            CA.bonus_disengage(self.game, self._c(actor))
+            CA.take_as_bonus(self.game, self._c(actor), "disengage")
         else:
             actions.disengage(self.game, self._c(actor))
 
@@ -374,13 +377,8 @@ class Session:
         actions.dodge(self.game, self._c(actor))
 
     def cmd_cunning_action(self, what, actor=None, cover=None):
-        a = self._c(actor)
-        if norm(what) == "hide":
-            actions.hide(
-                self.game, a, cover=cover or "three-quarters", bonus=True, source="Cunning Action (Hide)"
-            )
-        else:
-            CA.cunning_action(self.game, a, what)
+        kw = {"cover": cover or "three-quarters"} if norm(what) == "hide" else {}
+        CA.cunning_action(self.game, self._c(actor), what, **kw)
 
     def cmd_hide(self, actor=None, cover=None, obscured=None):
         actions.hide(self.game, self._c(actor), cover=cover, obscured=obscured)

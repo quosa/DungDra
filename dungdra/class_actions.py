@@ -78,20 +78,66 @@ def action_surge(game, pc):
     )
 
 
-def cunning_action(game, pc, what="dash"):
-    _need(pc, "cunning action")
-    what = what.lower()
-    if what == "dash":
-        return actions.dash(game, pc, bonus=True, source="Cunning Action (Dash)")
-    if what == "disengage":
-        return actions.disengage(game, pc, bonus=True, source="Cunning Action (Disengage)")
-    if what == "hide":
-        return None  # caller uses actions.hide(..., bonus=True)
+# -- Features that let a creature take an action as a Bonus Action -----------------
+# Each grant declares once who holds it and which actions it allows; every way of taking one
+# of those actions as a Bonus Action (the feature itself, or a command's bonus=True) goes
+# through `_take_granted`, so the check and the effect's source label live in one place.
+_BONUS_TAKEABLE = {"dash": actions.dash, "disengage": actions.disengage, "hide": actions.hide}
+
+ACTION_GRANTS = {
+    # SRD[CLASS.rogue.level-2-cunning-action]: Dash, Disengage or Hide as a Bonus Action
+    "cunning action": {
+        "label": "Cunning Action",
+        "holds": lambda c: hasattr(c, "has_feature") and c.has_feature("cunning action"),
+        "allows": ("dash", "disengage", "hide"),
+        "page": 62,
+        "rule": "CLASS.rogue.level-2-cunning-action",
+    },
+    # SRD[MONSTER.goblins.goblin-warrior#24]: a stat-block Bonus Action, Disengage or Hide only
+    "nimble escape": {
+        "label": "Nimble Escape",
+        "holds": lambda c: "nimble escape" in c.traits,
+        "allows": ("disengage", "hide"),
+        "page": 290,
+        "rule": "MONSTER.goblins.goblin-warrior#24",
+    },
+}
+
+
+def _take_granted(game, creature, feature, what, **kw):
+    grant = ACTION_GRANTS[feature]
+    if not grant["holds"](creature):
+        raise Refusal(
+            f"{creature.name} doesn't have {grant['label']}", page=grant["page"], rule=grant["rule"]
+        )
+    what = norm(what)
+    if what not in grant["allows"]:
+        allowed = ", ".join(a.title() for a in grant["allows"][:-1]) + f" or {grant['allows'][-1].title()}"
+        raise Refusal(
+            f"{grant['label']} allows only {allowed} as a Bonus Action",
+            page=grant["page"],
+            rule=grant["rule"],
+        )
+    source = f"{grant['label']} ({what.title()})"
+    return _BONUS_TAKEABLE[what](game, creature, bonus=True, source=source, **kw)
+
+
+def take_as_bonus(game, creature, what, **kw):
+    """Take Dash, Disengage or Hide as a Bonus Action through the feature that grants it."""
+    what = norm(what)
+    for feature, grant in ACTION_GRANTS.items():
+        if what in grant["allows"] and grant["holds"](creature):
+            return _take_granted(game, creature, feature, what, **kw)
+    # SRD[PLAY.actions.bonus-actions]: a Bonus Action exists only when a feature grants one
     raise Refusal(
-        "Cunning Action allows only Dash, Disengage or Hide as a Bonus Action",
-        page=62,
-        rule="CLASS.rogue.level-2-cunning-action",
+        f"{creature.name} has no feature that lets it take the {what.title()} action as a Bonus Action",
+        page=10,
+        rule="PLAY.actions.bonus-actions",
     )
+
+
+def cunning_action(game, pc, what="dash", **kw):
+    return _take_granted(game, pc, "cunning action", what, **kw)
 
 
 def steady_aim(game, pc):
@@ -118,37 +164,7 @@ def steady_aim(game, pc):
 
 
 def nimble_escape(game, monster, what="disengage", **kw):
-    # SRD[MONSTER.goblins.goblin-warrior#24]: a stat-block Bonus Action, Disengage or Hide only
-    if "nimble escape" not in monster.traits:
-        raise Refusal(
-            f"{monster.name} doesn't have Nimble Escape",
-            page=290,
-            rule="MONSTER.goblins.goblin-warrior#24",
-        )
-    what = what.lower()
-    if what not in ("disengage", "hide"):
-        raise Refusal(
-            "Nimble Escape allows only the Disengage or Hide action",
-            page=290,
-            rule="MONSTER.goblins.goblin-warrior#24",
-        )
-    if what == "disengage":
-        return actions.disengage(game, monster, bonus=True, source="Nimble Escape")
-    return actions.hide(game, monster, bonus=True, source="Nimble Escape (Hide)", **kw)
-
-
-def bonus_disengage(game, creature):
-    # SRD[MONSTER.goblins.goblin-warrior#24]: Disengage is an action; only a feature such as
-    # Nimble Escape (or Cunning Action) lets a creature take it as a Bonus Action
-    if hasattr(creature, "has_feature") and creature.has_feature("cunning action"):
-        return cunning_action(game, creature, "disengage")
-    if "nimble escape" in creature.traits:
-        return nimble_escape(game, creature, "disengage")
-    raise Refusal(
-        f"{creature.name} has no feature (like Nimble Escape) to Disengage as a Bonus Action",
-        page=290,
-        rule="MONSTER.goblins.goblin-warrior#24",
-    )
+    return _take_granted(game, monster, "nimble escape", what, **kw)
 
 
 def stonecunning(game, pc, on_stone=True):
@@ -179,6 +195,7 @@ BONUS_ACTIONS = {
     "steady aim": steady_aim,
     "stonecunning": stonecunning,
     "cunning action": cunning_action,
+    "nimble escape": nimble_escape,
 }
 
 

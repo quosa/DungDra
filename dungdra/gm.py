@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import contextlib
 
-from . import actions
 from . import class_actions as CA
 from . import combat as C
 from .rules import Refusal
@@ -89,7 +88,7 @@ def monster_turn(game, m):
         and game.dice.rng.random() < 0.4
     ):
         with contextlib.suppress(Refusal):
-            actions.hide(game, m, cover="three-quarters", bonus=True, source="Nimble Escape (Hide)")
+            CA.nimble_escape(game, m, "hide", cover="three-quarters")
 
 
 def _try_attack(game, m, target, name):
