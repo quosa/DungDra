@@ -1,0 +1,74 @@
+{
+  "fingerprint": "6fad7d1f21679f94",
+  "for_review": [
+    "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out",
+    "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
+  ],
+  "id": "GLOSS.cone",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.cone#1",
+      "kind": "boundary",
+      "reason": "Choosing a direction has no threshold. The edges of the Cone are tested under #2, #3 and #4."
+    },
+    {
+      "clause": "GLOSS.cone#5",
+      "kind": "boundary",
+      "reason": "The origin is a single point with no threshold. The nearest square in the Cone (5 ft out) is covered by the #5 negative test and the #2 boundary test."
+    }
+  ],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.cone#4",
+      "reason": "Cones of other lengths (Cone of Cold 60 ft, Color Spray, dragon breath and so on) belong to spells and monsters the engine doesn't have. Burning Hands' 15 ft is the only Cone length in scope."
+    }
+  ],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_a_cone_cant_be_widened_into_a_quarter_circle",
+    "tests/srd/test_glossary.py::test_only_the_origin_is_left_out_not_the_square_next_to_it"
+  ],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1791276991,
+      "summary": "GLOSS.cone defines the Cone area of effect. It extends in straight lines from a point of origin in a direction the creator chooses. Its width at any point equals that point's distance from the origin (15 ft wide at 15 ft). The creating effect sets its maximum length, and the origin point is left out"
+    },
+    "B": {
+      "at": 1791277000,
+      "summary": "The unit has no related scenarios or SRD tests. The three code lines came up only because they cite p.179, and they belong to the concentration rules, so all three are not-related. I did not open the source file. The verdicts rest on the quoted lines and the section comment. The engine doesn't appea"
+    },
+    "C": {
+      "at": 1791277193,
+      "summary": "I added 21 GLOSS.cone tests to tests/srd/test_glossary.py. They use Burning Hands, the only Cone in scope, and every one passes: the engine's geometry.in_cone_direction (full width, origin excluded, Chebyshev length) matches the SRD on every clause. Every clause has a positive and a negative test. #"
+    },
+    "D": {
+      "at": 1791277416,
+      "summary": "I tried to refute all 21 Cone tests: 17 kept, 4 refuted. All were checked by mutation against the cone geometry (geometry.py lines 69 and 95) and the area placement code (spells.py lines 1063, 1067, 1077, 1118 and 1121). Every test failed under at least one mutation that breaks its rule, with two ex"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_a_cone_goes_in_the_direction_its_creator_chooses",
+    "tests/srd/test_glossary.py::test_a_cone_can_be_aimed_along_a_diagonal",
+    "tests/srd/test_glossary.py::test_a_cone_aimed_through_the_session_follows_the_chosen_point",
+    "tests/srd/test_glossary.py::test_a_cone_doesnt_reach_behind_its_point_of_origin",
+    "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+    "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out",
+    "tests/srd/test_glossary.py::test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side",
+    "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out",
+    "tests/srd/test_glossary.py::test_a_cone_is_15_ft_wide_15_ft_from_its_origin",
+    "tests/srd/test_glossary.py::test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin",
+    "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
+    "tests/srd/test_glossary.py::test_a_15_ft_cone_reaches_15_ft",
+    "tests/srd/test_glossary.py::test_a_15_ft_cone_stops_short_of_20_ft",
+    "tests/srd/test_glossary.py::test_a_15_ft_cone_along_a_diagonal_stops_at_15_ft",
+    "tests/srd/test_glossary.py::test_upcasting_doesnt_lengthen_the_cone",
+    "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cone",
+    "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length",
+    "tests/srd/test_glossary.py::test_the_caster_at_the_cones_origin_isnt_affected",
+    "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it"
+  ],
+  "tickets": [
+    "T-78"
+  ]
+}

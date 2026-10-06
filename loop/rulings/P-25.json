@@ -1,0 +1,14 @@
+{
+  "id": "P-25",
+  "unit": "GLOSS.cone",
+  "ambiguity": "GLOSS.cone ambiguity 3: for a Cone from the creator, is the creator's own space outside the area?",
+  "ruling": "Yes. The creator isn't affected unless they choose to be (a choice the engine doesn't offer yet), even if they name themself.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_the_caster_at_the_cones_origin_isnt_affected",
+    "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

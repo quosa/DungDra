@@ -1,0 +1,35 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/game.py:343",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# -- concentration (p.179) --------------------------------------------",
+    "rule_quote": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+    "explanation": "Matched by page number only. The comment heads the concentration section, which has nothing to do with the Cone area of effect."
+   },
+   {
+    "item": "dungdra/game.py:368",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=179,",
+    "rule_quote": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+    "explanation": "This is a page= argument in the concentration code, which is on the same page of the PDF. It isn't about Cone geometry."
+   },
+   {
+    "item": "dungdra/game.py:387",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=179,",
+    "rule_quote": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+    "explanation": "This is a page= argument in the concentration code, which is on the same page of the PDF. It isn't about Cone geometry."
+   }
+  ],
+  "summary": "The unit has no related scenarios or SRD tests. The three code lines came up only because they cite p.179, and they belong to the concentration rules, so all three are not-related. I did not open the source file. The verdicts rest on the quoted lines and the section comment. The engine doesn't appear to implement Cone geometry, so Stage C may need to decide whether it is in scope."
+ },
+ "problems": [],
+ "cost_usd": 0.04915,
+ "session": "917a63db-19b3-4ecf-8fcd-5e18ba244f75",
+ "error": null
+}

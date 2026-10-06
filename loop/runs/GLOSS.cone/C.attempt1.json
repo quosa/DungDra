@@ -1,0 +1,336 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.cone#1",
+    "with": "SPELL.burning-hands (the only Cone effect in scope)",
+    "risk": "high",
+    "note": "Direction comes from `point` or from the first creature named. A test that names an off-axis creature first gets the axis through that creature, which is easy to get wrong and could be abused."
+   },
+   {
+    "clause": "GLOSS.cone#1",
+    "with": "SPELL.casting-spells.effects.targets#4 / R-16",
+    "risk": "high",
+    "note": "The area decides who is hit, not the caller's list. Naming both flanks must not widen the Cone."
+   },
+   {
+    "clause": "GLOSS.cone#2",
+    "with": "ambiguity 2 (full width vs width from the axis)",
+    "risk": "high",
+    "note": "A quarter-circle reading would take the 10-ft-off-axis and diagonal squares. Tests pin the full-width reading."
+   },
+   {
+    "clause": "GLOSS.cone#3",
+    "with": "grid squares / creature positions (gap)",
+    "risk": "medium",
+    "note": "The engine treats a creature as the point at its square's centre. At 15 ft the squares at ±10 ft lie partly inside a 15-ft-wide band only at their far edge, so their result depends on the square-or-centre reading."
+   },
+   {
+    "clause": "GLOSS.cone#4",
+    "with": "PLAY grid diagonals (5 ft each)",
+    "risk": "medium",
+    "note": "Length is Chebyshev distance, so (15,15) is 15 ft away."
+   },
+   {
+    "clause": "GLOSS.cone#4",
+    "with": "upcasting Burning Hands",
+    "risk": "low",
+    "note": "Higher levels add d6s, not length."
+   },
+   {
+    "clause": "GLOSS.cone#4",
+    "with": "ambiguity 1 (shorter length by choice)",
+    "risk": "medium",
+    "note": "The engine has no length option, so aiming at a near point keeps the full length."
+   },
+   {
+    "clause": "GLOSS.cone#5",
+    "with": "the caster as origin (range Self)",
+    "risk": "high",
+    "note": "The caster must not be affected, even when named."
+   },
+   {
+    "clause": "GLOSS.cone#5",
+    "with": "PLAY.combat.cover / GLOSS.area-of-effect",
+    "risk": "low",
+    "note": "Total Cover from the origin is already covered by the area-of-effect and cover tests."
+   },
+   {
+    "clause": "GLOSS.cone#1",
+    "with": "elevation / flying creatures",
+    "risk": "low",
+    "note": "The Cone is 3D in the engine (along/across in xyz). No in-scope effect needs a vertically aimed Cone, so this isn't tested here."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Naming creatures on both flanks so that one Cone reaches both",
+    "test": "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+    "reason": "Catalogue: 'on both sides of the caster for one Cone'. This variant uses the 90° quarter-circle reading."
+   },
+   {
+    "case": "Widening a Cone to a quarter-circle along the diagonal",
+    "test": "tests/srd/test_glossary.py::test_a_cone_cant_be_widened_into_a_quarter_circle",
+    "reason": "New cheat, added to the catalogue."
+   },
+   {
+    "case": "Aiming at a far point to stretch the Cone",
+    "test": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cone",
+    "reason": "New cheat, added to the catalogue."
+   },
+   {
+    "case": "Upcasting to lengthen the area",
+    "test": "tests/srd/test_glossary.py::test_upcasting_doesnt_lengthen_the_cone",
+    "reason": "New cheat, added to the catalogue (written as a negative test)."
+   },
+   {
+    "case": "Naming yourself in your own Cone, to aim it or to be included",
+    "test": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it",
+    "reason": "New cheat, added to the catalogue."
+   },
+   {
+    "case": "Leaving creatures in the area off the list",
+    "test": null,
+    "reason": "Already covered by the TARGETS#4 tests and tests/unit; the Cone tests here also rely on it, because unnamed goblins are hit."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_goes_in_the_direction_its_creator_chooses",
+    "clause": "GLOSS.cone#1",
+    "kind": "positive",
+    "rule_quote": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_can_be_aimed_along_a_diagonal",
+    "clause": "GLOSS.cone#1",
+    "kind": "positive",
+    "rule_quote": "in a direction its creator chooses",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_aimed_through_the_session_follows_the_chosen_point",
+    "clause": "GLOSS.cone#1",
+    "kind": "positive",
+    "rule_quote": "in a direction its creator chooses",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_doesnt_reach_behind_its_point_of_origin",
+    "clause": "GLOSS.cone#1",
+    "kind": "negative",
+    "rule_quote": "extends in straight lines from a point of origin in a direction its creator chooses",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+    "clause": "GLOSS.cone#1",
+    "kind": "abuse",
+    "rule_quote": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out",
+    "clause": "GLOSS.cone#2",
+    "kind": "positive",
+    "rule_quote": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side",
+    "clause": "GLOSS.cone#2",
+    "kind": "negative",
+    "rule_quote": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out",
+    "clause": "GLOSS.cone#2",
+    "kind": "boundary",
+    "rule_quote": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_cant_be_widened_into_a_quarter_circle",
+    "clause": "GLOSS.cone#2",
+    "kind": "abuse",
+    "rule_quote": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_is_15_ft_wide_15_ft_from_its_origin",
+    "clause": "GLOSS.cone#3",
+    "kind": "positive",
+    "rule_quote": "For example, a Cone is 15 feet wide at a point along its length that is 15 feet from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin",
+    "clause": "GLOSS.cone#3",
+    "kind": "negative",
+    "rule_quote": "For example, a Cone is 15 feet wide at a point along its length that is 15 feet from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
+    "clause": "GLOSS.cone#3",
+    "kind": "boundary",
+    "rule_quote": "For example, a Cone is 15 feet wide at a point along its length that is 15 feet from the point of origin.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cone_reaches_15_ft",
+    "clause": "GLOSS.cone#4",
+    "kind": "positive",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cone_stops_short_of_20_ft",
+    "clause": "GLOSS.cone#4",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cone_along_a_diagonal_stops_at_15_ft",
+    "clause": "GLOSS.cone#4",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_upcasting_doesnt_lengthen_the_cone",
+    "clause": "GLOSS.cone#4",
+    "kind": "negative",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cone",
+    "clause": "GLOSS.cone#4",
+    "kind": "abuse",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length",
+    "clause": "GLOSS.cone#4",
+    "kind": "positive",
+    "rule_quote": "The effect that creates a Cone specifies its maximum length.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_caster_at_the_cones_origin_isnt_affected",
+    "clause": "GLOSS.cone#5",
+    "kind": "positive",
+    "rule_quote": "A Cone’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_only_the_origin_is_left_out_not_the_square_next_to_it",
+    "clause": "GLOSS.cone#5",
+    "kind": "negative",
+    "rule_quote": "A Cone’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it",
+    "clause": "GLOSS.cone#5",
+    "kind": "abuse",
+    "rule_quote": "A Cone’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.cone#5",
+    "kind": "missing",
+    "reason": "'unless its creator decides otherwise': the cast command and S.cast have no way for the creator to include the point of origin in the Cone, so the choice can't be tested.",
+    "infra_ticket": "Add a creator choice (e.g. include_origin) to area casting that puts the point of origin, or the creator's own space for a Self-range Cone, in the area; it is off by default."
+   },
+   {
+    "clause": "GLOSS.cone#4",
+    "kind": "out-of-scope",
+    "reason": "Cones of other lengths (Cone of Cold 60 ft, Color Spray, dragon breath and so on) belong to spells and monsters the engine doesn't have. Burning Hands' 15 ft is the only Cone length in scope.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.cone#1",
+    "kind": "boundary",
+    "reason": "Choosing a direction has no threshold. The edges of the Cone are tested under #2, #3 and #4."
+   },
+   {
+    "clause": "GLOSS.cone#5",
+    "kind": "boundary",
+    "reason": "The origin is a single point with no threshold. The nearest square in the Cone (5 ft out) is covered by the #5 negative test and the #2 boundary test."
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.cone ambiguity 2: is 'width' the full width across the Cone, or the width from the axis out to each side?",
+    "ruling": "Full width, centred on the chosen direction: a point may be at most half its distance along the axis away from the axis (about 53°). The 15-ft-at-15-ft example then covers three 5-ft squares.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side",
+     "tests/srd/test_glossary.py::test_a_cone_cant_be_widened_into_a_quarter_circle",
+     "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+     "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out",
+     "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.cone gap: on a grid, is a creature in the Cone when any part of its square is, or only when the centre of its square is?",
+    "ruling": "A creature is in the Cone when the centre of its space (its position) lies inside the Cone, so the 15-ft width at 15 ft covers exactly three squares.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
+     "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.cone ambiguity 1: may the creator choose a shorter length than the effect's maximum?",
+    "ruling": "No. The Cone always uses the full length the effect gives unless the effect offers a shorter one. Aiming at a near point sets only the direction.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.cone ambiguity 3: for a Cone from the creator, is the creator's own space outside the area?",
+    "ruling": "Yes. The creator isn't affected unless they choose to be (a choice the engine doesn't offer yet), even if they name themself.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_the_caster_at_the_cones_origin_isnt_affected",
+     "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it"
+    ]
+   }
+  ],
+  "summary": "I added 21 GLOSS.cone tests to tests/srd/test_glossary.py. They use Burning Hands, the only Cone in scope, and every one passes: the engine's geometry.in_cone_direction (full width, origin excluded, Chebyshev length) matches the SRD on every clause. Every clause has a positive and a negative test. #2, #3 and #4 have boundary tests (width 5 ft out, the squares just past 15 ft wide, 20 ft straight on and on the diagonal); boundary waivers for #1 and #5 are recorded. There are abuse tests for flank-naming, a quarter-circle width, stretching by a far point, upcasting, and naming yourself; I added four new cheats to loop/abuse-catalogue.md. #1 is also tested through Session.execute. One gap remains: the creator can't choose to include the point of origin (missing infra). I propose rulings for the three ambiguities and the grid-square gap. I changed no scenarios: all of stage B's verdicts were not-related."
+ },
+ "problems": [],
+ "cost_usd": 1.0527376000000002,
+ "session": "2eac38aa-495a-4bf9-ba00-2eeaf59894a0",
+ "error": null
+}

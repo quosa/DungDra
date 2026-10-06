@@ -1348,3 +1348,171 @@ def test_spell_attack_on_distant_prone_target_has_disadvantage(game):
     game.dice.force_str("d20=[2,2]")
     S.cast(game, m, "fire bolt", gob)
     assert "isadvantage" in game.log.last("attack").text
+
+
+# ================ GLOSS.cone ================
+CO = "GLOSS.cone"
+
+
+def burn(game, spots, hits, point=None, named=(0,), slot=None, dice="d6=[2,2,2]", level=None):
+    """MIALEE at (0, 0) casts Burning Hands (a 15-foot Cone) with goblins (30 HP) at `spots`,
+    aimed at `point` or else the first goblin named (`named` indexes into `spots`). Every creature
+    in the Cone fails its Dexterity save, so exactly `hits` d20s are forced."""
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    if level is not None:
+        m.level = level
+    gobs = []
+    for i, p in enumerate(spots):
+        g = mon(game, "goblin warrior", p, name=f"G{i}")
+        g.hp = 30
+        gobs.append(g)
+    game.dice.force_str(dice + "".join("; d20=[1]" for _ in range(hits)))
+    S.cast(game, m, "burning hands", [gobs[i] for i in named], point=point, slot=slot)
+    return m, gobs
+
+
+def hit(gobs):
+    return [g.hp < 30 for g in gobs]
+
+
+# ---------------- #1 · straight lines from a point of origin in a chosen direction ----------------
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="positive")
+def test_a_cone_goes_in_the_direction_its_creator_chooses(game):
+    _, gobs = burn(game, [(10, 0), (0, 10)], hits=1, point=(0, 15))
+    assert hit(gobs) == [False, True]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="positive")
+def test_a_cone_can_be_aimed_along_a_diagonal(game):
+    _, gobs = burn(game, [(10, 10), (10, 0)], hits=1, point=(15, 15))
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="positive")
+def test_a_cone_aimed_through_the_session_follows_the_chosen_point(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    east = mon(game, "goblin warrior", (5, 0), name="EAST")
+    west = mon(game, "goblin warrior", (-5, 0), name="WEST")
+    east.hp = west.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    out = Session(game).execute(
+        {"cmd": "cast", "spell": "burning hands", "actor": m.id, "targets": [east.id], "point": [-15, 0]}
+    )
+    assert out.get("ok") is not False, out
+    assert west.hp == 24 and east.hp == 30
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="negative")
+def test_a_cone_doesnt_reach_behind_its_point_of_origin(game):
+    _, gobs = burn(game, [(5, 0), (-5, 0), (-10, 5)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="abuse", ruling="P-22")
+def test_one_cone_cant_be_spread_to_both_flanks_by_naming_them(game):
+    # A quarter-circle aimed between them would take both; the Cone aimed at the first can't.
+    _, gobs = burn(game, [(10, 10), (10, -10)], hits=1, named=(0, 1))
+    assert hit(gobs) == [True, False]
+
+
+# ---------------- #2 · width at any point equals its distance from the origin ----------------
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="positive")
+def test_a_cone_is_10_ft_wide_10_ft_out(game):
+    _, gobs = burn(game, [(10, 0), (10, 5), (10, -5)], hits=3)
+    assert hit(gobs) == [True, True, True]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="negative", ruling="P-22")
+def test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side(game):
+    # Measured from the axis out to each side, 10 ft out would reach 10 ft off the axis.
+    _, gobs = burn(game, [(10, 0), (10, 10), (10, -10)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="boundary", ruling="P-23")
+def test_a_cone_is_only_5_ft_wide_5_ft_out(game):
+    # 5 ft out the Cone is 5 ft wide: the square straight ahead, not the diagonal ones beside it.
+    _, gobs = burn(game, [(5, 0), (5, 5), (5, -5)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+# ---------------- #3 · 15 feet wide at 15 feet ----------------
+@pytest.mark.srd(CO, clause=f"{CO}#3", kind="positive")
+def test_a_cone_is_15_ft_wide_15_ft_from_its_origin(game):
+    _, gobs = burn(game, [(15, -5), (15, 0), (15, 5)], hits=3, point=(15, 0))
+    assert hit(gobs) == [True, True, True]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#3", kind="negative")
+def test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin(game):
+    _, gobs = burn(game, [(15, 0), (15, 15), (15, -15)], hits=1)
+    assert hit(gobs) == [True, False, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#3", kind="boundary", ruling="P-23")
+def test_the_squares_just_past_the_15_ft_width_arent_in_the_cone(game):
+    # Three 5-ft squares make the 15-ft width; the squares either side of them are outside.
+    _, gobs = burn(game, [(15, 5), (15, 10), (15, -10)], hits=1, point=(15, 0))
+    assert hit(gobs) == [True, False, False]
+
+
+# ---------------- #4 · the effect specifies the maximum length ----------------
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="positive")
+def test_a_15_ft_cone_reaches_15_ft(game):
+    _, gobs = burn(game, [(15, 0), (5, 0)], hits=2)
+    assert hit(gobs) == [True, True]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="boundary")
+def test_a_15_ft_cone_stops_short_of_20_ft(game):
+    _, gobs = burn(game, [(15, 0), (20, 0)], hits=1)
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="boundary")
+def test_a_15_ft_cone_along_a_diagonal_stops_at_15_ft(game):
+    # Diagonal squares count 5 ft each, so (15, 15) is 15 ft away and (20, 20) is 20 ft.
+    _, gobs = burn(game, [(15, 15), (20, 20)], hits=1, point=(20, 20))
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="negative")
+def test_upcasting_doesnt_lengthen_the_cone(game):
+    _, gobs = burn(game, [(15, 0), (20, 0)], hits=1, slot=2, dice="d6=[2,2,2,2]", level=3)
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="abuse")
+def test_aiming_at_a_far_point_doesnt_stretch_the_cone(game):
+    _, gobs = burn(game, [(10, 0), (25, 0)], hits=1, point=(60, 0))
+    assert hit(gobs) == [True, False]
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="positive", ruling="P-24")
+def test_aiming_at_a_near_point_still_gives_the_full_length(game):
+    _, gobs = burn(game, [(5, 0), (15, 0)], hits=2, point=(5, 0))
+    assert hit(gobs) == [True, True]
+
+
+# ---------------- #5 · the point of origin isn't included ----------------
+@pytest.mark.srd(CO, clause=f"{CO}#5", kind="positive", ruling="P-25")
+def test_the_caster_at_the_cones_origin_isnt_affected(game):
+    m, gobs = burn(game, [(5, 0)], hits=1)
+    assert hit(gobs) == [True]
+    assert m.hp == m.max_hp
+    assert len(game.log.of_kind("save")) == 1
+
+
+@pytest.mark.srd(CO, clause=f"{CO}#5", kind="abuse", ruling="P-25")
+def test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    gob = mon(game, "goblin warrior", (5, 0), name="GOB")
+    gob.hp = 30
+    game.dice.force_str("d6=[2,2,2]; d20=[1]")
+    S.cast(game, m, "burning hands", [m, gob])
+    assert gob.hp == 24
+    assert m.hp == m.max_hp
+    assert len(game.log.of_kind("save")) == 1

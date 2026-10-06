@@ -1,0 +1,14 @@
+{
+  "id": "P-23",
+  "unit": "GLOSS.cone",
+  "ambiguity": "GLOSS.cone gap: on a grid, is a creature in the Cone when any part of its square is, or only when the centre of its square is?",
+  "ruling": "A creature is in the Cone when the centre of its space (its position) lies inside the Cone, so the 15-ft width at 15 ft covers exactly three squares.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
+    "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

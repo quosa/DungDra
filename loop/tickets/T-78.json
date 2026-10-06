@@ -1,0 +1,10 @@
+{
+  "id": "T-78",
+  "kind": "infra",
+  "unit": "GLOSS.cone",
+  "title": "Add a creator choice (e.g. include_origin) to area casting that puts the point of origin, or the creator's own space for a Self-range Cone, in the area; it is off by default.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
