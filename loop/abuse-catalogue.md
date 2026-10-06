@@ -84,6 +84,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Naming yourself for an area that starts from you, to aim it or to be in it.
 - Aiming a Cube diagonally so a rotated Cube takes in more squares than its side allows on the
   grid (ten instead of 3×3 for 15 feet).
+- Reading a Sphere's radius as its diameter or stretching it with a higher slot (Sleep's 5-foot
+  radius reaching 10 feet), or using its "origin is included" rule to put the caster in a
+  Sphere placed elsewhere, as if it were an Emanation from them.
 - Naming a far-off creature for an area spell that takes the caller's list instead of working out
   the area (Web's 20-foot Cube catching a creature 100 feet away).
 - Claiming an "if the attack roll had Advantage" rider (a Goblin's extra 1d4) when Advantage and

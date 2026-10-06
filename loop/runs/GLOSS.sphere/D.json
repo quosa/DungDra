@@ -1,0 +1,117 @@
+{
+ "summary": "I checked all 16 GLOSS.sphere tests against the rule text (p.188) and against the code they exercise: the sphere branch of `in_area` at `dungdra/geometry.py:91`, and `_area_placement`/`_area_targets` in `dungdra/spells.py`. I broke the code in a scratch copy for each test. As a control, a change that does nothing (`<= size + 0`) left the tests passing. 13 tests keep. 3 are refuted:\n\n(1) **The flyer test passes for the wrong reason (high confidence).** I made the sphere ignore elevation. The goblin 10 ft up is then inside the Sphere and rolls a save, but the seeded d20 comes up 14 and it succeeds. So the test's only check, that the goblin isn't asleep, still passes. I confirmed this by running the same setup with the change applied: the log shows the extra save. The fix is to also assert there was exactly one save.\n\n(2) **The diagonal test picks one reading the SRD doesn't settle (confidence 0.45, so a person decides).** The SRD's grid rules (PLAY.combat.the-order-of-combat, p.14) count diagonals only for movement and range. They say nothing about measuring areas on a grid. A true sphere measured in straight lines would leave out the square at (35,5), which is 7.07 ft away. The README's register has no ruling on this. The test enforces the engine's square-counting convention as if the rules required it.\n\n(3) **The 5-ft-reach test is a duplicate (0.6).** Its one assertion, that a goblin 5 ft away is in the Sphere, already appears in `test_a_5_ft_sphere_stops_short_of_10_ft` and in the every-direction test.\n\nOne near-duplicate is kept but flagged for a person (0.45): the far-named-creature abuse test is close to `tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere`.\n\nEvery other change I made was caught by its test.\n\nSeparately, none of the engine code carries a `# SRD[GLOSS.sphere#…]` tag, which the traceability rule asks for.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
+   "verdict": "keep",
+   "reason": "Follows from #1: four orthogonal neighbours at the radius are in the Sphere, and it asserts the save count.",
+   "mutation": "geometry.py:91 `<= size` → `< size`: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too",
+   "verdict": "keep",
+   "reason": "'Outward in all directions' includes up. A creature 5 ft above the origin is in a 5-ft-radius Sphere.",
+   "mutation": "Made the sphere a flat disc (`and _xyz(p)[2] == _xyz(origin)[2]`): the test failed. Making the radius exclusive also made it fail. Ignoring elevation entirely left it passing, as expected, because the goblin then counts as on the origin.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_is_centred_on_the_chosen_point",
+   "verdict": "keep",
+   "reason": "Checks that the origin is the chosen point when the spell is cast through the API. It asserts which goblin was affected and the save count.",
+   "mutation": "spells.py:1080, put the origin at the caster (`if True else place`): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_past_its_radius_in_any_direction",
+   "verdict": "keep",
+   "reason": "Squares 10 ft out in all four directions are outside, and it asserts there were no saves.",
+   "mutation": "geometry.py:91 `<= size * 2`: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin",
+   "verdict": "keep",
+   "reason": "Backed by R-10 and GLOSS.area-of-effect. It isn't a duplicate of test_total_cover_doesnt_refuse_an_area_spell: that test sets cover against everything, while this one sets cover only from the point of origin, so it checks that cover is measured from the point and not from the caster.",
+   "mutation": "spells.py:1132 `== \"total\"` → `== \"never\"` (cover check removed): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it",
+   "verdict": "refute",
+   "reason": "Probable duplicate of tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere, which already shows that naming a creature outside Sleep's Sphere doesn't make it save. This test only adds one goblin that is inside the Sphere. Sent to a person.",
+   "mutation": "spells.py:1121, let named creatures skip the area check (`if t not in named and not in_area(`): the test failed, as the existing test would.",
+   "confidence": 0.4
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_reaches_a_creature_5_ft_from_its_origin",
+   "verdict": "refute",
+   "reason": "Duplicate. Its only assertion, that a goblin at (35,0) is asleep with the point at (30,0), is already asserted by test_a_5_ft_sphere_stops_short_of_10_ft (same positions plus a goblin at 10 ft) and by test_a_sphere_extends_from_its_origin_in_every_direction.",
+   "mutation": "geometry.py:91 `< size`: the test failed, but the two tests named above fail on the same change.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_the_radius_isnt_the_spheres_width",
+   "verdict": "keep",
+   "reason": "A clear negative for #2: reading the size as the width catches only the origin's square. It overlaps the every-direction and on-origin tests but isn't an exact copy of either.",
+   "mutation": "geometry.py:91 `<= size / 2` (radius read as width): the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_stops_short_of_10_ft",
+   "verdict": "keep",
+   "reason": "Boundary on both sides of the radius, with a save-count check.",
+   "mutation": "geometry.py:91 `<= size * 2`: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after",
+   "verdict": "refute",
+   "reason": "Picks one reading where the SRD is silent. The SRD's grid rules count diagonals only for movement and range (PLAY.combat.the-order-of-combat, p.14) and say nothing about areas. The Sphere definition talks about straight lines and a radius, which suggests true distance; by that, (35,5) is 7.07 ft away and outside a 5-ft radius. The README has no ruling on how areas are measured on a grid, so the test enforces the engine's square-counting choice as if it were the rule. A person should add a ruling or drop the diagonal case.",
+   "mutation": "geometry.py:91 changed to straight-line (Euclidean) distance: the test failed. That shows the test pins the square-counting choice, not anything the text says.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_doesnt_reach_a_flyer_10_ft_above_its_origin",
+   "verdict": "refute",
+   "reason": "Passes for the wrong reason. With elevation ignored, the flyer is inside the Sphere and makes a save, but only one d20 is forced. The flyer's save uses the seeded d20, which rolls 14 and succeeds (13 vs DC 13), so 'not asleep' holds anyway. Unlike its sibling tests, it doesn't assert the number of saves.",
+   "mutation": "geometry.py:91 `dist_points(origin[:2], p[:2]) <= size` (ignore elevation): the test still passed. Replaying the setup with that change shows 'G1 Wis save vs Sleep (DC 13): d20=14 … → success'.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_higher_slot_doesnt_enlarge_the_sphere",
+   "verdict": "keep",
+   "reason": "Sleep in SRD 5.2.1 has no higher-level scaling, so the area stays at the size the spell states. It catches an engine that grows the area with the slot.",
+   "mutation": "spells.py:1077, size grows by +5 per slot level above 1st: the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_creature_on_the_point_of_origin_is_in_the_sphere",
+   "verdict": "keep",
+   "reason": "Direct test of #3.",
+   "mutation": "geometry.py:91 `0 < dist_points(origin, p) <= size` (origin left out): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_sphere_centred_on_a_named_creature_includes_that_creature",
+   "verdict": "keep",
+   "reason": "Tests #3 when the Sphere is placed by naming a creature (R-16), rather than by a point.",
+   "mutation": "Origin left out (`0 < …`): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_caster_who_centres_a_sphere_on_themself_is_in_it",
+   "verdict": "keep",
+   "reason": "Tests #3 with the caster standing on the origin, which differs from Self-range Cones and Cubes. The caster being in the Sphere shows up as the elf's automatic-success log line from Sleep.",
+   "mutation": "Origin left out (`0 < …`): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_the_caster_isnt_in_a_sphere_placed_away_from_them",
+   "verdict": "keep",
+   "reason": "A good negative: the Sphere's origin is the chosen point, not the caster.",
+   "mutation": "Origin moved to the caster (spells.py:1080): the test failed. Caster always counted as in the area (spells.py:1121): the test failed.",
+   "confidence": 0.7
+  }
+ ]
+}

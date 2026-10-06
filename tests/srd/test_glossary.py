@@ -1673,3 +1673,168 @@ def test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it(game):
     assert gob.hp == 26
     assert m.hp == m.max_hp
     assert len(game.log.of_kind("save")) == 1
+
+
+# ================ GLOSS.sphere ================
+SP = "GLOSS.sphere"
+
+
+def sleeper(game):
+    """MIALEE at (0, 0) with Sleep prepared."""
+    m = pc(game, "MIALEE", (0, 0))
+    if "sleep" not in m.prepared:
+        m.prepared.append("sleep")
+    return m
+
+
+def lull(game, spots, fails, point=(30, 0), named=None, elev=None, slot=None, level=None):
+    """MIALEE at (0, 0) casts Sleep (a 5-foot-radius Sphere, 'each creature of your choice') at
+    `point` (None: centred on the first creature named) with goblins at `spots`, all of them named
+    unless `named` indexes a subset. Every creature in the Sphere fails its Wisdom save, so exactly
+    `fails` d20s are forced. `elev` gives the goblins' elevations."""
+    m = sleeper(game)
+    if level is not None:
+        m.level = level
+    gobs = []
+    for i, p in enumerate(spots):
+        g = mon(game, "goblin warrior", p, name=f"G{i}")
+        if elev is not None:
+            g.elevation = elev[i]
+        gobs.append(g)
+    if fails:
+        game.dice.force_str("; ".join("d20=[1]" for _ in range(fails)))
+    chosen = gobs if named is None else [gobs[i] for i in named]
+    S.cast(game, m, "sleep", chosen, point=point, slot=slot)
+    return m, gobs
+
+
+def asleep(gobs):
+    return [g.has("incapacitated") for g in gobs]
+
+
+def save_texts(game):
+    return [e.text for e in game.log.of_kind("save")]
+
+
+# ---------------- #1 · straight lines from a point of origin outward in all directions ----------------
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="P-28")
+def test_a_sphere_extends_from_its_origin_in_every_direction(game):
+    _, gobs = lull(game, [(35, 0), (25, 0), (30, 5), (30, -5)], fails=4)
+    assert asleep(gobs) == [True, True, True, True]
+    assert len(save_texts(game)) == 4
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="P-28")
+def test_a_sphere_extends_upward_from_its_origin_too(game):
+    _, gobs = lull(game, [(30, 0)], fails=1, elev=[5])
+    assert asleep(gobs) == [True]
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive")
+def test_a_sphere_placed_through_the_session_is_centred_on_the_chosen_point(game):
+    m = sleeper(game)
+    near = mon(game, "goblin warrior", (25, 0), name="NEAR")
+    far = mon(game, "goblin warrior", (45, 0), name="FAR")
+    game.dice.force_str("d20=[1]")
+    out = Session(game).execute(
+        {"cmd": "cast", "spell": "sleep", "actor": m.id, "targets": [near.id, far.id], "point": [30, 0]}
+    )
+    assert out.get("ok") is not False, out
+    assert near.has("incapacitated") and not far.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="negative")
+def test_a_sphere_doesnt_reach_past_its_radius_in_any_direction(game):
+    _, gobs = lull(game, [(40, 0), (20, 0), (30, 10), (30, -10)], fails=0)
+    assert asleep(gobs) == [False, False, False, False]
+    assert save_texts(game) == []
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="negative", ruling="R-10")
+def test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin(game):
+    # The Sphere extends in straight lines from its origin: Total Cover from that point blocks them.
+    m = sleeper(game)
+    open_ = mon(game, "goblin warrior", (25, 0), name="OPEN")
+    walled = mon(game, "goblin warrior", (35, 0), name="WALLED")
+    game.scene.cover[((30, 0), walled.id)] = "total"
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [open_, walled], point=(30, 0))
+    assert open_.has("incapacitated") and not walled.has("incapacitated")
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="abuse")
+def test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it(game):
+    _, gobs = lull(game, [(35, 0), (30, 40)], fails=1)
+    assert asleep(gobs) == [True, False]
+    assert len(save_texts(game)) == 1 and "G1" not in save_texts(game)[0]
+
+
+# ---------------- #2 · the effect specifies the radius ----------------
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#2", kind="negative")
+def test_the_radius_isnt_the_spheres_width(game):
+    # Read as a 5-ft width, the Sphere would hold only the origin's square; it reaches 5 ft each way.
+    _, gobs = lull(game, [(25, 0), (30, 0), (35, 0)], fails=3)
+    assert asleep(gobs) == [True, True, True]
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#2", kind="boundary")
+def test_a_5_ft_sphere_stops_short_of_10_ft(game):
+    _, gobs = lull(game, [(35, 0), (40, 0)], fails=1)
+    assert asleep(gobs) == [True, False]
+    assert len(save_texts(game)) == 1
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#2", kind="boundary", ruling="P-28")
+def test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after(game):
+    # Diagonal squares count 5 ft each, as for range and movement: (35, 5) is 5 ft away, (40, 10) 10 ft.
+    _, gobs = lull(game, [(35, 5), (40, 10)], fails=1)
+    assert asleep(gobs) == [True, False]
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#2", kind="abuse")
+def test_a_higher_slot_doesnt_enlarge_the_sphere(game):
+    _, gobs = lull(game, [(35, 0), (40, 0)], fails=1, slot=2, level=3)
+    assert asleep(gobs) == [True, False]
+    assert len(save_texts(game)) == 1
+
+
+# ---------------- #3 · the point of origin is included ----------------
+@pytest.mark.srd(SP, clause=f"{SP}#3", kind="positive")
+def test_a_creature_on_the_point_of_origin_is_in_the_sphere(game):
+    _, gobs = lull(game, [(30, 0), (35, 0)], fails=2)
+    assert asleep(gobs) == [True, True]
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#3", kind="positive")
+def test_a_sphere_centred_on_a_named_creature_includes_that_creature(game):
+    _, gobs = lull(game, [(30, 0), (35, 5), (40, 0)], fails=2, point=None)
+    assert asleep(gobs) == [True, True, False]
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#3", kind="positive", ruling="P-29")
+def test_a_caster_who_centres_a_sphere_on_themself_is_in_it(game):
+    # Unlike a Cone or Cube, a Sphere includes its origin, even when the caster stands on it.
+    # MIALEE is an elf (Trance), so being in the Sphere shows as her automatic success.
+    m = sleeper(game)
+    gob = mon(game, "goblin warrior", (5, 0), name="GOB")
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [m, gob], point=(0, 0))
+    texts = save_texts(game)
+    assert len(texts) == 2
+    assert any("MIALEE automatically succeeds" in t for t in texts)
+    assert gob.has("incapacitated")
+
+
+@pytest.mark.srd(SP, clause=f"{SP}#3", kind="negative")
+def test_the_caster_isnt_in_a_sphere_placed_away_from_them(game):
+    # The origin is the chosen point, not the creator: a Sphere isn't an Emanation from the caster.
+    m = sleeper(game)
+    gob = mon(game, "goblin warrior", (30, 0), name="GOB")
+    game.dice.force_str("d20=[1]")
+    S.cast(game, m, "sleep", [m, gob], point=(30, 0))
+    assert gob.has("incapacitated") and not m.has("incapacitated")
+    assert len(save_texts(game)) == 1 and "MIALEE" not in save_texts(game)[0]

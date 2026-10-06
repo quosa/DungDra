@@ -254,6 +254,12 @@ def test_spells02_sleep(game):
     set_turn(game, m)
     game.dice.force_str("d20=[10]; d20=[14]")
     S.cast(game, m, "sleep", [a, b, sk, elf])
+    # GLOSS.sphere: the 5-ft Sphere is centred on A, its origin, and A is in it; B, the Skeleton and
+    # the elf are within 5 ft of it, so each of the four saves or automatically succeeds
+    saves = [e.text for e in game.log.of_kind("save")]
+    for who in (a, b, sk, elf):
+        assert sum(who.name in t for t in saves) == 1, (who.name, saves)
+    assert not any("outside the" in e.text for e in game.log.of_kind("spell"))
     assert a.has("incapacitated") and not a.has("unconscious") and not b.has("incapacitated")
     assert not sk.has("incapacitated") and not elf.has("incapacitated")
     set_turn(game, a)
