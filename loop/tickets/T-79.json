@@ -7,7 +7,7 @@
     "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it"
   ],
   "status": "open",
-  "attempts": 1,
+  "attempts": 2,
   "history": [
     {
       "event": "failed",
@@ -15,6 +15,14 @@
         "review: rejected (The fix stops a creature 100 ft away from saving against Web, and its tests check real behaviour. But it does this by adding a Web-only area filter and a new Cube predicate beside the existing `_area_targets`/`in_area` mechanism. That parallel path leaves out the Total Cover exclusion the shared path applies, logs the same exclusion under a different rule, and tests against a radius instead of the Cube. Extend `in_area`/`_area_placement` to handle a Cube placed at a point, then route Web through `_area_targets`.)",
         "review: orthogonality dungdra/spells.py:1535 `_web` gets its own area filter: it loops over the caller's list, applies its own containment test and logs its own 'outside the Cube' message. The engine already has one mechanism for 'the area decides who is affected': `_area_targets`, built on `_area_placement` and `in_area`, which Burning Hands, Thunderwave and Sleep use. That mechanism also drops creatures behind Total Cover from the point of origin (PLAY.combat.cover#3). The Web-only path skips that check, so a named creature behind Total Cover is still caught. It also cites a different rule from the shared path for the same exclusion (GLOSS.cube#1 here, SPELL.casting-spells.effects.targets#4/R-16 there). The real gap is that `in_area` can't place a Cube at a point with no direction, and Web is the only non-Self Cube. Fix it there by extending `_area_placement`/`in_area` to handle a Cube placed at a point, then route Web through `_area_targets` (with `area_choice` or not, whichever matches Web's wording). Don't add a second filter inside one spell handler.",
         "review: orthogonality dungdra/geometry.py:85 `within_cube_reach` is a second Cube-geometry predicate beside `in_area`/`in_cube_direction`, and `in_area` doesn't dispatch to it. It only answers 'could some Cube contain p', which is a ball of radius `side` (a 40-ft-wide region for a 20-ft Cube), not the Cube's actual area. It works as a stopgap filter, but it gives the area code two Cube rules that disagree. Put the placed-Cube case into `in_area` so every area query uses the same geometry."
+      ]
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The ticket's own symptom is fixed: Web now checks its 20-ft Cube, so a named creature 100 ft away no longer saves, and the xfail is honestly removed. I'm still rejecting the change for two problems in the diff. First, it invents where a point-placed Cube sits: the chosen point becomes the Cube's centre and the origin is moved 10 ft below it. That reading is attributed to R-16, which doesn't cover it. Second, it adds a caller-side `named_only` flag next to the existing data-driven `area_choice` mechanism instead of letting Web's spell data carry the rule.)",
+        "review: other dungdra/spells.py:1085 This adds a new reading of where a point-placed Cube sits and cites R-16 for it, but R-16 doesn't say this. R-16 only rules that the engine, not the caller's list, decides who is in an area. The SRD says a Cube's point of origin lies anywhere on a face (GLOSS.cube#1), and Web says the webs fill a 20-ft Cube 'there', at the chosen point. The fix makes the chosen point the Cube's centre and moves the point of origin size/2 below it (z = elevation − 10, underground for a ground-level cast). That is the fixer's own reading, not a register ruling. It also sidesteps GLOSS.cube#3: a creature standing on the chosen point is now inside the Cube, which wouldn't be true if the point were the origin. CLAUDE.md says an unruled reading must be proposed for a person to decide, not cited to an unrelated register row. Keep the placement neutral (for example, the chosen point is the origin at the centre of the bottom face), or flag the question for a ruling. Either way, remove the false R-16 citation.",
+        "review: orthogonality dungdra/spells.py:1118 `named_only` is a caller-side flag added next to the existing data-driven `area_choice` mechanism. The two do the same job: they limit `_area_targets` to the creatures named in the caller's list. If Web's casting-time save only covers creatures the caster names, Web's spell data should say so (through `area_choice` or a data field), not a keyword argument hard-wired into `_web`. The new docstring line 'as does a caller passing named_only' describes exactly this second mechanism."
       ]
     }
   ]
