@@ -46,7 +46,7 @@
       "summary": "I tried to refute all 21 Cone tests: 17 kept, 4 refuted. All were checked by mutation against the cone geometry (geometry.py lines 69 and 95) and the area placement code (spells.py lines 1063, 1067, 1077, 1118 and 1121). Every test failed under at least one mutation that breaks its rule, with two ex"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_a_cone_goes_in_the_direction_its_creator_chooses",
     "tests/srd/test_glossary.py::test_a_cone_can_be_aimed_along_a_diagonal",

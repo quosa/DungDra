@@ -1497,7 +1497,7 @@ def test_aiming_at_a_near_point_still_gives_the_full_length(game):
 
 
 # ---------------- #5 · the point of origin isn't included ----------------
-@pytest.mark.srd(CO, clause=f"{CO}#5", kind="positive", ruling="P-25")
+@pytest.mark.srd(CO, clause=f"{CO}#5", kind="positive", ruling="R-29")
 def test_the_caster_at_the_cones_origin_isnt_affected(game):
     m, gobs = burn(game, [(5, 0)], hits=1)
     assert hit(gobs) == [True]
@@ -1505,7 +1505,7 @@ def test_the_caster_at_the_cones_origin_isnt_affected(game):
     assert len(game.log.of_kind("save")) == 1
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#5", kind="abuse", ruling="P-25")
+@pytest.mark.srd(CO, clause=f"{CO}#5", kind="abuse", ruling="R-29")
 def test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")
