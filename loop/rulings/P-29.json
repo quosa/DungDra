@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_a_caster_who_centres_a_sphere_on_themself_is_in_it"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-33",
+  "note": "'P-25/P-27' means R-29/R-31.",
   "reason": ""
 }

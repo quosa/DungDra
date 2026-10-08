@@ -1815,7 +1815,7 @@ def test_a_sphere_centred_on_a_named_creature_includes_that_creature(game):
     assert asleep(gobs) == [True, True, False]
 
 
-@pytest.mark.srd(SP, clause=f"{SP}#3", kind="positive", ruling="P-29")
+@pytest.mark.srd(SP, clause=f"{SP}#3", kind="positive", ruling="R-33")
 def test_a_caster_who_centres_a_sphere_on_themself_is_in_it(game):
     # Unlike a Cone or Cube, a Sphere includes its origin, even when the caster stands on it.
     # MIALEE is an elf (Trance), so being in the Sphere shows as her automatic success.

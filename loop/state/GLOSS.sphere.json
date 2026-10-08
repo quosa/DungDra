@@ -46,7 +46,7 @@
       "summary": "I checked all 16 GLOSS.sphere tests against the rule text (p.188) and against the code they exercise: the sphere branch of `in_area` at `dungdra/geometry.py:91`, and `_area_placement`/`_area_targets` in `dungdra/spells.py`. I broke the code in a scratch copy for each test. As a control, a change tha"
     }
   },
-  "status": "blocked",
+  "status": "green",
   "tests": [
     "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
     "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too",
