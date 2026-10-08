@@ -1,8 +1,7 @@
 {
   "fingerprint": "f583ffed7c2d08c5",
   "for_review": [
-    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it",
-    "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after"
+    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it"
   ],
   "id": "GLOSS.sphere",
   "kind_waivers": [
@@ -28,6 +27,13 @@
     "tests/srd/test_glossary.py::test_a_5_ft_sphere_doesnt_reach_a_flyer_10_ft_above_its_origin"
   ],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "See rulings R-26, R-27, R-28 and R-32",
+      "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1791277845,

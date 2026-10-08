@@ -1,8 +1,6 @@
 {
   "fingerprint": "0a61521170900f0d",
-  "for_review": [
-    "tests/srd/test_spells.py::test_a_holy_symbol_worth_exactly_5_gp_is_enough"
-  ],
+  "for_review": [],
   "id": "SPELL.bless",
   "kind_waivers": [],
   "out_of_scope": [
@@ -40,6 +38,13 @@
       "evidence": "A spell is a magical effect that has the characteristics described in “Spells.”",
       "target": "GLOSS.spell",
       "type": "interacts_with"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "See rulings R-26, R-27, R-28 and R-32",
+      "test": "tests/srd/test_spells.py::test_a_holy_symbol_worth_exactly_5_gp_is_enough"
     }
   ],
   "revisit": false,

@@ -1,9 +1,6 @@
 {
   "fingerprint": "6fad7d1f21679f94",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out",
-    "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
-  ],
+  "for_review": [],
   "id": "GLOSS.cone",
   "kind_waivers": [
     {
@@ -28,6 +25,18 @@
     "tests/srd/test_glossary.py::test_only_the_origin_is_left_out_not_the_square_next_to_it"
   ],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "See rulings R-26, R-27, R-28 and R-32",
+      "test": "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out"
+    },
+    {
+      "decision": "kept",
+      "reason": "See rulings R-26, R-27, R-28 and R-32",
+      "test": "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1791276991,
