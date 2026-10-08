@@ -1431,7 +1431,7 @@ def test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side(game):
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#2", kind="boundary", ruling="R-26")
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="boundary", ruling="R-27")
 def test_a_cone_is_only_5_ft_wide_5_ft_out(game):
     # 5 ft out the Cone is 5 ft wide: the square straight ahead, not the diagonal ones beside it.
     _, gobs = burn(game, [(5, 0), (5, 5), (5, -5)], hits=1)
@@ -1451,7 +1451,7 @@ def test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin(game):
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#3", kind="boundary", ruling="R-26")
+@pytest.mark.srd(CO, clause=f"{CO}#3", kind="boundary", ruling="R-27")
 def test_the_squares_just_past_the_15_ft_width_arent_in_the_cone(game):
     # Three 5-ft squares make the 15-ft width; the squares either side of them are outside.
     _, gobs = burn(game, [(15, 5), (15, 10), (15, -10)], hits=1, point=(15, 0))

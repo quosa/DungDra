@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
     "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-27",
+  "note": "A centre exactly on the edge is inside. Revisit when creature spaces (T-46) give Large creatures several squares.",
   "reason": ""
 }
