@@ -34,7 +34,7 @@
       "summary": "I ran all 19 GLOSS.cube tests (15 pass, 2 red as expected; 2 more passed in a separate run) and tried to break the engine under each one with srdloop mutate. A harmless mutation passed, so the harness reports correctly.\n\nRefuted (3):\n- test_a_diagonal_cube_holds_no_more_than_3_by_3_squares (wrong or"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_a_cube_extends_from_its_origin_in_the_chosen_direction",
     "tests/srd/test_glossary.py::test_a_cube_aimed_through_the_session_follows_the_chosen_point",

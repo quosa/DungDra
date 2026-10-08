@@ -1654,7 +1654,7 @@ def test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it(game):
 
 
 # ---------------- #3 · the point of origin isn't included ----------------
-@pytest.mark.srd(CU, clause=f"{CU}#3", kind="positive", ruling="P-27")
+@pytest.mark.srd(CU, clause=f"{CU}#3", kind="positive", ruling="R-31")
 def test_the_caster_at_the_cubes_origin_isnt_affected(game):
     m, gobs = wave(game, [(5, 0)], hits=1)
     assert hit(gobs) == [True]
@@ -1662,7 +1662,7 @@ def test_the_caster_at_the_cubes_origin_isnt_affected(game):
     assert len(game.log.of_kind("save")) == 1
 
 
-@pytest.mark.srd(CU, clause=f"{CU}#3", kind="abuse", ruling="P-27")
+@pytest.mark.srd(CU, clause=f"{CU}#3", kind="abuse", ruling="R-31")
 def test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("thunderwave")

@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
     "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-31",
+  "note": "'As P-25' means R-29.",
   "reason": ""
 }
