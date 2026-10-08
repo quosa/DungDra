@@ -1572,7 +1572,7 @@ def test_a_cube_doesnt_reach_behind_the_face_its_origin_is_on(game):
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CU, clause=f"{CU}#1", kind="boundary", ruling="P-26")
+@pytest.mark.srd(CU, clause=f"{CU}#1", kind="boundary", ruling="R-30")
 def test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube(game):
     # Aimed east, the Cube starts at the caster's face: the squares north and south of her aren't in it.
     _, gobs = wave(game, [(5, 0), (0, 5), (0, -5)], hits=1)
@@ -1593,7 +1593,7 @@ def test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it(game):
 
 
 # ---------------- #2 · the effect gives the size: the length of each side ----------------
-@pytest.mark.srd(CU, clause=f"{CU}#2", kind="positive", ruling="P-26")
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="positive", ruling="R-30")
 def test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across(game):
     spots = [(5, -5), (5, 0), (5, 5), (10, -5), (10, 0), (10, 5), (15, -5), (15, 0), (15, 5)]
     _, gobs = wave(game, spots, hits=9, named=(4,))
@@ -1606,7 +1606,7 @@ def test_a_15_ft_cube_stops_short_of_20_ft(game):
     assert hit(gobs) == [True, False]
 
 
-@pytest.mark.srd(CU, clause=f"{CU}#2", kind="boundary", ruling="P-26")
+@pytest.mark.srd(CU, clause=f"{CU}#2", kind="boundary", ruling="R-30")
 def test_the_squares_just_past_the_15_ft_width_arent_in_the_cube(game):
     # Three 5-ft squares make the 15-ft side; the squares either side of them are outside.
     _, gobs = wave(game, [(10, 5), (10, 10), (10, -10)], hits=1, point=(15, 0))
