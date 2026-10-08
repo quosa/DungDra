@@ -1490,7 +1490,7 @@ def test_aiming_at_a_far_point_doesnt_stretch_the_cone(game):
     assert hit(gobs) == [True, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#4", kind="positive", ruling="P-24")
+@pytest.mark.srd(CO, clause=f"{CO}#4", kind="positive", ruling="R-28")
 def test_aiming_at_a_near_point_still_gives_the_full_length(game):
     _, gobs = burn(game, [(5, 0), (15, 0)], hits=2, point=(5, 0))
     assert hit(gobs) == [True, True]

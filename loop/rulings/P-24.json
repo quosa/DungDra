@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-28",
+  "note": "'Maximum length' allows a shorter Cone by choice; the engine doesn't offer it yet. Aiming sets only the direction.",
   "reason": ""
 }
