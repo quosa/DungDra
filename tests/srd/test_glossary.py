@@ -2036,7 +2036,7 @@ def test_an_obstruction_giving_total_cover_blocks_the_area(game):
     assert m.slots_left(1) == 1
 
 
-@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="negative", ruling="P-30")
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="negative", ruling="R-34")
 def test_half_cover_from_the_origin_doesnt_block_the_area(game):
     m = sleeper(game)
     g = mon(game, "goblin warrior", (35, 0), name="G0")
@@ -2047,7 +2047,7 @@ def test_half_cover_from_the_origin_doesnt_block_the_area(game):
     assert len(save_texts(game)) == 1
 
 
-@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="boundary", ruling="P-30")
+@pytest.mark.srd(AOE, clause=f"{AOE}#4", kind="boundary", ruling="R-34")
 def test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does(game):
     # An arrow slit's Three-Quarters Cover leaves lines through it: the creature is still in the Cone.
     m = pc(game, "MIALEE", (0, 0))

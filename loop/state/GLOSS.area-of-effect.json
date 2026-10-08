@@ -78,7 +78,7 @@
       "summary": "I checked all 17 tests (15 green, 2 red) against the engine's area-of-effect code at `dungdra/spells.py:1132`. Each test was run against at least one deliberate break of the rule, applied in a scratch copy. Breaks covered: always judging cover from the caster; judging cover from the point the area i"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_total_cover_from_some_other_point_doesnt_cut_a_creature_off",
     "tests/srd/test_glossary.py::test_cover_from_the_caster_doesnt_shield_a_creature_from_a_sphere_placed_elsewhere",

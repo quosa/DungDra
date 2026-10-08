@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_three_quarters_cover_just_short_of_total_doesnt_block_but_total_does",
     "tests/srd/test_glossary.py::test_half_cover_from_the_origin_doesnt_block_the_area"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-34",
+  "note": "Uses the point-based cover model (T-19).",
   "reason": ""
 }
