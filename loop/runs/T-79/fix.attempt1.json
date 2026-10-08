@@ -1,0 +1,49 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "Web no longer catches a creature its 20-ft Cube can't reach. Web is placed at a point and the webs fill a Cube \"there\". Under GLOSS.cube#1/#2 that point is on one of the Cube's faces, so nothing in the Cube can be farther from it than one side length. Before this fix, `_web` gave a Dexterity save to every creature the caller named. Now it drops any named creature more than a side length from the placement point and logs \"<name> is outside the 20-ft Cube\" (page=179, rule=\"GLOSS.cube#1\"). Those creatures make no save, can't be Restrained and aren't recorded as caught. Only creatures named for Web are checked, and the Cube's orientation is still the caster's choice, so no new ruling is needed. A precise check would need the Cube's direction and would also run into the point-of-origin exclusion (R-31). That exclusion would break the existing scenario tests that place Web on a goblin's own square. Results: the ticket test passes with `--runxfail` (without it, it shows as an XPASS(strict), as expected); the full suite has 1043 passed and only that one XPASS; ruff check and format are clean; dev-gate passes.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_a_point_a_side_away_from_a_cubes_origin_may_be_in_it",
+   "tests/unit/test_geometry.py::test_a_point_more_than_a_side_from_a_cubes_origin_cant_be_in_it",
+   "tests/unit/test_spells.py::test_web_catches_only_the_named_creatures_its_cube_can_reach"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.cube#1]",
+   "SRD[GLOSS.cube#2]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/spells.py",
+    "line": 1535,
+    "explanation": "`_web` gets its own area filter: it loops over the caller's list, applies its own containment test and logs its own 'outside the Cube' message. The engine already has one mechanism for 'the area decides who is affected': `_area_targets`, built on `_area_placement` and `in_area`, which Burning Hands, Thunderwave and Sleep use. That mechanism also drops creatures behind Total Cover from the point of origin (PLAY.combat.cover#3). The Web-only path skips that check, so a named creature behind Total Cover is still caught. It also cites a different rule from the shared path for the same exclusion (GLOSS.cube#1 here, SPELL.casting-spells.effects.targets#4/R-16 there). The real gap is that `in_area` can't place a Cube at a point with no direction, and Web is the only non-Self Cube. Fix it there by extending `_area_placement`/`in_area` to handle a Cube placed at a point, then route Web through `_area_targets` (with `area_choice` or not, whichever matches Web's wording). Don't add a second filter inside one spell handler."
+   },
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/geometry.py",
+    "line": 85,
+    "explanation": "`within_cube_reach` is a second Cube-geometry predicate beside `in_area`/`in_cube_direction`, and `in_area` doesn't dispatch to it. It only answers 'could some Cube contain p', which is a ball of radius `side` (a 40-ft-wide region for a 20-ft Cube), not the Cube's actual area. It works as a stopgap filter, but it gives the area code two Cube rules that disagree. Put the placed-Cube case into `in_area` so every area query uses the same geometry."
+   }
+  ],
+  "followups": [],
+  "summary": "The fix stops a creature 100 ft away from saving against Web, and its tests check real behaviour. But it does this by adding a Web-only area filter and a new Cube predicate beside the existing `_area_targets`/`in_area` mechanism. That parallel path leaves out the Total Cover exclusion the shared path applies, logs the same exclusion under a different rule, and tests against a radius instead of the Cube. Extend `in_area`/`_area_placement` to handle a Cube placed at a point, then route Web through `_area_targets`."
+ },
+ "problems": [
+  "review: rejected (The fix stops a creature 100 ft away from saving against Web, and its tests check real behaviour. But it does this by adding a Web-only area filter and a new Cube predicate beside the existing `_area_targets`/`in_area` mechanism. That parallel path leaves out the Total Cover exclusion the shared path applies, logs the same exclusion under a different rule, and tests against a radius instead of the Cube. Extend `in_area`/`_area_placement` to handle a Cube placed at a point, then route Web through `_area_targets`.)",
+  "review: orthogonality dungdra/spells.py:1535 `_web` gets its own area filter: it loops over the caller's list, applies its own containment test and logs its own 'outside the Cube' message. The engine already has one mechanism for 'the area decides who is affected': `_area_targets`, built on `_area_placement` and `in_area`, which Burning Hands, Thunderwave and Sleep use. That mechanism also drops creatures behind Total Cover from the point of origin (PLAY.combat.cover#3). The Web-only path skips that check, so a named creature behind Total Cover is still caught. It also cites a different rule from the shared path for the same exclusion (GLOSS.cube#1 here, SPELL.casting-spells.effects.targets#4/R-16 there). The real gap is that `in_area` can't place a Cube at a point with no direction, and Web is the only non-Self Cube. Fix it there by extending `_area_placement`/`in_area` to handle a Cube placed at a point, then route Web through `_area_targets` (with `area_choice` or not, whichever matches Web's wording). Don't add a second filter inside one spell handler.",
+  "review: orthogonality dungdra/geometry.py:85 `within_cube_reach` is a second Cube-geometry predicate beside `in_area`/`in_cube_direction`, and `in_area` doesn't dispatch to it. It only answers 'could some Cube contain p', which is a ball of radius `side` (a 40-ft-wide region for a 20-ft Cube), not the Cube's actual area. It works as a stopgap filter, but it gives the area code two Cube rules that disagree. Put the placed-Cube case into `in_area` so every area query uses the same geometry."
+ ],
+ "cost_usd": 0.7308,
+ "stash": "srdloop: T-79 attempt 1"
+}
