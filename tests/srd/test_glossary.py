@@ -1410,7 +1410,7 @@ def test_a_cone_doesnt_reach_behind_its_point_of_origin(game):
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#1", kind="abuse", ruling="P-22")
+@pytest.mark.srd(CO, clause=f"{CO}#1", kind="abuse", ruling="R-26")
 def test_one_cone_cant_be_spread_to_both_flanks_by_naming_them(game):
     # A quarter-circle aimed between them would take both; the Cone aimed at the first can't.
     _, gobs = burn(game, [(10, 10), (10, -10)], hits=1, named=(0, 1))
@@ -1424,14 +1424,14 @@ def test_a_cone_is_10_ft_wide_10_ft_out(game):
     assert hit(gobs) == [True, True, True]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#2", kind="negative", ruling="P-22")
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="negative", ruling="R-26")
 def test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side(game):
     # Measured from the axis out to each side, 10 ft out would reach 10 ft off the axis.
     _, gobs = burn(game, [(10, 0), (10, 10), (10, -10)], hits=1)
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#2", kind="boundary", ruling="P-23")
+@pytest.mark.srd(CO, clause=f"{CO}#2", kind="boundary", ruling="R-26")
 def test_a_cone_is_only_5_ft_wide_5_ft_out(game):
     # 5 ft out the Cone is 5 ft wide: the square straight ahead, not the diagonal ones beside it.
     _, gobs = burn(game, [(5, 0), (5, 5), (5, -5)], hits=1)
@@ -1451,7 +1451,7 @@ def test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin(game):
     assert hit(gobs) == [True, False, False]
 
 
-@pytest.mark.srd(CO, clause=f"{CO}#3", kind="boundary", ruling="P-23")
+@pytest.mark.srd(CO, clause=f"{CO}#3", kind="boundary", ruling="R-26")
 def test_the_squares_just_past_the_15_ft_width_arent_in_the_cone(game):
     # Three 5-ft squares make the 15-ft width; the squares either side of them are outside.
     _, gobs = burn(game, [(15, 5), (15, 10), (15, -10)], hits=1, point=(15, 0))
