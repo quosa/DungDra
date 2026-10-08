@@ -8,8 +8,8 @@
     "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
     "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-32",
+  "note": "The same distance as range on a grid (PLAY.combat, p.14).",
   "reason": ""
 }

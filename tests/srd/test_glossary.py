@@ -1717,14 +1717,14 @@ def save_texts(game):
 
 
 # ---------------- #1 · straight lines from a point of origin outward in all directions ----------------
-@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="P-28")
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="R-32")
 def test_a_sphere_extends_from_its_origin_in_every_direction(game):
     _, gobs = lull(game, [(35, 0), (25, 0), (30, 5), (30, -5)], fails=4)
     assert asleep(gobs) == [True, True, True, True]
     assert len(save_texts(game)) == 4
 
 
-@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="P-28")
+@pytest.mark.srd(SP, clause=f"{SP}#1", kind="positive", ruling="R-32")
 def test_a_sphere_extends_upward_from_its_origin_too(game):
     _, gobs = lull(game, [(30, 0)], fails=1, elev=[5])
     assert asleep(gobs) == [True]
@@ -1788,7 +1788,7 @@ def test_a_5_ft_sphere_stops_short_of_10_ft(game):
     assert len(save_texts(game)) == 1
 
 
-@pytest.mark.srd(SP, clause=f"{SP}#2", kind="boundary", ruling="P-28")
+@pytest.mark.srd(SP, clause=f"{SP}#2", kind="boundary", ruling="R-32")
 def test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after(game):
     # Diagonal squares count 5 ft each, as for range and movement: (35, 5) is 5 ft away, (40, 10) 10 ft.
     _, gobs = lull(game, [(35, 5), (40, 10)], fails=1)
