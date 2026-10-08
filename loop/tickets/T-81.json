@@ -4,7 +4,12 @@
   "unit": "GLOSS.cube",
   "title": "A choice hook on area spells to include the point of origin (the creator's own space) in a Cone or Cube",
   "tests": [],
-  "status": "open",
+  "status": "void",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "void",
+      "reason": "duplicate of T-78"
+    }
+  ]
 }
