@@ -4,7 +4,12 @@
   "unit": "PLAY.combat.cover",
   "title": "Scene objects with position and extent, so the engine can work out from geometry how much of a target an object covers (half / three-quarters / whole) and on which side of it an origin lies",
   "tests": [],
-  "status": "open",
+  "status": "void",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "void",
+      "reason": "duplicate of T-17"
+    }
+  ]
 }
