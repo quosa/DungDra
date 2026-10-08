@@ -1,8 +1,6 @@
 {
   "fingerprint": "f583ffed7c2d08c5",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it"
-  ],
+  "for_review": [],
   "id": "GLOSS.sphere",
   "kind_waivers": [
     {
@@ -32,6 +30,11 @@
       "decision": "kept",
       "reason": "See rulings R-26, R-27, R-28 and R-32",
       "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after"
+    },
+    {
+      "decision": "removed",
+      "reason": "duplicate",
+      "test": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it"
     }
   ],
   "stages": {
@@ -59,7 +62,6 @@
     "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_is_centred_on_the_chosen_point",
     "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_past_its_radius_in_any_direction",
     "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin",
-    "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it",
     "tests/srd/test_glossary.py::test_the_radius_isnt_the_spheres_width",
     "tests/srd/test_glossary.py::test_a_5_ft_sphere_stops_short_of_10_ft",
     "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after",

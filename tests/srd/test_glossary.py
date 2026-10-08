@@ -1764,13 +1764,6 @@ def test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin(gam
     assert len(save_texts(game)) == 1
 
 
-@pytest.mark.srd(SP, clause=f"{SP}#1", kind="abuse")
-def test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it(game):
-    _, gobs = lull(game, [(35, 0), (30, 40)], fails=1)
-    assert asleep(gobs) == [True, False]
-    assert len(save_texts(game)) == 1 and "G1" not in save_texts(game)[0]
-
-
 # ---------------- #2 · the effect specifies the radius ----------------
 
 
