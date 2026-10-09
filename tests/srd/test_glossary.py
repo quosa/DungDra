@@ -1961,12 +1961,6 @@ def test_a_sphere_placed_through_the_session_leaves_out_a_creature_cut_off_from_
 
 
 @pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-83: Burning Hands sets fire to a flammable object inside its Cone even when the "
-    "object is behind Total Cover; scene objects are placed in the area by geometry alone and "
-    "the blocked-lines check is made only for creatures",
-)
 def test_an_object_cut_off_from_the_origin_isnt_in_the_area(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")

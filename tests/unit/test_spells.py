@@ -486,6 +486,16 @@ def test_area_objects_uses_the_same_cone_as_creatures(game):
     assert _area_objects(game, c, [goblin], point=(-5, 0, 0)) == ["behind"]
 
 
+def test_area_objects_leaves_out_an_object_behind_total_cover_from_the_origin(game):
+    m, goblin = _hay_around_mialee(game)
+    c = Casting("burning hands", m, level=1, ability="int", dc=13, attack=5)
+    game.scene.cover_all["stone"] = "three-quarters"
+    game.scene.cover[(m.id, "inside")] = "total"
+    assert set(_area_objects(game, c, [goblin])) == {"worn", "stone"}
+    (ev,) = [e for e in game.log.events if e.rule == "GLOSS.area-of-effect#3"]
+    assert "inside" in ev.text and ev.page == "177"
+
+
 def test_sleep_at_a_point_only_reaches_creatures_in_its_sphere(game):
     m = pc(game, "MIALEE", (0, 0))
     near = mon(game, "goblin warrior", (35, 0), name="NEAR")

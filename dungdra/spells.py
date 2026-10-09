@@ -1085,16 +1085,28 @@ def _area_placement(c, targets, point=None):
 
 def _area_objects(game, c, targets, point=None):
     """The names of scene objects whose position lies inside the spell's area, by the same geometry
-    `_area_targets` uses for creatures. An object without a position isn't anywhere in the area."""
+    `_area_targets` uses for creatures. An object without a position isn't anywhere in the area,
+    and one behind Total Cover from the origin is left out like a creature."""
     shape, size, origin, toward = _area_placement(c, targets, point)
+    from_self = SPELLS[c.spell]["range"] == "self"
     out = []
     for name, obj in game.scene.objects.items():
         pos = obj.get("position")
         # SRD[SPELL.casting-spells.effects.targets#4] the area decides which objects it reaches, too
-        if pos is not None and in_area(
+        if pos is None or not in_area(
             shape, size, origin, (*pos[:2], obj.get("elevation", 0)), toward=toward
         ):
-            out.append(name)
+            continue
+        # SRD[GLOSS.area-of-effect#3] all lines from the point of origin blocked: not in the area
+        if game.labelled_cover(c.caster if from_self else origin[:2], name) == "total":
+            game.log.player(
+                "spell",
+                f"The {name} is behind Total Cover from the point of origin and isn't affected",
+                page=177,
+                rule="GLOSS.area-of-effect#3",
+            )
+            continue
+        out.append(name)
     return out
 
 

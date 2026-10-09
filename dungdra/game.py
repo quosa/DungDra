@@ -213,15 +213,19 @@ class Game:
         Half Cover of creatures standing in the line, for attacks and saves alike. The origin is
         the attacker (a creature) or a point (x, y) in feet where an area or other effect
         originates; the scene labels cover from a point under the key (point, target id)."""
-        order = [None, "half", "three-quarters", "total"]
+        c1 = self.labelled_cover(attacker, target.id)
+        c2 = "half" if attacker is not None and self.creatures_in_the_way(attacker, target) else None
+        return _most_cover(c1, c2)
+
+    def labelled_cover(self, origin, key: str) -> str | None:
+        """Degree of cover the scene labels give the creature id or object name `key` against the
+        origin (a creature or a point (x, y)): the most protective of the per-origin and blanket
+        labels."""
         # SRD[PLAY.combat.cover#3] cover counts against where the effect originates, which needn't
         # be the caster: a point of origin is looked up like a creature
-        key = _origin_key(attacker)
-        c1 = self.scene.cover.get((key, target.id)) if key is not None else None
-        c2 = self.scene.cover_all.get(target.id)
-        c3 = "half" if attacker is not None and self.creatures_in_the_way(attacker, target) else None
-        # SRD[PLAY.combat.cover#4] only the most protective degree applies; never added together
-        return max(c1, c2, c3, key=lambda c: order.index(c))
+        okey = _origin_key(origin)
+        c1 = self.scene.cover.get((okey, key)) if okey is not None else None
+        return _most_cover(c1, self.scene.cover_all.get(key))
 
     def cover_bonus(self, attacker, target, against: str) -> list[tuple[int, str]]:
         """The Half or Three-Quarters Cover bonus the target gets to its AC or Dexterity save
@@ -401,6 +405,12 @@ class Game:
 def _is_point(origin) -> bool:
     """An effect's origin given as a point (x, y) in feet rather than as a creature."""
     return isinstance(origin, (tuple, list))
+
+
+def _most_cover(*degrees):
+    # SRD[PLAY.combat.cover#4] only the most protective degree applies; never added together
+    order = [None, "half", "three-quarters", "total"]
+    return max(degrees, key=order.index)
 
 
 def _origin_key(origin):

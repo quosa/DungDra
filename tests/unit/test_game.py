@@ -84,6 +84,16 @@ def test_cover_from_a_point_of_origin_reads_the_scene_label_for_that_point(game)
     assert game.cover_between((20, 0), gob) is None
 
 
+def test_labelled_cover_reads_an_objects_labels_by_name_and_keeps_the_most_protective(game):
+    lidda, _ = setup(game)
+    assert game.labelled_cover(lidda, "hay") is None
+    game.scene.cover_all["hay"] = "half"
+    game.scene.cover[((40, 0), "hay")] = "total"
+    assert game.labelled_cover((40, 0), "hay") == "total"
+    assert game.labelled_cover(lidda, "hay") == "half"
+    assert game.labelled_cover(None, "hay") == "half"
+
+
 def test_a_creature_between_a_point_of_origin_and_the_target_gives_half_cover(game):
     _, gob = setup(game)
     mon(game, "goblin warrior", (50, 0), name="SHIELD")
