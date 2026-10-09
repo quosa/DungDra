@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it"
   ],
-  "status": "stuck",
-  "attempts": 3,
+  "status": "open",
+  "attempts": 0,
   "history": [
     {
       "event": "failed",
@@ -35,6 +35,11 @@
         "review: orthogonality dungdra/geometry.py:84 `HALF_SPACE` adds a second vertical convention: a creature's centre sits 2.5 ft above its elevation. `in_cube_direction`, `dist_points` and the rest of geometry.py compare elevations directly. Two different ideas of where a creature's centre lies vertically will give inconsistent area results between Thunderwave's Cube and Web's Cube. Use one convention for both.",
         "review: other dungdra/geometry.py:87 GLOSS.cube#1 puts the origin on any face. Making a point-placed Cube always rest with its origin at the centre of its bottom face is a new reading the register doesn't cover (R-30 settles only alignment and the centre-of-space test). Under CLAUDE.md, propose this as a ruling rather than encode it silently, or tie it to an existing register row."
       ]
+    },
+    {
+      "event": "reopened",
+      "was": "stuck",
+      "reason": "Settled by R-35 (README register), after three attempts each had to invent where a point-placed Cube sits and the reviewer rightly rejected every invention. THE QUESTION: Web says 'the webs fill a 20-foot Cube there' at a point within range, and GLOSS.cube only says the point of origin is 'anywhere on a face' of the Cube, so nothing said which face or which squares. THE DECISION (R-35): the point of origin is the centre of the Cube's BOTTOM face; the Cube rests on the ground at the point and extends upward. The caster names a square (point=, or a creature as shorthand for its square, R-16). An odd-sized Cube (15 ft) centres on that square: the 3x3 squares around it. An even-sized Cube (20 ft = 4 squares) cannot centre on a square, so it centres on that square's TOP-RIGHT corner (up and right on the map, +x/+y). Example: Web at a goblin in square (15,10) puts the corner at (17.5,12.5) and covers columns 10-25 and rows 5-20, a 4x4 block with the goblin second from the left and second from the bottom. Naming a neighbouring square moves the Cube one square that way. A creature is in the Cube when the centre of its space is (R-27). WHAT NOT TO DO (the rejected attempts): no Web-only area filter and no second Cube predicate beside in_area; Web is NOT 'of your choice', so the caller's list must not drop creatures inside the webs (R-16); no new vertical convention for elevation. Use the one area mechanism (_area_targets / in_area / geometry.py). Choosing another face, corner or offset is the parked T-67, not this ticket."
     }
   ]
 }
