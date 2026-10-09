@@ -589,6 +589,20 @@ def test_web_at_a_point_beyond_its_range_is_refused(game):
     assert not any(o.get("web") for o in game.scene.objects.values() if isinstance(o, dict))
 
 
+def test_web_catches_everyone_in_its_cube_and_no_one_outside_it(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.award_xp(900)  # level 3: level 2 slots
+    m.prepared.append("web")
+    named = mon(game, "goblin warrior", (15, 10), name="NAMED")
+    unnamed = mon(game, "goblin warrior", (25, 20), name="UNNAMED")
+    out = mon(game, "goblin warrior", (5, 10), name="OUT")
+    game.dice.force_str("d20=[1,1]")
+    cast(game, m, "web", [named, out])
+    assert named.has("restrained") and unnamed.has("restrained")
+    assert not out.has("restrained")
+    assert all("OUT" not in s.text for s in game.log.of_kind("save"))
+
+
 def test_sleep_only_takes_the_creatures_of_the_casters_choice_in_its_sphere(game):
     m = pc(game, "MIALEE", (0, 0))
     chosen = mon(game, "goblin warrior", (40, 0), name="CHOSEN")

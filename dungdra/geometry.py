@@ -81,14 +81,29 @@ def in_cube_direction(origin, toward, p, side) -> bool:
     return 0 < along <= side and across <= side / 2 and abs(q[2] - o[2]) <= side / 2
 
 
+def in_cube_at_point(square, p, side) -> bool:
+    """Is p inside the Cube placed at the point `square`, resting on the ground there and extending
+    `side` feet upward (R-35)? An odd number of squares centres on `square`; an even number can't,
+    so it centres on that square's top-right corner (+x/+y)."""
+    # SRD[GLOSS.cube#1] the point of origin is the centre of the Cube's bottom face (R-35)
+    o, q = _xyz(square), _xyz(p)
+    shift = 2.5 if (side // 5) % 2 == 0 else 0
+    cx, cy = o[0] + shift, o[1] + shift
+    # SRD[GLOSS.cube#2] each side is the Cube's size; a creature is in it when its centre is (R-27)
+    return abs(q[0] - cx) <= side / 2 and abs(q[1] - cy) <= side / 2 and 0 <= q[2] - o[2] <= side
+
+
 # SRD[SPELL.casting-spells.effects.targets#5] the area shapes the engine has geometry for
 def in_area(shape, size, origin, p, toward=None) -> bool:
     """Is p inside an area of `shape` ("cone", "cube" or "sphere") and `size` (a Cone's length, a
-    Cube's side, a Sphere's radius) from `origin`? A Cone or Cube points at `toward`; a Sphere is
-    centred on `origin`. Points are (x, y) or (x, y, elevation)."""
+    Cube's side, a Sphere's radius) from `origin`? A Cone or Cube points at `toward`; a Cube
+    without a direction is placed at the point `origin` (R-35); a Sphere is centred on `origin`.
+    Points are (x, y) or (x, y, elevation)."""
     shape = shape.lower()
     if shape == "sphere":
         return dist_points(origin, p) <= size
+    if shape == "cube" and toward is None:
+        return in_cube_at_point(origin, p, size)
     if toward is None:
         raise ValueError(f"a {shape} needs a direction")
     if shape == "cone":

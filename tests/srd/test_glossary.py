@@ -1638,11 +1638,6 @@ def test_aiming_at_a_far_point_doesnt_stretch_the_cube(game):
 
 
 @pytest.mark.srd(CU, clause=f"{CU}#2", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-79: Web takes the caller's list and makes a creature 100 ft from its 20-ft Cube "
-    "save against being Restrained; the Cube's size isn't checked at all",
-)
 def test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it(game):
     m = pc(game, "MIALEE", (0, 0))
     m.level = 3

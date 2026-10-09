@@ -7,6 +7,7 @@ from dungdra.geometry import (
     dist_points,
     in_area,
     in_cone_direction,
+    in_cube_at_point,
     in_cube_direction,
     segment_crosses_square,
 )
@@ -89,6 +90,34 @@ def test_in_area_measures_each_shape_from_its_origin():
     assert not in_area("cone", 15, (0, 0), (20, 0), toward=(5, 0))
     assert in_area("Cube", 15, (0, 0), (15, 5), toward=(5, 0))
     assert not in_area("cube", 15, (0, 0), (-5, 0), toward=(5, 0))
+
+
+def test_an_even_cube_at_a_point_centres_on_the_squares_top_right_corner():
+    # 20 ft at (15, 10): columns 10-25, rows 5-20 (R-35)
+    inside = [
+        (x, y) for x in range(-10, 50, 5) for y in range(-15, 45, 5) if in_cube_at_point((15, 10), (x, y), 20)
+    ]
+    assert sorted({x for x, _ in inside}) == [10, 15, 20, 25]
+    assert sorted({y for _, y in inside}) == [5, 10, 15, 20]
+    assert len(inside) == 16
+
+
+def test_an_odd_cube_at_a_point_centres_on_the_square():
+    inside = [
+        (x, y) for x in range(-10, 50, 5) for y in range(-15, 45, 5) if in_cube_at_point((15, 10), (x, y), 15)
+    ]
+    assert sorted(inside) == [(x, y) for x in (10, 15, 20) for y in (5, 10, 15)]
+
+
+def test_a_cube_at_a_point_rests_on_the_ground_and_extends_upward():
+    assert in_cube_at_point((15, 10), (15, 10, 20), 20)
+    assert not in_cube_at_point((15, 10), (15, 10, 25), 20)
+    assert not in_cube_at_point((15, 10, 10), (15, 10, 5), 20)
+
+
+def test_in_area_places_a_cube_without_a_direction_at_its_origin():
+    assert in_area("cube", 20, (30, 0), (30, 0))
+    assert not in_area("cube", 20, (30, 0), (30, 100))
 
 
 def test_in_area_refuses_a_shape_without_a_direction_or_geometry():

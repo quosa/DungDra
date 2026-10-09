@@ -1072,25 +1072,27 @@ def _area_point(spell, caster, targets, point):
 def _area_placement(c, targets, point=None):
     """The spell's area as (shape, size, origin, toward): shape and size from its `area` data, the
     origin at the caster for a spell with a range of Self (else at the placement point), and the
-    placement from `_area_point` as the direction of a Cone or Cube."""
+    placement from `_area_point` as the direction of a Cone or Cube from the caster. An area
+    placed at a point has no direction: a Cube there rests on the ground at it (R-35)."""
     sd = SPELLS[c.spell]
     shape, size = sd["area"]
     place = _area_point(c.spell, c.caster, targets, point)
     caster = c.caster
-    origin = (*caster.position, caster.elevation) if sd["range"] == "self" else place
-    return shape, size, origin, place
+    if sd["range"] == "self":
+        return shape, size, (*caster.position, caster.elevation), place
+    return shape, size, place, None
 
 
 def _area_objects(game, c, targets, point=None):
     """The names of scene objects whose position lies inside the spell's area, by the same geometry
     `_area_targets` uses for creatures. An object without a position isn't anywhere in the area."""
-    shape, size, origin, place = _area_placement(c, targets, point)
+    shape, size, origin, toward = _area_placement(c, targets, point)
     out = []
     for name, obj in game.scene.objects.items():
         pos = obj.get("position")
         # SRD[SPELL.casting-spells.effects.targets#4] the area decides which objects it reaches, too
         if pos is not None and in_area(
-            shape, size, origin, (*pos[:2], obj.get("elevation", 0)), toward=place
+            shape, size, origin, (*pos[:2], obj.get("elevation", 0)), toward=toward
         ):
             out.append(name)
     return out
@@ -1104,7 +1106,7 @@ def _area_targets(game, c, targets, point=None):
     the named ones (R-16). Anyone behind Total Cover from the origin is dropped; named objects pass
     through to the spell."""
     sd = SPELLS[c.spell]
-    shape, size, origin, place = _area_placement(c, targets, point)
+    shape, size, origin, toward = _area_placement(c, targets, point)
     from_self = sd["range"] == "self"
     caster = c.caster
     named = [t for t in targets if is_creature(t) and not (from_self and t is caster)]
@@ -1118,7 +1120,7 @@ def _area_targets(game, c, targets, point=None):
         if t.dead or (from_self and t is caster):
             continue
         # SRD[SPELL.casting-spells.effects.targets#4]: the area, not the caller's list, decides who is hit
-        if not in_area(shape, size, origin, (*t.position, t.elevation), toward=place):
+        if not in_area(shape, size, origin, (*t.position, t.elevation), toward=toward):
             if t in named:
                 game.log.player(
                     "spell",
@@ -1129,7 +1131,7 @@ def _area_targets(game, c, targets, point=None):
                 )
             continue
         # SRD[PLAY.combat.cover#3] cover counts from where the area originates: the caster or its point
-        if game.cover_between(caster if from_self else place[:2], t) == "total":
+        if game.cover_between(caster if from_self else origin[:2], t) == "total":
             game.log.player(
                 "spell",
                 f"{t.name} is behind Total Cover from the point of origin and isn't affected",
@@ -1531,6 +1533,8 @@ def spiritual_weapon_attack(game, caster, target, first=False):
 
 
 def _web(game, c, targets, point=None, option=None, **kw):
+    # SRD[GLOSS.cube#1] the webs fill a 20-foot Cube at the point: the area decides who saves (R-35)
+    targets = _area_targets(game, c, targets, point=point)
     anchored = option != "unanchored"
     name = f"web ({c.caster.name})"
     game.scene.objects[name] = {

@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "failed",
@@ -40,6 +40,10 @@
       "event": "reopened",
       "was": "stuck",
       "reason": "Settled by R-35 (README register), after three attempts each had to invent where a point-placed Cube sits and the reviewer rightly rejected every invention. THE QUESTION: Web says 'the webs fill a 20-foot Cube there' at a point within range, and GLOSS.cube only says the point of origin is 'anywhere on a face' of the Cube, so nothing said which face or which squares. THE DECISION (R-35): the point of origin is the centre of the Cube's BOTTOM face; the Cube rests on the ground at the point and extends upward. The caster names a square (point=, or a creature as shorthand for its square, R-16). An odd-sized Cube (15 ft) centres on that square: the 3x3 squares around it. An even-sized Cube (20 ft = 4 squares) cannot centre on a square, so it centres on that square's TOP-RIGHT corner (up and right on the map, +x/+y). Example: Web at a goblin in square (15,10) puts the corner at (17.5,12.5) and covers columns 10-25 and rows 5-20, a 4x4 block with the goblin second from the left and second from the bottom. Naming a neighbouring square moves the Cube one square that way. A creature is in the Cube when the centre of its space is (R-27). WHAT NOT TO DO (the rejected attempts): no Web-only area filter and no second Cube predicate beside in_area; Web is NOT 'of your choice', so the caller's list must not drop creatures inside the webs (R-16); no new vertical convention for elevation. Use the one area mechanism (_area_targets / in_area / geometry.py). Choosing another face, corner or offset is the parked T-67, not this ticket."
+    },
+    {
+      "event": "fixed",
+      "summary": "I fixed Web so it only affects creatures inside its 20-ft Cube. A creature 100 ft away no longer makes a save and can't be Restrained.\n\n- **How the Cube is placed:** I added `in_cube_at_point` to `dungdra/geometry.py`, following R-35. The Cube rests on the ground at the named square and extends upward. An odd-sized Cube centres on that square; an even-sized one centres on the square's top-right corner (+2.5, +2.5). A creature counts as inside when the centre of its space is (R-27).\n- **No second predicate:** the one Cube check, `in_area`, now handles a Cube with no direction as one placed at a point.\n- **Spell placement:** `_area_placement` in `spells.py` gives a direction only to Self-range spells. Anything placed at a point gets none. Cover for point-placed areas is now measured from that point.\n- **Web itself:** `_web` now takes its targets from `_area_targets`, the same area code other area spells use. Every living creature in the Cube saves, whether it was named or not, and creatures outside it are dropped with a log line.\n\nChecks:\n- The ticket's test passes with `--runxfail`.\n- In the full suite, the only failure is that same test reporting strict XPASS, which is expected until the harness removes its marker.\n- 530 unit tests passed, `ruff check` and `ruff format --check` are clean, and `dev-gate` passed."
     }
   ]
 }
