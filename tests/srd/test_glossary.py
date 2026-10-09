@@ -1931,11 +1931,6 @@ def test_a_creature_cut_off_from_the_origin_rolls_no_save_and_takes_nothing(game
 
 
 @pytest.mark.srd(AOE, clause=f"{AOE}#3", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-82: the exclusion of a creature cut off from the point of origin is logged as "
-    "rule='GLOSS.area-of-effect' with no clause number, so the log doesn't say which rule applied",
-)
 def test_the_exclusion_is_logged_against_the_blocked_lines_clause(game):
     m = pc(game, "MIALEE", (0, 0))
     m.prepared.append("burning hands")

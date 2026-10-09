@@ -505,7 +505,7 @@ def test_sleep_spares_a_creature_behind_total_cover_from_its_point_of_origin(gam
     game.dice.force_str("d20=[1]")
     cast(game, m, "sleep", [open_, walled], point=(40, 0))
     assert open_.has("incapacitated") and not walled.has("incapacitated")
-    game.log.assert_applied(rule="GLOSS.area-of-effect")
+    game.log.assert_applied(rule="GLOSS.area-of-effect#3")
 
 
 def test_sleep_reads_its_5_ft_sphere_from_the_spell_data(game):
@@ -539,7 +539,7 @@ def test_a_self_area_drops_a_creature_behind_total_cover_from_the_caster(game):
     game.dice.force_str("d8=[3,3]")
     cast(game, m, "thunderwave", [gob])
     assert gob.hp == 30
-    game.log.assert_applied(rule="GLOSS.area-of-effect")
+    game.log.assert_applied(rule="GLOSS.area-of-effect#3")
 
 
 def test_sleep_without_a_point_is_centred_on_the_first_named_creature(game):

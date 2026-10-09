@@ -1131,12 +1131,13 @@ def _area_targets(game, c, targets, point=None):
                 )
             continue
         # SRD[PLAY.combat.cover#3] cover counts from where the area originates: the caster or its point
+        # SRD[GLOSS.area-of-effect#3] all lines from the point of origin blocked: not in the area
         if game.cover_between(caster if from_self else origin[:2], t) == "total":
             game.log.player(
                 "spell",
                 f"{t.name} is behind Total Cover from the point of origin and isn't affected",
                 page=177,
-                rule="GLOSS.area-of-effect",
+                rule="GLOSS.area-of-effect#3",
             )
             continue
         out.append(t)
