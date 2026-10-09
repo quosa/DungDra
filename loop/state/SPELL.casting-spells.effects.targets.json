@@ -2,45 +2,24 @@
   "fingerprint": "fd4819b5fe8bca5d",
   "for_review": [],
   "id": "SPELL.casting-spells.effects.targets",
+  "kind_waivers": [],
   "out_of_scope": [
     {
       "clause": "SPELL.casting-spells.effects.targets#3",
-      "reason": "Only the negative half is out of scope: 'unless the creature must be Hostile or specifically a creature other than you'. No in-scope spell requires a Hostile creature or a creature other than the caster, so there is no spell to test the exclusion with. The positive half is tested."
+      "reason": "Only the exclusion is out of scope: 'unless the creature must be Hostile or specifically a creature other than you'. No in-scope spell requires a Hostile creature or a creature other than the caster. The positive half is tested (Cure Wounds, Healing Word, Mage Armor, Magic Missile on the caster), and so is a negative (Light can't be pointed at the caster)."
     },
     {
       "clause": "SPELL.casting-spells.effects.targets#6",
-      "reason": "Every in-scope spell that targets another creature has a perceptible effect (damage, a condition, a visible ward or a spoken command). No subset spell has a subtle effect whose target could fail to notice it."
+      "reason": "Every in-scope spell that targets another creature has a perceptible effect (damage, a condition, a visible ward, a spoken Command). No subset spell has a subtle effect whose target could fail to notice it."
     },
     {
       "clause": "SPELL.casting-spells.effects.targets#7",
       "reason": "The example subtle effect, reading thoughts (Detect Thoughts and similar), isn't in the implemented spell subset."
     }
   ],
-  "problems": {
-    "problems": [
-      "clause SPELL.casting-spells.effects.targets#1: no negative test",
-      "clause SPELL.casting-spells.effects.targets#2: no negative test",
-      "clause SPELL.casting-spells.effects.targets#4: no negative test",
-      "clause SPELL.casting-spells.effects.targets#5: no negative, positive test",
-      "clause SPELL.casting-spells.effects.targets#8: no negative test",
-      "clause SPELL.casting-spells.effects.targets#10: no negative test",
-      "clause SPELL.casting-spells.effects.targets#11: no negative test"
-    ],
-    "stage": "C"
-  },
   "refuted": [
-    "tests/srd/test_spells.py::test_fire_bolt_can_target_an_object",
-    "tests/srd/test_spells.py::test_a_spell_cant_target_a_creature_behind_total_cover",
-    "tests/srd/test_spells.py::test_sacred_flame_cant_reach_a_creature_behind_total_cover",
-    "tests/srd/test_spells.py::test_a_magic_missile_dart_cant_go_to_a_creature_behind_total_cover",
-    "tests/srd/test_spells.py::test_total_cover_doesnt_refuse_an_area_spell",
-    "tests/srd/test_spells.py::test_choosing_yourself_doesnt_add_a_target_past_the_cap",
-    "tests/srd/test_spells.py::test_thunderwave_reaches_a_creature_in_the_cube_that_wasnt_named",
-    "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_beast",
-    "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_fey_goblin",
-    "tests/srd/test_spells.py::test_hold_person_on_a_beast_through_the_session",
-    "tests/srd/test_spells.py::test_spare_the_dying_on_a_healthy_creature_isnt_a_half_refusal",
-    "tests/srd/test_spells.py::test_a_refused_target_spends_no_slot"
+    "tests/srd/test_spells.py::test_the_caster_cant_choose_themself_for_a_spell_that_targets_an_object",
+    "tests/srd/test_spells.py::test_leaving_a_creature_in_the_cone_off_the_list_doesnt_spare_it"
   ],
   "relations": [
     {
@@ -105,9 +84,17 @@
     "B": {
       "at": 1790931731,
       "summary": "I gave all 11 related items a verdict. None contradicts the SRD. Two scenarios and their tests, plus the Total Cover and Hold Person lines, agree with the unit. Three are affected by an ambiguity: the SPL-06 scenario, its test, and the Total Cover code (spells.py:130). The Hold Person invalid-target"
+    },
+    "C": {
+      "at": 1791585127,
+      "summary": "This is a revisit. Before it, the unit's committed tests had no positive for #1, #4 and #8 and no negative for #3 and #9. I added 8 tests to tests/srd/test_spells.py, all green. All 83 tests in the file pass, and ruff check and ruff format are clean.\n\n- **#1 positive:** Light makes a named object gl"
+    },
+    "D": {
+      "at": 1791585225,
+      "summary": "I mutated the rule each test exercises; all eight then failed, so none passes for the wrong reason. Refuted two: (1) the Light-on-self test, filed under #3 though its refusal comes from #1, which duplicates the existing test_light_cant_target_a_creature (the same mutation breaks both); (2) the Burni"
     }
   },
-  "status": "incomplete",
+  "status": "green",
   "tests": [
     "tests/srd/test_spells.py::test_ray_of_frost_cant_target_an_object",
     "tests/srd/test_spells.py::test_light_cant_target_a_creature",
@@ -130,7 +117,13 @@
     "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
     "tests/srd/test_spells.py::test_a_valid_target_really_rolls_its_save",
     "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing",
-    "tests/srd/test_spells.py::test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing"
+    "tests/srd/test_spells.py::test_a_save_spell_on_an_invalid_target_doesnt_say_it_did_nothing",
+    "tests/srd/test_spells.py::test_light_targets_the_object_its_description_names",
+    "tests/srd/test_spells.py::test_magic_missile_darts_can_go_to_the_caster",
+    "tests/srd/test_spells.py::test_burning_hands_hits_a_creature_in_the_cone_that_wasnt_named",
+    "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_wolf_that_couldnt_have_saved",
+    "tests/srd/test_spells.py::test_hold_person_on_a_wolf_through_the_session_spends_the_slot_and_does_nothing",
+    "tests/srd/test_spells.py::test_a_target_out_of_range_is_refused_before_the_slot_is_spent"
   ],
   "tickets": [
     "T-37",

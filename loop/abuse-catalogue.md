@@ -78,6 +78,8 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Going over a spell's target cap, hoping the refusal only comes after the slot is spent and
   Concentration has started.
 - Pointing an object-targeting spell (Light) at a creature.
+- Naming yourself as the target of an object-targeting spell (Light on the caster), on the strength
+  of "you can choose yourself", which covers only spells that target a creature.
 - Probing a creature's type or immunities by casting at it and reading the refusal or the log
   (an invalid target must look like a successful save, with no save rolled).
 - Getting the slot back by casting at an invalid target (the slot is still expended).

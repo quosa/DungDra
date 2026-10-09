@@ -593,7 +593,20 @@ def player_text_since(game, start):
     return " ".join(e.text for e in game.log.since(start) if e.visibility == "player")
 
 
+def unbeatable_dc(c):
+    """Raise the caster's spellcasting ability so no d20 save can reach the DC (2024: a natural
+    20 isn't an automatic success on a saving throw), so a target that rolls at all fails."""
+    c.abilities[c.spell_ability] = 40
+    return c.spell_dc()
+
+
 # ---------------------------------------------------------------- #1 the description says what it targets
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#1", kind="positive")
+def test_light_targets_the_object_its_description_names(game):
+    j = pc(game, "JOZAN", (0, 0))
+    game.scene.objects["torch"] = {"position": (5, 0)}
+    S.cast(game, j, "light", ["torch"])
+    assert game.scene.objects["torch"]["light"] == [20, 20]
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#1", kind="negative")
@@ -680,7 +693,30 @@ def test_mage_armor_can_target_the_caster(game):
     assert m.notes.get("mage_armor") and m.ac() == 13 + m.mod("dex")
 
 
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#3", kind="positive")
+def test_magic_missile_darts_can_go_to_the_caster(game):
+    # "one or more creatures of your choice": the caster may be one of them
+    m = pc(game, "MIALEE", (0, 0))
+    m.base_max_hp = m.hp = 30
+    game.answer("shield", False, who=m)  # MIALEE doesn't Shield herself against her own darts
+    game.dice.force_str("d4=[1,1,1]")
+    S.cast(game, m, "magic missile", [m])
+    assert m.hp == 30 - 3 * (1 + 1)
+
+
 # ------------------------------------------------------------ #4 the area determines what the spell targets
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="positive", ruling="R-16")
+def test_burning_hands_hits_a_creature_in_the_cone_that_wasnt_named(game):
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("burning hands")
+    near = mon(game, "goblin warrior", (5, 0), name="NEAR")
+    named = mon(game, "goblin warrior", (10, 0), name="NAMED")
+    near.base_max_hp = near.hp = named.base_max_hp = named.hp = 30
+    # aimed due east: both goblins are in the 15-ft Cone; both fail their saves
+    game.dice.force_str("d6=[2,2,2]; d20=[1,1]")
+    S.cast(game, m, "burning hands", [named], point=(15, 0))
+    assert named.hp == 30 - 6
+    assert near.hp == 30 - 6
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#4", kind="negative")
@@ -734,6 +770,28 @@ def test_single_target_spells_have_no_area(game):
 
 
 # ---------------------------------------------------------------- #8 invalid target: nothing happens
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#8", kind="positive", ruling="R-15")
+def test_hold_person_does_nothing_to_a_wolf_that_couldnt_have_saved(game):
+    # a DC no d20 save can reach: had the Wolf been affected at all, it would be Paralyzed
+    j = hold_person_caster(game)
+    assert unbeatable_dc(j) > 20 + 1  # the Wolf's Wis save is +1
+    wolf = mon(game, "wolf", (20, 0))
+    rolled = len(game.dice.history)
+    S.cast(game, j, "hold person", wolf)
+    assert not wolf.has("paralyzed")
+    assert wolf.hp == wolf.max_hp and not wolf.conditions()
+    assert len(game.dice.history) == rolled
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#8", kind="abuse", ruling="R-15")
+def test_hold_person_on_a_wolf_through_the_session_spends_the_slot_and_does_nothing(game):
+    j = hold_person_caster(game)
+    unbeatable_dc(j)
+    wolf = mon(game, "wolf", (20, 0))
+    out = Session(game).execute({"cmd": "cast", "spell": "hold person", "actor": j.id, "targets": [wolf.id]})
+    assert out.get("ok") is not False, out
+    assert j.slots_left(2) == 1
+    assert not wolf.has("paralyzed")
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#8", kind="negative")
@@ -753,6 +811,15 @@ def test_the_slot_is_spent_on_an_invalid_target(game):
     assert j.slots_left(2) == 2
     S.cast(game, j, "hold person", wolf)
     assert j.slots_left(2) == 1
+
+
+@pytest.mark.srd(TARGETS, clause=f"{TARGETS}#9", kind="negative")
+def test_a_target_out_of_range_is_refused_before_the_slot_is_spent(game):
+    # the slot is spent when the spell is cast; a target the caster can't choose stops the casting
+    j = hold_person_caster(game)
+    wolf = mon(game, "wolf", (65, 0))
+    assert_refused_cleanly(game, S.cast, game, j, "hold person", wolf, match="range")
+    assert j.slots_left(2) == 2
 
 
 @pytest.mark.srd(TARGETS, clause=f"{TARGETS}#9", kind="abuse")
