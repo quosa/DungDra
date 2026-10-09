@@ -26,6 +26,9 @@ Rules:
   everything and commits; you never commit.
 - If your fix also makes another ticket's red test pass, that's good, not a dispute: the harness
   sees it, drops that ticket's markers, re-runs its tests and closes it too.
+- If the fix needs a reading that neither the SRD text nor the register (README, R-nn) settles,
+  such as where an area sits or which of two plausible rules applies, don't choose one: stop and
+  describe the question and the readings in `dispute`. A person decides and reopens the ticket.
 - If you believe the acceptance test itself is wrong, stop and explain it in `dispute`. If a
   refactor needs acceptance tests changed, describe it in `test_change_request` (a person
   decides). Never weaken a test to make it pass.

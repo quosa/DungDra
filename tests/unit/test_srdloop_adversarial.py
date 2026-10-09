@@ -279,6 +279,22 @@ def test_a_waived_negative_test_gets_through_and_is_recorded(tmp_path, monkeypat
     assert S.load("GLOSS.grappled")["kind_waivers"] == [waiver]
 
 
+def test_a_revisit_counts_the_units_committed_tests_and_keeps_them_in_its_list(tmp_path, monkeypatch):
+    """A revisit's stage C writes only the tests that were untestable before; the clause x kind
+    gate counts the unit's committed tests too, and the unit's test list keeps them."""
+    ctx = repo(tmp_path, monkeypatch)
+    old = PLAN["tests"][1]["name"]  # the negative test, committed by the first audit
+    write(Path("."), {"tests/srd/test_glossary.py": TEST_FILE})
+    st = S.load("GLOSS.grappled")
+    st["tests"] = [old]
+    S.save(st)
+    subprocess.run(["git", "add", "-A"], check=True)
+    subprocess.run(["git", "commit", "-qm", "first audit"], check=True)
+    only_new = plan_with(tests=[PLAN["tests"][0]])  # the plan names only the positive test
+    assert run(ctx, agents("C", lambda: copy.deepcopy(only_new))) != "incomplete"
+    assert S.load("GLOSS.grappled")["tests"] == [old, PLAN["tests"][0]["name"]]
+
+
 def counting(stage_bad: str, bad, calls: list[str]):
     inner = agents(stage_bad, bad)
 

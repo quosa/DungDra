@@ -67,6 +67,17 @@ def test_clause_coverage_requires_kinds_boundaries_and_reasons():
     ]
 
 
+def test_srd_markers_read_a_clause_written_as_an_f_string_of_a_constant():
+    src = (
+        'import pytest\nU = "GLOSS.prone"\n\n'
+        '@pytest.mark.srd(U, clause=f"{U}#2", kind="negative")\ndef test_a(game):\n    assert True\n\n'
+        '@pytest.mark.srd(U, clause=f"{OTHER}#2", kind="negative")\ndef test_b(game):\n    assert True\n'
+    )
+    markers = G.srd_markers(src)
+    assert markers["test_a"]["clause"] == "GLOSS.prone#2"
+    assert markers["test_b"]["clause"] is None  # a name the file doesn't define stays unknown
+
+
 def test_a_negative_or_boundary_test_may_be_waived_for_one_clause_with_a_reason():
     clauses = [{"id": "ac", "threshold": True}, {"id": "init", "threshold": True}, {"id": "hp"}]
     tests = [

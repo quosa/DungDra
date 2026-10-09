@@ -129,6 +129,9 @@ def _value(node: ast.AST | None, consts: dict[str, str]):
         return node.value
     if isinstance(node, ast.Name):
         return consts.get(node.id)
+    if isinstance(node, ast.JoinedStr):  # clause=f"{U}#2": the parts are constants or named ones
+        parts = [_value(v.value if isinstance(v, ast.FormattedValue) else v, consts) for v in node.values]
+        return "".join(parts) if all(isinstance(p, str) for p in parts) else None
     return None
 
 

@@ -157,6 +157,16 @@ def test_a_failed_call_that_did_nothing_pauses_and_a_non_zero_exit_is_never_a_re
     assert res.output is None and res.error == "exit 0, success"
 
 
+def test_a_session_limit_hit_midway_pauses_even_after_spending(tmp_path, monkeypatch):
+    monkeypatch.chdir(REPO)
+    out = {"subtype": "success", "is_error": True, "total_cost_usd": 1.38}
+    run, _ = fake_run({**out, "result": "You've hit your session limit · resets 4pm (Europe/Helsinki)"}, 1)
+    with pytest.raises(C.Paused, match="hit your session limit"):
+        C.invoke(
+            "test-designer", "p", budget=C.Budget(9.0), about="u", stage="C", run=run, ledger=tmp_path / "c"
+        )
+
+
 def test_a_call_that_runs_past_the_timeout_pauses(tmp_path, monkeypatch):
     monkeypatch.chdir(REPO)
     seen = {}

@@ -22,7 +22,7 @@ SCHEMAS = Path(__file__).parent / "schemas"
 LEDGER = Path("loop/costs.jsonl")
 SETTINGS = Path(__file__).parent / "settings.json"  # loop-only: sandbox, deny rules, the write guard
 TRANSIENT = re.compile(
-    r"rate.?limit|usage limit|hit your limit|limit reached|resets? at"
+    r"rate.?limit|usage limit|session limit|hit your (?:\w+ )?limit|limit reached|resets? at"
     r"|overloaded|529|503|timed? ?out|ECONN|network",
     re.I,
 )

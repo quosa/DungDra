@@ -117,14 +117,31 @@ def _test_exists(nodeid: str) -> bool:
     return Path(path).exists() and name.split("[")[0] in Gt._tests(Path(path).read_text())
 
 
-def gate_tests(unit: dict, out: dict, analysis: dict, unit_ids: set[str], ref: str = "HEAD") -> list[str]:
+def existing_tests(uid: str, root: str = "tests/srd") -> list[dict]:
+    """The unit's tests already committed to the SRD suite (a revisit writes only new ones), with
+    the clause and kind their markers give, so the coverage gate counts them too. Committed only:
+    a test the designer just wrote must be in its plan to count."""
+    out = []
+    for f in git("ls-tree", "-r", "--name-only", "HEAD", "--", root).split():
+        if Path(f).name.startswith("test_") and f.endswith(".py"):
+            for name, m in Gt.srd_markers(git("show", f"HEAD:{f}")).items():
+                if m["unit"] == uid:
+                    out.append({"name": f"{f}::{name}", "clause": m["clause"], "kind": m["kind"]})
+    return out
+
+
+def gate_tests(
+    unit: dict, out: dict, analysis: dict, unit_ids: set[str], ref: str = "HEAD", existing: list[dict] = ()
+) -> list[str]:
     problems = Gt.quotes(out["tests"], "rule_quote", [unit["text"]], "test")
     untestable = {n["clause"]: n for n in out["not_testable"]}
     clauses = [
         {**c, "not_testable": c["id"] in untestable, "reason": untestable.get(c["id"], {}).get("reason", "")}
         for c in analysis["clauses"]
     ]
-    problems += Gt.clause_coverage(clauses, out["tests"], out["abuse"], out.get("kind_waivers", []))
+    ids = {c["id"] for c in clauses}
+    earlier = [t for t in existing if t["clause"] in ids and t["kind"] in Gt.KINDS]
+    problems += Gt.clause_coverage(clauses, out["tests"] + earlier, out["abuse"], out.get("kind_waivers", []))
     problems += [f"{t['name']}: no such test" for t in out["tests"] if not _test_exists(t["name"])]
     changed = Gt.changed_files(ref)
     problems += Gt.zone_problems(changed, "test-designer")
@@ -372,7 +389,7 @@ def stage_gate(ctx: P.Context, uid: str, stage: str, output: dict) -> list[str]:
         scenarios = {s.id: s.text for s in ctx.scenarios}
         return gate_verdicts(unit, output, ctx.related(uid), scenarios, ctx.fixtures)
     if stage == "C":
-        return gate_tests(unit, output, stage_output(uid, "A"), set(ctx.by_id))
+        return gate_tests(unit, output, stage_output(uid, "A"), set(ctx.by_id), existing=existing_tests(uid))
     return gate_verification(output, stage_output(uid, "C"))
 
 
@@ -450,6 +467,8 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
             remove_test(t["name"])
     for_review = [t["name"] for t in refuted if verdicts[t["name"]]["confidence"] < 0.5]
     kept = [t for t in plan["tests"] if t not in refuted or t["name"] in for_review]
+    removed = {t["name"] for t in refuted} - set(for_review)
+    keep_old = [n for n in st.get("tests", []) if n not in removed]  # a revisit's earlier tests stay
     tickets = []
     by_title: dict[str, list[str]] = {}
     for t in kept:
@@ -491,7 +510,7 @@ def finish_unit(ctx: P.Context, uid: str) -> str:
         tickets=st.get("tickets", []) + tickets,
         refuted=[t["name"] for t in refuted if t["name"] not in for_review],
         for_review=for_review,
-        tests=[t["name"] for t in kept],
+        tests=list(dict.fromkeys([*keep_old, *(t["name"] for t in kept)])),  # a revisit adds to the list
         out_of_scope=[{"clause": n["clause"], "reason": n["reason"]} for n in out_of_scope],
         kind_waivers=plan.get("kind_waivers", []),
         fingerprint=S.fingerprint(P.inputs(ctx, uid)),
