@@ -109,6 +109,15 @@ def test_an_odd_cube_at_a_point_centres_on_the_square():
     assert sorted(inside) == [(x, y) for x in (10, 15, 20) for y in (5, 10, 15)]
 
 
+def test_naming_a_neighbouring_square_moves_the_cube_one_square_that_way():
+    def squares(point):
+        grid = [(x, y) for x in range(-10, 50, 5) for y in range(-15, 45, 5)]
+        return {(x, y) for x, y in grid if in_cube_at_point(point, (x, y), 20)}
+
+    assert squares((20, 10)) == {(x + 5, y) for x, y in squares((15, 10))}
+    assert squares((15, 5)) == {(x, y - 5) for x, y in squares((15, 10))}
+
+
 def test_a_cube_at_a_point_rests_on_the_ground_and_extends_upward():
     assert in_cube_at_point((15, 10), (15, 10, 20), 20)
     assert not in_cube_at_point((15, 10), (15, 10, 25), 20)
