@@ -1,0 +1,76 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.emanation#1",
+   "with": "GLOSS.sphere (R-32, R-33)",
+   "risk": "medium",
+   "note": "An engine might build an aura as a Sphere centred on the creature. That would include the origin and measure from its centre. The in-scope Sphere (Sleep) is placed at a point and is already tested as not being an Emanation from the caster (test_glossary.py:1823)."
+  },
+  {
+   "clause": "GLOSS.emanation#1",
+   "with": "creature spaces (T-46), Large origins such as the Ogre",
+   "risk": "low",
+   "note": "Under reading A the distance is measured from the edges of the origin's space. This matters only once some in-scope effect makes an Emanation from a Large creature, and none does."
+  },
+  {
+   "clause": "GLOSS.emanation#3",
+   "with": "Concentration / duration effects (Spirit Guardians, Aura of Protection)",
+   "risk": "low",
+   "note": "An Emanation moves with its origin. Every Emanation creator is outside the subset: spells above level 2, Paladin, Barbarian level 14, and monsters not in the 14."
+  },
+  {
+   "clause": "GLOSS.emanation#4",
+   "with": "R-29 / R-31 (origin excluded for Cones and Cubes), T-78",
+   "risk": "low",
+   "note": "An Emanation leaves its origin out by default, the same as Cones and Cubes. The creator's opt-in choice is the same missing capability as T-78."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Naming yourself for an area that starts from you, to be in it",
+   "test": null,
+   "reason": "Applies to Emanations, but no in-scope effect creates one. It is already covered for Cones and Cubes."
+  },
+  {
+   "case": "Using a Sphere's 'origin is included' rule to put the caster in a Sphere placed elsewhere, as if it were an Emanation",
+   "test": null,
+   "reason": "Already covered by the existing GLOSS.sphere tests. No new form exists without Emanation content."
+  },
+  {
+   "case": "Walking out of your own moving Emanation to leave enemies in it, carrying a stationary one along, toggling the origin's inclusion mid-duration, or measuring a Large origin's Emanation from its centre (new, added to the catalogue)",
+   "test": null,
+   "reason": "Not testable: no in-scope spell, class feature (levels 1–3 of Fighter, Rogue, Cleric, Wizard), monster or magic item creates an Emanation."
+  }
+ ],
+ "tests": [],
+ "not_testable": [
+  {
+   "clause": "GLOSS.emanation#1",
+   "kind": "out-of-scope",
+   "reason": "Nothing in the implemented subset creates an Emanation. None of the 32 in-scope spells has an Emanation area (only Burning Hands' Cone, Thunderwave's and Web's Cubes, and Sleep's Sphere). No level 1–3 feature of the four in-scope classes, none of the 14 monsters and none of the 7 magic items has one. Every Emanation in the SRD is out of scope: Spirit Guardians, Aura of Life and others; Paladin and Berserker auras; monsters such as the Fire Elemental and Hezrou. The engine has no Emanation geometry: 'emanation' appears nowhere in dungdra/, and geometry.in_area raises for it. A test would have to invent the API, and CLAUDE.md rules out tests for content the engine doesn't implement.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.emanation#2",
+   "kind": "out-of-scope",
+   "reason": "The distance comes from the effect that creates the Emanation, and no in-scope effect gives one. So the threshold (a creature exactly at the distance, one square beyond it) can't be exercised.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.emanation#3",
+   "kind": "out-of-scope",
+   "reason": "Moving with the origin, or staying put for instantaneous and stationary effects, can only be seen through a lasting Emanation effect, and none is in scope. Stage A's gap also stands: no rule defines 'stationary effect'.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.emanation#4",
+   "kind": "out-of-scope",
+   "reason": "Excluding the origin, and the creator's choice to include it, can only be seen through an effect that makes an Emanation, and none is in scope. The same opt-in choice for Cones and Cubes is already tracked as T-78.",
+   "infra_ticket": ""
+  }
+ ],
+ "kind_waivers": [],
+ "scenario_changes": [],
+ "rulings_proposed": [],
+ "summary": "GLOSS.emanation can't be tested inside the implemented subset. The Rules Glossary is in scope, but no in-scope content creates an Emanation: not the 32 spells (their areas are Cone, Cube, Cube and Sphere), the level 1–3 features of Fighter, Rogue, Cleric and Wizard, the 14 monsters or the 7 magic items. The engine has no Emanation code at all ('emanation' doesn't appear in dungdra/, and geometry.in_area raises for it). This matches the GLOSS.cylinder decision: all four clauses are recorded as out-of-scope, with no tests and no tickets.\n\nWhen an Emanation creator enters scope (Spirit Guardians, Aura of Protection, …), its tests should build on stage A's proposed readings, which need rulings first:\n- the distance is measured from the edges of the origin's space, with the grid metric, inclusive, and a creature counts when the centre of its space is in the area;\n- the origin is left out by default, as in R-29 and R-31;\n- the creator chooses whether to include the origin once, when the effect is created.\n\nThe 'stationary effect' gap also needs a ruling. I added one cheat to loop/abuse-catalogue.md: leaving behind a moving aura or carrying along a stationary one, toggling the origin's inclusion, and measuring a Large origin's Emanation from its centre. Stage B gave no scenario verdicts that need action."
+}

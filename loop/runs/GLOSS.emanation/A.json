@@ -1,0 +1,67 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.emanation#1",
+   "text": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.emanation#2",
+   "text": "The effect that creates an Emanation specifies the distance it extends.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.emanation#3",
+   "text": "An Emanation moves with the creature or object that is its origin unless it is an instantaneous or a stationary effect.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.emanation#4",
+   "text": "An Emanation’s origin (creature or object) isn’t included in the area of effect unless its creator decides otherwise.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "extends in straight lines from a creature or an object in all directions",
+   "reading_a": "The distance is measured from the edges of the origin's space, so a larger origin has a larger area: a 10-ft Emanation from a Medium creature covers the 5×5 block of squares around it.",
+   "reading_b": "The distance is measured from the centre of the origin's space, like a Sphere's radius (R-32), so the origin's size makes no difference.",
+   "proposed_ruling": "Reading A. Measure with the grid distance used for range (every square, diagonals included, counts 5 ft) from the nearest square of the origin's space to the centre of the creature's space. A creature exactly at the distance is inside (as R-32), and a creature is in the area when the centre of its space is (R-27). So a 10-ft Emanation from a Medium creature covers the 5×5 block around it, minus the origin's own square (#4).",
+   "confidence": 0.6
+  },
+  {
+   "quote": "isn’t included in the area of effect unless its creator decides otherwise",
+   "reading_a": "The creator makes the choice once, when the Emanation is created, and it lasts for the whole duration.",
+   "reading_b": "The creator can change the choice at any time, for example every time the Emanation would affect its origin.",
+   "proposed_ruling": "Reading A. The creator chooses when the effect is created, and the origin is left out by default. Only the creator chooses, even when the origin is another creature or an object. The engine doesn't offer the choice until it is built (as R-29/R-31).",
+   "confidence": 0.5
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "unless it is an instantaneous or a stationary effect",
+   "explanation": "No rule defines 'stationary effect' or says how an effect is marked as one. Each effect's own text has to say whether its Emanation stays put. Where it says nothing, the default under this unit is that the Emanation moves with its origin."
+  },
+  {
+   "quote": "An Emanation moves with the creature or object that is its origin",
+   "explanation": "The unit doesn't say what happens when a moving Emanation's area reaches a creature, or stops covering one, during a turn. Whether that triggers anything depends on each effect's own wording; this unit sets no default."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "An Emanation’s origin (creature or object) isn’t included in the area of effect unless its creator decides otherwise.",
+   "note": "The 2014 rules have no Emanation shape. Aura effects such as Spirit Guardians were described as a radius around you, and engines often built them as a Sphere centred on the caster. A Sphere includes its point of origin (R-33), so such an engine wrongly affects the caster or the origin creature by default."
+  },
+  {
+   "quote": "An Emanation moves with the creature or object that is its origin unless it is an instantaneous or a stationary effect.",
+   "note": "In 2014, a radius effect centred on a point stayed where it was cast unless the spell said otherwise. In 2024, moving with the origin is the default for Emanations, so an engine that fixes the area at casting is wrong for non-instantaneous auras."
+  },
+  {
+   "quote": "extends in straight lines from a creature or an object in all directions",
+   "note": "Many 2014-style engines measure an aura's radius from the centre of the creature. Here the area extends from the creature itself, so for Large or larger origins the area grows with the creature's size."
+  }
+ ],
+ "summary": "GLOSS.emanation is an area of effect that extends the distance the effect gives, in straight lines and in all directions, from a creature or object. It moves with that origin unless the effect is instantaneous or stationary. The origin is left out of the area unless the creator chooses to include it. The open questions:\n- Where the distance is measured from: the edges of the origin's space or its centre. This matters for Large or larger origins.\n- When the creator's choice to include the origin is made.\n- What makes an effect 'stationary': no rule defines it.\n\nNo referenced units were supplied, so there are no relations or conflicts."
+}

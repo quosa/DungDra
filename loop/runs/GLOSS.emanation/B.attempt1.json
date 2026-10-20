@@ -1,0 +1,35 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/actions.py:192",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.dodge\"",
+    "rule_quote": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+    "explanation": "Matched by page 181 only. This is the Dodge action."
+   },
+   {
+    "item": "dungdra/creature.py:244",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.exhaustion\"",
+    "rule_quote": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+    "explanation": "Matched by page 181 only. This is exhaustion."
+   },
+   {
+    "item": "dungdra/hazards.py:120",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.dehydration\"",
+    "rule_quote": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions.",
+    "explanation": "Matched by page 181 only. This is dehydration."
+   }
+  ],
+  "summary": "No scenarios or SRD tests were given for GLOSS.emanation. All 9 code candidates matched by page 181 only. They are about Dodge, exhaustion, dehydration and food and water, not Emanations. I gave verdicts for three of them. The other six (actions.py:184, api.py:677, combat.py:656, creature.py:296, effects.py:357, hazards.py:84) are also not related. I did not search the engine for Emanation code that cites the unit by other means. The engine appears to have no Emanation implementation and no SRD[GLOSS.emanation#…] tags."
+ },
+ "problems": [],
+ "cost_usd": 0.033673999999999996,
+ "session": "32cd6bbd-8e5b-46b8-a80d-61e99d17abd5",
+ "error": null
+}

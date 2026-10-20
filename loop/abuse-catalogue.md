@@ -106,6 +106,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Hanging a Cylinder's origin in the air (its top face) so it stops short of creatures on the
   ground, or measuring its height from the wrong face, to make a column that falls from above
   miss the creatures under it; leaving the creature on a Cylinder's origin out of it.
+- Walking out of your own moving Emanation (an aura fixed where it was cast) to leave enemies
+  behind in it, or carrying a stationary or instantaneous one along; switching the origin's
+  inclusion on and off mid-duration to pick up a benefit or skip a harm; measuring a Large
+  origin's Emanation from its centre to shrink it.
 - Naming a creature that is walled off (Total Cover) from an area's point of origin, so that the
   caller's list puts it in the area anyway.
 - Judging an area's blocked lines from the wrong place: cover from the caster used against a
