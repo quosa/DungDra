@@ -1,0 +1,35 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I added a single \"is this a saving throw\" check: `Ctx.is_save` in `dungdra/effects.py`. It is true for both \"save\" and \"death save\", so save effects no longer each have to list \"death save\". The Cloak of Protection's save bonus (`SaveBonus`) now uses it, which means the Cloak now adds its bonus to Death Saving Throws as well. Bless now checks `ctx.is_attack or ctx.is_save` instead of naming the kinds itself. The Dwarven Resilience / Fey Ancestry / Brave check in character.py and the Paralyzed/Restrained save rules in effects.py also use `is_save`. Those last ones don't change behaviour: they only fire on a named ability or a condition the save avoids, and a death save has neither.\n\nThe new predicate has a plain comment rather than an `SRD[...]` tag, because `GLOSS.death-saving-throw` has no stage-A clause numbering to cite.\n\nThe ticket listed no acceptance tests. Ruff (check and format) is clean, all unit tests pass, the srd and scenario suites pass (266 passed), and dev-gate passes.",
+  "files": [
+   "dungdra/effects.py",
+   "dungdra/spells.py",
+   "dungdra/character.py",
+   "tests/unit/test_effects.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_is_save_covers_saving_throws_and_death_saves_only",
+   "tests/unit/test_effects.py::test_save_bonus_applies_to_a_death_saving_throw_but_not_a_check",
+   "tests/unit/test_effects.py::test_paralyzed_fails_str_dex_saves_but_not_a_death_save",
+   "tests/unit/test_effects.py::test_restrained_gives_disadvantage_on_dex_saves_only"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "Dodge.d20 (effects.py:370) still checks `ctx.kind == \"save\"` directly. Switch it to `ctx.is_save` so every save effect uses the one predicate. Behaviour stays the same because a death save has no ability.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I approve this change. It adds one `Ctx.is_save` predicate that covers both \"save\" and \"death save\", and uses it in five places: SaveBonus (Cloak of Protection), the Paralyzed/Stunned/Unconscious/Petrified automatic failure on Str and Dex saves, Restrained's Disadvantage on Dex saves, the species save traits in character.py, and Bless, which no longer lists \"death save\" itself. That is what the ticket asked for, and it is in the right layer.\n\nThe ability-gated effects behave the same as before, because a death save has no ability. Only SaveBonus changes what the engine does: the Cloak of Protection bonus now applies to Death Saving Throws, which is the bug the ticket describes.\n\nThe new unit tests check real behaviour through `gather()`:\n- the bonus applies to a death save and a normal save but not to an ability check;\n- Paralyzed fails Dex saves but not Wis saves or a death save;\n- Restrained gives Disadvantage only on Dex saves.\n\nOne place was missed: Dodge.d20 (effects.py:370) still checks `kind == \"save\"` directly. It behaves correctly because the Dex filter leaves death saves out anyway, so I've filed it as a small follow-up rather than a reason to reject."
+ },
+ "problems": [],
+ "cost_usd": 0.5132,
+ "stash": ""
+}

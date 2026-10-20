@@ -1,0 +1,15 @@
+{
+  "id": "P-26",
+  "unit": "GLOSS.cube",
+  "ambiguity": "GLOSS.cube ambiguity 2: is a Cube on a grid aligned to the grid, or can it be turned freely, and is a creature in it when any part of its square is or only its centre?",
+  "ruling": "A Cube is aligned to the grid and extends at right angles away from the face holding its origin. A creature is in it when the centre of its space is inside (as P-23). So a 15-ft Cube holds exactly 3×3 squares, a diagonal aim can't make it take in more, and the squares level with the origin's face (beside a Thunderwave caster) aren't in it.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube",
+    "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cube",
+    "tests/srd/test_glossary.py::test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across"
+  ],
+  "status": "accepted",
+  "register_id": "R-30",
+  "note": "'As P-23' means R-27.",
+  "reason": ""
+}

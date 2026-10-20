@@ -1,0 +1,98 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.prone#1",
+    "text": "Your only movement options are to crawl",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.prone#2",
+    "text": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.prone#3",
+    "text": "If your Speed is 0, you can’t right yourself.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.prone#4",
+    "text": "You have Disadvantage on attack rolls.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.prone#5",
+    "text": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.prone#6",
+    "text": "Otherwise, that attack roll has Disadvantage.",
+    "threshold": true
+   }
+  ],
+  "relations": [
+   {
+    "type": "requires",
+    "target": "GLOSS.speed",
+    "evidence": "spend an amount of movement equal to half your Speed (round down) to right yourself"
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.speed",
+    "evidence": "If your Speed is 0, you can’t right yourself."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.disadvantage",
+    "evidence": "You have Disadvantage on attack rolls."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.advantage",
+    "evidence": "An attack roll against you has Advantage if the attacker is within 5 feet of you."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.disadvantage",
+    "evidence": "Advantage and Disadvantage on the same roll cancel each other."
+   }
+  ],
+  "ambiguities": [
+   {
+    "quote": "half your Speed (round down)",
+    "reading_a": "Half of the creature's current Speed after modifiers (e.g. a Speed halved or reduced by an effect, so 30 halved to 15 costs 7 ft).",
+    "reading_b": "Half of the creature's base (unmodified) Speed, so 30 costs 15 ft whatever the current modifiers.",
+    "proposed_ruling": "Use the current Speed after all modifiers, rounded down.",
+    "confidence": 0.7
+   },
+   {
+    "quote": "half your Speed (round down)",
+    "reading_a": "'Speed' means the walking Speed only, even for a creature with a Fly, Swim or Climb Speed.",
+    "reading_b": "It means whichever speed the creature is using for the move (e.g. half its Swim Speed while in water).",
+    "proposed_ruling": "Use the walking Speed; GLOSS.speed treats 'Speed' as distinct from the named special speeds.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "if the attacker is within 5 feet of you",
+    "reading_a": "Measured from the nearest edge of the attacker's space to yours (any adjacent square counts, whatever the creatures' sizes).",
+    "reading_b": "Measured from the creatures' centres, so a Large attacker may count as beyond 5 feet while adjacent.",
+    "proposed_ruling": "Measure between the nearest occupied spaces; adjacent counts as within 5 feet, and a 10-ft reach attacker one square away gets Disadvantage.",
+    "confidence": 0.8
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "spend an amount of movement equal to half your Speed (round down) to right yourself",
+    "explanation": "The unit doesn't say what happens if you have less movement left than the cost (e.g. after crawling). 'Spend' implies you need that much remaining movement, but no rule says the attempt is refused or that partial movement carries over."
+   }
+  ],
+  "traps": [],
+  "summary": "Prone limits movement to crawling or righting yourself. Righting yourself costs half your Speed, rounded down, and isn't possible at Speed 0. A prone creature has Disadvantage on its attack rolls. Attacks against it have Advantage from within 5 feet and Disadvantage from farther away. These combine with other sources under the normal Advantage/Disadvantage cancelling rules. The ambiguities: which Speed (modified or base, walking or special) sets the cost to right yourself, and how the 5-foot distance is measured."
+ },
+ "problems": [],
+ "cost_usd": 0.14832800000000002,
+ "session": "4f8d393d-7a29-4691-9498-92c9b9293144"
+}

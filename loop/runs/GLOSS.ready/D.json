@@ -1,0 +1,236 @@
+{
+ "summary": "All 33 GLOSS.ready tests are red, and each fails for the reason it states. With --runxfail, every test fails on `Unknown command 'ready'`. Each refusal test fails only because that message doesn't match its regex. I couldn't run any mutations because the engine has no Ready code yet, so the wrong-reason checks below come from reading the code and running the fixture setup.\n\nThe fixture details hold up:\n- BROM, LIDDA, MIALEE and JOZAN are all level 1. MIALEE and JOZAN have 2 level-1 slots each, and everyone's Speed is 30.\n- The goblin warrior has 10 HP and Speed 30. Magic Missile rolls one d4 per dart.\n- The engine strings the tests expect exist: \"already taken their action\", \"It isn't X's turn\", \"no level N spell slots left\" and \"(no Reaction available)\".\n- `game.answers` is a deque that gets popped, so `not game.answers[...]` correctly proves the readier was asked.\n- In the Opportunity Attack test, the next unforced d20 would hit (14+5 against AC 15). So with this seed, a readied attack fired with no Reaction left would still be caught.\n\nRefuted:\n1. **test_readied_attack_interrupts_the_rest_of_the_move.** It queues an Opportunity Attack answer of True with the same forced dice. If movement becomes path-aware for Opportunity Attacks, gob.hp == 5 is reached without the readied attack. Nothing checks that the Reaction came from Ready. It also settles stage-A's open question of when \"right after the trigger finishes\" lands during a move (proposal confidence 0.7, no register row). Today's movement only checks the start and end points.\n2. **test_ignored_trigger_can_be_answered_the_next_time.** It picks reading A of an open ambiguity: whether an ignored trigger leaves you still readied (stage-A confidence 0.6, no R-row). The SRD doesn't say. A person should decide.\n3. **test_ready_leaves_no_second_action_for_dash.** It checks the same spent-action check, with the same message, as test_ready_takes_the_action. It only swaps Attack for Dash.\n\nLower-confidence keeps:\n- **test_readying_a_spell_ends_earlier_concentration** also relies on an unaccepted reading (stage A proposed it at 0.8, but no R-row). Here I think it follows from the Concentration glossary's \"activate another effect that requires Concentration\".\n- **test_readying_an_action_and_a_move_together_refused** uses a loose `(?i)one` match.\n- **test_ready_trigger_naming_no_creature_refused** checks input validation more than the rule itself.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_waits_for_the_trigger",
+   "verdict": "keep",
+   "reason": "Follows from #1 and #5: the attack happens only when the goblin steps within 5 ft. The forced d20=15/d8=2 gives 5 damage. It's the core positive test.",
+   "mutation": "No Ready code exists to mutate. With --runxfail it fails on `Unknown command 'ready'`, its stated reason.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_not_taken_on_the_readying_turn",
+   "verdict": "keep",
+   "reason": "The goblin is already adjacent, and the trigger is a move. It would catch an implementation that fires the response at once because the condition already holds when Ready is taken. That matches 'wait ... before you act'.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ready_takes_the_action",
+   "verdict": "keep",
+   "reason": "'you take this action on your turn': Ready uses up the action. It asserts actions_used==1 and that a following attack is refused with the engine's real message (combat.py:112).",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'` at the setup assert.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ready_leaves_no_second_action_for_dash",
+   "verdict": "refute",
+   "reason": "Duplicate of test_ready_takes_the_action. Both reach the same Turn.action_available() check and the same 'already taken their action' refusal. Swapping Attack for Dash adds no new rule coverage.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ready_refused_off_turn",
+   "verdict": "keep",
+   "reason": "'on your turn'. It's the goblin's turn, so the engine's existing 'It isn't X's turn' refusal matches (?i)turn.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal \"Unknown command 'ready'\" doesn't match (?i)turn.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ready_refused_after_the_action_is_spent",
+   "verdict": "keep",
+   "reason": "BROM is level 1 with no Extra Attack, so one attack uses up the action. Ready needs the action, so it should be refused with the existing message.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match 'already taken their action'.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_ends_at_the_start_of_your_next_turn",
+   "verdict": "keep",
+   "reason": "'before the start of your next turn'. The trigger arrives in the following round, after BROM's next turn has started. The assert `not reaction_used` catches a wrong firing even if the unforced roll misses.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction",
+   "verdict": "keep",
+   "reason": "The oracle follows from the one-Reaction rule (GLOSS.reaction). The only check is gob2.hp==10 on an unforced roll. I simulated the scenario: the next d20 is 14, which hits (+5 against AC 15). So with this seed, a wrong firing would deal damage and the test would catch it. That makes it seed-dependent and somewhat fragile.",
+   "mutation": "Not possible: no Ready code. Fails at `assert RDY.ready(...)['ok']`. In a simulation, the would-be readied roll hits, so a wrong firing would show.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_no_opportunity_attack_after_the_readied_attack",
+   "verdict": "keep",
+   "reason": "After the readied attack spends the Reaction, leaving reach takes the existing has_reaction branch (combat.py:586), which logs 'no Reaction available'. The forced dice and HP check show no second attack.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_only_the_chosen_circumstance_triggers_the_reaction",
+   "verdict": "keep",
+   "reason": "#3 says the chosen circumstance is the trigger. A different goblin approaching doesn't fire it, and the chosen one does. It has a positive half, with forced dice that must be rolled.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_not_taken_when_the_trigger_doesnt_happen",
+   "verdict": "keep",
+   "reason": "The goblin moves but stops 15 ft away, so the circumstance never occurs. The reaction_used assert catches a wrong firing whatever the dice do.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ready_trigger_naming_no_creature_refused",
+   "verdict": "keep",
+   "reason": "A trigger naming a creature that doesn't exist isn't a perceivable circumstance, so refusing it is reasonable. It checks input validation more than the rule.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match (?i)ogre.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_move_away_when_the_goblin_steps_next_to_you",
+   "verdict": "keep",
+   "reason": "This is the SRD's own example ('If the zombie steps next to me, I move away'). LIDDA's Speed is 30, so the move to (-30,0) is her full Speed. The goblin's Opportunity Attack is declined explicitly.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_move_beyond_speed_refused",
+   "verdict": "keep",
+   "reason": "'move up to your Speed': 35 ft is more than her 30. Refusing it at Ready time is a fair design choice, since her Speed is fixed in this fixture.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match 'Speed'.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_bonus_action_refused",
+   "verdict": "keep",
+   "reason": "#4 lets you ready 'the action you will take' or movement. Second Wind is a Bonus Action, not an action, so the text supports the refusal.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match (?i)bonus action.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused",
+   "verdict": "keep",
+   "reason": "#4 says action 'or' movement, so asking for both should be refused. The (?i)one match is loose, but the oracle is sound.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match (?i)one.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ignored_trigger_keeps_the_reaction",
+   "verdict": "keep",
+   "reason": "#5 lets you ignore the trigger. The test proves BROM was asked (the answers deque was popped), so a no-op Ready can't pass. It also proves no Reaction was spent.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time",
+   "verdict": "refute",
+   "reason": "Silent ruling choice. Whether you stay readied after ignoring a trigger is listed as an open ambiguity in loop/runs/GLOSS.ready/A.json. The proposal there is reading A at confidence 0.6, and there's no README register row. The SRD says only that you may ignore the trigger. A person should rule before this becomes an acceptance test.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_attack_interrupts_the_rest_of_the_move",
+   "verdict": "refute",
+   "reason": "It could pass for the wrong reason. It queues opportunity_attack=True for BROM with the same forced d20=15/d8=2. Once movement is checked along the path (which this test itself requires; today _check_leave_reach only compares the start and end points), the Opportunity Attack alone gives gob.hp==5. Nothing checks that the hit was the readied Reaction, for example through a log entry. It also picks reading A of the open 'right after the trigger finishes' ambiguity (stage A, confidence 0.7) without a register ruling.",
+   "mutation": "Not possible: no Ready code. I traced combat.py:514/555 instead. A move straight from (15,5) to (-15,5) gives d0=d1=15, so no Opportunity Attack today. Path-aware movement would make the Opportunity Attack satisfy the hp assert by itself.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_spell_spends_its_slot_when_readied",
+   "verdict": "keep",
+   "reason": "'cast it as normal (expending any resources)' but 'hold its energy'. The slot goes from 2 to 1, and the goblin isn't damaged yet.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readied_spell_released_with_the_reaction",
+   "verdict": "keep",
+   "reason": "The spell is released with the Reaction. Three d4s forced to 1 (one per dart, matching spells.py) give 6 damage. It also checks no second slot is spent.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_held_spell_not_released_when_the_trigger_is_ignored",
+   "verdict": "keep",
+   "reason": "Ignoring the trigger means no release. It proves MIALEE was asked and the slot stays spent.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_spell_without_a_slot_refused",
+   "verdict": "keep",
+   "reason": "'cast it as normal' means slot rules apply when readying. It matches the existing message 'no level 1 spell slots left'.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match 'spell slots'.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot",
+   "verdict": "keep",
+   "reason": "Resources are spent at Ready time, and nothing in the text refunds them. This follows from 'expending any resources' even though stage A notes the expiry case as a gap.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_bonus_action_spell_refused",
+   "verdict": "keep",
+   "reason": "#7: the spell must have a casting time of an action, and Healing Word is a Bonus Action. JOZAN's 2 slots must be untouched.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match (?i)casting time.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_reaction_spell_refused",
+   "verdict": "keep",
+   "reason": "#7: Shield has a Reaction casting time, so it can't be readied. No slot is spent.",
+   "mutation": "Not possible: no Ready code. Fails because the refusal message doesn't match (?i)casting time.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_an_action_cantrip_is_allowed",
+   "verdict": "keep",
+   "reason": "Fire Bolt has a casting time of an action, so readying it is allowed (positive counterpart to #7). Concentration is required whatever the spell's level.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_holding_a_readied_spell_takes_concentration",
+   "verdict": "keep",
+   "reason": "Directly from #8, on a spell that isn't a Concentration spell itself.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_weapon_attack_needs_no_concentration",
+   "verdict": "keep",
+   "reason": "Only holding a spell needs Concentration. Bless survives a readied weapon attack.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_held_spell_ends_at_the_start_of_your_next_turn",
+   "verdict": "keep",
+   "reason": "Concentration can be maintained 'up to the start of your next turn'. After that, no release happens and no Reaction is spent.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration",
+   "verdict": "keep",
+   "reason": "It takes reading A of a stage-A ambiguity (confidence 0.8, no R-row). Still, the text says holding requires Concentration, and GLOSS.concentration ends earlier Concentration when 'another effect that requires Concentration' is activated, so the words support it. Flagged for review.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_held_spell_dissipates_when_concentration_breaks",
+   "verdict": "keep",
+   "reason": "#9. The scimitar hits for 3 (MIALEE goes from 8 to 5 HP), she fails the DC 10 save on a forced 1, the spell isn't released and the slot stays spent.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_held_spell_survives_a_successful_concentration_save",
+   "verdict": "keep",
+   "reason": "Negative counterpart: a successful save keeps the spell, and it is released later for 6 damage.",
+   "mutation": "Not possible: no Ready code. Fails on `Unknown command 'ready'`.",
+   "confidence": 0.75
+  }
+ ]
+}

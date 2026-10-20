@@ -1,0 +1,100 @@
+{
+ "clauses": [
+  {
+   "id": "PLAY.combat.cover#1",
+   "text": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "threshold": false
+  },
+  {
+   "id": "PLAY.combat.cover#2",
+   "text": "there are three degrees of cover, each of which gives a different benefit to a target",
+   "threshold": false
+  },
+  {
+   "id": "PLAY.combat.cover#3",
+   "text": "A target can benefit from cover only when an attack or other effect originates on the opposite side of the cover.",
+   "threshold": false
+  },
+  {
+   "id": "PLAY.combat.cover#4",
+   "text": "If a target is behind multiple sources of cover, only the most protective degree of cover applies; the degrees aren’t added together.",
+   "threshold": false
+  },
+  {
+   "id": "PLAY.combat.cover#5",
+   "text": "+2 bonus to AC and Dexterity saving throws",
+   "threshold": true
+  },
+  {
+   "id": "PLAY.combat.cover#6",
+   "text": "Another creature or an object that covers at least half of the target",
+   "threshold": true
+  },
+  {
+   "id": "PLAY.combat.cover#7",
+   "text": "+5 bonus to AC and Dexterity saving throws",
+   "threshold": true
+  },
+  {
+   "id": "PLAY.combat.cover#8",
+   "text": "An object that covers at least three-quarters of the target",
+   "threshold": true
+  },
+  {
+   "id": "PLAY.combat.cover#9",
+   "text": "Can’t be targeted directly",
+   "threshold": false
+  },
+  {
+   "id": "PLAY.combat.cover#10",
+   "text": "An object that covers the whole target",
+   "threshold": false
+  }
+ ],
+ "relations": [
+  {
+   "type": "same_concept_as",
+   "target": "GLOSS.cover",
+   "evidence": "If behind more than one degree of cover, a target benefits only from the most protective degree."
+  },
+  {
+   "type": "requires",
+   "target": "GLOSS.target",
+   "evidence": "A target is the creature or object targeted by an attack roll, forced to make a saving throw by an effect, or selected to receive the effects of a spell or another phenomenon."
+  }
+ ],
+ "ambiguities": [
+  {
+   "quote": "Another creature or an object that covers at least half of the target",
+   "reading_a": "Any creature between the attacker and the target gives Half Cover, whatever its size. Only the object has to cover at least half.",
+   "reading_b": "The 'covers at least half' requirement applies to creatures too, so a much smaller creature (e.g. a Tiny one in front of a Large target) gives no cover.",
+   "proposed_ruling": "Any other creature in the line of effect gives Half Cover, whatever its size. A creature never gives more than Half Cover, because the Three-Quarters and Total rows list only objects.",
+   "confidence": 0.6
+  },
+  {
+   "quote": "Can’t be targeted directly",
+   "reading_a": "Total Cover only stops effects that select the target (attack rolls, spells that pick a creature). A creature behind Total Cover can still be caught by an area effect if the area reaches it.",
+   "reading_b": "GLOSS.target counts a creature 'forced to make a saving throw by an effect' as a target, so Total Cover also shields it from area effects that originate on the opposite side.",
+   "proposed_ruling": "'Directly' limits this to effects that select the creature. Whether an area reaches a creature behind Total Cover is decided by the area-of-effect rules, not by this table.",
+   "confidence": 0.55
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "A target can benefit from cover only when an attack or other effect originates on the opposite side of the cover.",
+   "explanation": "No rule says how to decide on a grid whether an effect originates on the opposite side, or how much of a target an obstacle covers (half or three-quarters). The 2014 DMG's corner-to-corner line method is not in this unit."
+  },
+  {
+   "quote": "Can’t be targeted directly",
+   "explanation": "The table gives Total Cover no benefit against Dexterity saving throws and doesn't say whether area effects reach a creature behind it. This unit leaves that case open."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "Can’t be targeted directly",
+   "note": "The 2014 PHB added 'although some spells can reach such a target by including it in an area of effect.' The 2024 table drops that sentence. An implementation built from memory might hard-code an area-of-effect exception that this unit doesn't state. Defer to the SRD 5.2.1 area-of-effect rules instead."
+  }
+ ],
+ "summary": "Cover has three degrees: Half (+2 to AC and Dexterity saving throws, given by any other creature or an object covering at least half the target), Three-Quarters (+5, given by an object covering at least three-quarters) and Total (can't be targeted directly, given by an object covering the whole target). Cover counts only when the attack or effect originates on the opposite side of the cover. When several sources apply, only the most protective degree counts and they don't stack. The rule matches GLOSS.cover. Two points are open: whether a creature's size matters for Half Cover, and how Total Cover interacts with area effects. There is also no grid method for deciding the opposite side or how much of the target is covered."
+}

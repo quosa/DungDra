@@ -1,0 +1,15 @@
+{
+  "id": "T-10",
+  "kind": "coverage",
+  "unit": "ENGINE",
+  "title": "Unit tests that assert_applied(ruling=...) for R-01 (creation tool proficiency), R-02 (XP split), R-03 (encounter budget GM-only / blocked reinforcements) and R-04 (disarm without Thieves' Tools); only R-05..R-07 are covered by the new traceability tests",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I added unit tests that call `game.log.assert_applied(ruling=...)` for R-01 to R-04. Each ruling has a positive test (the ruling is logged, with the right page and visibility) and a negative test (no ruling is logged when the case doesn't come up):\n- **R-01:** Lidda's duplicate Thieves' Tools is replaced by a Disguise Kit, and the prompt asking for a replacement cites R-01. Brom, whose tools don't overlap, logs nothing.\n- **R-02:** 250 XP split among 3 PCs gives 83 each, logged on page 255.\n- **R-03:** an over-High rating is logged GM-only with R-03 and adds no player event. A rating inside the budget logs no ruling. Reinforcements without a justification are refused with ruling R-03 and page 202. With a justification they're logged GM-only. Reinforcements within budget log nothing.\n- **R-04:** disarming without Thieves' Tools is a single-d20 check, logged GM-only with R-04 on page 94. Disarming with the tools logs no ruling.\n\nTo meet the page requirement for log events, I also added `page=` to the two ruling events that had none: R-01 in `creation.py` (page 83, from ORIGIN…tool-proficiency) and R-04 in `traps.py` (page 94, from EQUIP…thieves-tools-25-gp). I didn't add SRD tags because the ticket has no analysed unit.\n\nResults: the full suite passes (560 tests), `ruff check` and `ruff format --check` are clean, and the dev-gate passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`."
+    }
+  ]
+}

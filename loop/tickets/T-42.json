@@ -1,0 +1,15 @@
+{
+  "id": "T-42",
+  "kind": "infra",
+  "unit": "GLOSS.grappled",
+  "title": "Movement has no 'carry' mode distinct from drag for a grappled creature",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
+}

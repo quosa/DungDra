@@ -1,0 +1,286 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.cube#2",
+    "with": "SPELL.web (20-ft Cube at a point)",
+    "risk": "high",
+    "note": "Web doesn't compute its area. It saves and restrains whichever creatures the caller names, wherever they are."
+   },
+   {
+    "clause": "GLOSS.cube#1",
+    "with": "ambiguity 2 (grid alignment) / P-23",
+    "risk": "high",
+    "note": "The engine turns the Cube to face any aim point, so a diagonal aim takes in 10 square centres."
+   },
+   {
+    "clause": "GLOSS.cube#1",
+    "with": "SPELL.thunderwave (15-ft Cube from Self) / R-16",
+    "risk": "medium",
+    "note": "The area, not the named list, decides who is hit. Both sides of the caster and creatures left off the list are tested."
+   },
+   {
+    "clause": "GLOSS.cube#3",
+    "with": "ambiguity 1 / P-25",
+    "risk": "medium",
+    "note": "The caster is outside her own Thunderwave. The creator's choice to include the origin has no hook."
+   },
+   {
+    "clause": "GLOSS.cube#2",
+    "with": "elevation / flying creatures (gap 2)",
+    "risk": "medium",
+    "note": "The engine centres the Cube's height on the origin (±7.5 ft). Only readings that hold either way are tested: 5 ft up is in, 20 ft up is out."
+   },
+   {
+    "clause": "GLOSS.cube#2",
+    "with": "upcasting (Using a Higher-Level Spell Slot)",
+    "risk": "low",
+    "note": "Upcasting adds only damage, never size."
+   },
+   {
+    "clause": "GLOSS.cube#1",
+    "with": "PLAY.combat.cover / GLOSS.area-of-effect",
+    "risk": "low",
+    "note": "Total Cover from the origin is already tested under the cover units. Not repeated here."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Naming creatures on both sides of the caster for one Cube",
+    "test": "tests/srd/test_glossary.py::test_one_cube_cant_cover_both_sides_of_its_origin_by_naming_them",
+    "reason": "One Cube extends from one face only."
+   },
+   {
+    "case": "Leaving a creature in the Cube off the list to spare it",
+    "test": "tests/srd/test_glossary.py::test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it",
+    "reason": "Thunderwave affects each creature in the Cube (R-16)."
+   },
+   {
+    "case": "Upcasting to enlarge the area",
+    "test": "tests/srd/test_glossary.py::test_upcasting_doesnt_enlarge_the_cube",
+    "reason": "The effect fixes the side length."
+   },
+   {
+    "case": "Aiming at a far point to stretch the area",
+    "test": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cube",
+    "reason": "The aim point sets only the direction."
+   },
+   {
+    "case": "Aiming a Cube diagonally to take in more squares (new)",
+    "test": "tests/srd/test_glossary.py::test_a_diagonal_cube_holds_no_more_than_3_by_3_squares",
+    "reason": "A turned Cube takes in 10 square centres instead of 9."
+   },
+   {
+    "case": "Naming a far-off creature for Web (new)",
+    "test": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it",
+    "reason": "Web uses the caller's list and ignores its 20-ft Cube."
+   },
+   {
+    "case": "Naming yourself for an area that starts from you",
+    "test": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it",
+    "reason": "The origin isn't included, and naming yourself doesn't aim the Cube."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cube_extends_from_its_origin_in_the_chosen_direction",
+    "clause": "GLOSS.cube#1",
+    "kind": "positive",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cube_aimed_through_the_session_follows_the_chosen_point",
+    "clause": "GLOSS.cube#1",
+    "kind": "positive",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cube_doesnt_reach_behind_the_face_its_origin_is_on",
+    "clause": "GLOSS.cube#1",
+    "kind": "negative",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube",
+    "clause": "GLOSS.cube#1",
+    "kind": "boundary",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_one_cube_cant_cover_both_sides_of_its_origin_by_naming_them",
+    "clause": "GLOSS.cube#1",
+    "kind": "abuse",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it",
+    "clause": "GLOSS.cube#1",
+    "kind": "abuse",
+    "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across",
+    "clause": "GLOSS.cube#2",
+    "kind": "positive",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cube_stops_short_of_20_ft",
+    "clause": "GLOSS.cube#2",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cube",
+    "clause": "GLOSS.cube#2",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_size_is_the_side_not_a_radius_or_half_width",
+    "clause": "GLOSS.cube#2",
+    "kind": "negative",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_cube_reaches_a_creature_above_the_ground_inside_its_height",
+    "clause": "GLOSS.cube#2",
+    "kind": "positive",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_15_ft_cube_doesnt_reach_a_flyer_20_ft_up",
+    "clause": "GLOSS.cube#2",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_diagonal_cube_holds_no_more_than_3_by_3_squares",
+    "clause": "GLOSS.cube#2",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "red",
+    "ticket_title": "SRD: a 15-ft Cube is 15 ft on each side (3x3 squares on the grid); engine: a diagonally aimed Cube is turned 45 degrees and takes in ten squares"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_upcasting_doesnt_enlarge_the_cube",
+    "clause": "GLOSS.cube#2",
+    "kind": "abuse",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cube",
+    "clause": "GLOSS.cube#2",
+    "kind": "abuse",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it",
+    "clause": "GLOSS.cube#2",
+    "kind": "abuse",
+    "rule_quote": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "claim": "red",
+    "ticket_title": "SRD: Web's effect is a 20-ft Cube at a point; engine: Web uses the caller's list, so a creature 100 ft away saves and can be Restrained"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
+    "clause": "GLOSS.cube#3",
+    "kind": "positive",
+    "rule_quote": "A Cube’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_leaving_out_the_origin_doesnt_spare_the_creature_next_to_it",
+    "clause": "GLOSS.cube#3",
+    "kind": "negative",
+    "rule_quote": "A Cube’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it",
+    "clause": "GLOSS.cube#3",
+    "kind": "abuse",
+    "rule_quote": "A Cube’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.cube#1",
+    "kind": "missing",
+    "reason": "The SRD puts the point of origin anywhere on a face. The engine always puts it at the centre of the face, so an off-centre placement can't be expressed: for example, a Thunderwave with the caster at one edge of the face, or at the bottom edge so the Cube rises 15 ft from the ground.",
+    "infra_ticket": "A way to place an area's point of origin off the centre of the Cube's face (sideways and vertically), through spells.cast and the Session cast command"
+   },
+   {
+    "clause": "GLOSS.cube#3",
+    "kind": "missing",
+    "reason": "'unless its creator decides otherwise': the engine has no way for the creator to choose to include the point of origin (themself) in the area.",
+    "infra_ticket": "A choice hook on area spells to include the point of origin (the creator's own space) in a Cone or Cube"
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.cube#3",
+    "kind": "boundary",
+    "reason": "The point of origin is either included or not. There is no threshold to probe one step past."
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.cube ambiguity 2: is a Cube on a grid aligned to the grid, or can it be turned freely, and is a creature in it when any part of its square is or only its centre?",
+    "ruling": "A Cube is aligned to the grid and extends at right angles away from the face holding its origin. A creature is in it when the centre of its space is inside (as P-23). So a 15-ft Cube holds exactly 3×3 squares, a diagonal aim can't make it take in more, and the squares level with the origin's face (beside a Thunderwave caster) aren't in it.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_a_diagonal_cube_holds_no_more_than_3_by_3_squares",
+     "tests/srd/test_glossary.py::test_a_creature_beside_the_caster_is_level_with_the_face_and_outside_the_cube",
+     "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cube",
+     "tests/srd/test_glossary.py::test_a_15_ft_cube_is_15_ft_deep_and_15_ft_across"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.cube ambiguity 1: does 'the point of origin isn't included' leave out the creature whose space holds it (the caster of a Cube that originates from them)?",
+    "ruling": "Reading A, as P-25 for Cones: the creature at the point of origin isn't affected unless the creator chooses to include it, even if they name themself.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
+     "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it"
+    ]
+   }
+  ],
+  "summary": "I added 19 GLOSS.cube tests to tests/srd/test_glossary.py, using Thunderwave as the 15-ft Cube from Self and Web as the 20-ft Cube. The new tests ran with 17 passing and 2 failing because of the engine; the 2 are marked xfail and ruff is clean. The first red test: a diagonally aimed Cube is turned 45 degrees and takes in ten squares instead of 3×3. The second: Web doesn't compute its Cube at all and makes a named creature 100 ft away save against Restrained. The engine already gets right the direction, nothing behind the face, the side length (not a radius), the 20-ft height limit, no growth from upcasting or a far aim point, and the caster outside her own area. Two things are recorded as missing infrastructure: placing the origin off the centre of a face, and the creator's choice to include the origin. I proposed two rulings, grid-aligned Cubes with centre-of-space membership and the origin creature excluded (matching P-23 and P-25). I also added two new cheats to the abuse catalogue."
+ },
+ "problems": [],
+ "cost_usd": 0.9049458,
+ "session": "46817264-298a-47b5-9272-94d8e5a8119b",
+ "error": null
+}

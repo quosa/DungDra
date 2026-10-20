@@ -1,0 +1,83 @@
+{
+  "fingerprint": "5d33369d343c57cd",
+  "for_review": [],
+  "id": "GLOSS.grappled",
+  "out_of_scope": [],
+  "refuted": [],
+  "relations": [
+    {
+      "evidence": "You have Disadvantage on attack rolls against any target other than the grappler.",
+      "target": "GLOSS.disadvantage",
+      "type": "requires"
+    },
+    {
+      "evidence": "Your Speed is 0 and can’t increase.",
+      "target": "GLOSS.speed",
+      "type": "modifies"
+    },
+    {
+      "evidence": "For example, if your Speed is reduced to 0 and you have a Climb Speed, your Climb Speed is also reduced to 0.",
+      "target": "GLOSS.speed",
+      "type": "interacts_with"
+    }
+  ],
+  "revisit": false,
+  "stages": {
+    "A": {
+      "at": 1790792344,
+      "summary": "The Grappled condition does three things: it sets Speed to 0 and stops it increasing, it gives Disadvantage on attacks against anyone other than the grappler, and it lets the grappler drag or carry you at a cost of 1 extra foot per foot moved, unless you are Tiny or at least two sizes smaller than t"
+    },
+    "B": {
+      "at": 1790792367,
+      "summary": "Only CMB-06 and its test relate to Grappled. The scenario is consistent. The test checks Speed 0, Disadvantage against a non-grappler and the 2x drag cost. It doesn't check the no-Disadvantage-against-grappler case, the Tiny or two-sizes-smaller exemption, Speed not increasing, or multiple grapplers"
+    },
+    "C": {
+      "at": 1790936084,
+      "summary": "All 30 GLOSS.grappled tests in tests/srd/test_glossary.py pass. ruff check and ruff format are clean. The previous attempt failed its checks because its report listed only the 3 new tests, so most clauses looked uncovered; this report lists every test for the unit. Coverage: #1 has 2 positive, 1 neg"
+    },
+    "D": {
+      "at": 1790936246,
+      "summary": "Read the GLOSS.grappled text and rulings R-05, R-06 and R-07, and ran one targeted engine mutation per test with `srdloop mutate`. Every mutation made its test fail. No oracle conflicts with the SRD text: ambiguous cases follow R-05 (Tiny-by-Tiny drag), R-06 (two grapplers) and R-07 (special Speeds)"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_grappled_speed_is_zero",
+    "tests/srd/test_glossary.py::test_grappled_special_speed_is_zero_too",
+    "tests/srd/test_glossary.py::test_grappler_and_escaped_creature_keep_their_speed",
+    "tests/srd/test_glossary.py::test_grappled_turn_starts_with_no_movement",
+    "tests/srd/test_glossary.py::test_grappled_speed_cant_increase_with_a_bonus",
+    "tests/srd/test_glossary.py::test_grappled_dash_adds_no_movement",
+    "tests/srd/test_glossary.py::test_grappled_cant_move_even_one_step",
+    "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_spend_leftover_movement",
+    "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+    "tests/srd/test_glossary.py::test_grappled_pc_move_command_refused",
+    "tests/srd/test_glossary.py::test_grappled_attack_on_other_target_has_disadvantage",
+    "tests/srd/test_glossary.py::test_grappled_attack_command_has_disadvantage",
+    "tests/srd/test_glossary.py::test_grappled_attack_on_grappler_has_no_disadvantage",
+    "tests/srd/test_glossary.py::test_grappler_attacks_without_grappled_disadvantage",
+    "tests/srd/test_glossary.py::test_disadvantage_ends_with_the_grapple",
+    "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage",
+    "tests/srd/test_glossary.py::test_grappler_drags_target_along",
+    "tests/srd/test_glossary.py::test_grappler_moving_without_dragging_leaves_target",
+    "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling",
+    "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples",
+    "tests/srd/test_glossary.py::test_dragging_one_size_smaller_costs_double",
+    "tests/srd/test_glossary.py::test_dragging_same_size_costs_double",
+    "tests/srd/test_glossary.py::test_drag_cost_stacks_with_difficult_terrain",
+    "tests/srd/test_glossary.py::test_dragging_exactly_two_sizes_smaller_costs_nothing_extra",
+    "tests/srd/test_glossary.py::test_dragging_exactly_one_size_smaller_for_large_costs_double",
+    "tests/srd/test_glossary.py::test_tiny_dragging_tiny_costs_nothing_extra",
+    "tests/srd/test_glossary.py::test_small_grappler_drags_tiny_without_extra_cost",
+    "tests/srd/test_glossary.py::test_small_grappler_drags_small_at_double_cost",
+    "tests/srd/test_glossary.py::test_drag_cost_uses_whole_speed_exactly",
+    "tests/srd/test_glossary.py::test_drag_beyond_speed_refused"
+  ],
+  "tickets": [
+    "T-1",
+    "T-2",
+    "T-3",
+    "T-4",
+    "T-42"
+  ]
+}

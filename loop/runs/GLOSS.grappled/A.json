@@ -1,0 +1,90 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.grappled#1",
+   "text": "Your Speed is 0 and can’t increase.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.grappled#2",
+   "text": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.grappled#3",
+   "text": "The grappler can drag or carry you when it moves",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.grappled#4",
+   "text": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "threshold": true
+  }
+ ],
+ "relations": [
+  {
+   "type": "requires",
+   "target": "GLOSS.disadvantage",
+   "evidence": "You have Disadvantage on attack rolls against any target other than the grappler."
+  },
+  {
+   "type": "modifies",
+   "target": "GLOSS.speed",
+   "evidence": "Your Speed is 0 and can’t increase."
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.speed",
+   "evidence": "For example, if your Speed is reduced to 0 and you have a Climb Speed, your Climb Speed is also reduced to 0."
+  }
+ ],
+ "ambiguities": [
+  {
+   "quote": "unless you are Tiny or two or more sizes smaller than it",
+   "reading_a": "Literal: a Tiny grappled creature never costs extra movement, even when the grappler is also Tiny.",
+   "reading_b": "The Tiny clause is shorthand for a size gap, so a Tiny creature grappled by another Tiny creature still costs 1 extra foot per foot.",
+   "proposed_ruling": "Apply the text literally: a Tiny grappled creature never adds extra movement cost, whatever size the grappler is.",
+   "confidence": 0.65
+  },
+  {
+   "quote": "any target other than the grappler",
+   "reading_a": "If two creatures grapple you, each grapple exempts only its own grappler, so attacks against either one still have Disadvantage because of the other grapple.",
+   "reading_b": "Attacks against any creature that is grappling you have no Disadvantage. Disadvantage applies only to targets that aren't grappling you.",
+   "proposed_ruling": "Attacks against any of your current grapplers have no Disadvantage from this condition. Attacks against anyone else have it.",
+   "confidence": 0.55
+  },
+  {
+   "quote": "Your Speed is 0 and can’t increase.",
+   "reading_a": "Only the base Speed is locked at 0. Special speeds follow the Speed glossary rule and also drop to 0.",
+   "reading_b": "A special speed granted after the grapple starts (for example a new Fly Speed from a spell) could be used, because only 'Speed' is named.",
+   "proposed_ruling": "All speeds, including ones gained later, are 0 and can't increase while Grappled, as the Speed glossary's 'Changes to Your Speeds' rule implies.",
+   "confidence": 0.7
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "The grappler can drag or carry you when it moves",
+   "explanation": "The rule doesn't say whether being dragged uses any of the grappled creature's movement or reaction, or whether it provokes Opportunity Attacks against the grappled creature. The usual inference is that it's involuntary movement that doesn't provoke, but this unit doesn't state that."
+  },
+  {
+   "quote": "While you have the Grappled condition, you experience the following effects.",
+   "explanation": "The condition text doesn't say how it ends: escaping, the grappler becoming Incapacitated, or the distance growing too large. Those rules live elsewhere (Unarmed Strike / Grapple), and an implementation must pull them in from there."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "note": "In 2014, Grappled gave no attack penalty; it only set speed to 0. The 2024 version adds Disadvantage on attacks against anyone other than the grappler."
+  },
+  {
+   "quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "note": "In 2014, the grappler's speed was halved while dragging, unless the target was two or more sizes smaller. The 2024 version uses an extra foot of cost per foot moved (the same arithmetic but a different mechanism, which stacks with Difficult Terrain as extra cost) and adds an exemption for any Tiny target."
+  },
+  {
+   "quote": "Your Speed is 0 and can’t increase.",
+   "note": "In 2014, the condition itself ended when the grappler was Incapacitated or when the grappled creature was moved out of reach. The 2024 condition text leaves out those end triggers, so don't hard-code them into the condition."
+  }
+ ],
+ "summary": "The Grappled condition does three things: it sets Speed to 0 and stops it increasing, it gives Disadvantage on attacks against anyone other than the grappler, and it lets the grappler drag or carry you at a cost of 1 extra foot per foot moved, unless you are Tiny or at least two sizes smaller than the grappler. Open questions: how the Tiny exemption works when both creatures are Tiny, what happens when several creatures grapple you, and whether speeds gained after the grapple starts can be used. The ways the condition ends and how dragging interacts with Opportunity Attacks are defined elsewhere."
+}

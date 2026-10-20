@@ -1,0 +1,123 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.ready#1",
+   "text": "You take the Ready action to wait for a particular circumstance before you act.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ready#2",
+   "text": "To do so, you take this action on your turn, which lets you act by taking a Reaction before the start of your next turn.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.ready#3",
+   "text": "First, you decide what perceivable circumstance will trigger your Reaction.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ready#4",
+   "text": "Then, you choose the action you will take in response to that trigger, or you choose to move up to your Speed in response to it.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.ready#5",
+   "text": "When the trigger occurs, you can either take your Reaction right after the trigger finishes or ignore the trigger.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ready#6",
+   "text": "When you Ready a spell, you cast it as normal (expending any resources used to cast it) but hold its energy, which you release with your Reaction when the trigger occurs.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ready#7",
+   "text": "To be readied, a spell must have a casting time of an action",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ready#8",
+   "text": "holding on to the spell’s magic requires Concentration, which you can maintain up to the start of your next turn.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.ready#9",
+   "text": "If your Concentration is broken, the spell dissipates without taking effect.",
+   "threshold": false
+  }
+ ],
+ "relations": [
+  {
+   "type": "requires",
+   "target": "GLOSS.reaction",
+   "evidence": "which lets you act by taking a Reaction before the start of your next turn"
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.reaction",
+   "evidence": "Once you take a Reaction, you can’t take another one until the start of your next turn."
+  },
+  {
+   "type": "requires",
+   "target": "GLOSS.concentration",
+   "evidence": "holding on to the spell’s magic requires Concentration, which you can maintain up to the start of your next turn."
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.concentration",
+   "evidence": "You lose Concentration on an effect the moment you start casting a spell that requires Concentration or activate another effect that requires Concentration."
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.speed",
+   "evidence": "or you choose to move up to your Speed in response to it"
+  }
+ ],
+ "ambiguities": [
+  {
+   "quote": "holding on to the spell’s magic requires Concentration",
+   "reading_a": "Holding any readied spell (even one that isn't a Concentration spell) is an effect that requires Concentration, so readying it ends any Concentration the caster already has.",
+   "reading_b": "Only readying a spell whose own description requires Concentration ends an existing Concentration effect. Holding a non-Concentration spell can run alongside it.",
+   "proposed_ruling": "Reading A. Holding the spell is an effect that requires Concentration, so GLOSS.concentration's 'activate another effect that requires Concentration' ends the earlier effect.",
+   "confidence": 0.8
+  },
+  {
+   "quote": "you can either take your Reaction right after the trigger finishes or ignore the trigger",
+   "reading_a": "If you ignore the trigger, the readied action stays available for a later occurrence of the same trigger before the start of your next turn.",
+   "reading_b": "The first occurrence of the trigger uses up the readied action whether you act or not.",
+   "proposed_ruling": "Reading A. The text says you may ignore the trigger, not that ignoring it uses up the readiness. The window still ends at the start of your next turn.",
+   "confidence": 0.6
+  },
+  {
+   "quote": "right after the trigger finishes",
+   "reading_a": "For a movement trigger ('steps next to me'), the trigger finishes when the triggering step ends, so the Reaction interrupts the rest of the creature's move.",
+   "reading_b": "The trigger finishes only when the creature's whole move or action ends.",
+   "proposed_ruling": "Reading A. The Reaction resolves right after the triggering event itself and can interrupt the rest of a move.",
+   "confidence": 0.7
+  },
+  {
+   "quote": "you cast it as normal (expending any resources used to cast it) but hold its energy, which you release with your Reaction",
+   "reading_a": "Targets, the point of origin and range are chosen and checked when the spell is released.",
+   "reading_b": "Targets are chosen and range is checked when the spell is cast, and released later as fixed.",
+   "proposed_ruling": "Reading A. Choose targets and check range at release, since the trigger often reveals the target.",
+   "confidence": 0.55
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "which you can maintain up to the start of your next turn",
+   "explanation": "The unit doesn't say what happens to a held spell if the trigger never occurs or is ignored until the start of your next turn. The likely result is that it dissipates and the spent resources are lost, but only a broken Concentration is stated to make the spell dissipate."
+  },
+  {
+   "quote": "holding on to the spell’s magic requires Concentration",
+   "explanation": "The unit doesn't say whether a readied spell that itself requires Concentration carries the holding Concentration over into its normal duration after release, or whether a new Concentration starts at release."
+  },
+  {
+   "quote": "Then, you choose the action you will take in response to that trigger",
+   "explanation": "The unit doesn't say whether a readied Attack action taken as a Reaction off-turn gets features that key on taking the Attack action 'on your turn' (for example Extra Attack). It also doesn't say whether readied movement counts against your movement on your next turn."
+  }
+ ],
+ "traps": [],
+ "summary": "Ready is an action taken on your turn. You set a perceivable trigger and either an action or movement up to your Speed, and you carry it out with your Reaction (or ignore the trigger) before the start of your next turn. A readied spell must have a casting time of an action. It is cast at once, spending its resources, and held with Concentration until the start of your next turn. If that Concentration breaks, the spell dissipates. The unit depends on GLOSS.reaction (one Reaction per round, so an earlier Opportunity Attack uses up the readied response) and GLOSS.concentration (holding the spell ends any earlier Concentration, and damage calls for a save). The main open points are: whether readiness survives an ignored trigger, when the response resolves during movement, when targets are chosen for a held spell, and what happens to the spell if the trigger never comes."
+}

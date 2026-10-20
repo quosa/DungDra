@@ -1,0 +1,26 @@
+{
+  "recorded": "2026-09-29",
+  "note": "Groundwork baseline. Ratchets: values may only improve (coverage/mutation up; counts and limits down).",
+  "tests": {
+    "scenarios": 150,
+    "unit": 0,
+    "srd": 0
+  },
+  "coverage": {
+    "unit_suite_branch_pct": 49.92,
+    "reference_all_suites_branch_pct": 82.0
+  },
+  "ruff": {
+    "violations": 0,
+    "max_complexity_limit": 84,
+    "target_complexity_limit": 10
+  },
+  "suppressions": 0,
+  "duplication_blocks": {
+    "dungdra_min6": 1,
+    "tests_min10": 0
+  },
+  "vulture_min80": 3,
+  "import_contract_ignored_edges": 2,
+  "mutation_score": null
+}

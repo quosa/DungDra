@@ -1,0 +1,15 @@
+{
+  "id": "T-36",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "grappled_by now lives in a new tests/unit/helpers.py, beside the shared tests/support/helpers.py (pc, mon). The ticket asked for tests/support/helpers.py, but the loop forbids fixers to edit it (T-33 attempt 1 failed on that). A person should either move the helper into tests/support/helpers.py and delete tests/unit/helpers.py, or confirm tests/unit/helpers.py as the home for unit-only helpers, so there is one place for shared test helpers.",
+  "tests": [],
+  "status": "void",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "void",
+      "reason": "Accepted: tests/unit/helpers.py is the home for unit-test-only helpers; tests/support/helpers.py stays for helpers shared across suites."
+    }
+  ]
+}

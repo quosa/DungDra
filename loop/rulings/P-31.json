@@ -1,0 +1,13 @@
+{
+  "id": "P-31",
+  "unit": "GLOSS.ally",
+  "ambiguity": "GLOSS.ally ambiguity 1: is a creature its own ally?",
+  "ruling": "Reading A: a creature is never its own ally. Effects that include the user say 'you or an ally'. So a rogue next to the target doesn't count as an ally for her own Sneak Attack, and Help can't assist the helper's own check.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused"
+  ],
+  "status": "accepted",
+  "register_id": "R-36",
+  "note": "The rules that use 'ally' mean someone else ('you or an ally'; Help assists 'one ally').",
+  "reason": ""
+}

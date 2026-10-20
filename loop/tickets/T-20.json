@@ -1,0 +1,17 @@
+{
+  "id": "T-20",
+  "kind": "bug",
+  "unit": "SPELL.bless",
+  "title": "Casting a V,S,M spell without its material component first stows the held weapon (free object interaction, log entry), then refuses",
+  "tests": [
+    "tests/srd/test_spells.py::test_a_refused_bless_doesnt_stow_the_casters_weapon"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-20 is fixed. In `dungdra/spells.py`, `_components` freed a hand for the Somatic component (stowing the weapon, using the free object interaction and writing a log entry) before it checked the Material component. So a Bless cast without a Holy Symbol stowed the mace and only then refused.\n\nThe fix splits the work into checks and actions. `_components` now only checks: the Verbal component, then the Material component (moved into a new `_material`), then whether a Somatic hand is available (`_hand_to_free`, which refuses or returns the weapon to stow). It changes nothing and returns that weapon. `cast` stows it with `_stow_for_somatic` only after the action economy is spent, so a cast that is refused for its Material component, range, sight, a spent action or a spent free interaction no longer changes any state. The costed-component check carries `# SRD[SPELL.bless#4]`; the refusals keep their existing `page=105` and rule ids.\n\nChecks run:\n- The ticket's test passes with `--runxfail`. It shows as XPASS(strict) in the normal run until the harness removes its marker.\n- Unit tests: 251 passed.\n- `ruff check .` and `ruff format --check .` are clean.\n- `dev-gate` passes.\n- The only other failures under `--runxfail` are the existing T-21, T-22 and T-23 xfail tests, which are unchanged.\n\nTwo things outside this ticket:\n- Monster spellcasting crashes with `AttributeError: 'Monster' object has no attribute 'spell_dc'` (spells.py:83) before it reaches the component checks, so I left out a unit test for the monster path.\n- Bless's target cap (T-21) is still checked inside `_bless`, after the action and slot are spent, and now also after the weapon is stowed."
+    }
+  ]
+}

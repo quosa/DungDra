@@ -1,0 +1,31 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-71 is fixed. An attack refused because the target is out of reach or beyond long range no longer uses up the Attack action. The cause: in `attack()` (dungdra/combat.py), `_spend_attack` charged the turn before the reach, range and ammunition checks ran. I moved that call to just after those checks and before the Advantage/Disadvantage modifiers. Now an attack is paid for only once its reach or range allows it, and a refusal leaves the turn untouched. The new code is tagged SRD[MONSTER.goblins.goblin-warrior#18] and #21. One side effect: when an attack is both out of turn and out of range, the out-of-range refusal is now the one reported; it still costs nothing. Results: both T-71 tests pass with --runxfail. In the full suite their only failures are the expected strict XPASS, with nothing else failing. The 496 unit tests pass, ruff check and format are clean, and dev-gate passes. I added 4 unit tests in tests/unit/test_combat.py, using a small `_goblin_turn_at` helper built on the existing `_goblin_turn`. They check that a refusal out of reach or beyond long range leaves actions_used at 0 and attack_action_taken False. They also check that a later attack in range still spends the action, and that attacking out of turn is still refused. I couldn't confirm these tests fail without the fix, because running `git stash` to undo it temporarily was denied.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_an_attack_out_of_reach_spends_no_action",
+   "tests/unit/test_combat.py::test_an_attack_beyond_long_range_spends_no_action",
+   "tests/unit/test_combat.py::test_the_action_refused_attack_leaves_is_spent_by_an_attack_in_range",
+   "tests/unit/test_combat.py::test_an_attack_out_of_turn_is_still_refused"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.goblins.goblin-warrior#18]",
+   "SRD[MONSTER.goblins.goblin-warrior#21]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix is approved. The fix moves the `_spend_attack` call in `attack()` so it runs after the reach, long-range and ammunition checks, so an attack refused for any of those reasons no longer spends the Attack action. It changes the general attack path, with no special case for the goblin or for the numbers in the tests. The dead `elif opportunity: pass` branch is gone. The two acceptance tests that were xfailed for T-71 now pass without their markers. The new unit tests check real behaviour: after a reach refusal or a range refusal the turn state still has `actions_used == 0` and the Attack action not taken; that unused action can then be spent by an attack that is in range; and an attack out of turn is still refused. The traceability tags use the ticket's own clauses (#18 and #21). One small side effect: an attacker who is out of turn and also out of range now gets the range refusal instead of the turn refusal. Both are still refusals, so this isn't a problem. Nothing is out of scope; the only other change is the loop's own cost log."
+ },
+ "problems": [],
+ "cost_usd": 0.5733,
+ "stash": ""
+}

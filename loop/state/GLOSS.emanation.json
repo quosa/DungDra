@@ -1,0 +1,47 @@
+{
+  "fingerprint": "9fd322a39974e8f3",
+  "for_review": [],
+  "id": "GLOSS.emanation",
+  "kind_waivers": [],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.emanation#1",
+      "reason": "Nothing in the implemented subset creates an Emanation. None of the 32 in-scope spells has an Emanation area (only Burning Hands' Cone, Thunderwave's and Web's Cubes, and Sleep's Sphere). No level 1–3 feature of the four in-scope classes, none of the 14 monsters and none of the 7 magic items has one. Every Emanation in the SRD is out of scope: Spirit Guardians, Aura of Life and others; Paladin and Berserker auras; monsters such as the Fire Elemental and Hezrou. The engine has no Emanation geometry: 'emanation' appears nowhere in dungdra/, and geometry.in_area raises for it. A test would have to invent the API, and CLAUDE.md rules out tests for content the engine doesn't implement."
+    },
+    {
+      "clause": "GLOSS.emanation#2",
+      "reason": "The distance comes from the effect that creates the Emanation, and no in-scope effect gives one. So the threshold (a creature exactly at the distance, one square beyond it) can't be exercised."
+    },
+    {
+      "clause": "GLOSS.emanation#3",
+      "reason": "Moving with the origin, or staying put for instantaneous and stationary effects, can only be seen through a lasting Emanation effect, and none is in scope. Stage A's gap also stands: no rule defines 'stationary effect'."
+    },
+    {
+      "clause": "GLOSS.emanation#4",
+      "reason": "Excluding the origin, and the creator's choice to include it, can only be seen through an effect that makes an Emanation, and none is in scope. The same opt-in choice for Cones and Cubes is already tracked as T-78."
+    }
+  ],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792523681,
+      "summary": "GLOSS.emanation is an area of effect that extends the distance the effect gives, in straight lines and in all directions, from a creature or object. It moves with that origin unless the effect is instantaneous or stationary. The origin is left out of the area unless the creator chooses to include it"
+    },
+    "B": {
+      "at": 1792523689,
+      "summary": "No scenarios or SRD tests were given for GLOSS.emanation. All 9 code candidates matched by page 181 only. They are about Dodge, exhaustion, dehydration and food and water, not Emanations. I gave verdicts for three of them. The other six (actions.py:184, api.py:677, combat.py:656, creature.py:296, ef"
+    },
+    "C": {
+      "at": 1792523745,
+      "summary": "GLOSS.emanation can't be tested inside the implemented subset. The Rules Glossary is in scope, but no in-scope content creates an Emanation: not the 32 spells (their areas are Cone, Cube, Cube and Sphere), the level 1–3 features of Fighter, Rogue, Cleric and Wizard, the 14 monsters or the 7 magic it"
+    },
+    "D": {
+      "at": 1792523751,
+      "summary": "The test list for GLOSS.emanation is empty, so I had nothing to review and returned no verdicts. I ran no mutations and changed nothing. One possible coverage gap: the unit has four clauses that could be tested (how far an Emanation reaches, moving with its origin unless the effect is instantaneous "
+    }
+  },
+  "status": "out-of-scope",
+  "tests": [],
+  "tickets": []
+}

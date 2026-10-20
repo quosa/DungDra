@@ -1,0 +1,15 @@
+{
+  "id": "T-32",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "escape_grapple (combat.py:1615) still finds its Grappled condition with its own `next(e for e in c.effects if e.condition == \"grappled\")` scan. Route it through grapples_on(c) so every grapple lookup uses the one helper",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "escape_grapple (dungdra/combat.py:1627) now finds its Grappled condition through grapples_on(c) instead of its own scan of c.effects, so every grapple lookup uses that one helper. Behaviour is unchanged. I added two unit tests in tests/unit/test_combat.py. The first checks that escaping is refused when the creature is only Restrained, not Grappled. The second gives a creature both a Restrained effect with escape_dc=30 and a Grappled condition with escape_dc=15, and checks that the escape check uses DC 15 and that a success frees the creature. No acceptance tests were listed for this ticket. Results: 335 unit tests passed, the 20 grapple tests in tests/srd and tests/scenarios passed with --runxfail, ruff check and ruff format --check are clean, and dev-gate passed. I added no SRD tags because no rule code changed."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P-1",
+  "unit": "GLOSS.grappled",
+  "ambiguity": "“unless you are Tiny or two or more sizes smaller than it”: does a Tiny creature dragged by a Tiny grappler cost extra movement?",
+  "ruling": "A Tiny grappled creature never adds extra movement cost, whatever the grappler's size.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_tiny_dragging_tiny_costs_nothing_extra"
+  ],
+  "status": "accepted",
+  "register_id": "R-05",
+  "note": "As the reviewer reads the rule.",
+  "reason": ""
+}

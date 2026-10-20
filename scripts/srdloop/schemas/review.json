@@ -1,0 +1,79 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "verdict",
+  "findings",
+  "followups",
+  "summary"
+ ],
+ "properties": {
+  "verdict": {
+   "enum": [
+    "approve",
+    "reject"
+   ]
+  },
+  "findings": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "kind",
+     "file",
+     "line",
+     "explanation"
+    ],
+    "properties": {
+     "kind": {
+      "enum": [
+       "hard-coding",
+       "layering",
+       "orthogonality",
+       "test-meaningfulness",
+       "scope",
+       "other"
+      ]
+     },
+     "file": {
+      "type": "string"
+     },
+     "line": {
+      "type": "integer"
+     },
+     "explanation": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "followups": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "title",
+     "kind"
+    ],
+    "properties": {
+     "title": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "refactor",
+       "coverage",
+       "infra"
+      ]
+     }
+    }
+   },
+   "maxItems": 1
+  },
+  "summary": {
+   "type": "string"
+  }
+ }
+}

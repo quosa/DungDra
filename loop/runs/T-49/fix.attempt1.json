@@ -1,0 +1,51 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The restriction on which targets a spell can affect is now part of the spell's data, and the cast pipeline handles any target that fails it. No spell handler checks targets by hand any more.\n\n- **Spell data** (`dungdra/data/spells.py`): there is a new `Restriction(affects, why, save=None)` record and a `restrict=` field. Mage Armor's restriction is \"not wearing armor\" with no save, so the caster is told the spell did nothing. Hold Person's is \"is a Humanoid\" with a Wisdom save, so an invalid target appears to pass its save. I also added a `default_self` field. Mage Armor's handler used to target the caster when no target was named. That default now has to be decided before the restriction check, so it moved into the data too.\n- **Cast pipeline** (`dungdra/spells.py`): after the cast is paid for, the new `_affected_targets` checks each creature target against the restriction. Failing targets go to the existing `_invalid_target` (R-15: slot spent, a fake save success or \"did nothing\", plus a GM log entry). The handler only gets the targets the spell can affect. If every named target was invalid, the handler isn't called. The armor check in `_mage_armor` and the creature-type check in `_hold_person` are gone.\n\nThe ticket names no acceptance tests and none are marked T-49, so there was no red test to turn green. Checks:\n- Unit tests: 359 passed, including the existing Mage Armor and Hold Person R-15 tests, which still pass unchanged.\n- Full suite: 688 passed, 33 xfailed.\n- `ruff check` and `ruff format --check`: clean.\n- `python -m scripts.srdloop dev-gate`: PASS, import contract OK.",
+  "files": [
+   "dungdra/data/spells.py",
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_a_spell_restriction_routes_failing_targets_to_r15_and_keeps_the_rest",
+   "tests/unit/test_spells.py::test_a_restriction_without_a_save_says_the_spell_did_nothing",
+   "tests/unit/test_spells.py::test_an_unrestricted_spell_affects_every_target",
+   "tests/unit/test_spells.py::test_mage_armor_with_no_target_named_wards_the_caster",
+   "tests/unit/test_spells.py::test_restricted_spells_carry_the_restriction_in_their_data"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#8] (data/spells.py mage armor restriction; spells.py _affected_targets)",
+   "SRD[SPELL.casting-spells.effects.targets#10] (data/spells.py hold person restriction)"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/data/spells.py",
+    "line": 35,
+    "explanation": "The new `default_self` data flag is set only for Mage Armor. Two other handlers still pick the caster themselves when no target is named: `targets[0] if targets else c.caster` at dungdra/spells.py:911 (Guidance) and :1237. Two ways of doing the same thing now exist side by side. This is acceptable in this change, because Mage Armor needed its target resolved before the restriction check runs. Filed as a follow-up."
+   },
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_spells.py",
+    "line": 378,
+    "explanation": "`test_restricted_spells_carry_the_restriction_in_their_data` reads the data table's own constants back (`save == 'wis'`, `save is None`), so it tests no behaviour. This is minor: the other new tests do test behaviour through `_affected_targets` and `cast`, and the existing acceptance test for Hold Person under R-15 still passes."
+   }
+  ],
+  "followups": [
+   {
+    "kind": "refactor",
+    "title": "Guidance (dungdra/spells.py:911) and the handler at :1237 still pick the caster by hand with `targets[0] if targets else c.caster`. Mark those spells `default_self=True` in dungdra/data/spells.py and remove the fallback from the handlers, so every self-default comes from the data."
+   }
+  ],
+  "summary": "The change does what T-49 asks. Target restrictions are now data: `Restriction(affects, why, save)`. The cast pipeline sends failing targets to `_invalid_target` through `_affected_targets`, which runs after the cast is paid for, so R-15's rule that the slot is spent still holds. The hand-written checks are gone from `_mage_armor` and `_hold_person`. The SRD clause tags are kept (#8 and #10). Hold Person keeps an explicit save ability in its Restriction instead of reusing `sd['save']`. That is right, because not every spell with a save is harmless when the save succeeds. `default_self` was needed so Mage Armor's caster-as-target goes through the restriction check. It is applied to Mage Armor only, and two other handlers still choose the caster themselves; I filed a follow-up for those. One new unit test only reads the data's constants back, but the others test behaviour."
+ },
+ "problems": [],
+ "cost_usd": 0.79,
+ "stash": ""
+}

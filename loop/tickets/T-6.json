@@ -1,0 +1,15 @@
+{
+  "id": "T-6",
+  "kind": "refactor",
+  "unit": "GLOSS.grappled",
+  "title": "Pull the 'is X grappled by Y' check (e.condition == 'grappled' and e.data.get('grappler') == id) into one helper; it's now repeated in combat.py (move drag check, the reach check around line 451, release_grapple), effects.py:172 and game.py:283",
+  "tests": [],
+  "status": "void",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "edited",
+      "reason": "duplicate of T-5 (the reviewer didn't see open tickets then)"
+    }
+  ]
+}

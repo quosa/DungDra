@@ -1,0 +1,152 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_goes_in_the_direction_its_creator_chooses",
+   "verdict": "keep",
+   "reason": "Follows from #1. The goblin at (0,10) is in the Cone aimed north at (0,15), and the named goblin at (10,0) to the east isn't.",
+   "mutation": "spells.py:1063 `if point is not None:` → `if False:` (the chosen point is ignored and the Cone aims at the first named creature). The test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_can_be_aimed_along_a_diagonal",
+   "verdict": "keep",
+   "reason": "#1 lets the creator choose any direction, so a diagonal is allowed. At a 45° aim, (10,0) lies outside the about 53° Cone. The point (15,15) adds nothing, because the first named goblin is already on the diagonal.",
+   "mutation": "geometry.py:69 restricted to orthogonal aims (an extra condition that the aim vector has dx·dy == 0). The test failed, and a control run on an orthogonal test passed. Ignoring `point` (spells.py:1063) left it passing, which is expected given the redundant point.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_aimed_through_the_session_follows_the_chosen_point",
+   "verdict": "keep",
+   "reason": "Not a duplicate of the direct-API test. It checks that the Session `point` field reaches the area geometry, and that it overrides the named target in the opposite direction.",
+   "mutation": "spells.py:1063 `if point is not None:` → `if False:`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_doesnt_reach_behind_its_point_of_origin",
+   "verdict": "keep",
+   "reason": "'Extends ... in a direction' means the Cone has one side. The squares behind the origin are out.",
+   "mutation": "geometry.py:69 `along > 0 and across <= along / 2` → `across <= abs(along) / 2` (a double Cone). The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+   "verdict": "keep",
+   "reason": "A single Cone has one direction. Naming two creatures 90° apart doesn't give a union of Cones. The comment about a quarter-circle is misleading: widening to a quarter-circle alone doesn't fail this test, because the aim goes at the first named creature. What the test does catch is the union-of-named-directions abuse.",
+   "mutation": "Widening to a quarter-circle (geometry.py:69 `across <= along`): the test still PASSED. Then spells.py:1121, where membership became any Cone aimed at any named creature: the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_is_10_ft_wide_10_ft_out",
+   "verdict": "refute",
+   "reason": "This picks an unruled grid reading. Stage A recorded a gap: how a Cone maps to grid squares is undefined, and no register row covers it. The test asserts three squares (a 15-ft span) are in at 10 ft. That holds only because square centres measured exactly 5 ft off the axis count as inside (`<=`). With a strict boundary, or with a square-coverage reading where 10 ft wide means 2 squares, you get a different answer. The test name says 10 ft wide while asserting 15 ft of squares. A person should decide the grid mapping.",
+   "mutation": "geometry.py:69 `across <= along / 2` → `across < along / 2`. The test failed. So it tests the boundary-inclusion choice, not anything the SRD text states.",
+   "confidence": 0.4
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side",
+   "verdict": "keep",
+   "reason": "'Width' is the full width, and the 15-ft-wide-at-15-ft example rules out reading B (30 ft wide). (10,±10) is outside under any reasonable grid mapping.",
+   "mutation": "geometry.py:69 `across <= along / 2` → `across <= along` (axis-to-side reading). The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out",
+   "verdict": "keep",
+   "reason": "5 ft wide at 5 ft is one square, which fits the words under both the centre-point and the square-count reading. The diagonal squares are excluded.",
+   "mutation": "geometry.py:69 → `across <= along`. The test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_cant_be_widened_into_a_quarter_circle",
+   "verdict": "refute",
+   "reason": "Duplicate. test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin already asserts that (15,15) is outside a Cone aimed east from the same origin (it also checks (15,-15)). This test's only extra assertion, that (5,0) is hit, is covered by several other tests. It catches the same quarter-circle mutation and nothing else.",
+   "mutation": "geometry.py:69 → `across <= along`. The test failed, as did the 30-ft test, which covers the same square.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_is_15_ft_wide_15_ft_from_its_origin",
+   "verdict": "keep",
+   "reason": "Follows directly from the SRD example (#3): 15 ft wide at 15 ft is the three squares across. The result is the same with a strict or an inclusive boundary.",
+   "mutation": "geometry.py:69 → `across <= along / 4` (a Cone that is too narrow). The test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_cone_isnt_30_ft_wide_15_ft_from_its_origin",
+   "verdict": "keep",
+   "reason": "Tests the 30-ft misreading directly against the example. It overlaps with the just-past-15-ft boundary test, which is stricter, but this is the explicit negative for reading B.",
+   "mutation": "geometry.py:69 → `across <= along`. The test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone",
+   "verdict": "keep",
+   "reason": "At 15 ft the squares at ±10 off the axis (centres 10 ft off, more than 7.5) lie outside a 15-ft width, and (15,5) is in. This is consistent with the example under any symmetric grid reading.",
+   "mutation": "geometry.py:69 → `across <= along`. The test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_15_ft_cone_reaches_15_ft",
+   "verdict": "keep",
+   "reason": "Burning Hands specifies a 15-ft Cone, so a creature 15 ft out is included.",
+   "mutation": "geometry.py:95 `<= size and` → `< size and`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_15_ft_cone_stops_short_of_20_ft",
+   "verdict": "keep",
+   "reason": "The maximum length is 15 ft, so 20 ft is out.",
+   "mutation": "geometry.py:95 `<= size and` → `<= size + 5 and`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_a_15_ft_cone_along_a_diagonal_stops_at_15_ft",
+   "verdict": "keep",
+   "reason": "The SRD grid rule counts a diagonal square as one square (5 ft), so (15,15) is 15 ft away and (20,20) is 20 ft.",
+   "mutation": "geometry.py:95 → `<= size + 5`. The test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_upcasting_doesnt_lengthen_the_cone",
+   "verdict": "keep",
+   "reason": "The effect specifies the length, and Burning Hands' higher-level text adds damage only.",
+   "mutation": "spells.py:1077, where size became `area[1] + 5*(slot-1)`. The test failed. A control run of the same mutation on the non-upcast 20-ft test passed, so the failure is real.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_aiming_at_a_far_point_doesnt_stretch_the_cone",
+   "verdict": "keep",
+   "reason": "The aim point sets only the direction, and the length stays at the effect's maximum.",
+   "mutation": "geometry.py:95, where the length became `max(size, dist(origin, toward))`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length",
+   "verdict": "refute",
+   "reason": "Picks one side of an ambiguity that stage A recorded and nobody has ruled on. A.json reading A says the Cone always has full length. Reading B says the creator may choose a shorter length up to the 'maximum'. The proposed ruling has confidence 0.55 and no register row. The test asserts reading A as a positive SRD consequence, so a person should decide.",
+   "mutation": "geometry.py:95, where the length became `min(size, dist(origin, toward))`. The test failed, but that only shows it enforces reading A.",
+   "confidence": 0.4
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_the_caster_at_the_cones_origin_isnt_affected",
+   "verdict": "keep",
+   "reason": "Follows from #5 with a range of Self: the caster at the origin isn't affected. The engine excludes the origin in two places, so neither single mutation fails the test, but the behaviour is still correct under either one. The rule isn't actually broken by either mutation alone.",
+   "mutation": "spells.py:1118, with the `from_self and t is caster` skip removed: still passed. geometry.py:69 `along > 0` → `along >= 0`: still passed. Each guard covers for the other.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_only_the_origin_is_left_out_not_the_square_next_to_it",
+   "verdict": "refute",
+   "reason": "Duplicate. test_the_caster_at_the_cones_origin_isnt_affected already asserts that the adjacent square (5,0) is hit while the caster isn't. This test only adds (10,0), which other tests cover.",
+   "mutation": "geometry.py:69 `along > 0` → `along > 5` (the adjacent square excluded). The test failed, but so would the caster-at-origin test, which also asserts that (5,0) is hit.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cone_or_put_you_in_it",
+   "verdict": "keep",
+   "reason": "Naming yourself is not the creator deciding to include the origin, and it must not aim the Cone at the caster's own square.",
+   "mutation": "spells.py:1067 `if is_creature(t) and not (from_self and t is caster):` → `if is_creature(t):` (the caster becomes the aim point). The test failed.",
+   "confidence": 0.75
+  }
+ ],
+ "summary": "I tried to refute all 21 Cone tests: 17 kept, 4 refuted. All were checked by mutation against the cone geometry (geometry.py lines 69 and 95) and the area placement code (spells.py lines 1063, 1067, 1077, 1118 and 1121). Every test failed under at least one mutation that breaks its rule, with two exceptions.\n- **One-direction abuse test:** survived the quarter-circle mutation its comment refers to. It failed only under a union-of-Cones mutation.\n- **Caster-at-origin test:** survived each single mutation, because the origin is excluded twice: once in the geometry and once by the self-range skip.\n\nRefuted:\n- **Two unruled readings (confidence 0.4, so they go to a person):**\n  - `test_a_cone_is_10_ft_wide_10_ft_out` depends on counting squares that sit exactly on the edge. That choice comes from the grid-mapping gap stage A recorded, which has no register row. The test asserts 15 ft of squares in a row it calls 10 ft wide.\n  - `test_aiming_at_a_near_point_still_gives_the_full_length` picks reading A of the 'maximum length' ambiguity in A.json. There is no ruling on it.\n- **Duplicates:**\n  - The quarter-circle abuse test only rechecks the (15,15) square, which the 30-ft-wide negative test already asserts.\n  - The 'not the square next to it' test asserts the adjacent square is hit and the caster isn't. The caster-at-origin test already asserts both."
+}

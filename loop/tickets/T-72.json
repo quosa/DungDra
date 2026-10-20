@@ -1,0 +1,17 @@
+{
+  "id": "T-72",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: with Advantage the hit adds 2 (1d4), static 2 when the GM uses static damage; engine: static monster damage drops the rider and deals 5 instead of 7",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_7"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-72 is fixed. When the GM uses static monster damage (`game.fixed_monster_damage`), `combat.attack` now adds the static number for the Advantage bonus damage (the average of `adv_extra`, so 2 for the goblin's 1d4) if the attack roll had Advantage. Before, that branch used only the main damage's average and skipped the bonus, so the goblin's scimitar dealt 5 instead of 7. The fix covers every monster attack that has `adv_extra`, not just the goblin. Both the static and the rolled code paths are tagged `SRD[MONSTER.goblins.goblin-warrior#20]`.\n\nResults:\n- The target test passes with `--runxfail`.\n- `tests/unit` passes (499 tests), `ruff check` and `ruff format --check` are clean, and `dev-gate` passes.\n- In the full suite, the only failure is this ticket's test, which now passes while still marked xfail (strict); it stops failing once the harness removes the marker.\n- The other 3 failures in `test_monsters.py` under `--runxfail` are other tickets' tests (T-73, T-74, T-75) and are unchanged.\n\nNot changed: the separate `extra` damage (Cultist, Priest) still rolls dice even when static damage is on. That is a different rule and not part of this ticket."
+    }
+  ]
+}

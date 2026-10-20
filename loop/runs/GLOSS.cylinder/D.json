@@ -1,0 +1,4 @@
+{
+ "verdicts": [],
+ "summary": "The test list for GLOSS.cylinder is empty, so there was nothing to refute and I ran no mutations. Someone should check whether the stage that writes tests left this unit untested on purpose (for example, because the engine has no Cylinder content and it was treated as out of scope) or by mistake. The unit has three clauses that tests could cover: the point of origin is at the centre of the circular top or bottom; the effect gives the base radius and the height; and the point of origin is inside the area."
+}

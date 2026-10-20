@@ -1,0 +1,24 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The engine already does what T-79 asks, so I changed no engine code. The fix committed in debdebe follows R-35. The ticket was reopened afterwards with the same R-35 reason, but the code still matches R-35:\n- `dungdra/geometry.py:in_cube_at_point` places the Cube at the named square, resting on the ground and extending upward. A 15-ft Cube centres on that square; a 20-ft Cube centres on the square's top-right corner (+2.5, +2.5). A creature is in the Cube when the centre of its space is (R-27).\n- `in_area` sends a Cube with no direction to that function, so there is still only one area mechanism and no second Cube check beside it.\n- `_area_placement` gives Self-range spells a direction and gives point-placed areas none.\n- `_web` gets its targets from the shared `_area_targets`. Web is not 'of your choice', so every living creature in the Cube saves whether or not it was named (R-16). Creatures behind Total Cover from the point are left out, the same as for other area spells.\n\nI added one unit test for the one R-35 clause that had no test: naming a neighbouring square moves the Cube one square that way.\n\nChecks: 533 unit tests pass. The ticket's test passes with --runxfail; its xfail marker was already removed in debdebe. tests/srd and tests/scenarios: 527 passed. `ruff check` and `ruff format --check` are clean, and dev-gate passes.\n\nOne thing a person may want to look at: the Cube's height check includes its top edge (0 ≤ dz ≤ side), so a creature standing on top of a 20-ft Cube at elevation 20 counts as inside. That matches the inclusive vertical check the existing Thunderwave Cube (`in_cube_direction`) already uses, and the ticket says not to add a new vertical convention, so I left it as it is.",
+  "files": [
+   "tests/unit/test_geometry.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_naming_a_neighbouring_square_moves_the_cube_one_square_that_way"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change. The engine fix for T-79 is already at HEAD from commit debdebe, and it follows R-35. `in_cube_at_point` puts the point of origin at the centre of the Cube's bottom face. An odd-sized Cube centres on the named square, and an even-sized one centres on that square's +x/+y corner. `in_area` sends a Cube with no direction to that function, so there is still only one Cube predicate. `_area_placement` gives a direction only to Self-range spells, and `_web` takes its targets from the shared `_area_targets`, with no area filter of its own and no `area_choice`. The ticket's acceptance test `test_naming_a_creature_far_outside_a_20_ft_web_cube_doesnt_catch_it` passes, and no T-79 xfail is left. The ticket was reopened with R-35's text, and this attempt adds only one unit test. That test checks the R-35 rule that naming a neighbouring square moves the Cube one square that way. It compares two computed sets of covered squares over a grid wide enough to hold both, so it tests behaviour rather than echoing constants. Nothing in it is hard-coded, wrongly layered or out of scope. The only other change is the `loop/costs.jsonl` entry the harness adds."
+ },
+ "problems": [],
+ "cost_usd": 0.7146,
+ "stash": ""
+}

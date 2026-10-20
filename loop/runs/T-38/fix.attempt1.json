@@ -1,0 +1,42 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed T-38: Burning Hands now hits only creatures inside one Cone pointing in one direction. Before, it checked distance only, so it could hit named creatures on both sides of the caster.\n\n- Added `geometry.in_cone_direction(origin, toward, p)`. It checks whether a point is inside the Cone's angle: a Cone's width equals the distance from its origin, and the origin itself isn't included. Length is still checked by the caller.\n- `spells._area_targets` takes an aim for Cones. The aim is the `point=` argument if the caller gives one; otherwise it's the first named creature other than the caster. Named creatures outside the Cone are skipped and logged as outside it (page 106, rule `SPELL.casting-spells.effects.targets#4`), and the code carries the `SRD[...#4]` tag. `_burning_hands` passes `point` through.\n\nTest results: the ticket's acceptance test now passes with `--runxfail` (without it, it shows as a strict XPASS, which is expected). All other srd and scenario tests pass, apart from the 32 still marked xfail for other tickets; the existing Burning Hands tests all aim along +x and still pass. 373 unit tests pass, ruff is clean, and dev-gate passes.\n\nChoices a person may want to review:\n- **Default aim:** with no `point=`, the Cone aims at the first named creature. That's my own choice, not a register ruling.\n- **Creatures as points:** a creature counts as a single point at its position, not a 5-ft square, so a creature whose square only partly overlaps the Cone isn't hit.\n- **Caller's list:** the engine still only narrows the list the caller gives. It doesn't yet find unnamed creatures in the area as R-16 describes; that is a broader change.\n- **Tagging:** there's no stage-A analysis for `GLOSS.cone`, so the code is tagged with the ticket's clause #4 only.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_a_cone_contains_points_along_its_axis_but_not_behind_its_origin",
+   "tests/unit/test_geometry.py::test_a_cones_width_equals_the_distance_from_its_origin",
+   "tests/unit/test_geometry.py::test_a_cone_with_no_direction_contains_nothing",
+   "tests/unit/test_spells.py::test_a_cone_aimed_at_the_first_named_creature_skips_one_behind_the_caster",
+   "tests/unit/test_spells.py::test_a_cone_aimed_at_a_point_follows_the_point"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "findings": [],
+  "followups": [
+   {
+    "title": "R-16: area spells (Burning Hands Cone, Thunderwave Cube) still take the affected creatures from the caller's list. Select every creature in the area from scene positions, shape, origin and an explicit direction, so a caller can't leave out a creature inside an 'each creature' area. Once the direction is explicit, drop the 'aim at the first named creature' fallback in _area_targets.",
+    "kind": "infra"
+   },
+   {
+    "title": "_burning_hands ignites flammable objects from a hand-set obj['in_cone'] flag instead of testing the object's position with the same Cone geometry (in_cone_direction plus length) that creatures use. Use the one area test for both.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I approve this fix. A Cone from Burning Hands now points one way. The new `in_cone_direction` check in `dungdra/geometry.py` follows the SRD's rule that a Cone's width at any point equals that point's distance from the origin. The check sits in the shared `_area_targets` helper in `dungdra/spells.py`, next to the existing distance and Total Cover checks, so no second mechanism was added. It's tagged `SRD[SPELL.casting-spells.effects.targets#4]` and its log event cites page 106. The strict xfail for T-38 was removed from the acceptance test because the test now passes, and nothing else in that suite changed. The new unit tests check real geometry and real spell outcomes: hit points, and which creatures were skipped. They don't just repeat the code's own constants back.\n\nOne thing I'm not counting against the change: when the caller gives no `point`, the code aims the Cone at the first creature named. That's a convenience fallback for while the engine still relies on the caller's list of creatures, which ruling R-16 says it eventually shouldn't. I've filed two follow-ups:\n- **R-16 (infra):** work out every creature in an area from the scene, using shape, origin and an explicit direction, for both Cone and Cube spells.\n- **Flammable objects (refactor):** Burning Hands still decides which objects catch fire from a hand-set `in_cone` flag rather than the same Cone check creatures use.",
+  "verdict": "approve"
+ },
+ "problems": [],
+ "cost_usd": 0.6815,
+ "stash": ""
+}

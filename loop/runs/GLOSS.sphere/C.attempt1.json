@@ -1,0 +1,250 @@
+{
+ "output": {
+  "summary": "I wrote 17 SRD tests for GLOSS.sphere at the end of tests/srd/test_glossary.py. They use Sleep, the only Sphere spell the engine has: a 5-ft-radius Sphere that affects each creature of your choice in it. All 17 pass. The engine measures the Sphere with the grid metric (diagonals count 5 ft), counts a creature exactly at the radius as inside, includes the point of origin, applies Total Cover from the origin (R-10), and leaves out named creatures outside the radius. No xfails were needed. Stage B marked SPELLS-02 / test_spells02_sleep as under-asserting: it now checks that each of the four creatures was in the Sphere centred on A (one save or automatic-success entry each) and that nobody was logged as outside it. I added one cheat to the abuse catalogue. Three tests depend on readings not yet in the register, so I proposed two rulings: the distance metric with the edge counting as inside, and the caster being in a Sphere centred on themself. Ruff check and format pass.",
+  "interactions": [
+   {
+    "clause": "GLOSS.sphere#2",
+    "with": "geometry metric (range/movement Chebyshev, ambiguity 1)",
+    "risk": "high",
+    "note": "Whether the diagonal and edge squares are in a 5-ft Sphere depends on the metric: grid distance vs Euclidean. The diagonal boundary test follows the proposed grid metric."
+   },
+   {
+    "clause": "GLOSS.sphere#3",
+    "with": "P-25/P-27 (Cone/Cube origin excluded)",
+    "risk": "high",
+    "note": "A Sphere has the opposite rule: the origin is in the area. Tested with a creature on the origin, a named centre creature and a caster on their own origin, plus the negative that a caster away from the origin isn't in the Sphere (it isn't an Emanation)."
+   },
+   {
+    "clause": "GLOSS.sphere#1",
+    "with": "R-10 / GLOSS.area-of-effect (Total Cover blocks the straight lines)",
+    "risk": "medium",
+    "note": "A creature inside the radius with Total Cover from the point of origin isn't affected."
+   },
+   {
+    "clause": "GLOSS.sphere#1",
+    "with": "R-16 / SPELL.sleep 'of your choice'",
+    "risk": "medium",
+    "note": "The caller's list can only narrow the Sphere; a named creature outside it isn't caught."
+   },
+   {
+    "clause": "GLOSS.sphere#2",
+    "with": "spell slots (upcasting Sleep)",
+    "risk": "low",
+    "note": "A higher slot doesn't change the radius."
+   },
+   {
+    "clause": "GLOSS.sphere#3",
+    "with": "Trance (elf caster), SPELL.sleep",
+    "risk": "low",
+    "note": "MIALEE auto-succeeds; her presence in the area shows as the automatic-success log entry."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Naming creatures for an area spell that the area can't hold (far from the point of origin)",
+    "test": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it",
+    "reason": "Sleep takes a caller list; the Sphere must still filter it."
+   },
+   {
+    "case": "Stretching an area by upcasting a spell whose higher levels don't enlarge it",
+    "test": "tests/srd/test_glossary.py::test_a_higher_slot_doesnt_enlarge_the_sphere",
+    "reason": "Sleep cast with a level 2 slot keeps its 5-ft radius."
+   },
+   {
+    "case": "Naming yourself for an area to be in it (a Sphere placed elsewhere isn't an Emanation)",
+    "test": "tests/srd/test_glossary.py::test_the_caster_isnt_in_a_sphere_placed_away_from_them",
+    "reason": "The origin is the chosen point, not the caster."
+   },
+   {
+    "case": "Reading a Sphere's radius as its diameter (new catalogue entry)",
+    "test": "tests/srd/test_glossary.py::test_a_5_ft_sphere_stops_short_of_10_ft",
+    "reason": "Covered by the 10-ft boundary tests along the axis, the diagonal and upward."
+   },
+   {
+    "case": "Leaving creatures that are in the area off the list to spare them",
+    "test": null,
+    "reason": "Doesn't apply: the only Sphere spell in scope (Sleep) is 'of your choice', so leaving a creature off the list legitimately spares it."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
+    "clause": "GLOSS.sphere#1",
+    "kind": "positive",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too",
+    "clause": "GLOSS.sphere#1",
+    "kind": "positive",
+    "rule_quote": "extends in straight lines from a point of origin outward in all directions",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_placed_through_the_session_is_centred_on_the_chosen_point",
+    "clause": "GLOSS.sphere#1",
+    "kind": "positive",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_past_its_radius_in_any_direction",
+    "clause": "GLOSS.sphere#1",
+    "kind": "negative",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_doesnt_reach_a_creature_behind_total_cover_from_its_origin",
+    "clause": "GLOSS.sphere#1",
+    "kind": "negative",
+    "rule_quote": "extends in straight lines from a point of origin outward in all directions",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_naming_a_creature_far_outside_the_sphere_doesnt_catch_it",
+    "clause": "GLOSS.sphere#1",
+    "kind": "abuse",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_5_ft_sphere_reaches_a_creature_5_ft_from_its_origin",
+    "clause": "GLOSS.sphere#2",
+    "kind": "positive",
+    "rule_quote": "The effect that creates a Sphere specifies the distance it extends as the radius of the Sphere.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_radius_isnt_the_spheres_width",
+    "clause": "GLOSS.sphere#2",
+    "kind": "negative",
+    "rule_quote": "specifies the distance it extends as the radius of the Sphere",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_5_ft_sphere_stops_short_of_10_ft",
+    "clause": "GLOSS.sphere#2",
+    "kind": "boundary",
+    "rule_quote": "The effect that creates a Sphere specifies the distance it extends as the radius of the Sphere.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after",
+    "clause": "GLOSS.sphere#2",
+    "kind": "boundary",
+    "rule_quote": "specifies the distance it extends as the radius of the Sphere",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_5_ft_sphere_doesnt_reach_a_flyer_10_ft_above_its_origin",
+    "clause": "GLOSS.sphere#2",
+    "kind": "boundary",
+    "rule_quote": "specifies the distance it extends as the radius of the Sphere",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_higher_slot_doesnt_enlarge_the_sphere",
+    "clause": "GLOSS.sphere#2",
+    "kind": "abuse",
+    "rule_quote": "The effect that creates a Sphere specifies the distance it extends as the radius of the Sphere.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_creature_on_the_point_of_origin_is_in_the_sphere",
+    "clause": "GLOSS.sphere#3",
+    "kind": "positive",
+    "rule_quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_sphere_centred_on_a_named_creature_includes_that_creature",
+    "clause": "GLOSS.sphere#3",
+    "kind": "positive",
+    "rule_quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_a_caster_who_centres_a_sphere_on_themself_is_in_it",
+    "clause": "GLOSS.sphere#3",
+    "kind": "positive",
+    "rule_quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_the_caster_isnt_in_a_sphere_placed_away_from_them",
+    "clause": "GLOSS.sphere#3",
+    "kind": "negative",
+    "rule_quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.sphere#1",
+    "kind": "out-of-scope",
+    "reason": "Spheres with a radius larger than 5 ft (Fireball and similar) aren't in the implemented spell subset; Sleep's 5-ft Sphere is the only one available, so larger radii can't be tested through a real effect.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.sphere#3",
+    "kind": "boundary",
+    "reason": "Origin inclusion is a yes/no membership rule with no threshold; the radius boundary belongs to #2 and is tested there."
+   },
+   {
+    "clause": "GLOSS.sphere#1",
+    "kind": "boundary",
+    "reason": "#1 states the shape (all directions) and has no threshold; the distance boundaries are tested under #2."
+   }
+  ],
+  "scenario_changes": [
+   {
+    "scenario": "tests/scenarios/test_spells.py::test_spells02_sleep",
+    "change": "under-asserts: added assertions that the 5-ft Sphere centred on A holds A (its origin), B, the Skeleton and the elf (each has exactly one save or automatic-success entry), and that no named creature was logged as outside the Sphere.",
+    "note_row": "| SPELLS-02 | under-asserts (GLOSS.sphere) | Added Sphere-membership assertions: origin creature A plus B, Skeleton and elf within 5 ft each save or auto-succeed once; none logged outside the Sphere. |"
+   }
+  ],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.sphere ambiguity 1: 'specifies the distance it extends as the radius': Euclidean distance or the grid metric, and is a point exactly at the radius inside?",
+    "ruling": "Measure a Sphere's radius with the grid distance used for range and movement (each square, diagonals included, counts 5 ft; elevation counts the same way), from the centre of the origin's space to the centre of the creature's space. A creature exactly at the radius is inside, so a 5-ft Sphere covers the 3×3 block of squares around its origin and nothing 10 ft away.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after",
+     "tests/srd/test_glossary.py::test_a_5_ft_sphere_reaches_a_creature_5_ft_from_its_origin",
+     "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
+     "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.sphere ambiguity 3: 'A Sphere's point of origin is included': is a creature whose space holds the origin (including the caster) in the area?",
+    "ruling": "Reading A: a creature whose space holds the point of origin is in the Sphere and is affected like any other creature in it, including a caster who places the Sphere on their own space. This is the opposite of P-25/P-27 for Cones and Cubes. A caster away from the origin isn't in the Sphere: it isn't an Emanation.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_a_caster_who_centres_a_sphere_on_themself_is_in_it"
+    ]
+   }
+  ]
+ },
+ "problems": [],
+ "cost_usd": 1.1153102000000001,
+ "session": "b418b48a-e9d6-47d6-b7e9-a3edec64f6bb",
+ "error": null
+}

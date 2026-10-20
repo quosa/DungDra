@@ -1,0 +1,61 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "verdicts",
+  "summary"
+ ],
+ "properties": {
+  "verdicts": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "item",
+     "kind",
+     "verdict",
+     "evidence",
+     "rule_quote",
+     "explanation"
+    ],
+    "properties": {
+     "item": {
+      "type": "string",
+      "description": "scenario id, test node id, or file:line"
+     },
+     "kind": {
+      "enum": [
+       "scenario",
+       "test",
+       "code"
+      ]
+     },
+     "verdict": {
+      "enum": [
+       "consistent",
+       "contradicts-srd",
+       "under-asserts",
+       "affected-by-ambiguity",
+       "not-related"
+      ]
+     },
+     "evidence": {
+      "type": "string",
+      "description": "verbatim from the item"
+     },
+     "rule_quote": {
+      "type": "string",
+      "description": "verbatim from the unit"
+     },
+     "explanation": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "summary": {
+   "type": "string"
+  }
+ }
+}

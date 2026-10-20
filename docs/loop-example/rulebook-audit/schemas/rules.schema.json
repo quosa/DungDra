@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "required": ["rules"],
+  "properties": {
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text", "source", "scope", "kind"],
+        "properties": {
+          "id":     { "type": "string", "description": "Stable id, e.g. SEC-004. Reuse ids from the rulebook if it has them." },
+          "text":   { "type": "string", "description": "Verbatim rule text." },
+          "source": { "type": "string", "description": "Section/heading in the rulebook." },
+          "scope":  { "type": "array", "items": { "type": "string" }, "description": "Glob(s) the rule applies to, e.g. services/*/src/**/*.ts. ['**'] if global." },
+          "kind":   { "enum": ["mechanical", "semantic"], "description": "mechanical = checkable by grep/linter/script; semantic = needs judgment." },
+          "check":  { "type": "string", "description": "For mechanical rules: a shell command that exits non-zero on violation. Optional." },
+          "normative": { "enum": ["MUST", "SHOULD", "MAY"] }
+        }
+      }
+    }
+  }
+}

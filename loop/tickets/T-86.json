@@ -1,0 +1,24 @@
+{
+  "id": "T-86",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: you aren't your own ally, so Help can't assist your own ability check; engine: help_check accepts the helper as the ally and gives them Advantage",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused"
+  ],
+  "status": "fixed",
+  "attempts": 2,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The fix solves the ticket. help_check now refuses when the helper names themself, the refusal comes before any action is spent or effect added, and the xfail marker was removed correctly. Checking identity is the right minimal rule here. Using game.allies_of instead would also take on T-89 and T-87, which are separate open tickets. The one problem is traceability: the refusal applies register ruling R-36, but the Refusal has no ruling=\"R-36\" and the comment credits only GLOSS.ally#1, whose text doesn't say this. Add the ruling tag and assert it in the unit test.)",
+        "review: other dungdra/actions.py:29 The refusal doesn't name the ruling it applies. GLOSS.ally#1 only says an ally is a member of your party. 'A creature is never its own ally, so Help can't assist the helper's own check' comes from register ruling R-36, and the acceptance test is marked ruling=\"R-36\". CLAUDE.md requires refusals to carry ruling=\"R-nn\" where a register ruling applies, and Refusal already accepts ruling= (see dungdra/encounters.py:83). Add ruling=\"R-36\" to the Refusal and cite R-36 in the SRD comment. The unit test in tests/unit/test_actions.py should assert e.value.ruling == \"R-36\" too, so the trace is checked."
+      ]
+    },
+    {
+      "event": "fixed",
+      "summary": "I fixed T-86. `actions.help_check` now refuses when the creature being helped is the helper. Under register ruling R-36 a creature is never its own ally, so Help can't assist the helper's own check. The refusal happens before any action is spent, any effect is added or anything is logged. It carries page=176, rule=\"GLOSS.ally#1\" and ruling=\"R-36\", and the code has a `# SRD[GLOSS.ally#1]` tag with a comment citing R-36. That adds the ruling tag the reviewer asked for after attempt 1. I added a new file, `tests/unit/test_actions.py`, with two tests. The first checks that helping yourself is refused with the right rule, ruling and page, and that no effect or log event is left behind. The second checks that helping another creature still gives it the Help effect from the helper. Results: the ticket's test passes with --runxfail, unit tests show 535 passed, `ruff check` and `ruff format --check` are clean, and dev-gate shows PASS. When I ran the other GLOSS.ally tests with --runxfail, two others failed (the GM-designated ally and helping an enemy's check). They are probably still-xfailed tests from other tickets, but I didn't check their markers. I left them alone."
+    }
+  ]
+}

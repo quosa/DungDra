@@ -1,0 +1,36 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-11 is fixed: the Grappled condition event now carries ruling=\"R-07\" only when the creature has a non-walk Speed above 0 ft, which is the only case where the ruling decides anything. A creature with only a walking Speed is logged with ruling=None.\n\nTo cover Speeds gained later, I added `Creature.gain_speed(kind, ft, source)` in `dungdra/creature.py`. It sets the Speed, and if the creature is Grappled and the Speed is not walking, it logs a \"speed\" event with page=182, rule=\"GLOSS.grappled#1\", ruling=\"R-07\" and the tag `SRD[GLOSS.grappled#1]`. The Thief's Second-Story Work climb Speed in `dungdra/features.py` now goes through it. Assigning to `speeds` directly elsewhere still bypasses this log. I also added a small `special_speeds()` helper. The movement refusal in `combat.py` already logged R-07 only for a non-walk mode, so it is unchanged.\n\nThe unit test that expected R-07 on a goblin's grapple now uses a giant rat (which has a climb Speed). I added tests for: the walk-only case (no ruling), a Fly Speed gained while Grappled (stored as 60 ft, works out to 0, R-07 logged), and the cases where nothing should be logged (gained while free, or a walking Speed while Grappled).\n\nChecks: the unit suite passes (279), all of `tests/srd` and `tests/scenarios` pass (266), ruff check and ruff format are clean, and dev-gate passes. The ticket names no acceptance tests, so there was nothing extra to run with `--runxfail`.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/features.py",
+   "tests/unit/test_creature.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_creature.py::test_grappling_a_creature_with_a_special_speed_logs_ruling_r07",
+   "tests/unit/test_creature.py::test_grappling_a_walk_only_creature_logs_no_ruling",
+   "tests/unit/test_creature.py::test_a_speed_gained_while_grappled_logs_r07_and_stays_zero",
+   "tests/unit/test_creature.py::test_a_speed_gained_while_free_logs_nothing"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.grappled#1]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "The test for 'a non-walk Speed above 0' (the case R-07 decides) is now written three ways: Creature.special_speeds(), the inline `kind != \"walk\" and ft > 0` check in Creature.gain_speed, and `mode != \"walk\" and c.speeds.get(mode, 0) > 0` in combat.move's grappled refusal (combat.py:490). Put it in one predicate on Creature, such as `has_special_speed(kind=None)`, and call that from all three places.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "The fix is sound, so I'm approving it. `add_condition` now logs R-07 on Grappled only when the creature has a non-walk Speed above 0 (`special_speeds()`). The ticket also covers a Speed the creature gains while grappled. That case gets a new `Creature.gain_speed`, which logs R-07 (page 182, GLOSS.grappled#1) when that Speed is a non-walk one above 0. The engine had no way to grant a Speed except writing straight into the `speeds` dict, so a new method here doesn't duplicate an existing one. Its one existing caller, the Thief's Climb Speed in features.py, now goes through it. The method only logs. Zeroing the Speed still happens in `speed()` through the Grappled effect's `speed_zero`, so the rule isn't implemented twice. Nothing is special-cased for a fixture. The tests check how each R-07 case is logged: a creature with a Climb Speed gets the ruling, a walk-only creature doesn't, a Fly Speed gained while grappled is logged and reads 0 through `speed()`, and nothing is logged for a Speed gained while free or a walking Speed gained while grappled. The change stays within the ticket. One small duplication is worth a follow-up: the \"non-walk Speed above 0\" check is now written three ways (`special_speeds`, `gain_speed`, and combat.py:490)."
+ },
+ "problems": [],
+ "cost_usd": 0.6553,
+ "stash": ""
+}

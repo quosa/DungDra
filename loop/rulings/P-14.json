@@ -1,0 +1,13 @@
+{
+  "id": "P-14",
+  "unit": "GLOSS.ready",
+  "ambiguity": "GLOSS.ready ambiguity 2: does an ignored trigger use up the readied action?",
+  "ruling": "Reading A. Ignoring the trigger keeps the readied action and the Reaction for a later occurrence of the same circumstance, until the start of your next turn.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time"
+  ],
+  "status": "accepted",
+  "register_id": "R-18",
+  "note": "nothing says it wouldn't last until the start of the next turn if the trigger is ignored",
+  "reason": ""
+}

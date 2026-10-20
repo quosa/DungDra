@@ -1,0 +1,34 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed Web so it only affects creatures inside its 20-ft Cube. A creature 100 ft away no longer makes a save and can't be Restrained.\n\n- **How the Cube is placed:** I added `in_cube_at_point` to `dungdra/geometry.py`, following R-35. The Cube rests on the ground at the named square and extends upward. An odd-sized Cube centres on that square; an even-sized one centres on the square's top-right corner (+2.5, +2.5). A creature counts as inside when the centre of its space is (R-27).\n- **No second predicate:** the one Cube check, `in_area`, now handles a Cube with no direction as one placed at a point.\n- **Spell placement:** `_area_placement` in `spells.py` gives a direction only to Self-range spells. Anything placed at a point gets none. Cover for point-placed areas is now measured from that point.\n- **Web itself:** `_web` now takes its targets from `_area_targets`, the same area code other area spells use. Every living creature in the Cube saves, whether it was named or not, and creatures outside it are dropped with a log line.\n\nChecks:\n- The ticket's test passes with `--runxfail`.\n- In the full suite, the only failure is that same test reporting strict XPASS, which is expected until the harness removes its marker.\n- 530 unit tests passed, `ruff check` and `ruff format --check` are clean, and `dev-gate` passed.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_an_even_cube_at_a_point_centres_on_the_squares_top_right_corner",
+   "tests/unit/test_geometry.py::test_an_odd_cube_at_a_point_centres_on_the_square",
+   "tests/unit/test_geometry.py::test_a_cube_at_a_point_rests_on_the_ground_and_extends_upward",
+   "tests/unit/test_geometry.py::test_in_area_places_a_cube_without_a_direction_at_its_origin",
+   "tests/unit/test_spells.py::test_web_catches_everyone_in_its_cube_and_no_one_outside_it"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.cube#1]",
+   "SRD[GLOSS.cube#2]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I approve this fix. It solves T-79 the way R-35 says to. Web now runs its creatures through `_area_targets`, so the 20-ft Cube decides who saves. A creature named far outside the webs gets no save, and an unnamed creature inside is still caught (R-16). The Cube at a point is a new branch inside `in_area`, used when there is no direction, not a second mechanism beside it. The even/odd centring comes from the side length (an even number of squares shifts 2.5 ft to the top-right corner), with no special case for a number. The Cube rests on the ground at the point and extends upward, as R-35 states. I checked R-35's example by hand: square (15,10) gives columns 10-25 and rows 5-20.\n\nThe change to `_area_placement` only affects spells that aren't range Self. Thunderwave's Cube and the Self Cone still go through the directional path. The Sphere ignores `toward`, so it behaves as before. Cover from `origin[:2]` is the same point as `place[:2]` was. The xfail is removed because the acceptance test now passes. The unit tests check the actual squares the Cube covers, the vertical limits, and who gets caught versus who is left out, not the code's own constants. I ran the three affected test files: 273 passed, 2 xfailed."
+ },
+ "problems": [],
+ "cost_usd": 0.8363,
+ "stash": ""
+}

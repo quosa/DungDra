@@ -1,0 +1,17 @@
+{
+  "id": "T-23",
+  "kind": "bug",
+  "unit": "SPELL.bless",
+  "title": "death_save doesn't gather effects, so Bless adds no 1d4 to a Death Saving Throw",
+  "tests": [
+    "tests/srd/test_spells.py::test_bless_adds_1d4_to_a_death_saving_throw"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I fixed T-23: Bless now adds its 1d4 to a Death Saving Throw, and the ticket's test passes with `--runxfail`.\n\n**Cause:** `death_save` built its roll without asking what effects the dying creature had on it.\n\n**Fix:**\n- **`dungdra/damage.py`:** `death_save` now gathers the creature's effects for a \"death save\" roll and applies them the same way `Creature.save` does: modifiers, Advantage/Disadvantage, bonus dice and register rulings, and it removes any one-shot effects the roll uses up.\n- **`dungdra/spells.py`:** `Bless.d20` now also reacts to death saves, tagged `SRD[SPELL.bless#7]`.\n\n**Side effect:** Exhaustion now also lowers a Death Saving Throw by 2 per level. That matches the rule (a death save is a D20 Test), but it is a change in behaviour beyond Bless.\n\n**New unit tests** in `tests/unit/test_damage.py` cover Exhaustion lowering the roll, the Bless d4 turning a 9 into a success, a one-shot Advantage effect being used up, and a natural 1 still counting as two failures even with Bless.\n\n**Checks:**\n- `pytest tests/unit`: 268 passed.\n- Full suite: 532 passed. The only failure is the ticket's own test passing while still marked xfail, which is expected until the harness removes the marker.\n- `ruff check` and `ruff format --check` are clean.\n- `dev-gate` passes. It first flagged the code that removes used-up effects as untested, so I added the one-shot Advantage test to cover it."
+    }
+  ]
+}

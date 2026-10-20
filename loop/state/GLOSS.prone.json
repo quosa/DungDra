@@ -1,0 +1,112 @@
+{
+  "fingerprint": "3ca5e85d02264040",
+  "for_review": [],
+  "id": "GLOSS.prone",
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_adjacent_attack_on_standing_target_is_normal",
+    "tests/srd/test_glossary.py::test_ranged_attack_on_distant_standing_target_is_normal"
+  ],
+  "relations": [
+    {
+      "evidence": "spend an amount of movement equal to half your Speed (round down) to right yourself",
+      "target": "GLOSS.speed",
+      "type": "requires"
+    },
+    {
+      "evidence": "If your Speed is 0, you can’t right yourself.",
+      "target": "GLOSS.speed",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "You have Disadvantage on attack rolls.",
+      "target": "GLOSS.disadvantage",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "An attack roll against you has Advantage if the attacker is within 5 feet of you.",
+      "target": "GLOSS.advantage",
+      "type": "interacts_with"
+    },
+    {
+      "evidence": "Advantage and Disadvantage on the same roll cancel each other.",
+      "target": "GLOSS.disadvantage",
+      "type": "interacts_with"
+    }
+  ],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Only test of grapple ends → Speed restored → can stand; catches a stale Speed after release",
+      "test": "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand"
+    }
+  ],
+  "revisit": false,
+  "stages": {
+    "A": {
+      "at": 1790946601,
+      "summary": "Prone limits movement to crawling or righting yourself. Righting yourself costs half your Speed, rounded down, and isn't possible at Speed 0. A prone creature has Disadvantage on its attack rolls. Attacks against it have Advantage from within 5 feet and Disadvantage from farther away. These combine "
+    },
+    "B": {
+      "at": 1790946648,
+      "summary": "Only COND-02 and test_cond02 really exercise GLOSS.prone. Both agree with the rule but under-assert. The test checks clause #2 (stand-up cost 15 at Speed 30), #3 (grappled, Speed 0, refusal), #5 (Advantage from 5 ft) and #6 (Disadvantage from 40 ft). It never checks #4, the prone creature's own atta"
+    },
+    "C": {
+      "at": 1790947011,
+      "summary": "I added 41 GLOSS.prone tests to tests/srd/test_glossary.py and wrote one journey (tests/srd/journeys/test_prone_journey.py). Every clause has positive and negative tests, the threshold clauses have boundary tests, and abuse cases are covered too. The tests cover: crawling at double cost, which stack"
+    },
+    "D": {
+      "at": 1790947257,
+      "summary": "I checked 42 tests: 39 keep and 3 refute.\n\nAll 39 green tests pass, and every keep was confirmed by a mutation (the engine broken on purpose in a scratch copy, which made the test fail). The mutations hit three places:\n- **Movement** (combat.py:461): the crawl cost and the rule that a plain move whi"
+    }
+  },
+  "status": "red",
+  "tests": [
+    "tests/srd/test_glossary.py::test_prone_crawl_costs_double_and_stays_prone",
+    "tests/srd/test_glossary.py::test_prone_walk_is_a_crawl_not_a_free_stand",
+    "tests/srd/test_glossary.py::test_prone_move_command_crawls",
+    "tests/srd/test_glossary.py::test_after_standing_movement_costs_normal",
+    "tests/srd/test_glossary.py::test_prone_crawl_through_difficult_terrain_stacks",
+    "tests/srd/test_glossary.py::test_prone_cant_crawl_at_full_speed",
+    "tests/srd/test_glossary.py::test_prone_cant_climb_instead_of_crawling",
+    "tests/srd/test_glossary.py::test_stand_costs_half_speed_and_ends_prone",
+    "tests/srd/test_glossary.py::test_stand_cost_follows_the_creatures_speed",
+    "tests/srd/test_glossary.py::test_stand_command_spends_half_speed",
+    "tests/srd/test_glossary.py::test_stand_cost_rounds_down_for_an_odd_speed",
+    "tests/srd/test_glossary.py::test_stand_with_exactly_the_cost_left",
+    "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
+    "tests/srd/test_glossary.py::test_dash_doesnt_raise_the_stand_cost",
+    "tests/srd/test_glossary.py::test_stand_when_not_prone_refused_cleanly",
+    "tests/srd/test_glossary.py::test_cant_stand_up_for_free_on_another_creatures_turn",
+    "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time",
+    "tests/srd/test_glossary.py::test_grappled_prone_creature_cant_stand",
+    "tests/srd/test_glossary.py::test_restrained_prone_pc_stand_command_refused",
+    "tests/srd/test_glossary.py::test_speed_zero_ends_and_the_creature_can_stand",
+    "tests/srd/test_glossary.py::test_speed_reduced_to_zero_by_a_penalty_cant_stand",
+    "tests/srd/test_glossary.py::test_speed_five_can_still_stand",
+    "tests/srd/test_glossary.py::test_movement_left_from_before_a_grapple_cant_right_you",
+    "tests/srd/test_glossary.py::test_prone_attacker_melee_has_disadvantage",
+    "tests/srd/test_glossary.py::test_prone_attacker_ranged_has_disadvantage",
+    "tests/srd/test_glossary.py::test_prone_caster_spell_attack_has_disadvantage",
+    "tests/srd/test_glossary.py::test_prone_attack_command_has_disadvantage",
+    "tests/srd/test_glossary.py::test_standing_attacker_has_no_prone_disadvantage",
+    "tests/srd/test_glossary.py::test_prone_doesnt_affect_saving_throws",
+    "tests/srd/test_glossary.py::test_prone_attacker_against_prone_target_cancels",
+    "tests/srd/test_glossary.py::test_prone_attacker_disadvantage_cancels_restrained_target_advantage",
+    "tests/srd/test_glossary.py::test_adjacent_attack_on_prone_target_has_advantage",
+    "tests/srd/test_glossary.py::test_diagonal_adjacent_attack_on_prone_target_has_advantage",
+    "tests/srd/test_glossary.py::test_monster_attack_on_adjacent_prone_pc_has_advantage",
+    "tests/srd/test_glossary.py::test_ranged_attack_from_within_5_ft_on_prone_target_cancels",
+    "tests/srd/test_glossary.py::test_ranged_attack_on_distant_prone_target_has_disadvantage",
+    "tests/srd/test_glossary.py::test_reach_attack_from_10_ft_on_prone_target_has_disadvantage",
+    "tests/srd/test_glossary.py::test_distant_prone_restrained_target_cancels",
+    "tests/srd/test_glossary.py::test_spell_attack_on_distant_prone_target_has_disadvantage",
+    "tests/srd/journeys/test_prone_journey.py::test_prone_pc_fights_crawls_and_stands"
+  ],
+  "tickets": [
+    "T-43",
+    "T-44",
+    "T-45",
+    "T-46"
+  ]
+}

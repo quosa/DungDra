@@ -1,0 +1,15 @@
+{
+  "id": "T-18",
+  "kind": "infra",
+  "unit": "PLAY.combat.cover",
+  "title": "Obstacle geometry: scene objects with extent/height and a method that derives the cover degree (half / three-quarters / total) between an origin and a target from the objects and creatures in the line",
+  "tests": [],
+  "status": "void",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "void",
+      "reason": "duplicate of T-17 (same capability filed twice by one plan)"
+    }
+  ]
+}

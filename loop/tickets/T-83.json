@@ -1,0 +1,17 @@
+{
+  "id": "T-83",
+  "kind": "bug",
+  "unit": "GLOSS.area-of-effect",
+  "title": "SRD: a location cut off from the point of origin by Total Cover isn't in the area; engine: Burning Hands sets fire to a flammable object behind Total Cover because scene objects are placed in the area by geometry alone",
+  "tests": [
+    "tests/srd/test_glossary.py::test_an_object_cut_off_from_the_origin_isnt_in_the_area"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Burning Hands no longer sets fire to a flammable object behind Total Cover. Before, `_area_objects` placed scene objects in the area by geometry alone. Now it also leaves out an object whose lines from the point of origin are all blocked under GLOSS.area-of-effect#3. It measures cover from the caster for a Self-range spell and from the origin point otherwise, the same way `_area_targets` does for creatures, and logs the exclusion with page=177. To share the cover lookup with objects, I split the scene-label part of `Game.cover_between` into a new `Game.labelled_cover(origin, key)`, which reads the per-origin and blanket cover labels by creature id or object name. The 'take the most protective degree' rule (PLAY.combat.cover#4) moved into a shared `_most_cover` helper, and `cover_between` now combines `labelled_cover` with the Half Cover from creatures in the way. Results: the ticket test passes with --runxfail, and in a normal run it now shows as an unexpected pass (XPASS), which strict mode reports as a failure until the harness removes the marker. 532 unit tests pass, the rest of the glossary and scenario suites pass (320), ruff check and format are clean, and dev-gate passes."
+    }
+  ]
+}

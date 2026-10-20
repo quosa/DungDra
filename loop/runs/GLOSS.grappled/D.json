@@ -1,0 +1,215 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_speed_is_zero",
+   "verdict": "keep",
+   "reason": "Follows directly from 'Your Speed is 0'.",
+   "mutation": "effects.py:271 removed \"grappled\" from the speed_zero conditions → test failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_special_speed_is_zero_too",
+   "verdict": "keep",
+   "reason": "Climb Speed is 0 per R-07. The climb test repeats this assert but reaches it through add_condition rather than the grapple action, so it isn't an exact duplicate.",
+   "mutation": "effects.py:271 removed \"grappled\" from speed_zero → test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappler_and_escaped_creature_keep_their_speed",
+   "verdict": "keep",
+   "reason": "Only the creature that has the condition is affected, and the effect ends with the condition.",
+   "mutation": "Two mutations: (a) effects.py:126 made the 'grappling' flag zero the grappler's Speed → failed; (b) combat.py:1652 release_grapple no longer removes the condition → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_turn_starts_with_no_movement",
+   "verdict": "keep",
+   "reason": "With Speed 0, the turn's movement budget is 0.",
+   "mutation": "effects.py:271 removed \"grappled\" from speed_zero → failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_speed_cant_increase_with_a_bonus",
+   "verdict": "keep",
+   "reason": "Covers 'can't increase'. A +10 ft effect must still leave Speed at 0.",
+   "mutation": "creature.py:321 changed 'return 0' to 'base = 0', so Speed is zeroed but bonuses still apply → failed (Speed became 10).",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_dash_adds_no_movement",
+   "verdict": "keep",
+   "reason": "Dash adds your Speed, which is 0. The test catches Dash reading the base Speed.",
+   "mutation": "actions.py:166 Dash adds speeds['walk'] instead of speed() → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_cant_move_even_one_step",
+   "verdict": "keep",
+   "reason": "Requires the refusal to name Speed 0, not just an empty budget.",
+   "mutation": "combat.py:493 Speed-0 refusal disabled ('if False:') → failed, because the budget refusal's message has no 'Speed'.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_spend_leftover_movement",
+   "verdict": "keep",
+   "reason": "30 ft of budget is left, so only the Speed-0 rule can stop the move. Distinct from the turn-start case.",
+   "mutation": "combat.py:493 Speed-0 refusal disabled → failed (the move went through).",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+   "verdict": "keep",
+   "reason": "R-07 says every Speed is 0. The test exercises the climb movement path with budget left.",
+   "mutation": "creature.py:320 speed_zero applied only to kind=='walk' → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_pc_move_command_refused",
+   "verdict": "keep",
+   "reason": "Covers the Session command path. It has no match string, but breaking the rule does make it fail.",
+   "mutation": "effects.py:271 removed \"grappled\" from speed_zero → failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_attack_on_other_target_has_disadvantage",
+   "verdict": "keep",
+   "reason": "Follows directly from the clause #2 text.",
+   "mutation": "effects.py:216 condition 'ctx.target.id not in grapplers' → False → failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_attack_command_has_disadvantage",
+   "verdict": "keep",
+   "reason": "Covers the command/log path. Its log check ('isadvantage') is loose but sensitive enough to catch the mutation.",
+   "mutation": "effects.py:216 → False → failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappled_attack_on_grappler_has_no_disadvantage",
+   "verdict": "keep",
+   "reason": "Attacks on the grappler itself are exempt, per the plain text.",
+   "mutation": "effects.py:216 → True (Disadvantage against everyone) → failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappler_attacks_without_grappled_disadvantage",
+   "verdict": "keep",
+   "reason": "The grappler isn't Grappled, so it gets no Disadvantage.",
+   "mutation": "combat.py:1586 grapple also gives the attacker the Grappled condition (a symmetric grapple) → failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_disadvantage_ends_with_the_grapple",
+   "verdict": "keep",
+   "reason": "The effects last only while you have the condition.",
+   "mutation": "combat.py:1652 release_grapple doesn't remove the condition → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage",
+   "verdict": "keep",
+   "reason": "The ambiguity is settled by ruling R-06, which the test follows.",
+   "mutation": "effects.py:213 grapplers = set(), so only each effect's own grappler is exempt → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappler_drags_target_along",
+   "verdict": "keep",
+   "reason": "'Can drag or carry you when it moves.'",
+   "mutation": "combat.py:520 the dragged creature's position isn't updated → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_grappler_moving_without_dragging_leaves_target",
+   "verdict": "keep",
+   "reason": "'Can' means dragging is optional. The test catches automatic dragging.",
+   "mutation": "combat.py:518 every creature the mover grapples is always dragged → failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling",
+   "verdict": "keep",
+   "reason": "Only the grappler can drag.",
+   "mutation": "combat.py:420 ownership refusal → if False → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples",
+   "verdict": "keep",
+   "reason": "Separates 'the grappler' from 'anyone, as long as the target is Grappled'.",
+   "mutation": "combat.py:420 condition changed to 'not grapplers_of(drag)' (anyone can drag a Grappled creature) → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_dragging_one_size_smaller_costs_double",
+   "verdict": "keep",
+   "reason": "A gap of 1 isn't 'two or more' and Small isn't Tiny, so the extra foot applies.",
+   "mutation": "combat.py:485 size-gap threshold >=2 → >=1 → failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_dragging_same_size_costs_double",
+   "verdict": "keep",
+   "reason": "The same size pays the extra cost.",
+   "mutation": "combat.py:485 threshold → >=0 → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_drag_cost_stacks_with_difficult_terrain",
+   "verdict": "keep",
+   "reason": "Each rule adds 1 extra foot per foot. Stacking is the natural reading and matches the engine's crawl/climb treatment. No register ruling exists, but the reading isn't contested.",
+   "mutation": "combat.py:487 drag cost changed to max(cost, 2*dist) (doesn't stack) → failed (20 instead of 30).",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_dragging_exactly_two_sizes_smaller_costs_nothing_extra",
+   "verdict": "keep",
+   "reason": "Boundary at 'two or more sizes smaller'.",
+   "mutation": "combat.py:485 threshold → >=3 → failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_dragging_exactly_one_size_smaller_for_large_costs_double",
+   "verdict": "keep",
+   "reason": "Other side of the two-sizes boundary with the same Large grappler. It nearly duplicates the Medium→Small one-size test, but it guards against size-table or grappler-size bugs.",
+   "mutation": "combat.py:485 threshold → >=1 → failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_tiny_dragging_tiny_costs_nothing_extra",
+   "verdict": "keep",
+   "reason": "The ambiguity is settled by R-05: Tiny never adds extra cost.",
+   "mutation": "combat.py:486 Tiny exemption removed → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_small_grappler_drags_tiny_without_extra_cost",
+   "verdict": "keep",
+   "reason": "Plain text ('unless you are Tiny'), so it doesn't depend on R-05. Small→Tiny is a one-size gap, so only the Tiny exemption makes it free. Not a duplicate of the Tiny-by-Tiny test, which rests on the ruling.",
+   "mutation": "combat.py:486 Tiny exemption removed → failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_small_grappler_drags_small_at_double_cost",
+   "verdict": "keep",
+   "reason": "Correct oracle. It is close to test_dragging_same_size_costs_double (Medium/Medium), but it pins the non-Tiny side of the boundary with the same Small grappler as the Small→Tiny test. It's the negative partner showing that the Tiny exemption isn't 'Small or smaller'.",
+   "mutation": "combat.py:486 same-size drag made free → failed. Note that a 'tiny or small' exemption mutation would also be caught by the Medium→Small test, so its added value is modest.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_drag_cost_uses_whole_speed_exactly",
+   "verdict": "keep",
+   "reason": "Spending exactly all the movement (15 ft × 2 = 30) is allowed.",
+   "mutation": "combat.py:504 'cost > movement_left' → '>=' → failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_drag_beyond_speed_refused",
+   "verdict": "keep",
+   "reason": "20 ft × 2 = 40 > 30, so the move is refused.",
+   "mutation": "combat.py:487 drag cost removed (pass) → failed (the move was allowed).",
+   "confidence": 0.85
+  }
+ ],
+ "summary": "Read the GLOSS.grappled text and rulings R-05, R-06 and R-07, and ran one targeted engine mutation per test with `srdloop mutate`. Every mutation made its test fail. No oracle conflicts with the SRD text: ambiguous cases follow R-05 (Tiny-by-Tiny drag), R-06 (two grapplers) and R-07 (special Speeds), and difficult-terrain stacking is the uncontested natural reading. Exact duplicates: none. The closest overlaps are small_drags_small vs. same_size, Large→Medium vs. Medium→Small, and special_speed vs. the mid-turn climb assert. Each still pins a distinct boundary or code path, so I kept them at lower confidence. Verdict: keep all 30."
+}

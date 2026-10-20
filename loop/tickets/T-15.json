@@ -1,0 +1,17 @@
+{
+  "id": "T-15",
+  "kind": "bug",
+  "unit": "PLAY.combat.cover",
+  "title": "The Half/Three-Quarters Cover AC and save bonus is applied but no event carries rule=PLAY.combat.cover (T-9 traceability)",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_applied_cover_bonus_is_traced_to_the_rule"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-15 is fixed: a Half or Three-Quarters Cover bonus now leaves a log event tagged `rule=PLAY.combat.cover`.\n\nThere is now one helper, `Game.cover_bonus(attacker, target, against)` in `dungdra/game.py`. It works out the cover with the existing `cover_between`. With Half or Three-Quarters Cover, it returns the AC/save bonus and logs a GM-only `cover` event with page=15 and `rule=\"PLAY.combat.cover#5\"` (+2) or `\"#7\"` (+5). With no cover or Total Cover it returns nothing and logs nothing; the Total Cover refusal is unchanged. Weapon attacks (`combat.attack`), spell attack rolls and Dexterity saves against spells (`spell_save`) now all get the bonus from this helper, replacing three copies of the same inline code. So cover is traced the same way everywhere, not just for weapon attacks.\n\nThree unit tests cover +2 with clause #5, +5 with clause #7, and no bonus or event for no cover or Total Cover.\n\nResults:\n- Unit tests: 245 passed.\n- `tests/srd/test_playing_the_game.py --runxfail`: 38 passed.\n- Full `tests/srd` and `tests/scenarios` without `--runxfail`: the only failure is the T-15 test reporting XPASS(strict), which is expected until the harness removes its marker.\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS, import contract OK."
+    }
+  ]
+}

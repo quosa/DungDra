@@ -1,0 +1,244 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "CMB-02",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "[H] Dropping Prone costs no movement.",
+    "rule_quote": "Your only movement options are to crawl",
+    "explanation": "Concerns the cost of going Prone, which the Prone unit doesn't cover. The unit covers effects while Prone."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb02_turn_economy",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "C.drop_prone(game, mia)",
+    "rule_quote": "Your only movement options are to crawl",
+    "explanation": "It only checks that dropping Prone costs no movement. It doesn't check any effect of being Prone."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb02_one_reaction_per_round",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "game.combat.spend(brom, \"reaction\")",
+    "rule_quote": "Your only movement options are to crawl",
+    "explanation": "It tests one Reaction per round. Prone isn't involved."
+   },
+   {
+    "item": "CMB-06",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "BROM Shoves a Bandit Prone.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "The Shove inflicts the condition. The effects of Prone aren't exercised."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb06_grapple_shove",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert C.shove(game, brom, bandit, \"prone\") and bandit.has(\"prone\")",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It only checks that a Shove applies Prone. It checks none of the Prone effects."
+   },
+   {
+    "item": "CMB-08",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "[H] JOZAN fails the DC 10 Dex save, falls off and lands Prone.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It is about how a rider gets Prone when the mount falls. The effects of Prone aren't covered."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb08_underwater",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "game.scene.underwater = True",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It covers underwater attack modifiers. No Prone creature is involved."
+   },
+   {
+    "item": "tests/scenarios/test_combat.py::test_cmb08_fall_off_mount",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert jozan.has(\"prone\") and \"mount\" not in jozan.notes",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It only checks that the rider gains Prone when the mount does. It checks no Prone effects."
+   },
+   {
+    "item": "HAZ-02",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "[H] The fall deals 9 Bludgeoning damage and leaves her Prone.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "Falling and burning give the condition. They don't exercise its effects."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_haz02_falling",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert m.hp == 21 and m.has(\"prone\")",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It checks that a fall leaves the creature Prone, not what Prone does."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_haz02_suffocation",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "H.start_holding_breath(game, m)",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It tests suffocation and Exhaustion. Prone isn't involved."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_haz02_food_water",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "H.end_of_day_water(game, lidda, 1)",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It tests food and water rules. Prone isn't involved."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_haz02_burning",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert b.has(\"prone\") and not b.find_effects(cls=H.Burning)",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "Dropping Prone to put out a fire is the Burning rule. The Prone effects aren't checked."
+   },
+   {
+    "item": "COND-01",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "is also Prone (and stays Prone after waking), and has Speed 0.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "This is the Unconscious condition's rule. It is not the Prone effects."
+   },
+   {
+    "item": "tests/scenarios/test_damage_rest.py::test_cond01_incapacitating",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert j.has(\"prone\") and j.speed() == 0",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It checks that Unconscious also grants Prone. It doesn't test Prone effects, and the attack Advantage here comes from Incapacitating conditions."
+   },
+   {
+    "item": "tests/scenarios/test_damage_rest.py::test_cond01_initiative_disadvantage",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "b.add_condition(\"incapacitated\")",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It tests Incapacitated initiative Disadvantage. Prone isn't involved."
+   },
+   {
+    "item": "COND-02",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "attacks from within 5 ft have Advantage and attacks from farther have Disadvantage.",
+    "rule_quote": "An attack roll against you has Advantage if the attacker is within 5 feet of you. Otherwise, that attack roll has Disadvantage.",
+    "explanation": "The Prone line matches clauses 2 to 6: standing costs half Speed, not possible at Speed 0, own attacks at Disadvantage, and the distance rule. The crawling cost is another rule's."
+   },
+   {
+    "item": "tests/scenarios/test_damage_rest.py::test_cond02",
+    "kind": "test",
+    "verdict": "under-asserts",
+    "evidence": "assert C.stand_up(game, gob) == 15 and game.combat.turn.movement_left == 15",
+    "rule_quote": "You have Disadvantage on attack rolls.",
+    "explanation": "It checks clauses 2 and 3, and clause 5 (melee at 5 ft) and clause 6 (ranged at 40 ft). It never checks that a Prone creature's own attacks have Disadvantage (clause 4) and never checks crawling (clause 1). It also doesn't test the 5 ft boundary against a ranged attacker, round-down at an odd Speed, or having too little movement left to right yourself."
+   },
+   {
+    "item": "SPELLS-04",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "[H] The Cultist's 10 fails DC 13, so it becomes Prone and ends its turn.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "Command's Grovel option applies the condition. The effects of Prone aren't covered."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spells04",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert cult.has(\"prone\") and not game.combat.turn.action_available()",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It checks the spell's outcome: Prone is applied and the action is lost. It tests no Prone effect."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spells04_sanctuary",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "S.cast(game, j, \"sanctuary\", m)",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It tests Sanctuary, which has nothing to do with Prone."
+   },
+   {
+    "item": "MON-02",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "a Medium or smaller target gets the **Prone** condition (no save)",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It covers the wolf's Bite applying the condition. It doesn't cover the effects."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_mon02_traits",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert lidda.has(\"prone\")",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It only checks that the wolf's Bite applies Prone."
+   },
+   {
+    "item": "TRAP-01",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "The lead PC falls, takes 3 Bludgeoning and is Prone.",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "The pit trap applies the condition. The effects aren't exercised."
+   },
+   {
+    "item": "tests/scenarios/test_world.py::test_trap01_hidden_pit",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert b.hp == 10 and b.has(\"prone\")",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "It only checks that falling into the pit leaves the creature Prone."
+   },
+   {
+    "item": "dungdra/combat.py:93",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=186,",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "This is the Reaction refusal (GLOSS.reaction), which only shares page 186 with Prone."
+   },
+   {
+    "item": "dungdra/combat.py:1702",
+    "kind": "code",
+    "verdict": "consistent",
+    "evidence": "raise Refusal(f\"{c.name} can't right themselves with Speed 0\", page=186, rule=\"GLOSS.prone\")",
+    "rule_quote": "If your Speed is 0, you can’t right yourself.",
+    "explanation": "It refuses to stand when Speed is 0, as clause 3 says. The next line, `cost = c.speed() // 2`, halves Speed and rounds down, as clause 2 says."
+   },
+   {
+    "item": "dungdra/combat.py:1709",
+    "kind": "code",
+    "verdict": "affected-by-ambiguity",
+    "evidence": "f\"Standing up costs {cost} ft of movement; {cb.turn.movement_left} ft left\",",
+    "rule_quote": "spend an amount of movement equal to half your Speed (round down) to right yourself and thereby end the condition",
+    "explanation": "It refuses to stand up when less than half Speed of movement remains. That follows reading A of the \"enough movement\" ambiguity, the proposed ruling. The SRD text doesn't state this refusal."
+   },
+   {
+    "item": "dungdra/creature.py:538",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"p.186: 10 + check bonus, +5 with Advantage, -5 with Disadvantage.\"\"\"",
+    "rule_quote": "While you have the Prone condition, you experience the following effects.",
+    "explanation": "This is the passive-check docstring. It only shares page 186 with Prone."
+   }
+  ],
+  "summary": "Of the 31 items, only COND-02 and test_cond02 and two engine lines in stand_up() are really about Prone. The scenario line is consistent. test_cond02 under-asserts clause 4 (a Prone creature's own attack Disadvantage) and clause 1 (crawling), and skips the 5 ft boundary, round-down at an odd Speed, and having too little movement left to stand. combat.py:1702 is consistent with clause 3 and combat.py:1709 follows the proposed reading of the \"enough movement\" ambiguity. The remaining scenarios, tests and code lines only apply Prone or share page 186, so I marked them not-related. No item contradicts the SRD. Evidence for each test is now a verbatim line from the test body, which fixes the five checks that failed last time."
+ },
+ "problems": [
+  "verdict on MON-02 #1: evidence is not a verbatim quote: 'a Medium or smaller target gets the **Prone** condition (no save)'"
+ ],
+ "cost_usd": 0.17412619999999998,
+ "session": "e4dd656e-9108-40bf-9d3c-bd3123ef80b0"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "T-30",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "gear.py (buy/sell valuation, lines ~147 and ~251) prices items with item_cost(name), so it ignores the new per-item `cost` prop that Item.unit_cost() honours. Route item valuation through Item.unit_cost() so one value mechanism exists",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-30 is fixed. An owned item's value now comes from one place on the Item, so a per-item `cost` prop sets its sale price.\n\nWhat changed:\n- **`dungdra/items.py`**: I added `Item.listed_cost()`. It returns the `cost` prop if the item has one, otherwise the equipment-table price, or None if the item has no price. `unit_cost()` now just calls it and still returns 0 for an unpriced item, so the material-cost check in spells.py behaves as before.\n- **`sale_price()`** now takes an Item instead of a name and works from `listed_cost()`. It is still half the value rounded down, and it still refuses an unpriced item.\n- **`dungdra/gear.py`**: `sell()` passes the item itself to `sale_price`. Before, it passed `it.base`, which skipped the `cost` prop. The `sell_value` override still works.\n\nI left `buy()` and `craft_plan()` on `item_cost(name)`. Both price a catalog name before any Item exists, and the table price is the same source `listed_cost()` falls back to. Building a temporary Item there would use up an item id and change nothing.\n\nThe ticket lists no acceptance tests. The existing selling test (EQP-04: a longsword sells for 750 CP) still passes. New unit tests cover the cost-prop override, unpriced items, rounding down, the refusal, and selling through `gear.sell`. No SRD tags were added because this refactor adds no rule.\n\nChecks run: the new unit tests (8 passed), the full `pytest -q` (594 passed), `ruff check` and `ruff format --check` (clean), and `python -m scripts.srdloop dev-gate` (PASS)."
+    }
+  ]
+}

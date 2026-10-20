@@ -1,0 +1,26 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The \"not your turn\" and \"can't act while Incapacitated\" refusals are now written once, in a new helper `Combat._require_turn` (dungdra/combat.py). `require_action` calls it before its own action-available and Action Surge/Magic checks. In `spend()`, \"action\" goes through `require_action` only, and \"bonus\"/\"free\" go through `_require_turn` only, so the checks no longer run twice. Refusal wording and order are unchanged. I added unit tests for three things: spend('action'|'bonus'|'free') is refused off-turn and while Incapacitated with nothing spent; a bonus action is refused the second time in a turn; and so is a second free object interaction. Unit tests pass (420), the full suite passes (780), ruff check and ruff format --check are clean, and dev-gate passes. The first dev-gate run failed because changed line dungdra/combat.py:176 had too little unit-test coverage (changed lines 88% covered, gate needs 90%). The second test closed that gap and the re-run passed. The ticket listed no acceptance tests, so there was nothing to run with --runxfail. This is a pure refactor with no rule change, so I added no SRD tags.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_spend_refuses_off_turn_and_incapacitated_without_spending",
+   "tests/unit/test_combat.py::test_spend_bonus_or_free_interaction_once_per_turn"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change: each refusal is now written in one place and behaviour is unchanged.\n\n- **The refactor:** the off-turn and Incapacitated refusals now live only in the new `Combat._require_turn` (`dungdra/combat.py:129`). `require_action` and the bonus and free branches of `spend` both call it, so the duplicate checks are gone.\n- **Action path:** `spend('action')` now runs `require_action` and goes straight to using up the action. The checks happen in the same order as before, and every refusal keeps its message, page and `rule=`.\n- **Reaction branch:** it keeps its own Incapacitated refusal. That is correct, not leftover duplication: Reactions aren't limited to the actor's turn, and the message is different (\"can't take Reactions\").\n- **Tests:** the two new unit tests check real behaviour, not the code's own constants:\n  - The bonus, action and free kinds are all refused off-turn and while Incapacitated, and the turn is left untouched.\n  - A second bonus or free interaction in the same turn is refused with the right page, and spending it doesn't use up the action.\n- **Scope:** besides the code and tests, the diff only adds the loop's own cost-log line in `loop/costs.jsonl`.\n\nAll gates pass. I found no problems and filed no follow-ups."
+ },
+ "problems": [],
+ "cost_usd": 0.374,
+ "stash": ""
+}

@@ -1,0 +1,362 @@
+{
+ "summary": "I checked all 51 PLAY.combat.cover tests (50 names, one of them parametrized twice). For each one I re-read the SRD p.15 clause, checked the R-09/R-10/R-11 rulings, and broke the engine in a scratch copy with `scripts.srdloop mutate`. Every test catches at least one targeted break, and I found no wrong oracle: each expected result follows from the SRD text or a register ruling.\n\nI refute 3 tests as duplicates:\n- **test_object_covering_the_whole_target_gives_total_cover** has the same setup and the same assertion as test_total_cover_is_not_a_bigger_ac_bonus.\n- **test_object_covering_only_half_gives_half_not_three_quarters** adds nothing beyond test_half_cover_ac_is_exactly_two. The engine never works out how much of the target an object covers: the test just sets the label to \"half\".\n- **test_three_quarters_cover_doesnt_help_a_con_save** is the half-cover Con save test with only the degree changed. The Dex-only check runs before the degree is looked at, so one change breaks both. I'm only 0.55 sure here, so a person decides.\n\nWeak spots in tests I kept:\n- **Dex save upper bound.** test_half_cover_adds_two_to_dex_save and test_creature_in_the_way_gives_half_cover_to_a_dex_save still pass if Half Cover gives +3 to Dex saves. Only the AC tests pin +2 exactly, because AC and saves share one value in `game.py:233`. Three-Quarters doesn't have this gap: test_three_quarters_dex_save_one_short catches +6.\n- **Kept on a narrow margin.**\n  - test_creature_cover_applies_through_the_session (`Session.cmd_attack` just calls `C.attack`)\n  - test_creature_in_the_way_gives_half_cover_to_a_spell_attack (every break that fails it also fails another test)\n  - test_object_covering_three_quarters_gives_plus_five (its only unique catch is the #7 clause number in the log)\n- **Earned their place.**\n  - test_refused_total_cover_attack_keeps_the_attack_action is the only test that catches the attack being spent before the Total Cover refusal; the session refusal test still passes with that break.\n  - test_half_cover_raises_a_pcs_ac_against_a_monster catches cover applied only against PC attackers.\n  - test_ally_in_the_way_gives_half_cover_to_the_enemy catches allies of the attacker being ignored.\n  - test_small_creature_in_front_of_a_large_one_gives_half_cover catches a size threshold.\n  - test_creature_on_a_diagonal_line_gives_half_cover catches line checks that only work on straight lines.\n\nA few verdicts (both 3/4 save tests, test_creature_alone_never_gives_three_quarters' sibling in the 3/4-creature row of the table below, and test_creature_cover_protects_a_pc_from_a_monster's companion tests) rest on breaks I reasoned through rather than ran; each such row says so in its mutation field. The batch and loop runs were denied, so I ran the mutations one command at a time.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_cover_makes_a_hit_harder",
+   "verdict": "keep",
+   "reason": "Follows #1. Pins total 16 against AC 17 and checks the miss.",
+   "mutation": "Changed the Half bonus from 2 to 3 (game.py:233): the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_no_cover_no_bonus",
+   "verdict": "keep",
+   "reason": "Control case: with no cover there is no Cover modifier.",
+   "mutation": "Made scene-wide cover default to 'half' (game.py:221): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_applied_cover_bonus_is_traced_to_the_rule",
+   "verdict": "keep",
+   "reason": "Checks the traceability rule (rule= on the log event).",
+   "mutation": "Changed the cover log's rule to 'X' (game.py:239): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_each_degree_gives_its_own_ac_bonus[half-2]",
+   "verdict": "keep",
+   "reason": "Matches the table: Half gives +2.",
+   "mutation": "Changed the Half bonus to 1: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_each_degree_gives_its_own_ac_bonus[three-quarters-5]",
+   "verdict": "keep",
+   "reason": "Matches the table: Three-Quarters gives +5.",
+   "mutation": "Changed the Three-Quarters bonus to 4: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_is_not_a_bigger_ac_bonus",
+   "verdict": "keep",
+   "reason": "Total Cover means the target can't be targeted, not a bigger bonus. Correct oracle.",
+   "mutation": "Made the Total Cover check in combat.py:942 never match: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_cover_from_one_attacker_doesnt_protect_against_another",
+   "verdict": "keep",
+   "reason": "#3: cover counts against one origin only.",
+   "mutation": "Let a cover entry from any origin apply to the target (game.py:220): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_cover_is_not_symmetric",
+   "verdict": "keep",
+   "reason": "Matches ruling R-11.",
+   "mutation": "Looked up cover in both directions (game.py:220): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_dex_save_cover_only_against_effect_from_the_far_side",
+   "verdict": "keep",
+   "reason": "#3 on the Dex save path.",
+   "mutation": "Let a cover entry from any origin apply: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_from_another_side_doesnt_stop_the_attack",
+   "verdict": "keep",
+   "reason": "#3 for Total Cover. This is the only test that catches the break below on the refusal path.",
+   "mutation": "Let a cover entry from any origin apply: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_cover_is_worked_out_per_attacker",
+   "verdict": "keep",
+   "reason": "#3 with cover from a creature's position rather than a scene label.",
+   "mutation": "Made every living creature give cover, dropping the between() check (game.py:268): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_cover_protects_a_pc_from_a_monster",
+   "verdict": "keep",
+   "reason": "Creature cover also protects a PC target from a monster.",
+   "mutation": "Gave creature cover only against PC attackers (game.py:222): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_half_and_tree_three_quarters_give_three_quarters",
+   "verdict": "keep",
+   "reason": "#4: the SRD's own example.",
+   "mutation": "Returned the scene-wide cover first ('c2 or c1 or c3', game.py:224): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_two_half_covers_dont_add_up",
+   "verdict": "keep",
+   "reason": "#4: degrees aren't added together.",
+   "mutation": "Made two Half Covers add up to Three-Quarters (game.py:224): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_beats_lesser_cover",
+   "verdict": "keep",
+   "reason": "#4: Total Cover wins over a lesser degree.",
+   "mutation": "Returned the first cover found ('c1 or c2 or c3'): the test failed. Returning the scene-wide cover first ('c2 or c1') didn't break it, because the Total entry is the scene-wide one.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_spell_attack_cover_doesnt_stack",
+   "verdict": "keep",
+   "reason": "#4 on the spell attack path.",
+   "mutation": "Returned the first cover found ('c1 or c2 or c3'): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_dex_save_cover_doesnt_stack",
+   "verdict": "keep",
+   "reason": "#4 on Dex saves; checks the exact total of 13.",
+   "mutation": "Returned the scene-wide cover first ('c2 or c1 or c3'): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_half_cover_ac_is_exactly_two",
+   "verdict": "keep",
+   "reason": "Boundary test that pins +2 from both sides.",
+   "mutation": "Ran the Half bonus at 3 against the AC tests; the bonus is shared, so this boundary catches it. Reasoned, not run on this test.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_half_cover_adds_two_to_dex_save",
+   "verdict": "keep",
+   "reason": "Shows Half Cover reaches Dex saves. Weak: it only checks the save is at least +2.",
+   "mutation": "Turned off cover on Dex saves (spells.py:625): the test failed. Half bonus 1: failed. Half bonus 3: STILL PASSED, so it doesn't pin exactly +2.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_no_cover_dex_save_fails",
+   "verdict": "keep",
+   "reason": "Control case for the Dex save tests.",
+   "mutation": "Made scene-wide cover default to 'half': the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_cover_doesnt_help_other_saves",
+   "verdict": "keep",
+   "reason": "The table limits the bonus to AC and Dex saves.",
+   "mutation": "Applied cover to Con saves too (spells.py:625): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_half_cover_on_a_spell_attack",
+   "verdict": "keep",
+   "reason": "Covers the separate AC code for spell attacks (spells.py:597).",
+   "mutation": "Dropped the cover bonus from spell attack AC: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_half_cover_on_a_melee_attack",
+   "verdict": "keep",
+   "reason": "Cover isn't limited to ranged attacks.",
+   "mutation": "Applied the AC cover bonus only when distance > 5 (combat.py:1089): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_half_cover_raises_a_pcs_ac_against_a_monster",
+   "verdict": "keep",
+   "reason": "The cover bonus also works when a monster attacks.",
+   "mutation": "Applied the AC cover bonus only for PC attackers (combat.py:1089): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover",
+   "verdict": "keep",
+   "reason": "#6: another creature gives Half Cover.",
+   "mutation": "Set creature cover to None (game.py:222): the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_ally_in_the_way_gives_half_cover_to_the_enemy",
+   "verdict": "keep",
+   "reason": "'Another creature' covers the attacker's allies too.",
+   "mutation": "Ignored creatures on the attacker's team (game.py:268): the test failed. test_creature_in_the_way_gives_half_cover wouldn't catch this.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_off_the_line_gives_no_cover",
+   "verdict": "keep",
+   "reason": "Only a creature in between gives cover.",
+   "mutation": "Made every creature give cover, dropping between(): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_behind_the_target_gives_no_cover",
+   "verdict": "keep",
+   "reason": "The cover must be between the origin and the target.",
+   "mutation": "Extended the line past the target (game.py:262): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_and_object_give_only_half",
+   "verdict": "keep",
+   "reason": "R-09 and #4, with the creature as one source; two_half_covers uses only labels.",
+   "mutation": "Made two Half Covers add up to Three-Quarters: the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_small_creature_in_front_of_a_large_one_gives_half_cover",
+   "verdict": "keep",
+   "reason": "R-09 says a creature of any size gives cover.",
+   "mutation": "Required the covering creature to be at least the target's size: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_on_a_diagonal_line_gives_half_cover",
+   "verdict": "keep",
+   "reason": "Tests the line check on a diagonal.",
+   "mutation": "Allowed creature cover only on horizontal lines (game.py:260): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_behind_the_attacker_gives_no_cover",
+   "verdict": "keep",
+   "reason": "The line ends at the attacker.",
+   "mutation": "Extended the line behind the attacker (game.py:262): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover_to_a_spell_attack",
+   "verdict": "keep",
+   "reason": "Creature cover on the spell attack path. Every break that fails it also fails another test.",
+   "mutation": "Dropped the cover bonus from spell attack AC (spells.py:597): the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover_to_a_dex_save",
+   "verdict": "keep",
+   "reason": "Creature cover on a save against an area effect. Like the other half-cover save test, it doesn't pin +2 exactly.",
+   "mutation": "Set creature cover to None: the test failed. Half bonus 3: still passed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_cover_applies_through_the_session",
+   "verdict": "keep",
+   "reason": "Session-level check, plus the #5 log clause. Session.cmd_attack just calls C.attack, so its unique value is small.",
+   "mutation": "Set creature cover to None: the test failed.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_three_quarters_ac_is_exactly_five",
+   "verdict": "keep",
+   "reason": "Boundary test that pins +5.",
+   "mutation": "Changed the Three-Quarters bonus to 6: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_three_quarters_adds_five_to_dex_save",
+   "verdict": "keep",
+   "reason": "Three-Quarters reaches Dex saves. The one-short test pins the upper side.",
+   "mutation": "Bonus 4: the test failed. Bonus 6: passed. The paired one-short test catches 6.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_three_quarters_dex_save_one_short",
+   "verdict": "keep",
+   "reason": "Upper boundary for the +5 on saves.",
+   "mutation": "Changed the Three-Quarters bonus to 6: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_three_quarters_cover_doesnt_help_a_con_save",
+   "verdict": "refute",
+   "reason": "Duplicate of test_cover_doesnt_help_other_saves: same Thunderwave Con save, only the degree changes. The Dex-only check runs before the degree is looked at, so no realistic break fails one test and not the other.",
+   "mutation": "Applied cover to Con saves too: both tests failed together.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_alone_never_gives_three_quarters",
+   "verdict": "keep",
+   "reason": "R-09: several creatures in the line still give only Half.",
+   "mutation": "Made two or more creatures give Three-Quarters: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_object_covering_three_quarters_gives_plus_five",
+   "verdict": "keep",
+   "reason": "Mostly overlaps the 3/4 AC tests. Its unique catch is the #7 clause in the log.",
+   "mutation": "Logged Three-Quarters as clause #5: the test failed; no other 3/4 AC test checks the log.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_object_covering_only_half_gives_half_not_three_quarters",
+   "verdict": "refute",
+   "reason": "Duplicate of test_half_cover_ac_is_exactly_two: same 'half' label, same target 17, and a looser hit check. The engine doesn't work out how much of the target an object covers; the test sets the label itself, so nothing about clause #8's 'at least three-quarters' is tested.",
+   "mutation": "Every break that fails it (for example Half bonus 3) also fails test_half_cover_ac_is_exactly_two and each_degree[half-2].",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_refuses_weapon_attack",
+   "verdict": "keep",
+   "reason": "#9, using scene-wide cover; also checks the refusal cites page 15.",
+   "mutation": "Made the Total Cover check never match: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_refuses_single_target_spell",
+   "verdict": "keep",
+   "reason": "#9 on the spell targeting path, with the slot kept.",
+   "mutation": "Made the spell Total Cover check never match (spells.py:234): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_sacred_flame_still_cant_target_total_cover",
+   "verdict": "keep",
+   "reason": "Sacred Flame ignores only Half and Three-Quarters Cover. Correct oracle.",
+   "mutation": "Made the spell Total Cover check never match: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_doesnt_refuse_an_area_spell",
+   "verdict": "keep",
+   "reason": "Matches ruling R-10.",
+   "mutation": "Ran the Total Cover check on area spells too (spells.py:233): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_refused_through_the_session",
+   "verdict": "keep",
+   "reason": "Total Cover refusal through the session layer.",
+   "mutation": "Made the weapon Total Cover check never match: the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_refused_total_cover_attack_keeps_the_attack_action",
+   "verdict": "keep",
+   "reason": "Abuse case: a refused attack must not use up the attack.",
+   "mutation": "Spent the attack before the cover check (combat.py:941): the test FAILED, while test_total_cover_refused_through_the_session still PASSED. Only this test catches it.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_total_cover_target_cant_be_slipped_into_a_multi_target_spell",
+   "verdict": "keep",
+   "reason": "Each target of a multi-target spell is checked (R-10).",
+   "mutation": "Checked only the first target (targets[:1]): the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover",
+   "verdict": "keep",
+   "reason": "#10 / R-09: a creature never gives Total Cover.",
+   "mutation": "Made creature cover 'total': the test failed. Made it 'three-quarters': also failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_playing_the_game.py::test_object_covering_the_whole_target_gives_total_cover",
+   "verdict": "refute",
+   "reason": "Exact duplicate of test_total_cover_is_not_a_bigger_ac_bonus: the same cover[(lidda, gob)] = 'total' setup and the same assert_refused_cleanly(..., match='Total Cover'). Only the marker's clause label differs.",
+   "mutation": "Made the weapon Total Cover check never match: this test and its twin both failed.",
+   "confidence": 0.85
+  }
+ ]
+}

@@ -1,0 +1,347 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.grappled#1",
+   "with": "GLOSS.speed (special speeds: Climb)",
+   "risk": "high",
+   "note": "R-07: every Speed is 0. The test needs a non-zero movement budget left over from before the grapple, otherwise the empty budget refuses the move before the Speed rule is ever checked."
+  },
+  {
+   "clause": "GLOSS.grappled#1",
+   "with": "Dash / Speed bonuses (SpeedPenalty with a negative value)",
+   "risk": "medium",
+   "note": "'can't increase': Dash and a +10 ft bonus must both leave 0 ft of movement."
+  },
+  {
+   "clause": "GLOSS.grappled#1",
+   "with": "Prone / standing up (COND-02)",
+   "risk": "low",
+   "note": "Standing up costs half your Speed, so it is impossible at Speed 0. COND-02 already covers this."
+  },
+  {
+   "clause": "GLOSS.grappled#2",
+   "with": "multiple grapplers (R-06)",
+   "risk": "medium",
+   "note": "Attacks against either grappler have no Grappled Disadvantage. An attack against a third creature does."
+  },
+  {
+   "clause": "GLOSS.grappled#2",
+   "with": "GLOSS.disadvantage / Savage Attacker",
+   "risk": "low",
+   "note": "The roll mode and the source list must name Grappled, and the grappler's own attacks must be unaffected."
+  },
+  {
+   "clause": "GLOSS.grappled#3",
+   "with": "another creature's grapple",
+   "risk": "high",
+   "note": "Only the creature doing the grappling can drag the target. Anyone else trying to drag it is refused cleanly."
+  },
+  {
+   "clause": "GLOSS.grappled#4",
+   "with": "creature sizes (Tiny exemption vs the two-sizes gap, R-05)",
+   "risk": "high",
+   "note": "The Tiny branch only matters for a Tiny or Small grappler. A Medium grappler with a Tiny target falls under the size-gap branch anyway."
+  },
+  {
+   "clause": "GLOSS.grappled#4",
+   "with": "Difficult Terrain",
+   "risk": "medium",
+   "note": "The extra costs stack: 10 ft of dragging through Difficult Terrain costs 30 ft."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Moving while Speed is 0",
+   "test": "tests/srd/test_glossary.py::test_grappled_cant_move_even_one_step",
+   "reason": "Grappled sets Speed to 0, so even a 5 ft step is refused cleanly."
+  },
+  {
+   "case": "Dashing or stacking a Speed bonus while Speed is 0 and can't increase",
+   "test": "tests/srd/test_glossary.py::test_grappled_dash_adds_no_movement",
+   "reason": "'can't increase': Dash adds nothing."
+  },
+  {
+   "case": "Spending movement left over from before a Speed-0 condition started mid-turn",
+   "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_spend_leftover_movement",
+   "reason": "The goblin still has 30 ft of budget, but Speed 0 stops it moving."
+  },
+  {
+   "case": "Escaping a Speed-0 condition with a special Speed (climb), using leftover movement (added to the catalogue)",
+   "test": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+   "reason": "R-07: Climb Speed is 0 too. The leftover budget means only the zeroed Climb Speed can be what refuses the climb."
+  },
+  {
+   "case": "Player move command while Grappled",
+   "test": "tests/srd/test_glossary.py::test_grappled_pc_move_command_refused",
+   "reason": "Session.execute refuses the move cleanly and the position doesn't change."
+  },
+  {
+   "case": "Dragging a creature you aren't grappling",
+   "test": "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling",
+   "reason": "Only 'the grappler' can drag."
+  },
+  {
+   "case": "Dragging a creature someone else is grappling",
+   "test": "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples",
+   "reason": "Only 'the grappler' can drag."
+  },
+  {
+   "case": "Dragging past what your Speed covers once the drag cost is counted",
+   "test": "tests/srd/test_glossary.py::test_drag_beyond_speed_refused",
+   "reason": "20 ft of dragging costs 40 ft, which is more than a 30 ft Speed."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_speed_is_zero",
+   "clause": "GLOSS.grappled#1",
+   "kind": "positive",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_special_speed_is_zero_too",
+   "clause": "GLOSS.grappled#1",
+   "kind": "positive",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappler_and_escaped_creature_keep_their_speed",
+   "clause": "GLOSS.grappled#1",
+   "kind": "negative",
+   "rule_quote": "While you have the Grappled condition, you experience the following effects.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_turn_starts_with_no_movement",
+   "clause": "GLOSS.grappled#1",
+   "kind": "boundary",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_speed_cant_increase_with_a_bonus",
+   "clause": "GLOSS.grappled#1",
+   "kind": "boundary",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_dash_adds_no_movement",
+   "clause": "GLOSS.grappled#1",
+   "kind": "abuse",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_cant_move_even_one_step",
+   "clause": "GLOSS.grappled#1",
+   "kind": "abuse",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_spend_leftover_movement",
+   "clause": "GLOSS.grappled#1",
+   "kind": "abuse",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_mid_turn_cant_climb_with_leftover_movement",
+   "clause": "GLOSS.grappled#1",
+   "kind": "abuse",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_pc_move_command_refused",
+   "clause": "GLOSS.grappled#1",
+   "kind": "abuse",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_attack_on_other_target_has_disadvantage",
+   "clause": "GLOSS.grappled#2",
+   "kind": "positive",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_attack_command_has_disadvantage",
+   "clause": "GLOSS.grappled#2",
+   "kind": "positive",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappled_attack_on_grappler_has_no_disadvantage",
+   "clause": "GLOSS.grappled#2",
+   "kind": "negative",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappler_attacks_without_grappled_disadvantage",
+   "clause": "GLOSS.grappled#2",
+   "kind": "negative",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_disadvantage_ends_with_the_grapple",
+   "clause": "GLOSS.grappled#2",
+   "kind": "negative",
+   "rule_quote": "While you have the Grappled condition, you experience the following effects.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage",
+   "clause": "GLOSS.grappled#2",
+   "kind": "boundary",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappler_drags_target_along",
+   "clause": "GLOSS.grappled#3",
+   "kind": "positive",
+   "rule_quote": "The grappler can drag or carry you when it moves",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_grappler_moving_without_dragging_leaves_target",
+   "clause": "GLOSS.grappled#3",
+   "kind": "negative",
+   "rule_quote": "The grappler can drag or carry you when it moves",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_cant_drag_a_creature_you_arent_grappling",
+   "clause": "GLOSS.grappled#3",
+   "kind": "abuse",
+   "rule_quote": "The grappler can drag or carry you when it moves",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples",
+   "clause": "GLOSS.grappled#3",
+   "kind": "abuse",
+   "rule_quote": "The grappler can drag or carry you when it moves",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_dragging_one_size_smaller_costs_double",
+   "clause": "GLOSS.grappled#4",
+   "kind": "positive",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_dragging_same_size_costs_double",
+   "clause": "GLOSS.grappled#4",
+   "kind": "positive",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_drag_cost_stacks_with_difficult_terrain",
+   "clause": "GLOSS.grappled#4",
+   "kind": "positive",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_dragging_exactly_two_sizes_smaller_costs_nothing_extra",
+   "clause": "GLOSS.grappled#4",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_dragging_exactly_one_size_smaller_for_large_costs_double",
+   "clause": "GLOSS.grappled#4",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_tiny_dragging_tiny_costs_nothing_extra",
+   "clause": "GLOSS.grappled#4",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_small_grappler_drags_tiny_without_extra_cost",
+   "clause": "GLOSS.grappled#4",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_small_grappler_drags_small_at_double_cost",
+   "clause": "GLOSS.grappled#4",
+   "kind": "negative",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_drag_cost_uses_whole_speed_exactly",
+   "clause": "GLOSS.grappled#4",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_drag_beyond_speed_refused",
+   "clause": "GLOSS.grappled#4",
+   "kind": "abuse",
+   "rule_quote": "every foot of movement costs it 1 extra foot unless you are Tiny or two or more sizes smaller than it.",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "GLOSS.grappled#3",
+   "kind": "missing",
+   "reason": "'carry' as distinct from 'drag' (lifting the creature off the ground) has no separate representation; the engine models only dragging via move(drag=...). Dragging is tested.",
+   "infra_ticket": "Movement has no 'carry' mode distinct from drag for a grappled creature"
+  }
+ ],
+ "scenario_changes": [],
+ "rulings_proposed": [],
+ "summary": "All 30 GLOSS.grappled tests in tests/srd/test_glossary.py pass. ruff check and ruff format are clean. The previous attempt failed its checks because its report listed only the 3 new tests, so most clauses looked uncovered; this report lists every test for the unit. Coverage: #1 has 2 positive, 1 negative, 2 boundary and 5 abuse tests (Dash, mid-turn leftover movement, climbing with leftover movement under R-07, and a refused Session move). #2 has 2 positive tests (one through Session), 3 negative tests and a two-grappler boundary test (R-06). #3 has 1 positive, 1 negative and 2 abuse tests (dragging a creature you aren't grappling, or one someone else grapples). #4 has 3 positive tests (including stacking with Difficult Terrain), 1 negative test, 5 boundary tests (exactly two sizes smaller, one size smaller for a Large grappler, Tiny dragged by Tiny under R-05, Tiny dragged by Small, and using the whole Speed exactly) and 1 abuse test (dragging beyond Speed). Every test relies only on accepted rulings (R-05/06/07), so no new rulings are proposed. I made no scenario changes. CMB-06 already asserts there is no Disadvantage against the grappler, and the other gaps Stage B noted are covered here. 'Carry' as opposed to 'drag' is recorded as missing infrastructure."
+}

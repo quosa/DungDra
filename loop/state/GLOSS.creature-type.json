@@ -1,0 +1,84 @@
+{
+  "fingerprint": "17573d648128057a",
+  "for_review": [],
+  "id": "GLOSS.creature-type",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.creature-type#1",
+      "kind": "boundary",
+      "reason": "No threshold: a creature either has a type tag or not."
+    },
+    {
+      "clause": "GLOSS.creature-type#2",
+      "kind": "boundary",
+      "reason": "No threshold: 'most' PCs being Humanoid has no numeric edge."
+    },
+    {
+      "clause": "GLOSS.creature-type#3",
+      "kind": "boundary",
+      "reason": "No threshold: the list is a closed set of 14 names, with no edge value."
+    },
+    {
+      "clause": "GLOSS.creature-type#4",
+      "kind": "boundary",
+      "reason": "No threshold: the clause says types carry no rules of their own."
+    }
+  ],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.creature-type#1",
+      "reason": "Stage A gap: a creature's type while an effect changes its form (e.g. a Beast stat block). No in-scope spell or feature changes a creature's form."
+    }
+  ],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_creature_type_a_goblin_s_goblinoid_tag_isnt_its_type",
+    "tests/srd/test_glossary.py::test_creature_type_hold_person_doesnt_reach_a_goblin_through_its_tag",
+    "tests/srd/test_glossary.py::test_creature_type_study_of_fey_lore_uses_arcana_not_the_humanoid_history",
+    "tests/srd/test_glossary.py::test_creature_type_a_pc_s_species_isnt_its_type",
+    "tests/srd/test_glossary.py::test_creature_type_every_in_scope_monster_type_is_on_the_list",
+    "tests/srd/test_glossary.py::test_creature_type_hold_person_on_a_goblin_doesnt_reveal_its_type"
+  ],
+  "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1792523180,
+      "summary": "Glossary definition. Every creature, player characters included, has a creature-type tag. The 14 types are listed, most player characters are Humanoid, and the types carry no rules themselves: only other rules that name a type make it matter. There are no thresholds, relations or conflicts. The two "
+    },
+    "B": {
+      "at": 1792523191,
+      "summary": "There were no scenarios or SRD tests for this unit. The three candidate code lines in game.py all belong to the Concentration rule (rule=GLOSS.concentration), which shares p.179 with Creature Type, so each is not-related. Nothing in the items covers the creature-type clauses (a single type from the "
+    },
+    "C": {
+      "at": 1792523386,
+      "summary": "I added 16 tests for GLOSS.creature-type to tests/srd/test_glossary.py: 14 pass and 2 are strict xfails. They check four things. First, every in-scope monster and sample PC has one type from the list of 14. Second, a goblin is Fey: its Goblinoid tag doesn't count as a type, so Hold Person has no eff"
+    },
+    "D": {
+      "at": 1792523550,
+      "summary": "Of the 16 tests, I'd keep 9 and remove 7. One of the 7 has confidence below 0.5, so it goes to a person rather than being removed. Every oracle matched the SRD text, including the Areas of Knowledge table in GLOSS.study. All tests I mutated failed when their rule was broken, with one exception: hold"
+    }
+  },
+  "status": "red",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type",
+    "tests/srd/test_glossary.py::test_creature_type_the_sample_party_is_humanoid_whatever_the_species",
+    "tests/srd/test_glossary.py::test_creature_type_hold_person_can_paralyze_a_humanoid_pc",
+    "tests/srd/test_glossary.py::test_creature_type_turn_undead_doesnt_touch_a_humanoid_pc",
+    "tests/srd/test_glossary.py::test_creature_type_study_knows_each_of_the_fourteen_types",
+    "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
+    "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused",
+    "tests/srd/test_glossary.py::test_creature_type_turn_undead_affects_the_undead_and_not_the_giant",
+    "tests/srd/test_glossary.py::test_creature_type_alone_changes_nothing_in_an_attack",
+    "tests/srd/test_glossary.py::test_creature_type_studying_fey_lore_with_history_is_refused"
+  ],
+  "tickets": [
+    "T-91",
+    "T-92"
+  ]
+}

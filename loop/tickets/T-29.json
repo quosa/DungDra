@@ -1,0 +1,15 @@
+{
+  "id": "T-29",
+  "kind": "refactor",
+  "unit": "SPELL.bless",
+  "title": "death_save ignores acc.auto (auto success/fail from gathered effects), which Creature.save handles. Route death_save through the same gather/finish path as Creature.save",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Death saving throws now use the same gather-and-finish path as `Creature.save`. That means an automatic success or failure from a gathered effect now applies to death saves too; before, death saves ignored it.\n\n- **`dungdra/creature.py`:** I pulled the gather-and-finish code out of `Creature.save` into a new method, `Creature.roll_gathered(roll, ctx, mods, adv, dis, visibility, page, rule)`. It applies the gathered modifiers, Advantage/Disadvantage, bonus dice and automatic success or failure, removes effects used up by the roll, then rolls (or doesn't, for an automatic result). `save` now calls it.\n- **`dungdra/damage.py`:** `death_save` now calls `pc.roll_gathered` too, so the old copy of that logic is gone. When no d20 is rolled because of an automatic result, a success adds one death-save success and a failure adds one failure with the effect's reason. The natural 20 and natural 1 rules are unchanged. The success bookkeeping moved into a small `_add_success` helper, and an import that was no longer used was removed.\n\nThis ticket listed no acceptance tests. Results:\n- Unit tests: 283 passed.\n- `tests/srd` and `tests/scenarios`: 266 passed.\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS.\n\nI added no SRD tags: this refactor adds no new rule, and the death-save rule was already tagged with `rule=\"GLOSS.death-saving-throw\"`."
+    }
+  ]
+}

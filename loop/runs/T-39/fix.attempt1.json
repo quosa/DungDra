@@ -1,0 +1,37 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Sleep now uses its point of origin. I added `_sphere_targets` in dungdra/spells.py: when a `point` is given, it drops every named creature farther than the Sphere's radius from that point, using grid distance (`dist_points`). Each dropped creature gets a log line with page=106 and rule=\"SPELL.casting-spells.effects.targets#4\". `_sleep` now accepts `point` and filters through this helper with radius 5. With no point given, it still treats the named creatures as inside the Sphere, so existing scenario callers behave as before. Checks run: unit tests (375 passed); tests/srd/test_spells.py plus tests/scenarios with --runxfail (216 passed, including the T-39 test); ruff check and ruff format --check (both clean); dev-gate (PASS).",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_sleep_at_a_point_only_reaches_creatures_in_its_sphere",
+   "tests/unit/test_spells.py::test_sleep_without_a_point_takes_the_named_creatures_as_inside"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "kind": "refactor",
+    "title": "Area membership is split across two helpers: _area_targets (caster origin, Cone/Cube, with a Total Cover check) and _sphere_targets (Sphere at a point, no cover check). Each handler also hard-codes its size: _sleep passes 5 and _burning_hands passes 15, though SPELLS[...]['area'] already holds ('sphere', 5) and ('cone', 15). Merge them into one area-selection helper that takes the origin (caster or point) and reads shape and size from the spell's area data."
+   },
+   {
+    "kind": "infra",
+    "title": "The point of origin of a point-placed area spell (Sleep, Web, ...) isn't checked against the spell's range: _range_check only looks at the targets. Sleep also falls back to 'every listed creature is inside' when no point is given. Require a point for spells whose area sits at a point, and refuse one beyond the spell's range under SPELL.casting-spells.range."
+   }
+  ],
+  "summary": "I'm approving this fix. Sleep now filters the creatures the caller names through a 5-ft Sphere centred on `point`. Anyone outside it is logged with rule=SPELL.casting-spells.effects.targets#4, page 106, and never makes a save. The SRD abuse test's xfail was removed correctly and the test passes. The two unit tests check real behaviour: the creature inside the Sphere saves, the one outside doesn't, and the no-point path still affects the listed creature.\n\nTwo minor points, not blocking because they follow the existing Burning Hands pattern:\n- **Second helper:** `_sphere_targets` sits beside `_area_targets` instead of `_area_targets` gaining an origin parameter.\n- **Hard-coded size:** `_sleep` passes 5 even though `SPELLS['sleep']['area']` already holds `('sphere', 5)`.\n\nThe diff also adds a T-39 fixer row to `loop/costs.jsonl`, which is the loop's own bookkeeping and outside the ticket's scope.\n\nThe fix leaves two gaps:\n- **No point given:** Sleep still treats every listed creature as inside the Sphere.\n- **Point not range-checked:** `_range_check` never compares the point with the spell's 60-ft range.\n\nT-56 covers selecting area targets from scene positions only for Burning Hands and Thunderwave, and T-19 covers Total Cover from a point. I filed one follow-up to merge the two helpers so the area's shape and size come from the spell data. I filed a second to require a point for point-placed spells and range-check it."
+ },
+ "problems": [],
+ "cost_usd": 0.5261,
+ "stash": ""
+}

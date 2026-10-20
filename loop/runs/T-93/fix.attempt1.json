@@ -1,0 +1,32 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The two places that still decided \"ally\" by team equality now go through `Game.is_ally`, which covers party members, your side, and Friendly creatures (R-37):\n- `HelpAttack.as_target` (`dungdra/effects.py`) now uses `game.is_ally(helper, attacker)`. A Friendly NPC attacking the enemy that a PC distracted with Help now gets Advantage. The helper still can't benefit from their own Help, because `is_ally` treats yourself as not your ally (R-36).\n- The Alert Initiative Swap (`dungdra/combat.py`) builds its candidate list with `game.is_ally(c, other)`, so a Friendly NPC is offered and an enemy is not. The explicit `x != cid` check was dropped because `is_ally` already excludes the creature itself.\nBoth are tagged SRD[GLOSS.ally#2] SRD[GLOSS.ally#3].\n\nNo acceptance tests are tied to T-93. I added three unit tests, and each would fail on the old team-equality code:\n- Help gives a Friendly guard Advantage, and the Help effect is used up.\n- Help gives an enemy of the helper no Advantage.\n- Alert offers exactly [None, the friendly guard] and not the goblin.\n\nThe Alert test captures the offered options by setting `game.decider`. `game.answer` can't show the option list, and `game.decider` is how player choices come in, but it isn't listed by name in `tests/unit/SEAMS.md`.\n\nResults: the full `python -m pytest -q` run passed (1096 tests), `ruff check .` and `ruff format --check .` are clean, and `python -m scripts.srdloop dev-gate` passed.\n\nOther places still compare teams directly, such as `enemies_of`, opportunity attacks and the gm/nl targeting. They decide who is an enemy, not who is an ally, so this ticket leaves them alone.",
+  "files": [
+   "dungdra/effects.py",
+   "dungdra/combat.py",
+   "tests/unit/test_effects.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_help_attack_gives_a_friendly_npc_advantage",
+   "tests/unit/test_effects.py::test_help_attack_gives_the_helpers_enemy_no_advantage",
+   "tests/unit/test_combat.py::test_alert_swap_offers_a_friendly_npc_but_not_an_enemy"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ally#2]",
+   "SRD[GLOSS.ally#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this fix. It sends both places the ticket named through Game.is_ally (game.py:156): HelpAttack.as_target and the Alert initiative swap. Before, both checked whether two creatures were on the same team. Now both also use R-37, so a Friendly NPC counts as an ally. The old HelpAttack check `ctx.actor.id != helper.id` was safe to drop because is_ally already returns False for a creature and itself (R-36).\n\nThe tests check real behaviour on both sides:\n- **Alert swap:** with a Friendly guard and a goblin in the fight, only the guard is offered as a swap partner.\n- **Help:** a Friendly NPC attacking the helped target gets Advantage and uses up the Help; one of the helper's enemies gets neither.\n\nThe diff adds no special cases and touches nothing outside the ticket. Other `.team` comparisons are still in the engine (interface code and opportunity-attack hostility), but they are a different question from \"ally\" and outside this ticket. This is a refactor ticket, so I filed no follow-ups."
+ },
+ "problems": [],
+ "cost_usd": 0.5933,
+ "stash": ""
+}

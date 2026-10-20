@@ -1,0 +1,51 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "Area spells now work out who is affected from the scene, as R-16 requires. The caller's list no longer decides it. This follows the person's decision: `point=` places the area, and naming a creature is shorthand for its position.\n\n- **Placement:** a new `_area_point` returns the `point=` if one is given. Otherwise it returns the first named creature's position, skipping the caster for a spell with range Self. That position is the direction for a Cone or Cube from Self, or the centre of a Sphere.\n- **Selection:** `_area_targets` now goes through the living creatures in `game.creatures` and tests each one with the new `geometry.in_area` (Cone, Cube or Sphere, plus an elevation limit). An 'each creature' area (Burning Hands, Thunderwave) takes every creature inside, whether it was named or not. Sleep is 'each creature of your choice', so it is marked `area_choice=True` in the spell data and takes only the named creatures inside its Sphere. Named creatures that fall outside are still logged (targets#4, R-16), and creatures behind Total Cover from the origin are still dropped.\n- **Cube geometry:** Thunderwave's Cube now extends one way from the caster: up to its full side length toward the aim and half of it to each side. Before, it was a symmetric square around the caster. The new `geometry.in_cube_direction` does this, and it shares an along/across helper with the Cone check.\n- **Thunderwave handler:** it now passes `point=` through; before, the point was dropped.\n- **New refusal:** an area spell with neither a point nor a creature to aim at is refused in `_check`, before the slot is spent (page 106, targets#4, R-16). This rule is new.\n\nTest results: the full suite passes (826 passed). The 1 xfail is T-57's SPL-05, which still depends on the hand-set `in_cone` flag for flammable objects; that is T-57's job. `ruff check` and `ruff format --check` are clean, and dev-gate passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail` for it.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_a_cube_extends_its_side_from_the_origin_and_half_of_it_to_each_side",
+   "tests/unit/test_geometry.py::test_a_cube_doesnt_contain_its_origin_or_anything_behind_it",
+   "tests/unit/test_geometry.py::test_in_area_measures_each_shape_from_its_origin",
+   "tests/unit/test_geometry.py::test_in_area_refuses_a_shape_it_has_no_geometry_for",
+   "tests/unit/test_spells.py::test_sleep_without_a_point_is_centred_on_the_first_named_creature",
+   "tests/unit/test_spells.py::test_a_cone_hits_each_creature_inside_it_named_or_not",
+   "tests/unit/test_spells.py::test_a_dead_creature_in_the_area_isnt_affected",
+   "tests/unit/test_spells.py::test_a_cube_from_the_caster_extends_toward_the_named_creature_only",
+   "tests/unit/test_spells.py::test_a_point_aims_a_cube_from_the_caster",
+   "tests/unit/test_spells.py::test_sleep_only_takes_the_creatures_of_the_casters_choice_in_its_sphere",
+   "tests/unit/test_spells.py::test_an_area_with_nothing_to_place_it_is_refused_before_the_slot_is_spent"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4] (scene-based area selection in _area_targets; R-16 'of your choice' narrowing)",
+   "SRD[SPELL.casting-spells.effects.targets#4] (refusal in _check when an area has no point or creature to place it)"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "layering",
+    "file": "dungdra/spells.py",
+    "line": 1086,
+    "explanation": "The area's vertical extent is decided in the spell layer with a one-size-fits-all check, `abs(elevation - height) > size`. It sits beside `in_area`, which only does 2D. Shape geometry belongs in `dungdra/geometry.py`, which already folds elevation into distance via `distance()`'s dz term, so this is a second elevation mechanism. It also gives the wrong answer for the new Cube. Thunderwave's origin is the centre of one face, so the Cube reaches size/2 (7.5 ft) above and below the caster, not `size`. A creature 10 ft up and 5 ft ahead is counted inside. Pass elevation (3D points, or the creature) into `in_area`/`in_cube_direction`/`in_cone_direction` so each shape applies its own vertical bound. Then test that in tests/unit/test_geometry.py."
+   }
+  ],
+  "followups": [],
+  "summary": "The ticket's main problem is fixed. Area spells now take creatures from the scene: the shape, origin and aim come from `point`, or else from a named creature's position (R-16). Sleep's 'of your choice' rule is carried in data (`area_choice`). A missing placement is refused before the slot is spent. The geometry unit tests check real behaviour. One problem remains in the new code: the vertical limit of the area is a single `size` check written inline in spells.py rather than in each shape's geometry. That check duplicates how geometry.distance already handles elevation, and it lets a 15-ft Cube reach 15 ft up instead of 7.5. Move elevation into `in_area` and the per-shape tests."
+ },
+ "problems": [
+  "review: rejected (The ticket's main problem is fixed. Area spells now take creatures from the scene: the shape, origin and aim come from `point`, or else from a named creature's position (R-16). Sleep's 'of your choice' rule is carried in data (`area_choice`). A missing placement is refused before the slot is spent. The geometry unit tests check real behaviour. One problem remains in the new code: the vertical limit of the area is a single `size` check written inline in spells.py rather than in each shape's geometry. That check duplicates how geometry.distance already handles elevation, and it lets a 15-ft Cube reach 15 ft up instead of 7.5. Move elevation into `in_area` and the per-shape tests.)",
+  "review: layering dungdra/spells.py:1086 The area's vertical extent is decided in the spell layer with a one-size-fits-all check, `abs(elevation - height) > size`. It sits beside `in_area`, which only does 2D. Shape geometry belongs in `dungdra/geometry.py`, which already folds elevation into distance via `distance()`'s dz term, so this is a second elevation mechanism. It also gives the wrong answer for the new Cube. Thunderwave's origin is the centre of one face, so the Cube reaches size/2 (7.5 ft) above and below the caster, not `size`. A creature 10 ft up and 5 ft ahead is counted inside. Pass elevation (3D points, or the creature) into `in_area`/`in_cube_direction`/`in_cone_direction` so each shape applies its own vertical bound. Then test that in tests/unit/test_geometry.py."
+ ],
+ "cost_usd": 1.6397,
+ "stash": "srdloop: T-56 attempt 1"
+}

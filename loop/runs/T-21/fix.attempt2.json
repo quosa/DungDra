@@ -1,0 +1,32 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The target cap is now checked in cast(), before components, the action, the slot and Concentration are paid. Spell data carries max_targets=(base, extra per level above the spell's level). A new _target_cap check runs right after the range check and refuses with page=sd[\"page\"]. For Bless the rule is SPELL.bless#6 at level 1, or SPELL.bless#8 with a higher slot (from target_clauses=(6, 8) in the data). Command, Aid, Hold Person and Invisibility had the same check in their handlers with the same bug. They now use this one check, cite their spell unit and page, and their old handler checks are removed. Hold Person's message now says \"creatures\" instead of \"Humanoids\". The cap counts the target list as given, so naming one creature several times still counts against it, as before. This avoids the duplicate-target reading that got attempt 1 rejected. Results: the three ticket tests pass with --runxfail, and without it they show only as strict XPASS. The full suite has 520 passed and 2 xfailed (other tickets). ruff check and format are clean and dev-gate passes. Left alone: for a monster, _monster_way uses up a Divine Aid charge before the cap check can refuse.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_too_many_bless_targets_are_refused_before_anything_is_spent",
+   "tests/unit/test_spells.py::test_naming_a_creature_more_than_once_still_counts_against_the_cap",
+   "tests/unit/test_spells.py::test_a_higher_slot_raises_the_cap_and_cites_the_upcast_clause",
+   "tests/unit/test_spells.py::test_each_capped_spell_refuses_one_target_over_its_cap_under_its_own_rule"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.bless#6]",
+   "SRD[SPELL.bless#8]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this fix.\n\n**What it changes.** The Bless target cap is no longer checked inside `_bless`. It now lives in the spell data as `max_targets=(base, per_level)`. A new `_target_cap` check runs inside `cast()` before anything is spent: after the cover and range checks, but before components, the action, the slot and Concentration. The cap uses the level the spell is actually cast at, which covers slots, wand charges and scrolls (scrolls use the spell's base level). The refusal now cites the spell's page and the right clause: `SPELL.bless#6` at level 1 and `SPELL.bless#8` when cast from a higher slot. That fixes both halves of T-21, and all three acceptance tests that were marked xfail now pass.\n\n**Scope.** Command, Aid, Hold Person and Invisibility each had the same inline cap with the same bug: they refused only after the slot was spent. The fix moves them onto the same data-driven check. The ticket only named Bless, but I count this as following the \"extend an existing mechanism\" rule rather than as extra scope. Without it the engine would have two ways of capping targets. The per-spell values match the SRD:\n- Command: 1, plus 1 per slot level above 1.\n- Aid: 3, and that number doesn't grow with the slot.\n- Hold Person and Invisibility: 1, plus 1 per slot level above 2.\n\nThose four spells have no clause analysis yet, so their refusals cite `spell_rule(spell)` without a clause number. Other spell refusals in `cast()` do the same today.\n\n**Tests.** The unit tests check real behaviour:\n- After a refused Bless, no slot is used, Concentration hasn't started, nobody has the Bless effect and no cast is logged.\n- A higher slot raises the cap, cites `#8`, and the cast succeeds at the new cap.\n- Each of the other capped spells accepts exactly its cap and refuses one more, citing its own rule and page.\n\n**Two small points (no action needed):**\n- The `SRD[SPELL.bless#6/#8]` comment sits in the shared `_target_cap` function, but only Bless has analysed clauses so far.\n- Invisibility is missing from the parametrized unit test, but it uses the same data path as Hold Person."
+ },
+ "problems": [],
+ "cost_usd": 0.8097,
+ "stash": ""
+}

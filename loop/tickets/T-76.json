@@ -1,0 +1,15 @@
+{
+  "id": "T-76",
+  "kind": "infra",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "Let roll_initiative use a monster's fixed Initiative score (10 + Initiative modifier, '(12)' in the stat block) instead of rolling, as a GM option like game.fixed_monster_damage",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "parked",
+      "reason": "GM option, not a rule gap"
+    }
+  ]
+}

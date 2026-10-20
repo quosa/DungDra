@@ -1,0 +1,16 @@
+{
+  "id": "P-22",
+  "unit": "GLOSS.cone",
+  "ambiguity": "GLOSS.cone ambiguity 2: is 'width' the full width across the Cone, or the width from the axis out to each side?",
+  "ruling": "Full width, centred on the chosen direction: a point may be at most half its distance along the axis away from the axis (about 53°). The 15-ft-at-15-ft example then covers three 5-ft squares.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_width_is_measured_across_the_cone_not_from_its_axis_to_each_side",
+    "tests/srd/test_glossary.py::test_one_cone_cant_be_spread_to_both_flanks_by_naming_them",
+    "tests/srd/test_glossary.py::test_a_cone_is_only_5_ft_wide_5_ft_out",
+    "tests/srd/test_glossary.py::test_the_squares_just_past_the_15_ft_width_arent_in_the_cone"
+  ],
+  "status": "accepted",
+  "register_id": "R-26",
+  "note": "",
+  "reason": ""
+}

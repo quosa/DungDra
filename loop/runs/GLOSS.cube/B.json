@@ -1,0 +1,29 @@
+{
+ "verdicts": [
+  {
+   "item": "dungdra/game.py:343",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# -- concentration (p.179) --------------------------------------------",
+   "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+   "explanation": "Section header for concentration; matched only by page number."
+  },
+  {
+   "item": "dungdra/game.py:368",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=179,",
+   "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+   "explanation": "Logs the end of Concentration with rule GLOSS.concentration; nothing to do with Cubes."
+  },
+  {
+   "item": "dungdra/game.py:387",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=179,",
+   "rule_quote": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+   "explanation": "Concentration saving throw, rule GLOSS.concentration; not about Cubes."
+  }
+ ],
+ "summary": "No scenarios or SRD tests relate to GLOSS.cube. The three code lines share only page 179 with it and are Concentration code (rule GLOSS.concentration), so they are not related. The engine has no Cube area-of-effect implementation or tests yet."
+}

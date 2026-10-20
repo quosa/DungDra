@@ -1,0 +1,792 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "with": "GLOSS.advantage (Advantage and Disadvantage cancel)",
+    "risk": "high",
+    "note": "Whether the 1d4 rider applies when Advantage is cancelled is the open ambiguity. Tests follow reading A."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "with": "long range / hostile within 5 ft (ranged Disadvantage)",
+    "risk": "high",
+    "note": "Disadvantage from range or an adjacent enemy cancels Advantage, so no 1d4."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "with": "static monster damage (fixed_monster_damage)",
+    "risk": "high",
+    "note": "Static numbers must include 'plus 2' with Advantage. The engine drops it (red)."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "with": "critical hits",
+    "risk": "medium",
+    "note": "The 1d4 rider doubles on a crit."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "with": "GLOSS.hide / GLOSS.disengage, Bonus Action economy",
+    "risk": "high",
+    "note": "Only Disengage or Hide. Hide needs cover and DC 15 and grants Invisible. One Bonus Action per turn."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#1",
+    "with": "Hold Person (Humanoid only), R-15",
+    "risk": "medium",
+    "note": "The 2024 goblin is Fey, so Hold Person does nothing and the slot is spent."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#15",
+    "with": "GLOSS.passive-perception, Poisoned",
+    "risk": "medium",
+    "note": "Passive 9 should drop to 4 with Disadvantage. The engine returns a fixed 9 (red)."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#14",
+    "with": "GLOSS.darkvision, scene lighting",
+    "risk": "medium",
+    "note": "Darkness is seen as Dim within 60 ft, and Dim as Bright."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "with": "encounter budgets p.202, R-02 XP split",
+    "risk": "low",
+    "note": "50 XP fills a level-1 Low budget, and two goblins make High."
+   },
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#12",
+    "with": "GLOSS.hide DC 15",
+    "risk": "medium",
+    "note": "The listed Stealth +6 is used, not Dex + PB."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Counting the Advantage 1d4 rider when Disadvantage cancelled the Advantage",
+    "test": "tests/srd/test_monsters.py::test_scimitar_advantage_cancelled_by_disadvantage_adds_no_1d4",
+    "reason": "Reading A of the ambiguity. The roll has neither, so no rider."
+   },
+   {
+    "case": "Dropping the rider from static damage",
+    "test": "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_5_plus_2",
+    "reason": "The static number should be 5 plus 2 with Advantage. The engine gives 5."
+   },
+   {
+    "case": "Using Nimble Escape twice in a turn",
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_twice_in_one_turn_is_refused",
+    "reason": "Only one Bonus Action per turn."
+   },
+   {
+    "case": "Using Nimble Escape for an action other than Disengage or Hide (Dash)",
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_cant_take_an_action_other_than_disengage_or_hide",
+    "reason": "The trait names only those two actions."
+   },
+   {
+    "case": "Using Nimble Escape out of turn",
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_off_turn_is_refused",
+    "reason": "A Bonus Action is taken on your own turn."
+   },
+   {
+    "case": "Using Nimble Escape as a creature without the trait",
+    "test": "tests/srd/test_monsters.py::test_a_creature_without_nimble_escape_cant_use_it",
+    "reason": "The trait belongs only to stat blocks that list it."
+   },
+   {
+    "case": "Hiding in plain view with Nimble Escape",
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_hide_in_plain_view_is_refused",
+    "reason": "Hide needs Heavy Obscurement or Three-Quarters/Total Cover."
+   },
+   {
+    "case": "Moving farther than Speed",
+    "test": "tests/srd/test_monsters.py::test_goblin_warrior_cant_move_35_ft",
+    "reason": "Speed 30 ft."
+   },
+   {
+    "case": "Attacking past reach or long range",
+    "test": "tests/srd/test_monsters.py::test_shortbow_reaches_320_ft_but_not_325",
+    "reason": "Range 80/320."
+   },
+   {
+    "case": "Attacking with gear the stat block lacks (a dagger)",
+    "test": "tests/srd/test_monsters.py::test_goblin_warrior_has_only_its_listed_attacks",
+    "reason": "Only Scimitar and Shortbow are listed actions."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_is_a_small_fey_goblinoid",
+    "clause": "MONSTER.goblins.goblin-warrior#1",
+    "kind": "positive",
+    "rule_quote": "Small Fey (Goblinoid), Chaotic Neutral",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_is_not_a_humanoid_so_hold_person_does_nothing",
+    "clause": "MONSTER.goblins.goblin-warrior#1",
+    "kind": "negative",
+    "rule_quote": "Small Fey (Goblinoid), Chaotic Neutral",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_ac_is_15",
+    "clause": "MONSTER.goblins.goblin-warrior#2",
+    "kind": "positive",
+    "rule_quote": "AC 15",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_attack_total_15_hits_the_goblin_warrior",
+    "clause": "MONSTER.goblins.goblin-warrior#2",
+    "kind": "boundary",
+    "rule_quote": "AC 15",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_attack_total_14_misses_the_goblin_warrior",
+    "clause": "MONSTER.goblins.goblin-warrior#2",
+    "kind": "negative",
+    "rule_quote": "AC 15",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_initiative_modifier_is_plus_2",
+    "clause": "MONSTER.goblins.goblin-warrior#3",
+    "kind": "positive",
+    "rule_quote": "Initiative +2 (12)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_initiative_on_a_1_is_3",
+    "clause": "MONSTER.goblins.goblin-warrior#3",
+    "kind": "boundary",
+    "rule_quote": "Initiative +2 (12)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_has_10_hp",
+    "clause": "MONSTER.goblins.goblin-warrior#4",
+    "kind": "positive",
+    "rule_quote": "HP 10 (3d6)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_rolled_hp_uses_3d6",
+    "clause": "MONSTER.goblins.goblin-warrior#4",
+    "kind": "positive",
+    "rule_quote": "HP 10 (3d6)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_survives_9_damage_and_dies_at_10",
+    "clause": "MONSTER.goblins.goblin-warrior#4",
+    "kind": "boundary",
+    "rule_quote": "HP 10 (3d6)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_survives_7_damage_unlike_the_2014_goblin",
+    "clause": "MONSTER.goblins.goblin-warrior#4",
+    "kind": "negative",
+    "rule_quote": "HP 10 (3d6)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_speed_is_30",
+    "clause": "MONSTER.goblins.goblin-warrior#5",
+    "kind": "positive",
+    "rule_quote": "Speed 30 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_moves_30_but_not_35",
+    "clause": "MONSTER.goblins.goblin-warrior#5",
+    "kind": "boundary",
+    "rule_quote": "Speed 30 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_cant_move_35_ft",
+    "clause": "MONSTER.goblins.goblin-warrior#5",
+    "kind": "negative",
+    "rule_quote": "Speed 30 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_moves_its_full_30_ft",
+    "clause": "MONSTER.goblins.goblin-warrior#5",
+    "kind": "positive",
+    "rule_quote": "Speed 30 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_strength",
+    "clause": "MONSTER.goblins.goblin-warrior#6",
+    "kind": "positive",
+    "rule_quote": "| Str | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_strength_save_16_vs_dc_15",
+    "clause": "MONSTER.goblins.goblin-warrior#6",
+    "kind": "boundary",
+    "rule_quote": "| Str | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_athletics_has_no_proficiency",
+    "clause": "MONSTER.goblins.goblin-warrior#6",
+    "kind": "negative",
+    "rule_quote": "| Str | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_dexterity",
+    "clause": "MONSTER.goblins.goblin-warrior#7",
+    "kind": "positive",
+    "rule_quote": "| Dex | 15 | +2 | +2 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_dexterity_save_meets_dc_14_on_a_12",
+    "clause": "MONSTER.goblins.goblin-warrior#7",
+    "kind": "boundary",
+    "rule_quote": "| Dex | 15 | +2 | +2 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_dexterity_save_has_no_proficiency",
+    "clause": "MONSTER.goblins.goblin-warrior#7",
+    "kind": "negative",
+    "rule_quote": "| Dex | 15 | +2 | +2 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_constitution",
+    "clause": "MONSTER.goblins.goblin-warrior#8",
+    "kind": "positive",
+    "rule_quote": "| Con | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_constitution_save_has_no_proficiency",
+    "clause": "MONSTER.goblins.goblin-warrior#8",
+    "kind": "negative",
+    "rule_quote": "| Con | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_constitution_save_10_meets_dc_10_and_9_fails",
+    "clause": "MONSTER.goblins.goblin-warrior#8",
+    "kind": "boundary",
+    "rule_quote": "| Con | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_intelligence",
+    "clause": "MONSTER.goblins.goblin-warrior#9",
+    "kind": "positive",
+    "rule_quote": "| Int | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_intelligence_check_is_flat",
+    "clause": "MONSTER.goblins.goblin-warrior#9",
+    "kind": "negative",
+    "rule_quote": "| Int | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_intelligence_save_10_meets_dc_10_and_9_fails",
+    "clause": "MONSTER.goblins.goblin-warrior#9",
+    "kind": "boundary",
+    "rule_quote": "| Int | 10 | +0 | +0 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_wisdom",
+    "clause": "MONSTER.goblins.goblin-warrior#10",
+    "kind": "positive",
+    "rule_quote": "| Wis | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_wisdom_save_16_fails_dc_16",
+    "clause": "MONSTER.goblins.goblin-warrior#10",
+    "kind": "boundary",
+    "rule_quote": "| Wis | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_wisdom_save_on_a_10_fails_dc_10",
+    "clause": "MONSTER.goblins.goblin-warrior#10",
+    "kind": "negative",
+    "rule_quote": "| Wis | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_charisma",
+    "clause": "MONSTER.goblins.goblin-warrior#11",
+    "kind": "positive",
+    "rule_quote": "| Cha | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_charisma_check_has_minus_1",
+    "clause": "MONSTER.goblins.goblin-warrior#11",
+    "kind": "negative",
+    "rule_quote": "| Cha | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_charisma_save_11_meets_dc_10_and_10_fails",
+    "clause": "MONSTER.goblins.goblin-warrior#11",
+    "kind": "boundary",
+    "rule_quote": "| Cha | 8 | −1 | −1 |",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_stealth_is_plus_6_as_listed",
+    "clause": "MONSTER.goblins.goblin-warrior#12",
+    "kind": "positive",
+    "rule_quote": "Skills Stealth +6",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_unlisted_dex_skill_uses_dex_only",
+    "clause": "MONSTER.goblins.goblin-warrior#12",
+    "kind": "negative",
+    "rule_quote": "Skills Stealth +6",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_hides_on_a_9_but_not_an_8",
+    "clause": "MONSTER.goblins.goblin-warrior#12",
+    "kind": "boundary",
+    "rule_quote": "Skills Stealth +6",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_gear",
+    "clause": "MONSTER.goblins.goblin-warrior#13",
+    "kind": "positive",
+    "rule_quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_has_only_its_listed_attacks",
+    "clause": "MONSTER.goblins.goblin-warrior#13",
+    "kind": "negative",
+    "rule_quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+    "claim": "red",
+    "ticket_title": "SRD: an attack the stat block doesn't list is refused with a page citation; engine: the refusal cites no SRD page or rule"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_sees_in_darkness_to_60_ft",
+    "clause": "MONSTER.goblins.goblin-warrior#14",
+    "kind": "boundary",
+    "rule_quote": "Darkvision 60 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_sees_dim_light_as_bright_within_60_ft",
+    "clause": "MONSTER.goblins.goblin-warrior#14",
+    "kind": "positive",
+    "rule_quote": "Darkvision 60 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_darkvision_sees_darkness_only_as_dim",
+    "clause": "MONSTER.goblins.goblin-warrior#14",
+    "kind": "negative",
+    "rule_quote": "Darkvision 60 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_passive_perception_is_9",
+    "clause": "MONSTER.goblins.goblin-warrior#15",
+    "kind": "positive",
+    "rule_quote": "Passive Perception 9",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_perception_check_has_no_proficiency",
+    "clause": "MONSTER.goblins.goblin-warrior#15",
+    "kind": "negative",
+    "rule_quote": "Passive Perception 9",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_poisoned_passive_perception_is_4",
+    "clause": "MONSTER.goblins.goblin-warrior#15",
+    "kind": "boundary",
+    "rule_quote": "Passive Perception 9",
+    "claim": "red",
+    "ticket_title": "SRD: Passive Perception is 5 lower with Disadvantage (Poisoned goblin: 4); engine: a monster's fixed Passive Perception ignores Advantage and Disadvantage"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_speaks_common_and_goblin",
+    "clause": "MONSTER.goblins.goblin-warrior#16",
+    "kind": "positive",
+    "rule_quote": "Languages Common, Goblin",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_speaks_no_other_language",
+    "clause": "MONSTER.goblins.goblin-warrior#16",
+    "kind": "negative",
+    "rule_quote": "Languages Common, Goblin",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_cr_xp_and_pb",
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "kind": "positive",
+    "rule_quote": "CR 1/4 (XP 50; PB +2)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_defeating_a_goblin_warrior_awards_50_xp",
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "kind": "positive",
+    "rule_quote": "CR 1/4 (XP 50; PB +2)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_xp_split_three_ways_rounds_down",
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "kind": "boundary",
+    "rule_quote": "CR 1/4 (XP 50; PB +2)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_goblin_warrior_cr_is_not_above_a_level_1_party",
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "kind": "negative",
+    "rule_quote": "CR 1/4 (XP 50; PB +2)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_one_goblin_warrior_fills_a_level_1_low_budget_exactly",
+    "clause": "MONSTER.goblins.goblin-warrior#17",
+    "kind": "boundary",
+    "rule_quote": "CR 1/4 (XP 50; PB +2)",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_plus_4_hits_ac_15_on_an_11",
+    "clause": "MONSTER.goblins.goblin-warrior#18",
+    "kind": "boundary",
+    "rule_quote": "Melee Attack Roll: +4, reach 5 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_misses_ac_15_on_a_10",
+    "clause": "MONSTER.goblins.goblin-warrior#18",
+    "kind": "negative",
+    "rule_quote": "Melee Attack Roll: +4, reach 5 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_reaches_5_ft_but_not_10",
+    "clause": "MONSTER.goblins.goblin-warrior#18",
+    "kind": "boundary",
+    "rule_quote": "Melee Attack Roll: +4, reach 5 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_through_the_session",
+    "clause": "MONSTER.goblins.goblin-warrior#18",
+    "kind": "positive",
+    "rule_quote": "Melee Attack Roll: +4, reach 5 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_deals_1d6_plus_2_slashing",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "positive",
+    "rule_quote": "Hit: 5 (1d6 + 2) Slashing damage, plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_with_advantage_adds_1d4_slashing",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "positive",
+    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_with_disadvantage_adds_no_1d4",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "negative",
+    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_advantage_cancelled_by_disadvantage_adds_no_1d4",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "boundary",
+    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_crit_with_advantage_doubles_the_1d4_too",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "positive",
+    "rule_quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_5_plus_2",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "positive",
+    "rule_quote": "Hit: 5 (1d6 + 2) Slashing damage, plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "claim": "red",
+    "ticket_title": "SRD: static damage with Advantage is 5 plus 2; engine: static monster damage drops the Advantage rider"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_scimitar_static_damage_without_advantage_is_5",
+    "clause": "MONSTER.goblins.goblin-warrior#19",
+    "kind": "negative",
+    "rule_quote": "Hit: 5 (1d6 + 2) Slashing damage",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_at_80_ft_has_no_disadvantage",
+    "clause": "MONSTER.goblins.goblin-warrior#20",
+    "kind": "boundary",
+    "rule_quote": "Ranged Attack Roll: +4, range 80/320 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_beyond_80_ft_has_disadvantage",
+    "clause": "MONSTER.goblins.goblin-warrior#20",
+    "kind": "boundary",
+    "rule_quote": "Ranged Attack Roll: +4, range 80/320 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_reaches_320_ft_but_not_325",
+    "clause": "MONSTER.goblins.goblin-warrior#20",
+    "kind": "boundary",
+    "rule_quote": "Ranged Attack Roll: +4, range 80/320 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_misses_ac_15_on_a_10",
+    "clause": "MONSTER.goblins.goblin-warrior#20",
+    "kind": "negative",
+    "rule_quote": "Ranged Attack Roll: +4, range 80/320 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_plus_4_hits_at_30_ft",
+    "clause": "MONSTER.goblins.goblin-warrior#20",
+    "kind": "positive",
+    "rule_quote": "Ranged Attack Roll: +4, range 80/320 ft.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_deals_1d6_plus_2_piercing",
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "kind": "positive",
+    "rule_quote": "Hit: 5 (1d6 + 2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_with_advantage_adds_1d4_piercing",
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "kind": "positive",
+    "rule_quote": "plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_long_range_cancels_advantage_so_no_1d4",
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "kind": "boundary",
+    "rule_quote": "plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_with_an_enemy_adjacent_and_advantage_adds_no_1d4",
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "kind": "negative",
+    "rule_quote": "plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_shortbow_static_damage_with_advantage_is_5_plus_2",
+    "clause": "MONSTER.goblins.goblin-warrior#21",
+    "kind": "positive",
+    "rule_quote": "Hit: 5 (1d6 + 2) Piercing damage, plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "claim": "red",
+    "ticket_title": "SRD: static damage with Advantage is 5 plus 2; engine: static monster damage drops the Advantage rider"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_disengage_is_a_bonus_action",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "positive",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_hide_is_a_bonus_action_with_the_dc_15_stealth_check",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "positive",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_hide_in_plain_view_is_refused",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "negative",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_failed_hide_still_spends_the_bonus_action",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "negative",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_twice_in_one_turn_is_refused",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "abuse",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_cant_take_an_action_other_than_disengage_or_hide",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "abuse",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "red",
+    "ticket_title": "SRD: Nimble Escape takes only the Disengage or Hide action; engine: any other option is treated as Hide"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_nimble_escape_off_turn_is_refused",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "abuse",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "red",
+    "ticket_title": "SRD: a Bonus Action is taken on your own turn; engine: the off-turn refusal cites no page or rule"
+   },
+   {
+    "name": "tests/srd/test_monsters.py::test_a_creature_without_nimble_escape_cant_use_it",
+    "clause": "MONSTER.goblins.goblin-warrior#22",
+    "kind": "abuse",
+    "rule_quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "claim": "red",
+    "ticket_title": "SRD: only a stat block with Nimble Escape can use it; engine: the refusal for a creature without the trait cites no page or rule"
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "MONSTER.goblins.goblin-warrior#13",
+    "kind": "missing",
+    "reason": "Nothing in the unit says whether AC is recalculated when the goblin loses its Shield or armor, or whether monster Shortbow ammunition is tracked. The engine stores monster AC as a fixed value. Only the listed gear and the derived AC are tested.",
+    "infra_ticket": "Monster gear is not modelled as equipment: no way to disarm or remove a monster's Shield or armor and recompute AC, and no tracking of monster ammunition"
+   }
+  ],
+  "scenario_changes": [
+   {
+    "scenario": "tests/scenarios/test_world.py::test_mon02_traits",
+    "change": "Stage B verdict under-asserts. Added assertions: a Scimitar hit without Advantage adds no 1d4; Advantage cancelled by Disadvantage adds no 1d4 (reading A); a Shortbow hit with Advantage adds the 1d4 Piercing rider (1+2+3).",
+    "note_row": "| MON-02 | test_mon02_traits | under-asserts (MONSTER.goblins.goblin-warrior) | Added the no-Advantage, cancelled-Advantage and Shortbow-rider checks for the Goblin Warrior |"
+   }
+  ],
+  "rulings_proposed": [
+   {
+    "ambiguity": "MONSTER.goblins.goblin-warrior: 'if the attack roll had Advantage': does the 1d4 rider apply when Advantage and Disadvantage cancel?",
+    "ruling": "Reading A. When Advantage and Disadvantage cancel, the roll has neither (GLOSS.advantage), so the extra 1d4 isn't added. This includes Disadvantage from long range or a hostile creature within 5 ft of a ranged attacker.",
+    "tests": [
+     "tests/srd/test_monsters.py::test_scimitar_advantage_cancelled_by_disadvantage_adds_no_1d4",
+     "tests/srd/test_monsters.py::test_shortbow_long_range_cancels_advantage_so_no_1d4",
+     "tests/srd/test_monsters.py::test_shortbow_with_an_enemy_adjacent_and_advantage_adds_no_1d4"
+    ]
+   }
+  ],
+  "summary": "I fixed the previous attempt's gaps in `tests/srd/test_monsters.py`. Clauses #4, #5, #6, #7, #10, #14 and #17 now have negative tests, #8, #9, #11, #15 and #17 have boundary tests, and #20 has a positive test. The ruling proposal now names only my own SRD tests. The file and the updated `tests/scenarios/test_world.py::test_mon02_traits` give 93 passed and 7 strict xfails, and ruff is clean. One new test is red: the engine returns a monster's fixed Passive Perception of 9 even when the goblin is Poisoned (Disadvantage should make it 4). The other red tests carried over from the earlier attempt: static damage drops the Advantage 1d4 rider for both attacks; Nimble Escape treats any option other than Disengage as Hide; three refusals cite no page or rule (an attack the stat block doesn't list, an off-turn Nimble Escape, and Nimble Escape for a creature without the trait). The Advantage-cancel tests follow proposed reading A. I didn't add the `docs/scenario-notes.md` row: it is only required for contradicts-srd verdicts. The proposed row is under scenario_changes."
+ },
+ "problems": [
+  "clause MONSTER.goblins.goblin-warrior#3: no negative test"
+ ],
+ "cost_usd": 0.9321249999999999,
+ "session": "d5d928ea-109a-4a80-8a3d-c21102724ba9"
+}

@@ -1,0 +1,440 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.ready#2",
+    "with": "GLOSS.reaction",
+    "risk": "high",
+    "note": "You get one Reaction per round. An Opportunity Attack taken before the trigger leaves nothing for the readied response, and a readied response that fires leaves nothing for a later Opportunity Attack. Both directions are tested."
+   },
+   {
+    "clause": "GLOSS.ready#2",
+    "with": "PLAY.combat (one action per turn)",
+    "risk": "high",
+    "note": "Ready is the turn's action. You can't ready after attacking, and once you have readied you can't take another action such as Attack or Dash."
+   },
+   {
+    "clause": "GLOSS.ready#5",
+    "with": "GLOSS.opportunity-attacks / combat.move",
+    "risk": "high",
+    "note": "Trigger timing during movement: the Reaction comes right after the triggering step, in the middle of the move (ambiguity 3)."
+   },
+   {
+    "clause": "GLOSS.ready#8",
+    "with": "GLOSS.concentration",
+    "risk": "high",
+    "note": "Holding a spell takes Concentration, so readying one ends an earlier Concentration (ambiguity 1). Readying a weapon attack takes no Concentration. Damage calls for a save, and a failed save makes the held spell dissipate (#9)."
+   },
+   {
+    "clause": "GLOSS.ready#6",
+    "with": "SPELL.casting-spells spell slots",
+    "risk": "high",
+    "note": "The slot is spent when you ready the spell. It isn't refunded if the trigger is ignored, never comes, or Concentration breaks, and releasing the spell spends no second slot."
+   },
+   {
+    "clause": "GLOSS.ready#6",
+    "with": "one spell with a slot per turn",
+    "risk": "medium",
+    "note": "A readied slot spell counts toward the readying turn's one slot spell. Releasing it shouldn't count again. Not tested yet."
+   },
+   {
+    "clause": "GLOSS.ready#6",
+    "with": "Ambiguity 4 (targets and range at release)",
+    "risk": "medium",
+    "note": "The tests name targets when readying and never check range at release, so they hold under either reading."
+   },
+   {
+    "clause": "GLOSS.ready#7",
+    "with": "Healing Word, Shield, Fire Bolt",
+    "risk": "medium",
+    "note": "Bonus Action and Reaction spells are refused, and an action cantrip is allowed."
+   },
+   {
+    "clause": "GLOSS.ready#4",
+    "with": "GLOSS.speed / GLOSS.grappled",
+    "risk": "medium",
+    "note": "Readied movement is capped at your Speed. Two questions are untested: does a Speed-0 condition gained after readying stop the move, and does readied movement count against next turn's movement?"
+   },
+   {
+    "clause": "GLOSS.ready#3",
+    "with": "GLOSS.invisible",
+    "risk": "low",
+    "note": "Whether an invisible creature's movement counts as 'perceivable' is untested. The register has no ruling on it."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Two Reactions in one round (an Opportunity Attack, then the readied attack)",
+    "test": "tests/srd/test_glossary.py::test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction",
+    "reason": "There is one Reaction per round."
+   },
+   {
+    "case": "Two Reactions in one round (the readied attack, then an Opportunity Attack)",
+    "test": "tests/srd/test_glossary.py::test_no_opportunity_attack_after_the_readied_attack",
+    "reason": "Once the readied attack has fired, the Reaction is spent."
+   },
+   {
+    "case": "Readying out of turn",
+    "test": "tests/srd/test_glossary.py::test_ready_refused_off_turn",
+    "reason": "You take the Ready action on your turn."
+   },
+   {
+    "case": "Two actions in one turn (Attack, then Ready)",
+    "test": "tests/srd/test_glossary.py::test_ready_refused_after_the_action_is_spent",
+    "reason": "Ready is an action."
+   },
+   {
+    "case": "Readying an action plus a move as one response",
+    "test": "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused",
+    "reason": "The response is either the action or a move, not both."
+   },
+   {
+    "case": "A readied move farther than your Speed",
+    "test": "tests/srd/test_glossary.py::test_readied_move_beyond_speed_refused",
+    "reason": "Readied movement is up to your Speed."
+   },
+   {
+    "case": "A trigger that names a creature that doesn't exist",
+    "test": "tests/srd/test_glossary.py::test_ready_trigger_naming_no_creature_refused",
+    "reason": "The trigger must be a perceivable circumstance."
+   },
+   {
+    "case": "Readying a spell with no slot left",
+    "test": "tests/srd/test_glossary.py::test_readying_a_spell_without_a_slot_refused",
+    "reason": "A readied spell is cast as normal and spends its resources."
+   },
+   {
+    "case": "Getting the slot back when the spell is never released",
+    "test": "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot",
+    "reason": "The resources are spent when the spell is readied."
+   },
+   {
+    "case": "Concentration on two spells at once (Bless plus a held spell)",
+    "test": "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration",
+    "reason": "Holding the spell requires Concentration."
+   },
+   {
+    "case": "Readying a Reaction spell",
+    "test": "tests/srd/test_glossary.py::test_readying_a_reaction_spell_refused",
+    "reason": "A readied spell must have a casting time of an action."
+   },
+   {
+    "case": "A refused command that still spends the turn or a slot",
+    "test": "tests/srd/test_glossary.py::test_readying_a_bonus_action_spell_refused",
+    "reason": "assert_refused_cleanly checks that nothing changed, and the test also checks the slot count."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_waits_for_the_trigger",
+    "clause": "GLOSS.ready#1",
+    "kind": "positive",
+    "rule_quote": "You take the Ready action to wait for a particular circumstance before you act.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_not_taken_on_the_readying_turn",
+    "clause": "GLOSS.ready#1",
+    "kind": "negative",
+    "rule_quote": "You take the Ready action to wait for a particular circumstance before you act.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ready_takes_the_action",
+    "clause": "GLOSS.ready#2",
+    "kind": "positive",
+    "rule_quote": "To do so, you take this action on your turn, which lets you act by taking a Reaction before the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ready_leaves_no_second_action_for_dash",
+    "clause": "GLOSS.ready#2",
+    "kind": "negative",
+    "rule_quote": "To do so, you take this action on your turn",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ready_refused_off_turn",
+    "clause": "GLOSS.ready#2",
+    "kind": "abuse",
+    "rule_quote": "To do so, you take this action on your turn",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ready_refused_after_the_action_is_spent",
+    "clause": "GLOSS.ready#2",
+    "kind": "abuse",
+    "rule_quote": "To do so, you take this action on your turn",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_ends_at_the_start_of_your_next_turn",
+    "clause": "GLOSS.ready#2",
+    "kind": "boundary",
+    "rule_quote": "which lets you act by taking a Reaction before the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_lost_when_an_opportunity_attack_spent_the_reaction",
+    "clause": "GLOSS.ready#2",
+    "kind": "abuse",
+    "rule_quote": "which lets you act by taking a Reaction before the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_no_opportunity_attack_after_the_readied_attack",
+    "clause": "GLOSS.ready#2",
+    "kind": "abuse",
+    "rule_quote": "which lets you act by taking a Reaction before the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_only_the_chosen_circumstance_triggers_the_reaction",
+    "clause": "GLOSS.ready#3",
+    "kind": "positive",
+    "rule_quote": "First, you decide what perceivable circumstance will trigger your Reaction.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_not_taken_when_the_trigger_doesnt_happen",
+    "clause": "GLOSS.ready#3",
+    "kind": "negative",
+    "rule_quote": "First, you decide what perceivable circumstance will trigger your Reaction.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ready_trigger_naming_no_creature_refused",
+    "clause": "GLOSS.ready#3",
+    "kind": "abuse",
+    "rule_quote": "First, you decide what perceivable circumstance will trigger your Reaction.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_move_away_when_the_goblin_steps_next_to_you",
+    "clause": "GLOSS.ready#4",
+    "kind": "positive",
+    "rule_quote": "Then, you choose the action you will take in response to that trigger, or you choose to move up to your Speed in response to it.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_move_beyond_speed_refused",
+    "clause": "GLOSS.ready#4",
+    "kind": "boundary",
+    "rule_quote": "or you choose to move up to your Speed in response to it.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_bonus_action_refused",
+    "clause": "GLOSS.ready#4",
+    "kind": "negative",
+    "rule_quote": "Then, you choose the action you will take in response to that trigger",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused",
+    "clause": "GLOSS.ready#4",
+    "kind": "abuse",
+    "rule_quote": "Then, you choose the action you will take in response to that trigger, or you choose to move up to your Speed in response to it.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ignored_trigger_keeps_the_reaction",
+    "clause": "GLOSS.ready#5",
+    "kind": "negative",
+    "rule_quote": "When the trigger occurs, you can either take your Reaction right after the trigger finishes or ignore the trigger.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time",
+    "clause": "GLOSS.ready#5",
+    "kind": "positive",
+    "rule_quote": "When the trigger occurs, you can either take your Reaction right after the trigger finishes or ignore the trigger.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_attack_interrupts_the_rest_of_the_move",
+    "clause": "GLOSS.ready#5",
+    "kind": "positive",
+    "rule_quote": "When the trigger occurs, you can either take your Reaction right after the trigger finishes or ignore the trigger.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_spell_spends_its_slot_when_readied",
+    "clause": "GLOSS.ready#6",
+    "kind": "positive",
+    "rule_quote": "When you Ready a spell, you cast it as normal (expending any resources used to cast it) but hold its energy, which you release with your Reaction when the trigger occurs.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readied_spell_released_with_the_reaction",
+    "clause": "GLOSS.ready#6",
+    "kind": "positive",
+    "rule_quote": "When you Ready a spell, you cast it as normal (expending any resources used to cast it) but hold its energy, which you release with your Reaction when the trigger occurs.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_held_spell_not_released_when_the_trigger_is_ignored",
+    "clause": "GLOSS.ready#6",
+    "kind": "negative",
+    "rule_quote": "When you Ready a spell, you cast it as normal (expending any resources used to cast it) but hold its energy, which you release with your Reaction when the trigger occurs.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_spell_without_a_slot_refused",
+    "clause": "GLOSS.ready#6",
+    "kind": "abuse",
+    "rule_quote": "When you Ready a spell, you cast it as normal (expending any resources used to cast it)",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot",
+    "clause": "GLOSS.ready#6",
+    "kind": "abuse",
+    "rule_quote": "When you Ready a spell, you cast it as normal (expending any resources used to cast it)",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_bonus_action_spell_refused",
+    "clause": "GLOSS.ready#7",
+    "kind": "negative",
+    "rule_quote": "To be readied, a spell must have a casting time of an action",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_reaction_spell_refused",
+    "clause": "GLOSS.ready#7",
+    "kind": "abuse",
+    "rule_quote": "To be readied, a spell must have a casting time of an action",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_an_action_cantrip_is_allowed",
+    "clause": "GLOSS.ready#7",
+    "kind": "positive",
+    "rule_quote": "To be readied, a spell must have a casting time of an action",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_holding_a_readied_spell_takes_concentration",
+    "clause": "GLOSS.ready#8",
+    "kind": "positive",
+    "rule_quote": "holding on to the spell’s magic requires Concentration, which you can maintain up to the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_weapon_attack_needs_no_concentration",
+    "clause": "GLOSS.ready#8",
+    "kind": "negative",
+    "rule_quote": "holding on to the spell’s magic requires Concentration",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_held_spell_ends_at_the_start_of_your_next_turn",
+    "clause": "GLOSS.ready#8",
+    "kind": "boundary",
+    "rule_quote": "holding on to the spell’s magic requires Concentration, which you can maintain up to the start of your next turn.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration",
+    "clause": "GLOSS.ready#8",
+    "kind": "abuse",
+    "rule_quote": "holding on to the spell’s magic requires Concentration",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_held_spell_dissipates_when_concentration_breaks",
+    "clause": "GLOSS.ready#9",
+    "kind": "positive",
+    "rule_quote": "If your Concentration is broken, the spell dissipates without taking effect.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_held_spell_survives_a_successful_concentration_save",
+    "clause": "GLOSS.ready#9",
+    "kind": "negative",
+    "rule_quote": "If your Concentration is broken, the spell dissipates without taking effect.",
+    "claim": "red",
+    "ticket_title": "SRD: Ready lets a creature wait for a trigger and act with its Reaction; engine: no Ready action, readied trigger or readied Reaction exists"
+   }
+  ],
+  "not_testable": [],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.ready ambiguity 1: 'holding on to the spell’s magic requires Concentration'. Does holding a spell that isn't a Concentration spell end an existing Concentration?",
+    "ruling": "Reading A. Holding any readied spell is an effect that requires Concentration, so readying one ends Concentration on an earlier spell such as Bless.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.ready ambiguity 2: does an ignored trigger use up the readied action?",
+    "ruling": "Reading A. Ignoring the trigger keeps the readied action and the Reaction for a later occurrence of the same circumstance, until the start of your next turn.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_ignored_trigger_can_be_answered_the_next_time"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.ready ambiguity 3: 'right after the trigger finishes'. For a movement trigger, does the Reaction come after the triggering step or after the whole move?",
+    "ruling": "Reading A. The Reaction resolves right after the triggering step and interrupts the rest of the move. The mover then finishes its movement.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_readied_attack_interrupts_the_rest_of_the_move"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.ready gap: what happens to a held spell that isn't released before the start of your next turn?",
+    "ruling": "The Concentration that holds it ends at the start of your next turn. The spell dissipates without effect, and the spent slot isn't refunded.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_held_spell_ends_at_the_start_of_your_next_turn",
+     "tests/srd/test_glossary.py::test_unreleased_readied_spell_doesnt_refund_its_slot"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.ready #4: is the readied response checked when you ready it, or only when the trigger occurs?",
+    "ruling": "It is checked when you ready it. A response that isn't one action, or one move up to your Speed, is refused cleanly on your turn before the action is spent.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_readied_move_beyond_speed_refused",
+     "tests/srd/test_glossary.py::test_readying_a_bonus_action_refused",
+     "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused"
+    ]
+   }
+  ],
+  "summary": "The engine has no Ready action: no `ready` command, no structured trigger and no readied Reaction. This attempt adds the four tests the last check found missing:\n- **#2 negative:** after Ready, Dash is refused because the action is spent.\n- **#3 positive:** only the chosen circumstance triggers the Reaction. Goblin 2 stepping in fires it; the other goblin stepping in doesn't.\n- **#6 negative:** an ignored trigger releases nothing, and the slot stays spent.\n- **#8 negative:** readying a weapon attack takes no Concentration, so Bless stays up.\n\nThat makes 33 GLOSS.ready tests in tests/srd/test_glossary.py, all claimed red and marked xfail(strict) with one shared ticket. Every clause from #1 to #9 has a positive and a negative test. There are boundary tests for #2, #4 and #8, and 12 abuse tests.\n\nTest results:\n- The normal run of the file gives 34 passed and 33 xfailed.\n- With --runxfail, each of the 4 new tests fails only because Ready is missing: \"Unknown command 'ready'\", or the step that readies.\n- ruff format and ruff check are clean.\n\nThe command shape the tests use lives in tests/support/ready.py, so if the dev loop picks a different shape, only that file changes. The new cheats are in loop/abuse-catalogue.md. Five rulings are proposed. There are no scenario changes, since stage B had no verdicts."
+ },
+ "problems": [],
+ "cost_usd": 0.7583757999999999,
+ "session": "1d4669ed-11f6-4577-a4e7-0513efa843dc"
+}

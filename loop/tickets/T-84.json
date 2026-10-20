@@ -1,0 +1,15 @@
+{
+  "id": "T-84",
+  "kind": "infra",
+  "unit": "GLOSS.area-of-effect",
+  "title": "Walls/obstructions placed between points in the scene, plus visibility of a point from a creature, so that an area placed at an unseen point behind an obstruction gets its point of origin on the near side (GLOSS.area-of-effect#5)",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature B: obstacle geometry"
+    }
+  ]
+}

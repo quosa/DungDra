@@ -1,0 +1,13 @@
+{
+  "id": "P-13",
+  "unit": "GLOSS.ready",
+  "ambiguity": "GLOSS.ready ambiguity 1: 'holding on to the spell’s magic requires Concentration'. Does holding a spell that isn't a Concentration spell end an existing Concentration?",
+  "ruling": "Reading A. Holding any readied spell is an effect that requires Concentration, so readying one ends Concentration on an earlier spell such as Bless.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_readying_a_spell_ends_earlier_concentration"
+  ],
+  "status": "accepted",
+  "register_id": "R-17",
+  "note": "you can only concentrate on one thing at a time",
+  "reason": ""
+}

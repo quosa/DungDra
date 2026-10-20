@@ -1,0 +1,15 @@
+{
+  "id": "T-46",
+  "kind": "infra",
+  "unit": "GLOSS.prone",
+  "title": "Creature spaces: give Large and bigger creatures a footprint, and measure distance and adjacency between the nearest occupied squares",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
+}

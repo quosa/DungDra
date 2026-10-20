@@ -1,0 +1,15 @@
+{
+  "id": "P-28",
+  "unit": "GLOSS.sphere",
+  "ambiguity": "GLOSS.sphere ambiguity 1: 'specifies the distance it extends as the radius': Euclidean distance or the grid metric, and is a point exactly at the radius inside?",
+  "ruling": "Measure a Sphere's radius with the grid distance used for range and movement (each square, diagonals included, counts 5 ft; elevation counts the same way), from the centre of the origin's space to the centre of the creature's space. A creature exactly at the radius is inside, so a 5-ft Sphere covers the 3×3 block of squares around its origin and nothing 10 ft away.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_a_5_ft_sphere_along_a_diagonal_takes_the_next_square_but_not_the_one_after",
+    "tests/srd/test_glossary.py::test_a_sphere_extends_from_its_origin_in_every_direction",
+    "tests/srd/test_glossary.py::test_a_sphere_extends_upward_from_its_origin_too"
+  ],
+  "status": "accepted",
+  "register_id": "R-32",
+  "note": "The same distance as range on a grid (PLAY.combat, p.14).",
+  "reason": ""
+}

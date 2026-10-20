@@ -1,0 +1,26 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "escape_grapple (dungdra/combat.py:1627) now finds its Grappled condition through grapples_on(c) instead of its own scan of c.effects, so every grapple lookup uses that one helper. Behaviour is unchanged. I added two unit tests in tests/unit/test_combat.py. The first checks that escaping is refused when the creature is only Restrained, not Grappled. The second gives a creature both a Restrained effect with escape_dc=30 and a Grappled condition with escape_dc=15, and checks that the escape check uses DC 15 and that a success frees the creature. No acceptance tests were listed for this ticket. Results: 335 unit tests passed, the 20 grapple tests in tests/srd and tests/scenarios passed with --runxfail, ruff check and ruff format --check are clean, and dev-gate passed. I added no SRD tags because no rule code changed.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_escape_grapple_refused_when_not_grappled",
+   "tests/unit/test_combat.py::test_escape_grapple_checks_against_the_grapples_escape_dc"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I approve this fix. `escape_grapple` (combat.py:1627) now finds the Grappled condition through `grapples_on(c)`, which uses the same `condition == \"grappled\"` test. Behaviour doesn't change. The ad-hoc scan was the last one: every other grapple lookup in `dungdra/` (in combat.py, game.py and effects.py) already goes through `grapples_on`. `grapples_on` was already imported in combat.py, so no new import was needed.\n\nThe two new unit tests check real behaviour:\n- **Not grappled:** if the creature is only Restrained, the escape is refused and the Restrained condition stays.\n- **Right escape DC:** a Restrained effect with escape DC 30 is added before a grapple with DC 15. The test checks that the escape is rolled against the grapple's DC (15) and that the grapple ends.\n\nNeither test mocks anything, and neither just reads the implementation's own constants back. The old code would also have passed them, which is expected for a refactor: they guard against regressions rather than proving a change. The extra line in `loop/costs.jsonl` is the loop recording its own cost, not out-of-scope work. I'm filing no follow-ups."
+ },
+ "problems": [],
+ "cost_usd": 0.4536,
+ "stash": ""
+}

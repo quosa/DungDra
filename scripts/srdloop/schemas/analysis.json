@@ -1,0 +1,173 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "clauses",
+  "relations",
+  "ambiguities",
+  "conflicts",
+  "gaps",
+  "traps",
+  "summary"
+ ],
+ "properties": {
+  "clauses": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "text",
+     "threshold"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "description": "<unit id>#<n>, numbered from 1"
+     },
+     "text": {
+      "type": "string",
+      "description": "verbatim from the unit"
+     },
+     "threshold": {
+      "type": "boolean",
+      "description": "has a numeric or size threshold worth a boundary test"
+     }
+    }
+   }
+  },
+  "relations": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "type",
+     "target",
+     "evidence"
+    ],
+    "properties": {
+     "type": {
+      "enum": [
+       "requires",
+       "modifies",
+       "exception_to",
+       "overrides",
+       "excludes",
+       "triggers",
+       "interacts_with",
+       "same_concept_as"
+      ]
+     },
+     "target": {
+      "type": "string",
+      "description": "unit id"
+     },
+     "evidence": {
+      "type": "string",
+      "description": "verbatim from either unit"
+     }
+    }
+   }
+  },
+  "ambiguities": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "quote",
+     "reading_a",
+     "reading_b",
+     "proposed_ruling",
+     "confidence"
+    ],
+    "properties": {
+     "quote": {
+      "type": "string"
+     },
+     "reading_a": {
+      "type": "string"
+     },
+     "reading_b": {
+      "type": "string"
+     },
+     "proposed_ruling": {
+      "type": "string"
+     },
+     "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+     }
+    }
+   }
+  },
+  "conflicts": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "target",
+     "quote",
+     "explanation"
+    ],
+    "properties": {
+     "target": {
+      "type": "string"
+     },
+     "quote": {
+      "type": "string"
+     },
+     "explanation": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "gaps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "quote",
+     "explanation"
+    ],
+    "properties": {
+     "quote": {
+      "type": "string"
+     },
+     "explanation": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "traps": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "quote",
+     "note"
+    ],
+    "properties": {
+     "quote": {
+      "type": "string"
+     },
+     "note": {
+      "type": "string",
+      "description": "how 2014 rules differ"
+     }
+    }
+   }
+  },
+  "summary": {
+   "type": "string"
+  }
+ }
+}

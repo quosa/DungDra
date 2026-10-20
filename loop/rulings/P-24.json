@@ -1,0 +1,13 @@
+{
+  "id": "P-24",
+  "unit": "GLOSS.cone",
+  "ambiguity": "GLOSS.cone ambiguity 1: may the creator choose a shorter length than the effect's maximum?",
+  "ruling": "No. The Cone always uses the full length the effect gives unless the effect offers a shorter one. Aiming at a near point sets only the direction.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_aiming_at_a_near_point_still_gives_the_full_length"
+  ],
+  "status": "accepted",
+  "register_id": "R-28",
+  "note": "'Maximum length' allows a shorter Cone by choice; the engine doesn't offer it yet. Aiming sets only the direction.",
+  "reason": ""
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P-29",
+  "unit": "GLOSS.sphere",
+  "ambiguity": "GLOSS.sphere ambiguity 3: 'A Sphere's point of origin is included': is a creature whose space holds the origin (including the caster) in the area?",
+  "ruling": "Reading A: a creature whose space holds the point of origin is in the Sphere and is affected like any other creature in it, including a caster who places the Sphere on their own space. This is the opposite of P-25/P-27 for Cones and Cubes. A caster away from the origin isn't in the Sphere: it isn't an Emanation.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_a_caster_who_centres_a_sphere_on_themself_is_in_it"
+  ],
+  "status": "accepted",
+  "register_id": "R-33",
+  "note": "'P-25/P-27' means R-29/R-31.",
+  "reason": ""
+}

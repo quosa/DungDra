@@ -1,0 +1,15 @@
+{
+  "id": "T-63",
+  "kind": "infra",
+  "unit": "GLOSS.prone",
+  "title": "A controlled mount's movement on its rider's turn draws on no budget (moves_on_riders_turn makes it free_off_turn), so it can move without limit there, and it still gets its own full budget in the separate initiative slot mount() inserts after the rider. Give the controlled mount one movement budget per rider's turn, limited by the mount's Speed (PLAY.combat.mounted-combat \"moves on your turn as you direct it\"), and stop granting it a second budget.",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "parked",
+      "reason": "feature menu: not next"
+    }
+  ]
+}

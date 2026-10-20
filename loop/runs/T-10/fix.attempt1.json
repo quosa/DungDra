@@ -1,0 +1,38 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I added unit tests that call `game.log.assert_applied(ruling=...)` for R-01 to R-04. Each ruling has a positive test (the ruling is logged, with the right page and visibility) and a negative test (no ruling is logged when the case doesn't come up):\n- **R-01:** Lidda's duplicate Thieves' Tools is replaced by a Disguise Kit, and the prompt asking for a replacement cites R-01. Brom, whose tools don't overlap, logs nothing.\n- **R-02:** 250 XP split among 3 PCs gives 83 each, logged on page 255.\n- **R-03:** an over-High rating is logged GM-only with R-03 and adds no player event. A rating inside the budget logs no ruling. Reinforcements without a justification are refused with ruling R-03 and page 202. With a justification they're logged GM-only. Reinforcements within budget log nothing.\n- **R-04:** disarming without Thieves' Tools is a single-d20 check, logged GM-only with R-04 on page 94. Disarming with the tools logs no ruling.\n\nTo meet the page requirement for log events, I also added `page=` to the two ruling events that had none: R-01 in `creation.py` (page 83, from ORIGIN…tool-proficiency) and R-04 in `traps.py` (page 94, from EQUIP…thieves-tools-25-gp). I didn't add SRD tags because the ticket has no analysed unit.\n\nResults: the full suite passes (560 tests), `ruff check` and `ruff format --check` are clean, and the dev-gate passes. The ticket names no acceptance tests, so there was nothing to run with `--runxfail`.",
+  "files": [
+   "dungdra/creation.py",
+   "dungdra/traps.py",
+   "tests/unit/test_encounters.py",
+   "tests/unit/test_creation.py",
+   "tests/unit/test_traps.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_encounters.py::test_xp_split_divides_evenly_rounding_down_and_logs_r02",
+   "tests/unit/test_encounters.py::test_an_over_high_rating_is_gm_only_and_logs_r03",
+   "tests/unit/test_encounters.py::test_a_rating_within_budget_logs_no_ruling",
+   "tests/unit/test_encounters.py::test_reinforcements_over_high_are_refused_with_r03",
+   "tests/unit/test_encounters.py::test_justified_reinforcements_over_high_log_r03_gm_only",
+   "tests/unit/test_encounters.py::test_reinforcements_within_budget_log_no_ruling",
+   "tests/unit/test_creation.py::test_a_duplicate_tool_proficiency_is_replaced_and_logs_r01",
+   "tests/unit/test_creation.py::test_the_replacement_tool_is_asked_for_citing_r01",
+   "tests/unit/test_creation.py::test_distinct_tool_proficiencies_log_no_ruling",
+   "tests/unit/test_traps.py::test_disarming_without_thieves_tools_is_a_plain_check_and_logs_r04_gm_only",
+   "tests/unit/test_traps.py::test_disarming_with_thieves_tools_logs_no_ruling"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I approve this fix. It adds unit tests in tests/unit/test_creation.py, test_encounters.py and test_traps.py that call assert_applied(ruling=...) for all four rulings in the ticket:\n- **R-01:** a duplicate Thieves' Tools proficiency is replaced by the Disguise Kit, and the builder's prompt for the replacement tool cites R-01.\n- **R-02:** the XP split is checked, and rounding down gives 83 each.\n- **R-03:** an over-high encounter rating is logged GM-only, reinforcements without a justification are refused citing R-03 and page 202, and justified ones are logged GM-only.\n- **R-04:** disarming without Thieves' Tools rolls one d20 with no Advantage and logs R-04 GM-only.\n\nEach ruling also has a negative test showing nothing is logged when the ruling doesn't apply. The tests check what the engine does (which tools the PC ends up with, the XP each PC gets, the rating band, the roll mode, whether the trap is disabled, and the refusal) rather than repeating the code's own constants. They use the real engine with forced dice and no mocks.\n\nThe only engine change adds the missing `page=` to the R-01 and R-04 ruling events. The project rules require a page on every log event, and the pages match the units' pages in units.jsonl (ORIGIN…tool-proficiency is p.83, EQUIP…thieves-tools is p.94). It's small and the tests need it, so it's within scope. I couldn't run the tests myself because Bash was denied; I'm relying on the gate result (all gates pass)."
+ },
+ "problems": [],
+ "cost_usd": 0.57,
+ "stash": ""
+}

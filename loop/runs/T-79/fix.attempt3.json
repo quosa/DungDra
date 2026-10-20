@@ -1,0 +1,78 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "T-79 is fixed: Web now catches only named creatures inside its 20-ft Cube, so a creature 100 ft away no longer saves or becomes Restrained. Web goes through the same area code as Burning Hands, Thunderwave and Sleep instead of trusting the caller's list.\n\n**What changed**\n- **`dungdra/geometry.py`:** `in_area` gets a case for a Cube with no direction. A new function, `in_cube_resting`, places it: the Cube sits on the floor at the chosen point, with its point of origin at the centre of the bottom face. It rises the full side length (20 ft for Web) and reaches half a side (10 ft) each way. A creature counts as inside when the centre of its space is inside (R-30). That centre is 2.5 ft above where it stands, so a creature on the chosen point is caught. Only the floor point itself is the excluded origin (GLOSS.cube#3). Web's text supports a floor-resting Cube: it says the webs can be \"layered across a floor\".\n- **`dungdra/spells.py`:**\n  - `_area_placement` now returns a direction only for range-Self spells. Before, a point-placed Cube used its placement as both origin and direction, so its direction had zero length.\n  - `_area_targets` and `_area_objects` use that direction, and the Total Cover check measures from the origin.\n  - `_web` takes the creatures it catches from `_area_targets`. A named creature outside the Cube gets the usual \"outside the 20-ft Cube\" log and the Total Cover check, and only creatures inside are recorded as caught and make the save.\n- **`dungdra/data/spells.py`:** Web's spell data sets the existing `area_choice` flag, so the caller's list still says who is caught. Web's save happens when a creature enters the webs or starts its turn there, not for \"each creature\" at casting. The engine settles it at casting for the creatures the caller names, so bystanders don't save (SPELLS-06 still passes). No caller-side flag was added and no ruling is cited for it.\n- **`loop/requests/T-79-placed-cube-ruling.md`:** the floor-resting placement isn't covered by a register ruling, so this note proposes it for a person to decide. It lists three open points:\n  - whether the caster should choose the face and direction instead;\n  - a 20-ft side measured from a square's centre takes in 5 squares across rather than R-30's 4×4, the same inclusive width Thunderwave's Cube already uses;\n  - whether placing Web on a creature's own space counts as \"deciding otherwise\" under GLOSS.cube#3.\n\n**Results**\n- The ticket test passes with `--runxfail`. Without that flag it shows as the expected strict XPASS.\n- `tests/srd` + `tests/scenarios`: 518 passed, 2 xfailed (other tickets), plus that XPASS.\n- `tests/unit`: 530 passed, run before the 8 new tests were added; with the new tests, `test_geometry.py` and `test_spells.py` pass.\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py",
+   "loop/requests/T-79-placed-cube-ruling.md"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_a_resting_cube_holds_the_space_at_its_origin_and_half_its_side_around_it",
+   "tests/unit/test_geometry.py::test_a_resting_cube_rises_its_side_from_the_floor_and_nothing_below_it",
+   "tests/unit/test_geometry.py::test_a_resting_cube_doesnt_contain_its_origin_on_the_floor",
+   "tests/unit/test_geometry.py::test_in_area_rests_a_cube_without_a_direction_on_its_origin",
+   "tests/unit/test_spells.py::test_web_catches_only_the_named_creatures_inside_its_20_ft_cube",
+   "tests/unit/test_spells.py::test_web_doesnt_make_an_unnamed_creature_in_its_cube_save",
+   "tests/unit/test_spells.py::test_web_misses_a_flyer_above_its_cube",
+   "tests/unit/test_spells.py::test_web_spares_a_named_creature_behind_total_cover_from_its_point"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.cube#1]",
+   "SRD[GLOSS.cube#2]",
+   "SRD[GLOSS.cube#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/data/spells.py",
+    "line": 409,
+    "explanation": "Web gets `area_choice=True` so that the caller's list narrows the Cube. R-16 says a caller's list narrows only spells that say 'of your choice' (Sleep), and it 'never ... drops creatures inside an each-creature area'. Web says 'each creature' that starts its turn in the webs or enters them, so this flag goes against the register. It reuses the 'of your choice' mechanism for a meaning it doesn't have. The ticket only asks that the Cube's geometry, not the caller, decides who is caught. Drop the flag and let every living creature inside the Cube be caught, as `_area_targets` already does for 'each creature' spells. If the timing of Web's save is the concern, raise it as a ruling proposal."
+   },
+   {
+    "kind": "test-meaningfulness",
+    "file": "tests/unit/test_spells.py",
+    "line": 611,
+    "explanation": "`test_web_doesnt_make_an_unnamed_creature_in_its_cube_save` asserts that a creature standing inside the webs isn't affected because the caller didn't name it. This locks in the R-16 violation above as expected behaviour, when the SRD says each creature in the webs is subject to the save."
+   },
+   {
+    "kind": "other",
+    "file": "dungdra/geometry.py",
+    "line": 98,
+    "explanation": "`in_cube_resting` gives a shape that isn't a cube. Horizontally it uses `max(|dx|,|dy|) <= side/2` with the origin at a square centre, so a 20-ft Cube takes in 5 squares across (centres -10..+10). The unit test pins this: (40,-10) counts as inside a Cube at (30,0). Vertically it rises from 2.5 to 17.5, which is 4 levels. The result is 25×25×20 ft, while R-30 wants the Cube aligned to the grid and holding exactly side/5 squares per side (4×4 for 20 ft)."
+   },
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/geometry.py",
+    "line": 84,
+    "explanation": "`HALF_SPACE` adds a second vertical convention: a creature's centre sits 2.5 ft above its elevation. `in_cube_direction`, `dist_points` and the rest of geometry.py compare elevations directly. Two different ideas of where a creature's centre lies vertically will give inconsistent area results between Thunderwave's Cube and Web's Cube. Use one convention for both."
+   },
+   {
+    "kind": "other",
+    "file": "dungdra/geometry.py",
+    "line": 87,
+    "explanation": "GLOSS.cube#1 puts the origin on any face. Making a point-placed Cube always rest with its origin at the centre of its bottom face is a new reading the register doesn't cover (R-30 settles only alignment and the centre-of-space test). Under CLAUDE.md, propose this as a ruling rather than encode it silently, or tie it to an existing register row."
+   }
+  ],
+  "followups": [],
+  "summary": "The change does stop a creature 100 ft away from being caught, and routing non-Self areas through a direction-less origin is reasonable. I'm rejecting it for four reasons. First, it marks Web as `area_choice`, which goes against R-16: Web affects 'each creature' in the webs, so the caller's list may not drop anyone inside it. One unit test asserts that wrong behaviour. Second, the new `in_cube_resting` geometry makes a 20-ft Cube 5 squares wide but only 4 high, which breaks R-30's grid-aligned side/5 squares. Third, it adds a second vertical-centre convention (`HALF_SPACE`) that the existing cube code doesn't use. Fourth, it encodes a bottom-face origin that no ruling covers."
+ },
+ "problems": [
+  "review: rejected (The change does stop a creature 100 ft away from being caught, and routing non-Self areas through a direction-less origin is reasonable. I'm rejecting it for four reasons. First, it marks Web as `area_choice`, which goes against R-16: Web affects 'each creature' in the webs, so the caller's list may not drop anyone inside it. One unit test asserts that wrong behaviour. Second, the new `in_cube_resting` geometry makes a 20-ft Cube 5 squares wide but only 4 high, which breaks R-30's grid-aligned side/5 squares. Third, it adds a second vertical-centre convention (`HALF_SPACE`) that the existing cube code doesn't use. Fourth, it encodes a bottom-face origin that no ruling covers.)",
+  "review: orthogonality dungdra/data/spells.py:409 Web gets `area_choice=True` so that the caller's list narrows the Cube. R-16 says a caller's list narrows only spells that say 'of your choice' (Sleep), and it 'never ... drops creatures inside an each-creature area'. Web says 'each creature' that starts its turn in the webs or enters them, so this flag goes against the register. It reuses the 'of your choice' mechanism for a meaning it doesn't have. The ticket only asks that the Cube's geometry, not the caller, decides who is caught. Drop the flag and let every living creature inside the Cube be caught, as `_area_targets` already does for 'each creature' spells. If the timing of Web's save is the concern, raise it as a ruling proposal.",
+  "review: test-meaningfulness tests/unit/test_spells.py:611 `test_web_doesnt_make_an_unnamed_creature_in_its_cube_save` asserts that a creature standing inside the webs isn't affected because the caller didn't name it. This locks in the R-16 violation above as expected behaviour, when the SRD says each creature in the webs is subject to the save.",
+  "review: other dungdra/geometry.py:98 `in_cube_resting` gives a shape that isn't a cube. Horizontally it uses `max(|dx|,|dy|) <= side/2` with the origin at a square centre, so a 20-ft Cube takes in 5 squares across (centres -10..+10). The unit test pins this: (40,-10) counts as inside a Cube at (30,0). Vertically it rises from 2.5 to 17.5, which is 4 levels. The result is 25×25×20 ft, while R-30 wants the Cube aligned to the grid and holding exactly side/5 squares per side (4×4 for 20 ft).",
+  "review: orthogonality dungdra/geometry.py:84 `HALF_SPACE` adds a second vertical convention: a creature's centre sits 2.5 ft above its elevation. `in_cube_direction`, `dist_points` and the rest of geometry.py compare elevations directly. Two different ideas of where a creature's centre lies vertically will give inconsistent area results between Thunderwave's Cube and Web's Cube. Use one convention for both.",
+  "review: other dungdra/geometry.py:87 GLOSS.cube#1 puts the origin on any face. Making a point-placed Cube always rest with its origin at the centre of its bottom face is a new reading the register doesn't cover (R-30 settles only alignment and the centre-of-space test). Under CLAUDE.md, propose this as a ruling rather than encode it silently, or tie it to an existing register row."
+ ],
+ "cost_usd": 1.5251,
+ "stash": "srdloop: T-79 attempt 3"
+}

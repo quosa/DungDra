@@ -1,0 +1,33 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed T-68. A monster created with `hp=\"roll\"` now rolls its Hit Points when it joins a game. Before, nothing rolled and the goblin kept its 10 HP.\n\nHow it works:\n- `Game.add` calls a new `Creature.on_added(game)` hook, which does nothing in the base class. The game layer can't import `Monster`, which is why a hook is used.\n- `Monster.on_added` takes the `roll_hp` note off the monster and calls `roll_hp(game.dice)`. That rolls the stat block's die expression, including its modifier (3d6 for the goblin, 8d10+24 for the ogre), and sets both current and max HP, with a minimum of 1.\n- Because the note is removed, adding the same monster again doesn't roll a second time.\n- It logs an `hp_rolled` event.\n\nThis addresses the review of attempt 1. The tag and the log event now cite the general rule for every monster: `rule=\"MONSTER.parts-of-a-stat-block.hit-points\"`, page 255 (\"Either use the number … or roll the die expression in parentheses … don't use both\"). They no longer cite the goblin's #4 clause. That unit has no stage-A numbering, so the reference has no clause number; dev-gate's check allows that. The unit tests use an ogre (8d10+24) and a kobold, so a citation hard-coded to the goblin would fail them.\n\nResults:\n- Unit suite: 487 passed.\n- The ticket's test with `--runxfail`: passes.\n- Full srd/scenarios run: the only failure is this test's expected strict XPASS. The 8 xfails left belong to other tickets.\n- `ruff check` and `ruff format --check`: clean.\n- dev-gate: PASS.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/game.py",
+   "dungdra/monster.py",
+   "tests/unit/test_monster.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_monster.py::test_rolled_hp_rolls_the_hit_dice_and_its_modifier_when_the_monster_joins",
+   "tests/unit/test_monster.py::test_a_rolled_total_below_1_still_leaves_1_hp",
+   "tests/unit/test_monster.py::test_rolled_hp_is_not_rolled_again_when_re_added",
+   "tests/unit/test_monster.py::test_average_and_fixed_hp_roll_nothing",
+   "tests/unit/test_monster.py::test_a_monster_keeps_the_average_until_it_joins_a_game"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.parts-of-a-stat-block.hit-points]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "This fixes T-68. A Monster made with hp='roll' still only sets the roll_hp note at construction. Game.add now calls a new Creature.on_added hook, and Monster's version of it pops the note and rolls the stat block's Hit Dice. The roll replaces current and max HP, so the average isn't used as well. It logs an hp_rolled event that cites MONSTER.parts-of-a-stat-block.hit-points on p.255. The rule is generic: it reads self.hd and has no goblin special case, and it reuses the existing roll_hp method. Because the note is popped, adding the monster again doesn't roll a second time. The SRD test's strict xfail was removed, and that test now passes, which is allowed when a fix makes it pass. The new unit tests check real behaviour on monsters other than the goblin: the ogre rolls 8d10+24 and the event cites the general rule (attempt 1 was rejected for citing the goblin-specific rule), a roll below 1 still leaves 1 HP, no second roll on re-add, nothing rolls for average or fixed HP, and a monster keeps its average HP until it joins a game. The rule= value has no clause number, but no stage-A analysis exists for that unit, and existing citations of parts-of-a-stat-block units (challenge-rating) leave the clause out the same way. The diff also adds one line to loop/costs.jsonl, the loop's cost log. No scope creep."
+ },
+ "problems": [],
+ "cost_usd": 0.5638,
+ "stash": ""
+}

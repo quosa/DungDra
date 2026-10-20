@@ -1,0 +1,27 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Death saving throws now use the same gather-and-finish path as `Creature.save`. That means an automatic success or failure from a gathered effect now applies to death saves too; before, death saves ignored it.\n\n- **`dungdra/creature.py`:** I pulled the gather-and-finish code out of `Creature.save` into a new method, `Creature.roll_gathered(roll, ctx, mods, adv, dis, visibility, page, rule)`. It applies the gathered modifiers, Advantage/Disadvantage, bonus dice and automatic success or failure, removes effects used up by the roll, then rolls (or doesn't, for an automatic result). `save` now calls it.\n- **`dungdra/damage.py`:** `death_save` now calls `pc.roll_gathered` too, so the old copy of that logic is gone. When no d20 is rolled because of an automatic result, a success adds one death-save success and a failure adds one failure with the effect's reason. The natural 20 and natural 1 rules are unchanged. The success bookkeeping moved into a small `_add_success` helper, and an import that was no longer used was removed.\n\nThis ticket listed no acceptance tests. Results:\n- Unit tests: 283 passed.\n- `tests/srd` and `tests/scenarios`: 266 passed.\n- `ruff check` and `ruff format --check`: clean.\n- `dev-gate`: PASS.\n\nI added no SRD tags: this refactor adds no new rule, and the death-save rule was already tagged with `rule=\"GLOSS.death-saving-throw\"`.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/damage.py",
+   "tests/unit/test_damage.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_damage.py::test_an_automatic_success_counts_as_a_success_without_a_roll",
+   "tests/unit/test_damage.py::test_an_automatic_failure_counts_as_one_failure_whatever_bless_adds"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this fix with no findings. It does what T-29 asks: Creature.save now hands its effect gathering and finishing to a new `roll_gathered` method (gather, then auto success or fail, then `_finish`), and `death_save` goes through that same path. Before, `death_save` gathered effects on its own and skipped `acc.auto`; that duplicate code is gone.\n\nHow it behaves now:\n- **Automatic results:** an automatic success counts as one success, and an automatic failure counts as one failure. A forced result never counts as a natural 1 or 20.\n- **Rolled results:** natural 20, natural 1 and the 10+ threshold work as before. `roll.total` equals the old `chosen + modifier` whenever a die was rolled.\n- **Consumed effects:** these are still removed, and that now happens inside `_finish`.\n- **Refactor:** the success-logging branch moved into `_add_success`, which avoids writing it twice.\n\nThe new unit tests check behaviour: no die is rolled, `death_saves` counts change correctly, and Bless doesn't affect an automatic failure. They use a small Effect subclass that runs through the real effect mechanism, so nothing is mocked.\n\nNo follow-up ticket is needed. T-27 already covers the related \"death save is a save\" check (effects keyed on `ctx.kind == \"save\"` skip death saves), and nothing in this change is out of scope."
+ },
+ "problems": [],
+ "cost_usd": 0.5571,
+ "stash": ""
+}

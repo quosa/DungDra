@@ -1,0 +1,51 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "summary",
+  "files",
+  "unit_tests",
+  "srd_tags",
+  "dispute",
+  "test_change_request"
+ ],
+ "properties": {
+  "summary": {
+   "type": "string"
+  },
+  "files": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "unit_tests": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "description": "node ids of new or changed unit tests"
+   }
+  },
+  "srd_tags": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "description": "SRD[...] tags added"
+   }
+  },
+  "dispute": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "description": "why the acceptance test is wrong, if it is"
+  },
+  "test_change_request": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "description": "acceptance tests a refactor needs changed, and why"
+  }
+ }
+}

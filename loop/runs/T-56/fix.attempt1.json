@@ -1,0 +1,32 @@
+{
+ "result": "dispute",
+ "fixer": {
+  "summary": "Burning Hands (Cone) and Thunderwave (Cube) now take every living creature in the area from the scene (game.creatures), using shape and size from SPELLS[...][\"area\"], the caster as origin, and a direction (point=, or the first named creature other than the caster). The caller's list only aims the area: it can't add a creature outside or leave out one inside (R-16). Thunderwave's Cube was a 15-ft radius around the caster; it is now a real Cube set against one face of the caster's space, via the new geometry.in_cube_from. A cast with no usable direction is refused before anything is paid (SPELL.casting-spells.effects.targets#4, p.106). A named creature outside the area is logged with page=106 and ruling R-16. Behind-Total-Cover creatures are still excluded (GLOSS.area-of-effect). The 'aim at the first named creature' fallback is kept only as a way to state the direction, because 7 acceptance tests cast without point= (see test_change_request). Full suite (818), ruff check/format and dev-gate pass.",
+  "files": [
+   "dungdra/spells.py",
+   "dungdra/geometry.py",
+   "tests/unit/test_spells.py",
+   "tests/unit/test_geometry.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_a_cone_takes_every_creature_inside_it_even_one_the_caller_left_out",
+   "tests/unit/test_spells.py::test_a_named_creature_outside_the_area_is_logged_under_r16_and_untouched",
+   "tests/unit/test_spells.py::test_a_dead_creature_in_the_cone_makes_no_save",
+   "tests/unit/test_spells.py::test_a_thunderwave_cube_takes_creatures_on_the_side_it_faces_only",
+   "tests/unit/test_spells.py::test_an_area_from_the_caster_with_no_direction_is_refused_before_the_slot_is_spent",
+   "tests/unit/test_geometry.py::test_a_cube_aimed_along_an_axis_is_three_squares_deep_and_centred_on_the_creatures_row",
+   "tests/unit/test_geometry.py::test_a_cube_aimed_on_a_diagonal_fills_the_quadrant_from_the_creatures_corner",
+   "tests/unit/test_geometry.py::test_a_cube_with_no_direction_contains_nothing"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4] (area aim check: the area needs a direction)",
+   "SRD[SPELL.casting-spells.effects.targets#4] (_area_targets: the area, not the caller's list, decides who is hit)"
+  ],
+  "dispute": null,
+  "test_change_request": "To drop the 'aim at the first named creature' fallback entirely (so that only an explicit point= gives a Cone/Cube its direction), these acceptance tests must pass point= because they currently cast Burning Hands or Thunderwave with only a creature list: tests/srd/test_playing_the_game.py (mialee_burns helper -> point=(15, 0); test_cover_doesnt_help_other_saves thunderwave -> point=(20, 0); test_total_cover_doesnt_refuse_an_area_spell -> point=(15, 0)), tests/srd/test_spells.py (test_a_named_creature_outside_the_cone_isnt_affected -> point=(30, 0); test_one_cone_cant_reach_both_sides_of_the_caster -> point=(15, 0) or (-15, 0)), tests/scenarios/test_spells.py::test_spl05_burning_hands -> point=(15, 0), tests/scenarios/test_combat.py CMB-05 Burning Hands casts -> point=(215, 200). After that change, _area_aim would return only the point, and _area_aim_check would refuse a cast without one. The scene-based selection the ticket asks for is already in place and doesn't depend on this change."
+ },
+ "review": null,
+ "problems": [],
+ "cost_usd": 1.1401,
+ "stash": "srdloop: T-56 dispute"
+}

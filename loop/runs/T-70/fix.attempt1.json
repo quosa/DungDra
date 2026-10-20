@@ -1,0 +1,30 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-70: a monster's Passive Perception now drops by 5 when it has Disadvantage on Perception checks, so a poisoned goblin warrior's printed 9 becomes 4. Advantage raises it by 5 in the same way.\n\nThe cause was in `Monster.passive`, which returned the printed number whenever no tags were passed and so never checked for Advantage or Disadvantage. I split a `passive_base(skill)` method out of `Creature.passive` (it returns 10 plus the check bonus). `Monster` now overrides only that base: for Perception it uses the printed number, then the shared code applies situational modifiers and the ±5 for Advantage or Disadvantage. Other skills are still worked out from the check bonus. One small change in behaviour: a tagged Perception query on a monster now also starts from the printed number instead of a computed one. That change is tagged `SRD[MONSTER.goblins.goblin-warrior#15]`.\n\nResults:\n- **Unit tests:** 492 passed, including 3 new ones in `tests/unit/test_monster.py`.\n- **Ticket's test** with `--runxfail`: passes.\n- **Lint:** `ruff check` and `ruff format --check` are clean.\n- **dev-gate:** PASS.\n- **Full suite:** 923 passed and 6 xfailed. The only failure is this ticket's own test, which now passes while its strict xfail marker is still in place; the harness removes that marker.\n- **Other marked tests:** running `tests/srd/test_monsters.py` with `--runxfail` still shows 6 failures, which are the 6 xfailed tests from the other tickets (scimitar reach, scimitar damage with Advantage, shortbow range, Nimble Escape, and two bandit tests). My change didn't make any of them pass.",
+  "files": [
+   "dungdra/creature.py",
+   "dungdra/monster.py",
+   "tests/unit/test_monster.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_monster.py::test_passive_perception_is_the_printed_number_without_advantage_or_disadvantage",
+   "tests/unit/test_monster.py::test_disadvantage_on_perception_checks_lowers_the_printed_passive_by_5",
+   "tests/unit/test_monster.py::test_other_passive_skills_still_come_from_the_check_bonus"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.goblins.goblin-warrior#15]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves T-70 cleanly. It adds a `passive_base` hook to the existing `Creature.passive` mechanism, and `Monster` overrides only that base: for Perception it returns the printed number. Advantage, Disadvantage and situational modifiers then go through the same `gather` path every creature uses. Before, the monster override returned the printed score early and skipped that path. Now a Poisoned goblin's Passive Perception drops from 9 to 4. The test for that (clause #15) had an xfail marker for T-70; the diff removes it, which is allowed now the fix lands, and the assertion is unchanged. Nothing is special-cased for the goblin or a test number. The unit tests set the printed score to 13, which isn't 10 plus the Wisdom modifier, so they check that the printed number is really the base. They also check the -5 for Disadvantage on that base, and that other skills (Stealth: 16, then 11 when Poisoned) still come from the check bonus. All gates pass."
+ },
+ "problems": [],
+ "cost_usd": 0.3984,
+ "stash": ""
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P-21",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "ambiguity": "Gear lists a Shield and a Two-Handed Shortbow with no arrows. Does the goblin lose its Shield AC when it shoots, and does it use up ammunition?",
+  "ruling": "Stat-block actions and AC are used exactly as printed. The goblin keeps AC 15 while using the Shortbow, and a monster's stat-block ranged attacks don't track ammunition.",
+  "tests": [
+    "tests/srd/test_monsters.py::test_goblin_shortbow_attack_needs_no_tracked_arrows"
+  ],
+  "status": "accepted",
+  "register_id": "R-25",
+  "note": "Stat-block actions and AC are used as printed; monsters don't track ammunition.",
+  "reason": ""
+}

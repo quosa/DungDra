@@ -1,0 +1,35 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/game.py:347",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# -- concentration (p.179) --------------------------------------------",
+    "rule_quote": "The types don’t have rules themselves, but some rules in the game affect creatures of certain types in different ways.",
+    "explanation": "Section header for Concentration, which shares page 179 with Creature Type. It has nothing to do with creature types."
+   },
+   {
+    "item": "dungdra/game.py:372",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=179,",
+    "rule_quote": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+    "explanation": "This is the log call in end_concentration, tagged rule=GLOSS.concentration. It matched on page number only."
+   },
+   {
+    "item": "dungdra/game.py:391",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=179,",
+    "rule_quote": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+    "explanation": "This is the Concentration save in concentration_check, tagged rule=GLOSS.concentration. It matched on page number only."
+   }
+  ],
+  "summary": "There were no scenarios or SRD tests for this unit. The three candidate code lines in game.py all belong to the Concentration rule (rule=GLOSS.concentration), which shares p.179 with Creature Type, so each is not-related. Nothing in the items covers the creature-type clauses (a single type from the 14 listed, Humanoid for most player characters)."
+ },
+ "problems": [],
+ "cost_usd": 0.0327178,
+ "session": "4c5191b8-ebfd-474a-9b00-ddf2ff7c9605",
+ "error": null
+}

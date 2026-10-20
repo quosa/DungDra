@@ -1,0 +1,15 @@
+{
+  "id": "T-31",
+  "kind": "refactor",
+  "unit": "ENGINE",
+  "title": "The test for 'a non-walk Speed above 0' (the case R-07 decides) is now written three ways: Creature.special_speeds(), the inline `kind != \"walk\" and ft > 0` check in Creature.gain_speed, and `mode != \"walk\" and c.speeds.get(mode, 0) > 0` in combat.move's grappled refusal (combat.py:490). Put it in one predicate on Creature, such as `has_special_speed(kind=None)`, and call that from all three places.",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I added one predicate, `Creature.has_special_speed(kind=None)` in `dungdra/creature.py`. With a kind, it returns true when that kind is not walk and its Speed is above 0 ft. With no kind, it returns true if any Speed meets that test. This is the case R-07 decides, and all three places now call it:\n- `add_condition`'s Grappled log, in place of `special_speeds()`\n- `gain_speed`, in place of the inline `kind != \"walk\" and ft > 0` check\n- `combat.move`'s Grappled refusal, in place of `mode != \"walk\" and c.speeds.get(mode, 0) > 0`\n\n`special_speeds()` still returns the list of qualifying Speeds, but it now filters through the predicate, so the test lives in one place. Behaviour is unchanged.\n\nI added a unit test covering walk-only, a 0-ft Speed, a gained climb Speed, and kinds the creature doesn't have. Results:\n- `ruff check` and `ruff format`: clean\n- Unit tests: 329 passed\n- Grapple-related srd/scenario tests: 20 passed\n- `dev-gate`: PASS\n\nThe ticket listed no acceptance tests, so there were none to run with `--runxfail`."
+    }
+  ]
+}

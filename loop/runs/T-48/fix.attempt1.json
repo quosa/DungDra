@@ -1,0 +1,25 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "T-48 is done. I added a public `is_creature(target)` predicate to `dungdra/spells.py` and replaced all five `hasattr(t, \"id\")` checks in that file with it: the Total Cover check, the sight check, both branches of `_target_kind`, and Web's `caught` list. Behaviour is unchanged. I added one unit test that checks a PC and a monster count as creatures, and a name string, a scene-object dict and a point don't.\n\nResults: `ruff check` and `ruff format --check` are clean, `tests/unit` passes (354), `tests/srd` plus `tests/scenarios` show 329 passed and 33 xfailed, and `dev-gate` passes. The ticket listed no acceptance tests, so there was nothing to run with `--runxfail`. I added no SRD tags, since this is a pure refactor and the existing tags stay where they were.\n\nOne check is left on purpose: `Game.get` in `dungdra/game.py` still has a `hasattr(ref, \"id\")`. It's outside the ticket's scope, and it decides whether a reference is already a creature or needs looking up by name, which isn't a spell-target check. `game` also sits below `spells` in the import layers, so it couldn't use the new predicate without moving it to a lower module.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_is_creature_tells_a_creature_from_an_object_name_or_point"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change. It adds a single `is_creature` predicate to `dungdra/spells.py` and uses it in all four places the ticket names: the Total Cover check, the sight check, both branches of `_target_kind`, and Web's caught list. A grep shows no `hasattr(…, \"id\")` creature test left anywhere in `spells.py`, so the swap is complete. The `getattr(x, \"id\", x)` calls elsewhere in the engine are a different thing: they turn a creature or a name into an id, not test whether something is a creature. They're outside this ticket. `game.get` does its own `hasattr` check, but that's for looking up a reference, not a spell-target rule, so I'm not filing a follow-up for it. The new unit test checks the predicate's actual results: a player character and a monster count as creatures, while a name string, a dict and a point don't. Nothing else changed except the loop's cost log. All gates pass."
+ },
+ "problems": [],
+ "cost_usd": 0.4476,
+ "stash": ""
+}

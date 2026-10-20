@@ -1,0 +1,627 @@
+{
+ "output": {
+  "summary": "I checked all 89 tests. 79 pass and 9 are expected failures; the totals cover tests outside this list too. I'm keeping 77 and refuting 12. None of the expected outcomes contradicts the SRD 5.2.1 text, including these 2024-specific points:\n- Hold Person only affects Humanoids, and the slot is still spent.\n- Grapple DC is 8 + Str + PB.\n- Passive Perception drops by 5 with Disadvantage.\n- Static damage with Advantage is 5 + 2.\n\nI broke the engine on purpose in a scratch copy for about 20 rules. These changes were all caught:\n- the grapple size limit\n- the Humanoid restriction\n- the darkvision range (both the 60 ft and 65 ft edges)\n- 3d6 changed to 2d6\n- the Advantage rider (cancelled, disadvantage, critical, no-Advantage and journey cases)\n- Disengage spending the action instead of the Bonus Action\n- the passive-vs-hide comparison in both directions\n- the hide cover requirement\n- the melee reach check in the Session path\n- the initiative bonus\n\nEvery expected failure I ran fails for the reason given in its marker. Refuted, 12 tests:\n1. **Passes for the wrong reason.** `test_nimble_escape_disengage_through_the_session` still passes after I took Nimble Escape off the goblin. That's because the Session lets anyone Disengage as a Bonus Action, which is the bug the bandit expected-failure test records.\n2. **Tests nothing.** In `test_firing_the_two_handed_shortbow_doesnt_cost_the_goblin_its_shield_ac`, a monster's AC is a fixed stat-block number, so no hand or shield logic can change it.\n3. **Already covered by other tests (10):**\n   - the six \"save has no proficiency bonus\" tests: each positive test already checks the exact save total\n   - the initiative negative: the positive test already checks the total of 12\n   - the HP \"not the 2014 two dice\" test: the positive test's 6,6,6 = 18 already rules out 2d6\n   - the \"doesn't speak other languages\" test: the positive test already checks the exact language set\n   - the PB-again attack test: it uses the same roll and assertion (total 14) as the Strength-based attack test\n\nThe confidence on the duplicates is moderate, so a person may decide to keep them.",
+  "verdicts": [
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_warrior_is_a_small_fey_goblinoid_that_can_grapple_a_medium_creature",
+    "verdict": "keep",
+    "reason": "Type, size, tags and alignment match the stat block. A Small creature can grapple one size larger.",
+    "mutation": "Changed grapple size limit '> 1' to '> 0' (combat.py:1814). Not run, because the boundary mutation already showed the check is exercised. The ogre test failed with '> 2'.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_hold_person_does_nothing_to_a_goblin_warrior_which_isnt_humanoid",
+    "verdict": "keep",
+    "reason": "Hold Person targets a Humanoid. Targets#10 says a non-Humanoid appears to succeed and the slot is still spent.",
+    "mutation": "Changed the Humanoid restriction to 'True' (spells.py:332): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_a_small_goblin_cant_grapple_a_large_ogre",
+    "verdict": "keep",
+    "reason": "Large is two sizes above Small, so the grapple is refused.",
+    "mutation": "Changed grapple size limit '> 1' to '> 2': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_an_attack_total_of_15_hits_the_goblin",
+    "verdict": "keep",
+    "reason": "AC 15 is hit by a total of 15.",
+    "mutation": "Not mutated. A plain AC boundary, paired with the 14 test.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_an_attack_total_of_14_misses_the_goblin",
+    "verdict": "keep",
+    "reason": "Lower edge of AC 15.",
+    "mutation": "Not mutated. Complements the 15 test.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_firing_the_two_handed_shortbow_doesnt_cost_the_goblin_its_shield_ac",
+    "verdict": "refute",
+    "reason": "Tests nothing. A monster's ac() is the fixed gear_ac from the stat block (creature.py:300), and no hand or shield logic touches it, so nothing can make it fail. It also duplicates the other AC 15 checks.",
+    "mutation": "No engine mechanism exists to break. Monster base_ac returns gear_ac whatever is wielded.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_initiative_roll_adds_2",
+    "verdict": "keep",
+    "reason": "Initiative +2.",
+    "mutation": "init_bonus set to 0 (monster.py:74): the order test failed. This test checks the same value.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_initiative_doesnt_add_its_proficiency_bonus_or_stealth",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts total == 12 on a forced 10, and the total is 10 + sum(mods). Both assertions here follow from that.",
+    "mutation": "Not needed. Every mutation that breaks this also breaks test_goblin_initiative_roll_adds_2.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_rolling_11_for_initiative_takes_its_place_at_13_in_the_order",
+    "verdict": "keep",
+    "reason": "Checks where the goblin sits in the turn order.",
+    "mutation": "Changed init_bonus d['init'] to 0: FAILED",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_has_10_hit_points_and_rolled_hp_uses_3d6",
+    "verdict": "keep",
+    "reason": "HP 10 (3d6).",
+    "mutation": "Changing 3d6 to 2d6 breaks this test, since the forced dice don't line up.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_rolled_goblin_hp_is_three_dice_not_the_2014_two",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already rolls 3d6 with forced 6,6,6 = 18, which rules out 2d6. This adds only a different set of forced values.",
+    "mutation": "Changed hd 3d6 to 2d6 (monsters.py:141): FAILED, but the positive test catches the same change.",
+    "confidence": 0.55
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_a_goblin_added_with_rolled_hp_rolls_3d6",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: hp='roll' only sets a note and the goblin keeps 10 HP.",
+    "mutation": "Run with --runxfail: assert 10 == 6",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_9_damage_leaves_the_goblin_at_1_hp_and_10_kills_it",
+    "verdict": "keep",
+    "reason": "HP boundary. A monster at 0 HP dies.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_moves_30_feet_on_its_turn",
+    "verdict": "keep",
+    "reason": "Speed 30.",
+    "mutation": "Not mutated. Paired with the 35 ft boundary test.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_cant_move_35_feet",
+    "verdict": "keep",
+    "reason": "Speed boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_has_no_fly_speed",
+    "verdict": "keep",
+    "reason": "Only a walk speed is listed, and fly movement is refused.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_strength_8_gives_minus_1_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated. A data check.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_strength_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 9 on a 10, so total != 11 adds nothing.",
+    "mutation": "Any change that breaks this breaks the positive test too.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_strength_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "verdict": "keep",
+    "reason": "Checks the 'meets the DC' boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_dexterity_15_gives_plus_2_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_dexterity_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 12.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_dexterity_save_meets_dc_12_on_a_10_and_fails_dc_13",
+    "verdict": "keep",
+    "reason": "DC boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_constitution_10_gives_plus_0_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_constitution_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 10.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_constitution_save_meets_dc_10_on_a_10_and_fails_dc_11",
+    "verdict": "keep",
+    "reason": "DC boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_intelligence_10_gives_plus_0_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_intelligence_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 10.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_intelligence_save_meets_dc_10_on_a_10_and_fails_dc_11",
+    "verdict": "keep",
+    "reason": "DC boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_wisdom_8_gives_minus_1_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_wisdom_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 9.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_wisdom_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "verdict": "keep",
+    "reason": "DC boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_charisma_8_gives_minus_1_to_checks_and_saves",
+    "verdict": "keep",
+    "reason": "Matches the table row.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_charisma_save_has_no_proficiency_bonus",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test already asserts the save total is exactly 9.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_charisma_save_meets_dc_9_on_a_10_and_fails_dc_10",
+    "verdict": "keep",
+    "reason": "DC boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_stealth_check_adds_6",
+    "verdict": "keep",
+    "reason": "Stealth +6.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_the_stealth_bonus_doesnt_apply_to_other_dexterity_checks",
+    "verdict": "keep",
+    "reason": "Other Dex skills use only the +2 modifier.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_hides_on_a_9_against_dc_15_and_fails_on_an_8",
+    "verdict": "keep",
+    "reason": "Hide DC 15 boundary with +6.",
+    "mutation": "Not mutated. The Nimble Escape hide tests cover the same path.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_attacks_with_the_scimitar_and_shortbow_from_its_gear",
+    "verdict": "keep",
+    "reason": "Gear list, and both attacks are usable.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_shortbow_attack_needs_no_tracked_arrows",
+    "verdict": "keep",
+    "reason": "A stat-block attack has no ammunition tracking.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_cant_attack_with_a_weapon_not_in_its_stat_block",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the refusal cites no page.",
+    "mutation": "Run with --runxfail: 'cites no SRD page or ruling'",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_sees_a_creature_60_feet_away_in_darkness",
+    "verdict": "keep",
+    "reason": "Darkvision 60 ft, inclusive.",
+    "mutation": "Changed '<= dv' to '< dv' (game.py:186): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_cant_see_a_creature_65_feet_away_in_darkness",
+    "verdict": "keep",
+    "reason": "Darkvision boundary.",
+    "mutation": "Changed '<= dv' to '<= dv + 5': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_darkvision_doesnt_let_the_goblin_see_an_invisible_creature",
+    "verdict": "keep",
+    "reason": "Darkvision doesn't defeat the Invisible condition.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_passive_perception_9_finds_a_hide_total_of_9",
+    "verdict": "keep",
+    "reason": "A passive score that equals the hide total finds the creature.",
+    "mutation": "Changed '>=' to '>' (actions.py:440): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_passive_perception_9_misses_a_hide_total_of_10",
+    "verdict": "keep",
+    "reason": "Boundary.",
+    "mutation": "Changed 'total >=' to 'total + 1 >=': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_a_poisoned_goblins_passive_perception_drops_to_4",
+    "verdict": "keep",
+    "reason": "Poisoned gives Disadvantage on checks, and Passive Perception subtracts 5. Red for the stated reason.",
+    "mutation": "Run with --runxfail: assert 9 == 4",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_speaks_common_and_goblin",
+    "verdict": "keep",
+    "reason": "Language list.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_doesnt_speak_other_languages",
+    "verdict": "refute",
+    "reason": "Duplicate. The positive test asserts set(languages) == {common, goblin}, which already implies two languages and no Elvish or Dwarvish.",
+    "mutation": "Subsumed by the positive test.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_defeating_a_goblin_warrior_is_worth_50_xp",
+    "verdict": "keep",
+    "reason": "XP 50, split between the PCs.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_the_printed_attack_bonus_isnt_increased_by_the_proficiency_bonus_again",
+    "verdict": "refute",
+    "reason": "Exact duplicate of test_scimitar_attack_isnt_strength_based: same setup, the same forced d20 of 10, and the same assertion of total 14. It is also implied by test_scimitar_attack_adds_4.",
+    "mutation": "Any change to the attack bonus breaks both tests together.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_grapple_dc_is_9_from_str_minus_1_and_pb_2",
+    "verdict": "keep",
+    "reason": "2024 Unarmed Strike grapple DC is 8 + Str + PB = 9. Checks both sides of the boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_attack_adds_4_and_hits_at_equal_ac",
+    "verdict": "keep",
+    "reason": "+4, and a total equal to AC hits.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_attack_isnt_strength_based",
+    "verdict": "keep",
+    "reason": "The engine might derive the bonus from Str + PB. This is the surviving test of the duplicate pair.",
+    "mutation": "Not mutated.",
+    "confidence": 0.6
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_cant_reach_a_target_10_feet_away",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the refused attack still spent the action.",
+    "mutation": "Run with --runxfail: 'a refused command changed the turn'",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_gets_one_scimitar_attack_per_action",
+    "verdict": "keep",
+    "reason": "No Multiattack, so one attack per action.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_goblin_scimitar_attack_through_the_session_out_of_reach_is_refused",
+    "verdict": "keep",
+    "reason": "The Session path refuses because of reach.",
+    "mutation": "Changed reach check 'dist > reach' to 'dist > reach + 5' (combat.py:1037): FAILED",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_hit_deals_1d6_plus_2_slashing",
+    "verdict": "keep",
+    "reason": "Damage and damage type.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_critical_hit_doubles_the_d6_not_the_2",
+    "verdict": "keep",
+    "reason": "A critical hit doubles only the dice.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_static_damage_is_5",
+    "verdict": "keep",
+    "reason": "Static damage 5.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_with_advantage_adds_1d4_slashing",
+    "verdict": "keep",
+    "reason": "Advantage rider.",
+    "mutation": "The rider mutation 'False' broke the journey test, which goes through the same rider line.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_without_advantage_adds_no_1d4",
+    "verdict": "keep",
+    "reason": "Negative case.",
+    "mutation": "Changing the rider condition to 'True' broke the shortbow version of this test.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_with_disadvantage_adds_no_1d4",
+    "verdict": "keep",
+    "reason": "Disadvantage isn't Advantage.",
+    "mutation": "Changed 'mode == advantage' to 'mode != normal' (combat.py:1615): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_with_cancelled_advantage_adds_no_1d4",
+    "verdict": "keep",
+    "reason": "Advantage and Disadvantage cancel, so the roll didn't have Advantage.",
+    "mutation": "Changed to 'mode != disadvantage': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_critical_hit_with_advantage_doubles_the_1d4_too",
+    "verdict": "keep",
+    "reason": "A critical hit doubles all damage dice, including the rider.",
+    "mutation": "Changed the rider's crit argument to False (combat.py:1616): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_scimitar_static_damage_with_advantage_is_7",
+    "verdict": "keep",
+    "reason": "With static damage the rider adds its static 2. Red for the stated reason.",
+    "mutation": "Run with --runxfail: assert 5 == 7",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_an_unseen_goblins_scimitar_attack_has_advantage_and_adds_1d4",
+    "verdict": "keep",
+    "reason": "Advantage gained naturally (the target can't see the goblin) triggers the rider.",
+    "mutation": "Not mutated separately. It shares the rider line already mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_at_80_feet_adds_4_with_no_range_disadvantage",
+    "verdict": "keep",
+    "reason": "Edge of normal range.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_at_85_feet_has_long_range_disadvantage",
+    "verdict": "keep",
+    "reason": "Long-range boundary.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_reaches_320_feet_but_not_325",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the refused attack still spent the action.",
+    "mutation": "Run with --runxfail: 'a refused command changed the turn'",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_fired_next_to_an_enemy_has_disadvantage",
+    "verdict": "keep",
+    "reason": "Ranged attack with an enemy within 5 ft.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_hit_deals_1d6_plus_2_piercing",
+    "verdict": "keep",
+    "reason": "Damage and damage type.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_critical_hit_doubles_the_d6_not_the_2",
+    "verdict": "keep",
+    "reason": "Crit doubling.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_minimum_damage_is_3",
+    "verdict": "keep",
+    "reason": "Lowest damage the dice allow.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_with_advantage_adds_1d4_piercing",
+    "verdict": "keep",
+    "reason": "Rider.",
+    "mutation": "Not mutated separately. It shares the rider line.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_without_advantage_adds_no_1d4",
+    "verdict": "keep",
+    "reason": "Negative case.",
+    "mutation": "Changed the rider condition to 'True': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_shortbow_advantage_cancelled_by_long_range_adds_no_1d4",
+    "verdict": "keep",
+    "reason": "Advantage cancelled by the long-range Disadvantage.",
+    "mutation": "Changed to 'mode != disadvantage': FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_disengages_as_a_bonus_action_and_leaves_the_action",
+    "verdict": "keep",
+    "reason": "Disengage as a Bonus Action, and the action is still available.",
+    "mutation": "Made disengage always spend the action (actions.py:177): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_hides_as_a_bonus_action",
+    "verdict": "keep",
+    "reason": "Hide as a Bonus Action.",
+    "mutation": "Not mutated.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_disengage_through_the_session",
+    "verdict": "refute",
+    "reason": "Passes for the wrong reason. The Session gives every creature a bonus-action Disengage, the bug the bandit expected-failure test records. So the test still passes when the goblin lacks Nimble Escape.",
+    "mutation": "Removed 'nimble escape' from the goblin warrior's traits (monsters.py:152): PASSED. Making disengage always spend the action does make it fail, but that only shows the bonus flag is passed through, not Nimble Escape.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_without_nimble_escape_the_goblin_moving_away_provokes",
+    "verdict": "keep",
+    "reason": "Leaving reach without Disengage provokes an Opportunity Attack.",
+    "mutation": "Not mutated.",
+    "confidence": 0.65
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_hide_needs_cover_or_heavy_obscurement",
+    "verdict": "keep",
+    "reason": "Hide prerequisite.",
+    "mutation": "Made the cover requirement always true (actions.py:377): FAILED",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_hide_fails_on_a_stealth_total_of_14_and_spends_the_bonus_action",
+    "verdict": "keep",
+    "reason": "A failed hide still uses up the Bonus Action.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_only_once_per_turn",
+    "verdict": "keep",
+    "reason": "One Bonus Action per turn.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_out_of_turn_is_refused",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the 'isn't Gob's turn' refusal cites no page.",
+    "mutation": "Run with --runxfail: 'cites no SRD page or ruling'",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_nimble_escape_while_incapacitated_is_refused",
+    "verdict": "keep",
+    "reason": "An Incapacitated creature can't take Bonus Actions.",
+    "mutation": "Not mutated.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_a_bandit_has_no_nimble_escape",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the refusal cites no page. This is the only test that catches removing the trait gate.",
+    "mutation": "Removed the trait gate (class_actions.py:121): the positive test still passed, so this test is the one that covers the gate. Run with --runxfail: 'cites no SRD page'.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_monsters.py::test_a_bandit_cant_disengage_as_a_bonus_action_through_the_session",
+    "verdict": "keep",
+    "reason": "Red for the stated reason: the Session returned ok:True for the bandit's bonus-action Disengage.",
+    "mutation": "Run with --runxfail: 'expected a refusal, got {ok: True ...}'",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/journeys/test_goblin_warrior_journey.py::test_goblin_hides_shoots_from_hiding_then_disengages",
+    "verdict": "keep",
+    "reason": "A full sequence: hide, an attack with Advantage plus the rider, the attack reveals the goblin, then Disengage and move away.",
+    "mutation": "Made the Advantage rider never apply (combat.py:1615): FAILED",
+    "confidence": 0.8
+   }
+  ]
+ },
+ "problems": [],
+ "cost_usd": 1.2007268000000002,
+ "session": "e61dc075-f212-45c1-87e3-d75daca0e6d1",
+ "error": null
+}

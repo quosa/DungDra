@@ -1,0 +1,19 @@
+{
+  "id": "T-93",
+  "kind": "refactor",
+  "unit": "GLOSS.ally",
+  "title": "The ally rule is still decided by team equality outside Game.is_ally: HelpAttack.as_target (effects.py:350, `ctx.actor.team == helper.team`) and the Alert initiative swap (combat.py:252) ignore R-37, so a Friendly NPC gets no Advantage from a PC's Help and can't be swapped with. Route them through Game.is_ally",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-87"
+    },
+    {
+      "event": "fixed",
+      "summary": "The two places that still decided \"ally\" by team equality now go through `Game.is_ally`, which covers party members, your side, and Friendly creatures (R-37):\n- `HelpAttack.as_target` (`dungdra/effects.py`) now uses `game.is_ally(helper, attacker)`. A Friendly NPC attacking the enemy that a PC distracted with Help now gets Advantage. The helper still can't benefit from their own Help, because `is_ally` treats yourself as not your ally (R-36).\n- The Alert Initiative Swap (`dungdra/combat.py`) builds its candidate list with `game.is_ally(c, other)`, so a Friendly NPC is offered and an enemy is not. The explicit `x != cid` check was dropped because `is_ally` already excludes the creature itself.\nBoth are tagged SRD[GLOSS.ally#2] SRD[GLOSS.ally#3].\n\nNo acceptance tests are tied to T-93. I added three unit tests, and each would fail on the old team-equality code:\n- Help gives a Friendly guard Advantage, and the Help effect is used up.\n- Help gives an enemy of the helper no Advantage.\n- Alert offers exactly [None, the friendly guard] and not the goblin.\n\nThe Alert test captures the offered options by setting `game.decider`. `game.answer` can't show the option list, and `game.decider` is how player choices come in, but it isn't listed by name in `tests/unit/SEAMS.md`.\n\nResults: the full `python -m pytest -q` run passed (1096 tests), `ruff check .` and `ruff format --check .` are clean, and `python -m scripts.srdloop dev-gate` passed.\n\nOther places still compare teams directly, such as `enemies_of`, opportunity attacks and the gm/nl targeting. They decide who is an enemy, not who is an ally, so this ticket leaves them alone."
+    }
+  ]
+}

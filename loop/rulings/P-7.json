@@ -1,0 +1,13 @@
+{
+  "id": "P-7",
+  "unit": "PLAY.combat.cover",
+  "ambiguity": "“originates on the opposite side of the cover”: does an obstacle that covers the target from an attacker also cover the attacker from the target?",
+  "ruling": "No. Cover is worked out per target and per origin: an obstacle that covers the target from an attacker gives the attacker no cover unless it also covers the attacker (a separate entry).",
+  "tests": [
+    "tests/srd/test_playing_the_game.py::test_cover_is_not_symmetric"
+  ],
+  "status": "accepted",
+  "register_id": "R-11",
+  "note": "",
+  "reason": ""
+}

@@ -1,0 +1,93 @@
+{
+ "verdicts": [
+  {
+   "item": "SPL-05",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "[H] Only the two exposed goblins are affected.",
+   "rule_quote": "The area determines what the spell targets.",
+   "explanation": "The area decides who is affected, and a creature behind Total Cover is left out (R-10). Nothing in the scenario conflicts with the unit."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spl05_burning_hands",
+   "kind": "test",
+   "verdict": "consistent",
+   "evidence": "assert g1.dead and g2.hp == 10 - 6 and g3.hp == 10",
+   "rule_quote": "The area determines what the spell targets.",
+   "explanation": "The cast passes a list containing the caster and all three goblins. The area then decides who is hit, and G3 behind Total Cover is untouched. This agrees with clause 4."
+  },
+  {
+   "item": "SPL-06",
+   "kind": "scenario",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "[H] The Wolf is an invalid target: the slot is spent and the wolf appears to succeed on its save.",
+   "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+   "explanation": "It follows Reading A, where the caster may pick an invalid target and the slot is spent. It also follows the Total Cover clause. Reading B would conflict with it."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spl06_targeting",
+   "kind": "test",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "assert j.slots_left(2) == 1 and not wolf.has(\"paralyzed\")",
+   "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+   "explanation": "The test casts at a non-Humanoid and expects the slot to be spent, which is Reading A. It also checks the Total Cover refusal. It does not check clauses 2, 3, 6, 7 and 11 beyond that."
+  },
+  {
+   "item": "dungdra/spells.py:130",
+   "kind": "code",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "# targets behind Total Cover can't be targeted (p.106)",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "explanation": "This is clause 2. It reads 'clear path' as Total Cover only (Reading A) and skips area spells, which is the open gap about where an area's origin can be placed."
+  },
+  {
+   "item": "dungdra/spells.py:135",
+   "kind": "code",
+   "verdict": "consistent",
+   "evidence": "page=106,",
+   "rule_quote": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+   "explanation": "This is the refusal logged for the Total Cover check, with the right page and rule id."
+  },
+  {
+   "item": "dungdra/spells.py:501",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=106,",
+   "rule_quote": "A typical spell requires the caster to pick one or more targets to be affected by the spell’s magic.",
+   "explanation": "This line belongs to the spell attack roll, which is the effects.attack-rolls unit on the same page. It has nothing to do with targets."
+  },
+  {
+   "item": "dungdra/spells.py:628",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "if first is self:  # same spell twice doesn't combine (p.106)",
+   "rule_quote": "A typical spell requires the caster to pick one or more targets to be affected by the spell’s magic.",
+   "explanation": "This is Combining Spell Effects, a different unit on the same page."
+  },
+  {
+   "item": "dungdra/spells.py:1239",
+   "kind": "code",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "# p.106 invalid target: slot spent; the target appears to succeed",
+   "rule_quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+   "explanation": "It implements Reading A by resolving an invalid target as a disguised success rather than refusing it. It also runs only for Hold Person and not as a general rule."
+  },
+  {
+   "item": "dungdra/spells.py:1243",
+   "kind": "code",
+   "verdict": "consistent",
+   "evidence": "page=106,",
+   "rule_quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+   "explanation": "This is the player-visible log entry saying the target succeeds on its save, which matches the 'appears to have succeeded' rule."
+  },
+  {
+   "item": "dungdra/spells.py:1250",
+   "kind": "code",
+   "verdict": "consistent",
+   "evidence": "page=106,",
+   "rule_quote": "nothing happens to that target",
+   "explanation": "This is the GM-only log of the invalid target. The player sees only a successful save, so the immunity is not revealed. Nothing happens to the target, as the rule says."
+  }
+ ],
+ "summary": "I gave all 11 related items a verdict. None contradicts the SRD. Two scenarios and their tests, plus the Total Cover and Hold Person lines, agree with the unit. Three are affected by an ambiguity: the SPL-06 scenario, its test, and the Total Cover code (spells.py:130). The Hold Person invalid-target comment (spells.py:1239) is also affected, which makes four. Two page-106 lines (spells.py:501 and 628) belong to other units and are not-related. Several clauses have no assertion anywhere: choosing yourself as a target (clause 3), awareness of being targeted (6, 7) and what the caster perceives for an invalid target (11). The invalid-target handling covers Hold Person only, not spells in general."
+}

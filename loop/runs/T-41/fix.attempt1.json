@@ -1,0 +1,88 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Added the Ready action (GLOSS.ready). \n- combat.py: Combat.readied plus a Readied record (trigger creature, distance, response, release, held Concentration). ready() checks the turn and that the action is free (new Combat.require_action, which spend() now reuses), checks the trigger, builds the response, then spends the action. A refused response costs nothing. readied_attack and readied_move build the responses; a readied move is checked against Speed when readied (R-20). _readied_triggers runs after any move: only the chosen creature moving to within the distance triggers it. With no Reaction left, this is logged and nobody is asked. Otherwise the readier is asked `readied`. Ignoring keeps the response (R-18); taking it spends the Reaction and releases it right away. A refused release keeps both. attack() gained reaction=True, so a readied attack doesn't spend the action. start_turn and end_combat drop the readied response (#2). A held spell's Concentration ends at the start of the readier's next turn and the slot isn't refunded (R-19). An on_concentration_end hook makes a held spell dissipate when Concentration breaks (#9). \n- spells.py: cast(ready=True) refuses spells whose casting time isn't an action (#7). It casts as normal (slot and components spent, no action spent) and holds the energy under Concentration \"<Spell> (readied)\" (#8, R-17). It returns the Casting with release(game), which ends the holding Concentration and applies the effect through the new _take_effect helper. The 'no implementation' OutOfScope check now runs before anything is paid. \n- api.py: cmd_ready parses {trigger: moves_within, response: one command}. Lists are refused ('one', R-20), Bonus Action commands are refused (R-20), and other actions or triggers are OutOfScope. cmd_cast's argument handling moved into _cast so it can be reused. \nResults: all 31 T-41 tests pass with --runxfail. The unit suite and ruff are clean, dev-gate passes, and in the full run the only failures are the 31 T-41 strict-xfail XPASSes.",
+  "files": [
+   "dungdra/combat.py",
+   "dungdra/spells.py",
+   "dungdra/api.py",
+   "tests/unit/test_combat.py",
+   "tests/unit/test_spells.py",
+   "tests/unit/test_api.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_ready_spends_the_action_and_holds_the_response",
+   "tests/unit/test_combat.py::test_ready_refused_before_building_the_response_when_the_action_is_spent",
+   "tests/unit/test_combat.py::test_ready_trigger_naming_no_creature_cites_the_trigger_clause",
+   "tests/unit/test_combat.py::test_readied_attack_taken_with_the_reaction_when_the_creature_comes_within",
+   "tests/unit/test_combat.py::test_readied_trigger_needs_the_creature_to_come_within_the_distance",
+   "tests/unit/test_combat.py::test_a_refused_release_keeps_the_reaction_and_the_readied_response",
+   "tests/unit/test_combat.py::test_readied_response_lapses_at_the_start_of_the_readiers_next_turn",
+   "tests/unit/test_combat.py::test_ready_refused_outside_combat_and_for_a_bad_trigger",
+   "tests/unit/test_combat.py::test_require_action_refuses_off_turn_incapacitated_and_a_surged_magic_action",
+   "tests/unit/test_combat.py::test_readied_trigger_without_a_reaction_is_logged_and_not_asked",
+   "tests/unit/test_combat.py::test_a_readied_response_lapses_when_combat_ends",
+   "tests/unit/test_combat.py::test_readied_move_beyond_speed_cites_ruling_r20",
+   "tests/unit/test_combat.py::test_readied_move_is_released_off_turn_without_a_movement_budget",
+   "tests/unit/test_spells.py::test_a_bonus_action_spell_cant_be_readied_and_spends_nothing",
+   "tests/unit/test_spells.py::test_a_readied_spell_pays_its_slot_but_not_the_action_and_holds_its_energy",
+   "tests/unit/test_spells.py::test_releasing_a_held_spell_ends_the_holding_and_takes_effect",
+   "tests/unit/test_spells.py::test_releasing_a_concentration_spell_concentrates_on_the_spell_itself",
+   "tests/unit/test_api.py::test_ready_command_readies_an_attack",
+   "tests/unit/test_api.py::test_ready_command_readies_a_move",
+   "tests/unit/test_api.py::test_ready_command_readies_a_spell_and_holds_it",
+   "tests/unit/test_api.py::test_cast_command_casts_with_the_named_item_only",
+   "tests/unit/test_api.py::test_ready_command_refuses_a_bonus_action_under_ruling_r20",
+   "tests/unit/test_api.py::test_ready_command_refuses_two_responses",
+   "tests/unit/test_api.py::test_ready_command_puts_other_actions_and_triggers_out_of_scope"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ready#1]",
+   "SRD[GLOSS.ready#2]",
+   "SRD[GLOSS.ready#3]",
+   "SRD[GLOSS.ready#4]",
+   "SRD[GLOSS.ready#5]",
+   "SRD[GLOSS.ready#6]",
+   "SRD[GLOSS.ready#7]",
+   "SRD[GLOSS.ready#8]",
+   "SRD[GLOSS.ready#9]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [
+   {
+    "kind": "orthogonality",
+    "file": "dungdra/api.py",
+    "line": 51,
+    "explanation": "BONUS_ACTION_COMMANDS hard-codes, in the interface layer, which class features cost a Bonus Action (second_wind, cunning_action, steady_aim). class_abilities already knows this because it spends the bonus action. The list only changes the refusal message (every other command is OutOfScope anyway), so it is minor, but it is a second record of a fact that already exists in the engine."
+   },
+   {
+    "kind": "other",
+    "file": "dungdra/combat.py",
+    "line": 800,
+    "explanation": "If a readied spell's release raises Refusal, the except branch puts back the readied record and the Reaction, and its comment says 'nothing was taken'. But _release has already called end_concentration, and that also popped the on_concentration_end hook. The restored record then has held set while the caster no longer concentrates, and no hook is left to make it dissipate. Attack and move releases refuse before changing any state, so for those two the rollback is correct. This is a narrow edge case and doesn't block the fix."
+   }
+  ],
+  "followups": [
+   {
+    "title": "A readied spell whose release is refused (handler raises Refusal after _release has ended the holding Concentration) is restored to cb.readied with no Concentration and no on_concentration_end hook. Either check the release before ending Concentration or don't restore a held spell, and add a unit test for it.",
+    "kind": "coverage"
+   },
+   {
+    "title": "dungdra/api.py BONUS_ACTION_COMMANDS duplicates which commands cost a Bonus Action. Derive the Ready refusal from the engine (for example, the action cost class_abilities spends) instead of a hand-kept list in the interface layer.",
+    "kind": "refactor"
+   },
+   {
+    "title": "Combat.spend('action') now calls require_action and then repeats the is_turn and can_act checks right after it. Fold the remaining checks so each refusal is written in one place.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this fix. It adds a real Ready action with no special cases for the test fixtures. The engine part (the Readied record, the trigger check after each move, the lapse at the start of the readier's next turn, and the Reaction-paid attack via `_spend_attack`) lives in combat.py. Readying a spell uses `cast(ready=True)`: it pays the slot, then holds the energy under Concentration through the existing `on_concentration_end` hook in game.py. The API only parses the command. Refusals cite clauses #1–#9, with R-17 to R-20 where they apply. The 27 acceptance tests no longer have xfail markers, and the unit tests check behaviour (HP, Reaction use, slots, Concentration, positions, refusal citations). The only test that asserts a constant back is the one about the held-spell Concentration label. Gates pass. I found two minor problems: a hand-kept list of Bonus Action commands in the API layer, and a rollback that is wrong when a held spell's release is refused. Both are filed as follow-ups, along with the duplicated checks left in `Combat.spend`."
+ },
+ "problems": [],
+ "cost_usd": 3.0883,
+ "stash": ""
+}

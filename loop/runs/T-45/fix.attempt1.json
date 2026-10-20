@@ -1,0 +1,33 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-45: during combat, the stand command is now refused when it isn't the Prone creature's turn. Standing up costs half the creature's Speed in movement, and a creature only has movement on its own turn. Before this, the engine skipped the cost off-turn and ended Prone for free. The refusal is in `stand_up` (dungdra/combat.py), tagged `# SRD[GLOSS.prone#2]`, with page=186 and rule=\"GLOSS.prone#2\". The creature stays Prone and no movement is spent. On its own turn the cost is still checked and spent as before, and outside combat standing up is unchanged.\n\nResults:\n- `ruff format` and `ruff check .` are clean.\n- Unit tests: 353 passed.\n- The ticket's test passes with `--runxfail`.\n- Full `tests/srd` and `tests/scenarios` run: 328 passed, 33 xfailed. The only failure is T-45's own test, which now passes against its strict xfail marker. That's expected because the harness removes the marker.\n- **Not confirmed:** `python -m scripts.srdloop dev-gate` was still running in the background when I had to report, and I didn't see its result.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_stand_up_refused_off_turn_in_combat",
+   "tests/unit/test_combat.py::test_stand_up_on_own_turn_spends_half_speed"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.prone#2]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "dungdra/combat.py: move() and stand_up() each check and spend the turn's movement budget themselves (is_turn check, movement_left comparison, refusal, decrement). Add one CombatTurn/Combat helper, e.g. spend_movement(c, cost, rule=...), used by both. It would also decide what off-turn voluntary movement means: move() currently skips the budget off-turn, while stand_up() now refuses.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving the fix. It is small and fixes the rule itself. In `stand_up` (`dungdra/combat.py:1715`), a creature that tries to stand up on another creature's turn is now refused. The refusal cites page 186 and `GLOSS.prone#2`, because that rule makes standing cost half your Speed in movement, and a creature only has movement on its own turn. On the creature's own turn, the existing budget check still applies.\n\nNo test-specific code was added. The T-45 xfail was removed because the acceptance test now passes; nothing else in it changed.\n\nThe two new unit tests check behaviour, not constants:\n- **Off turn:** the refusal fires, the creature stays Prone, and the current creature's movement is untouched.\n- **On its own turn:** standing costs 15 ft (half the goblin's 30 ft Speed), and its movement drops from 30 to 15.\n\nThe change to `loop/costs.jsonl` is the loop's own bookkeeping.\n\nI'm filing one refactor follow-up. `move()` and `stand_up()` now each check the turn's movement budget themselves, and they disagree off-turn: `move()` lets a creature move without spending movement, while `stand_up` now refuses. One shared helper for spending movement would remove the duplicate check and settle which behaviour is right."
+ },
+ "problems": [],
+ "cost_usd": 0.5955,
+ "stash": ""
+}

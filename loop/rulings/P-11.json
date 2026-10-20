@@ -1,0 +1,13 @@
+{
+  "id": "P-11",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "ambiguity": "'If you cast a spell on someone or something that can't be affected by it, nothing happens to that target': does this cover restrictions the caster can see, such as Mage Armor's 'who isn't wearing armor', or does the engine refuse those?",
+  "ruling": "Reading A, applied to every target restriction in a spell's description except the positional ones the targeting rules name (range, clear path, sight). If a target fails a restriction such as creature type, wearing armor, or 0 HP, the spell is cast: the slot (and action) are spent, nothing happens to that target, and the caster either sees an apparent successful save (spells with a save) or a player-visible note that the spell did nothing (no save). The half-refusal abuse tests accept either a clean refusal or this resolution, so they don't depend on this ruling.",
+  "tests": [
+    "tests/srd/test_spells.py::test_mage_armor_on_an_armored_creature_visibly_does_nothing"
+  ],
+  "status": "accepted",
+  "register_id": "R-15",
+  "note": "Target kind (creature vs object, from the spell's description) is part of choosing a target and stays a refusal, like range, clear path and sight (T-26, T-37). Every other restriction (creature type, armor, 0 HP, …) is an invalid target: cast, slot spent, nothing happens.",
+  "reason": ""
+}

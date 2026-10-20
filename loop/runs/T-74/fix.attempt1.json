@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "nimble_escape now refuses a creature without the trait with page=290, rule=MONSTER.goblins.goblin-warrior#24 (tagged SRD[...#24]). It also refuses any option other than Disengage or Hide, where before anything else silently became a Hide. Unit tests added. Unit suite, ticket test (--runxfail), ruff and dev-gate all pass.",
+  "files": [
+   "dungdra/class_actions.py",
+   "tests/unit/test_class_actions.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_class_actions.py::test_nimble_escape_is_refused_with_a_citation_for_a_creature_without_the_trait",
+   "tests/unit/test_class_actions.py::test_nimble_escape_allows_only_disengage_or_hide"
+  ],
+  "srd_tags": [
+   "SRD[MONSTER.goblins.goblin-warrior#24]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves the ticket. When a creature without the Nimble Escape trait tries to use it, the refusal now cites page=290 and rule=\"MONSTER.goblins.goblin-warrior#24\". The unit's pages field confirms page 290, and #24 is stage A's Nimble Escape clause. The engine already had a trait check (the `traits` list in the monster data), and the fix adds the citation to that check rather than building a second one. The strict xfail on test_a_bandit_has_no_nimble_escape was removed, and that acceptance test now passes. The change also rejects any action other than Disengage or Hide. That goes a little beyond the ticket, but it enforces the same clause and fixes a real wrong result: before, any value other than \"disengage\" (say, \"dash\") silently became Hide. That check is a test of the parameter, not a special case for a fixture. The unit tests check what the engine does: a refused bandit gains no Disengage effect, Dash is refused for a goblin, and \"Disengage\" with a capital letter still works. The SRD comment sits on the code that implements the rule. Making Disengage a Bonus Action without the trait is already covered by open ticket T-75, so I filed no follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.3438,
+ "stash": ""
+}

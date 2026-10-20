@@ -1,0 +1,17 @@
+{
+  "id": "T-70",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: Passive Perception drops by 5 with Disadvantage on Perception checks (Poisoned); engine: a monster's Passive Perception is always the printed number",
+  "tests": [
+    "tests/srd/test_monsters.py::test_a_poisoned_goblins_passive_perception_drops_to_4"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I fixed T-70: a monster's Passive Perception now drops by 5 when it has Disadvantage on Perception checks, so a poisoned goblin warrior's printed 9 becomes 4. Advantage raises it by 5 in the same way.\n\nThe cause was in `Monster.passive`, which returned the printed number whenever no tags were passed and so never checked for Advantage or Disadvantage. I split a `passive_base(skill)` method out of `Creature.passive` (it returns 10 plus the check bonus). `Monster` now overrides only that base: for Perception it uses the printed number, then the shared code applies situational modifiers and the ±5 for Advantage or Disadvantage. Other skills are still worked out from the check bonus. One small change in behaviour: a tagged Perception query on a monster now also starts from the printed number instead of a computed one. That change is tagged `SRD[MONSTER.goblins.goblin-warrior#15]`.\n\nResults:\n- **Unit tests:** 492 passed, including 3 new ones in `tests/unit/test_monster.py`.\n- **Ticket's test** with `--runxfail`: passes.\n- **Lint:** `ruff check` and `ruff format --check` are clean.\n- **dev-gate:** PASS.\n- **Full suite:** 923 passed and 6 xfailed. The only failure is this ticket's own test, which now passes while its strict xfail marker is still in place; the harness removes that marker.\n- **Other marked tests:** running `tests/srd/test_monsters.py` with `--runxfail` still shows 6 failures, which are the 6 xfailed tests from the other tickets (scimitar reach, scimitar damage with Advantage, shortbow range, Nimble Escape, and two bandit tests). My change didn't make any of them pass."
+    }
+  ]
+}

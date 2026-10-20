@@ -1,0 +1,53 @@
+{
+ "verdicts": [
+  {
+   "item": "CMB-06",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "The grappled goblin has Speed 0 and Disadvantage on attacks against anyone but BROM.",
+   "rule_quote": "You have Disadvantage on attack rolls against any target other than the grappler.",
+   "explanation": "The scenario matches the Speed 0, Disadvantage and drag-cost clauses. The 1-extra-foot cost for a Small goblin dragged by a Medium creature is right, because one size smaller is not two. It does not cover the Tiny exemption or multiple grapplers."
+  },
+  {
+   "item": "tests/scenarios/test_combat.py::test_cmb06_grapple_shove",
+   "kind": "test",
+   "verdict": "under-asserts",
+   "evidence": "assert gob.has(\"grappled\") and gob.speed() == 0",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "explanation": "The test checks Speed 0, Disadvantage against a non-grappler, and a drag cost of 20 for 10 ft. It never checks that a grappled creature has no Disadvantage against the grappler. It never checks the Tiny or two-sizes-smaller exemption. It never checks that Speed can't increase. It never covers two grapplers."
+  },
+  {
+   "item": "COND-02",
+   "kind": "scenario",
+   "verdict": "not-related",
+   "evidence": "**Restrained:** Speed 0, attacks against it have Advantage, its own attacks have Disadvantage, Disadvantage on Dex saves.",
+   "rule_quote": "While you have the Grappled condition, you experience the following effects.",
+   "explanation": "The scenario header names Grappled, but none of its Pass lines describe Grappled effects. They cover Restrained, Prone and Frightened."
+  },
+  {
+   "item": "tests/scenarios/test_damage_rest.py::test_cond02",
+   "kind": "test",
+   "verdict": "under-asserts",
+   "evidence": "gob.add_condition(\"grappled\", grappler=b.id)",
+   "rule_quote": "Your Speed is 0 and can’t increase.",
+   "explanation": "Grappled is used only to show that standing up is refused at Speed 0. The test doesn't assert Speed 0, the attack Disadvantage, or the drag cost."
+  },
+  {
+   "item": "dungdra/game.py:280",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# p.182 grapple ends if the grappler is Incapacitated",
+   "rule_quote": "While you have the Grappled condition, you experience the following effects.",
+   "explanation": "This is about how the grapple ends, which the unit doesn't define. The gap analysis puts the end triggers in the Unarmed Strike/Grapple rules."
+  },
+  {
+   "item": "dungdra/combat.py:1347",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "raise Refusal(f\"{attacker.name} needs a free hand to grapple\", page=182)",
+   "rule_quote": "While you have the Grappled condition, you experience the following effects.",
+   "explanation": "This is the requirement for starting a grapple, not an effect of the condition."
+  }
+ ],
+ "summary": "Only CMB-06 and its test relate to Grappled. The scenario is consistent. The test checks Speed 0, Disadvantage against a non-grappler and the 2x drag cost. It doesn't check the no-Disadvantage-against-grappler case, the Tiny or two-sizes-smaller exemption, Speed not increasing, or multiple grapplers. COND-02 only mentions Grappled in its header, and its test uses the condition just to show that standing up is refused at Speed 0. The remaining page-matched code lines are about other rules, and I gave verdicts only to the two that mention grappling."
+}

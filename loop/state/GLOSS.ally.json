@@ -1,0 +1,87 @@
+{
+  "fingerprint": "d74ca421fbc10450",
+  "for_review": [],
+  "id": "GLOSS.ally",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.ally#1",
+      "kind": "boundary",
+      "reason": "No threshold: party membership is yes or no. The 5-ft reach of Sneak Attack and Help belongs to those units."
+    },
+    {
+      "clause": "GLOSS.ally#2",
+      "kind": "boundary",
+      "reason": "No threshold: an attitude is Friendly or it isn't."
+    },
+    {
+      "clause": "GLOSS.ally#3",
+      "kind": "boundary",
+      "reason": "No threshold: a creature is on your side or not."
+    },
+    {
+      "clause": "GLOSS.ally#4",
+      "kind": "boundary",
+      "reason": "No threshold: a creature is designated or not."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_ally_a_party_member_next_to_the_target_is_an_ally",
+    "tests/srd/test_glossary.py::test_ally_a_party_member_is_an_ally_through_the_session",
+    "tests/srd/test_glossary.py::test_ally_you_are_not_your_own_ally",
+    "tests/srd/test_glossary.py::test_ally_an_indifferent_npc_is_not_a_friend",
+    "tests/srd/test_glossary.py::test_ally_pack_tactics_counts_a_wolf_on_the_same_side"
+  ],
+  "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally"
+    },
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1792522749,
+      "summary": "GLOSS.ally defines 'ally' as a creature that matches any of four conditions: a member of your party, your friend, on your side in combat, or designated as an ally by the rules or the GM. There are no thresholds and no referenced units. The open questions are whether you count as your own ally (propo"
+    },
+    "B": {
+      "at": 1792522755,
+      "summary": "No scenarios or SRD tests were given for GLOSS.ally. The two code lines were matched only by page range (p.176-191) and have nothing to do with ally status, so both are not-related. Nothing in the engine or tests currently covers this unit's four clauses, which is a coverage gap rather than a contra"
+    },
+    "C": {
+      "at": 1792523017,
+      "summary": "I added 16 GLOSS.ally tests to tests/srd/test_glossary.py. Each clause is tested through its effects: Sneak Attack's ally within 5 ft, Help on an attack roll, Pack Tactics, controlled mounts, and the Session attack and spawn commands. 12 pass and 4 are strict xfail (red): (1) Help's ability-check as"
+    },
+    "D": {
+      "at": 1792523160,
+      "summary": "I keep 9 of the 16 tests and refute 7. Four refutations are duplicates (above 0.5, so they are removed); three get confidence 0.5 or less and go to a person.\n\nI broke the ally logic in a scratch copy once for each of the 12 green tests, and every test failed. The four red tests fail for the reasons "
+    }
+  },
+  "status": "red",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally",
+    "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused",
+    "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally",
+    "tests/srd/test_glossary.py::test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side",
+    "tests/srd/test_glossary.py::test_ally_help_gives_no_advantage_to_a_creature_on_the_other_side",
+    "tests/srd/test_glossary.py::test_ally_the_target_s_side_is_not_the_attacker_s_ally",
+    "tests/srd/test_glossary.py::test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack",
+    "tests/srd/test_glossary.py::test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally",
+    "tests/srd/test_glossary.py::test_ally_a_controlled_mount_is_designated_the_rider_s_ally",
+    "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally",
+    "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused"
+  ],
+  "tickets": [
+    "T-86",
+    "T-87",
+    "T-88",
+    "T-89",
+    "T-90"
+  ]
+}

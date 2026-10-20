@@ -1,0 +1,24 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The T-65 fix commit already added `test_a_held_spell_refused_at_release_stays_held_with_its_concentration`, which runs through the real `spells.cast(ready=True)` / `_release` path. To finish the coverage this ticket asks for, I added `test_a_held_spell_refused_at_release_is_released_by_a_later_trigger_for_its_one_slot`, which also uses the real path:\n- Mialee readies Magic Missile at G1, which spends one slot.\n- G1 is moved beyond 120 ft, so the first trigger's release is refused. The test checks that the log says \"beyond Magic Missile's range\" and that Concentration still holds the spell.\n- G1 is moved back in range, G0 steps away, and G0 comes within 5 ft again. This second trigger releases the held spell: G1 takes 6 damage, Concentration ends, the readied entry is gone and the Reaction is used.\n- No second slot is spent.\n\nNo engine change was needed. Results: unit tests 442 passed; `ruff check .` and `ruff format --check .` clean; `dev-gate` PASS. The ticket names no acceptance tests, so there was no `--runxfail` run.",
+  "files": [
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_a_held_spell_refused_at_release_is_released_by_a_later_trigger_for_its_one_slot"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "Approved. The new unit test uses the real path the ticket asks for: `cast(..., ready=True)` and its release callable, not a hand-written release. It checks what happens after the refusal, which the T-65 test above it does not:\n- When the target is out of range, the release is refused and the spell stays held under Concentration.\n- A later trigger then releases it: G1 takes 3×(1+1) = 6 damage and drops from 10 to 4 HP.\n- Concentration ends, the readied entry is cleared and the reaction is used.\n- The 1st-level slot is spent only once: it is 1 after readying and still 1 at the end.\n\nThese assertions check behaviour rather than repeating the implementation's own constants, and every die is forced and used. The diff touches nothing else apart from the loop's cost log. The three held-spell tests pass locally."
+ },
+ "problems": [],
+ "cost_usd": 0.39,
+ "stash": ""
+}

@@ -1,0 +1,66 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.cone#1",
+   "text": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.cone#2",
+   "text": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.cone#3",
+   "text": "For example, a Cone is 15 feet wide at a point along its length that is 15 feet from the point of origin.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.cone#4",
+   "text": "The effect that creates a Cone specifies its maximum length.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.cone#5",
+   "text": "A Cone’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "The effect that creates a Cone specifies its maximum length.",
+   "reading_a": "The Cone always extends to the full length the effect gives; 'maximum' only describes how far it reaches.",
+   "reading_b": "The creator may choose any length up to that maximum, so a shorter Cone can leave out creatures near the far end.",
+   "proposed_ruling": "The Cone always uses the full length the effect gives unless the effect itself offers a shorter one. The creator controls only direction (and, by #5, whether the origin is included).",
+   "confidence": 0.55
+  },
+  {
+   "quote": "A Cone’s width at any point along its length is equal to that point’s distance from the point of origin.",
+   "reading_a": "The width is the full width across the Cone, centred on its axis: half the distance on each side, which gives an opening angle of about 53°.",
+   "reading_b": "The width is measured from the axis out to each side, which gives a Cone twice as wide (about 90°).",
+   "proposed_ruling": "Reading A. The width is the full width, centred on the direction chosen, as the example of 15 feet wide at 15 feet shows.",
+   "confidence": 0.8
+  },
+  {
+   "quote": "A Cone’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+   "reading_a": "'Point of origin' means only the geometric point. On a grid the space holding that point (for example the creator's own space) is still outside the area unless the creator includes it.",
+   "reading_b": "Only the point itself is left out. A creature whose space holds the point but also reaches into the Cone can still be affected through the part of its space inside the Cone.",
+   "proposed_ruling": "Reading A for the creator's own space when the Cone starts from the creator: the creator isn't affected unless they choose to be. Any other creature is affected if any part of its space is in the Cone apart from the origin point.",
+   "confidence": 0.5
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "extends in straight lines from a point of origin in a direction its creator chooses",
+   "explanation": "The unit doesn't say how a Cone maps to grid squares or creature spaces, for example whether a square that is only partly covered counts as inside. It also doesn't say whether the straight lines are blocked by obstacles. Neither rule is stated here, so the engine needs the general area-of-effect rules or a register ruling."
+  },
+  {
+   "quote": "in a direction its creator chooses",
+   "explanation": "The unit doesn't say whether the direction is free (any angle) or limited, for example to the 8 grid directions or to the edges of a square, when play is on a grid."
+  }
+ ],
+ "traps": [],
+ "summary": "GLOSS.cone defines the Cone area of effect. It extends in straight lines from a point of origin in a direction the creator chooses. Its width at any point equals that point's distance from the origin (15 ft wide at 15 ft). The creating effect sets its maximum length, and the origin point is left out unless the creator includes it. The text matches the 2014 wording, so no traps are listed. Open questions: whether a shorter length than the maximum may be chosen, whether 'width' is the full width or the width on each side, and how the origin exclusion applies to grid spaces. The unit doesn't say how a Cone maps to grid squares or which directions are allowed."
+}

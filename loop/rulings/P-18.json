@@ -1,0 +1,14 @@
+{
+  "id": "P-18",
+  "unit": "GLOSS.prone",
+  "ambiguity": "GLOSS.prone gap: righting yourself with less movement left than half your Speed.",
+  "ruling": "Refuse it cleanly. Righting yourself needs at least the full cost in remaining movement, and no partial cost carries over.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_stand_refused_with_less_than_the_cost_left",
+    "tests/srd/test_glossary.py::test_drop_and_stand_repeatedly_pays_each_time"
+  ],
+  "status": "accepted",
+  "register_id": "R-22",
+  "note": "You can't spend movement you don't have; refused before anything changes.",
+  "reason": ""
+}

@@ -1,0 +1,38 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "I fixed T-86: Help can no longer target the helper's own ability check. `actions.help_check` now refuses when the target is the helper, before any action is spent or any effect is added. The refusal cites page=176 and rule=\"GLOSS.ally#1\", and the code is tagged `# SRD[GLOSS.ally#1]`. Two new unit tests in `tests/unit/test_actions.py` cover it: one checks that helping yourself is refused with no effect and nothing logged, the other that helping another creature still gives it Advantage on the check. Results: the ticket's test passes with --runxfail; unit tests 535 passed; ruff check and format are clean; dev-gate PASS. In the full tests/srd + tests/scenarios run, the only failure is this test reporting XPASS(strict), because its xfail marker is still in place for the harness to remove.",
+  "files": [
+   "dungdra/actions.py",
+   "tests/unit/test_actions.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_actions.py::test_help_check_refuses_the_helper_as_their_own_ally",
+   "tests/unit/test_actions.py::test_help_check_gives_another_creature_advantage_on_the_check"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ally#1]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "other",
+    "file": "dungdra/actions.py",
+    "line": 29,
+    "explanation": "The refusal doesn't name the ruling it applies. GLOSS.ally#1 only says an ally is a member of your party. 'A creature is never its own ally, so Help can't assist the helper's own check' comes from register ruling R-36, and the acceptance test is marked ruling=\"R-36\". CLAUDE.md requires refusals to carry ruling=\"R-nn\" where a register ruling applies, and Refusal already accepts ruling= (see dungdra/encounters.py:83). Add ruling=\"R-36\" to the Refusal and cite R-36 in the SRD comment. The unit test in tests/unit/test_actions.py should assert e.value.ruling == \"R-36\" too, so the trace is checked."
+   }
+  ],
+  "followups": [],
+  "summary": "The fix solves the ticket. help_check now refuses when the helper names themself, the refusal comes before any action is spent or effect added, and the xfail marker was removed correctly. Checking identity is the right minimal rule here. Using game.allies_of instead would also take on T-89 and T-87, which are separate open tickets. The one problem is traceability: the refusal applies register ruling R-36, but the Refusal has no ruling=\"R-36\" and the comment credits only GLOSS.ally#1, whose text doesn't say this. Add the ruling tag and assert it in the unit test."
+ },
+ "problems": [
+  "review: rejected (The fix solves the ticket. help_check now refuses when the helper names themself, the refusal comes before any action is spent or effect added, and the xfail marker was removed correctly. Checking identity is the right minimal rule here. Using game.allies_of instead would also take on T-89 and T-87, which are separate open tickets. The one problem is traceability: the refusal applies register ruling R-36, but the Refusal has no ruling=\"R-36\" and the comment credits only GLOSS.ally#1, whose text doesn't say this. Add the ruling tag and assert it in the unit test.)",
+  "review: other dungdra/actions.py:29 The refusal doesn't name the ruling it applies. GLOSS.ally#1 only says an ally is a member of your party. 'A creature is never its own ally, so Help can't assist the helper's own check' comes from register ruling R-36, and the acceptance test is marked ruling=\"R-36\". CLAUDE.md requires refusals to carry ruling=\"R-nn\" where a register ruling applies, and Refusal already accepts ruling= (see dungdra/encounters.py:83). Add ruling=\"R-36\" to the Refusal and cite R-36 in the SRD comment. The unit test in tests/unit/test_actions.py should assert e.value.ruling == \"R-36\" too, so the trace is checked."
+ ],
+ "cost_usd": 0.5866,
+ "stash": "srdloop: T-86 attempt 1"
+}

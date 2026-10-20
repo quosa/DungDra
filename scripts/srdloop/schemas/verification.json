@@ -1,0 +1,50 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "verdicts",
+  "summary"
+ ],
+ "properties": {
+  "verdicts": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "test",
+     "verdict",
+     "reason",
+     "mutation",
+     "confidence"
+    ],
+    "properties": {
+     "test": {
+      "type": "string"
+     },
+     "verdict": {
+      "enum": [
+       "keep",
+       "refute"
+      ]
+     },
+     "reason": {
+      "type": "string"
+     },
+     "mutation": {
+      "type": "string",
+      "description": "what you broke and whether the test then failed"
+     },
+     "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+     }
+    }
+   }
+  },
+  "summary": {
+   "type": "string"
+  }
+ }
+}

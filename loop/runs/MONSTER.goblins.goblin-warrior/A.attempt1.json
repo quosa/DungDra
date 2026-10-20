@@ -1,0 +1,229 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "MONSTER.goblins.goblin-warrior#1",
+    "text": "Small Fey (Goblinoid), Chaotic Neutral",
+    "threshold": false
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#2",
+    "text": "AC 15",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#3",
+    "text": "Initiative +2 (12)",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#4",
+    "text": "HP 10 (3d6)",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#5",
+    "text": "Speed 30 ft.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#6",
+    "text": "| Str | 8 | −1 | −1 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#7",
+    "text": "| Dex | 15 | +2 | +2 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#8",
+    "text": "| Con | 10 | +0 | +0 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#9",
+    "text": "| Int | 10 | +0 | +0 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#10",
+    "text": "| Wis | 8 | −1 | −1 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#11",
+    "text": "| Cha | 8 | −1 | −1 |",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#12",
+    "text": "Skills Stealth +6",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#13",
+    "text": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+    "threshold": false
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#14",
+    "text": "Senses Darkvision 60 ft.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#15",
+    "text": "Passive Perception 9",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#16",
+    "text": "Languages Common, Goblin",
+    "threshold": false
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#17",
+    "text": "CR 1/4 (XP 50; PB +2)",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#18",
+    "text": "Scimitar. Melee Attack Roll: +4, reach 5 ft.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#19",
+    "text": "Hit: 5 (1d6 + 2) Slashing damage",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#20",
+    "text": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#21",
+    "text": "Shortbow. Ranged Attack Roll: +4, range 80/320 ft.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#22",
+    "text": "Hit: 5 (1d6 + 2) Piercing damage",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#23",
+    "text": "plus 2 (1d4) Piercing damage if the attack roll had Advantage.",
+    "threshold": true
+   },
+   {
+    "id": "MONSTER.goblins.goblin-warrior#24",
+    "text": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "threshold": false
+   }
+  ],
+  "relations": [
+   {
+    "type": "requires",
+    "target": "GLOSS.disengage",
+    "evidence": "The goblin takes the Disengage or Hide action."
+   },
+   {
+    "type": "requires",
+    "target": "GLOSS.hide",
+    "evidence": "The goblin takes the Disengage or Hide action."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.advantage",
+    "evidence": "plus 2 (1d4) Slashing damage if the attack roll had Advantage."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.attack-roll",
+    "evidence": "Melee Attack Roll: +4, reach 5 ft."
+   },
+   {
+    "type": "requires",
+    "target": "GLOSS.darkvision",
+    "evidence": "Senses Darkvision 60 ft."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.initiative",
+    "evidence": "Your Initiative score equals 10 plus your Dexterity modifier."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.passive-perception",
+    "evidence": "A creature’s Passive Perception equals 10 plus the creature’s Wisdom (Perception) check bonus."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.speed",
+    "evidence": "Speed 30 ft."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.save",
+    "evidence": "| Dex | 15 | +2 | +2 |"
+   }
+  ],
+  "ambiguities": [
+   {
+    "quote": "if the attack roll had Advantage",
+    "reading_a": "The extra 1d4 applies only when the roll was actually made with Advantage. If Advantage and Disadvantage cancel, there's no extra damage.",
+    "reading_b": "The extra 1d4 applies whenever any effect gave the roll Advantage, even when Disadvantage cancelled it.",
+    "proposed_ruling": "Reading A. Advantage and Disadvantage 'cancel each other', so the roll didn't have Advantage and the 1d4 isn't added.",
+    "confidence": 0.75
+   },
+   {
+    "quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "reading_a": "On a Critical Hit, the conditional 1d4 is an attack damage die and is rolled twice, like the 1d6.",
+    "reading_b": "Only the weapon's base 1d6 is doubled on a Critical Hit; the conditional 1d4 rider isn't.",
+    "proposed_ruling": "Reading A. The 1d4 is damage dealt by the hit, so a Critical Hit doubles it too.",
+    "confidence": 0.7
+   },
+   {
+    "quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+    "reading_a": "The stat block is authoritative. The Shortbow attack can be used while AC stays 15, even though the Shortbow is Two-Handed and the goblin carries a Shield.",
+    "reading_b": "The goblin has to doff the Shield (and lose its AC bonus) before it can fire the Two-Handed Shortbow.",
+    "proposed_ruling": "Reading A. Stat block actions and AC are used exactly as printed. Gear doesn't add equip/doff limits to a monster's own actions.",
+    "confidence": 0.6
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "Gear Leather Armor, Scimitar, Shield, Shortbow",
+    "explanation": "The Gear line lists a Shortbow (Ammunition property) but no arrows. The unit doesn't say whether the goblin's Shortbow attacks use up ammunition or how much it carries. That needs a register ruling, for example that monster stat-block ranged attacks don't track ammunition."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "Small Fey (Goblinoid), Chaotic Neutral",
+    "note": "In 2014 the goblin was a Small humanoid (goblinoid), Neutral Evil. In 2024 it is Fey, so effects limited to Humanoids (e.g. Charm Person, Hold Person) don't affect it, and effects aimed at Fey do."
+   },
+   {
+    "quote": "HP 10 (3d6)",
+    "note": "The 2014 goblin had 7 (2d6) HP."
+   },
+   {
+    "quote": "plus 2 (1d4) Slashing damage if the attack roll had Advantage.",
+    "note": "The extra 1d4 on Advantage is new in 2024. The 2014 Scimitar/Shortbow attacks did a flat 1d6 + 2."
+   },
+   {
+    "quote": "Nimble Escape. The goblin takes the Disengage or Hide action.",
+    "note": "Same wording as 2014, but the 2024 Hide action needs a DC 15 Stealth check while Heavily Obscured or behind Three-Quarters/Total Cover and out of enemy sight. Success gives the Invisible condition. The 2014 Hide was a contest against passive Perception with no fixed DC."
+   },
+   {
+    "quote": "Initiative +2 (12)",
+    "note": "2014 stat blocks had no Initiative line. In 2024 the score of 12 (10 + Dex) can be used instead of rolling."
+   }
+  ],
+  "summary": "The Goblin Warrior stat block (CR 1/4, 50 XP) splits into 24 testable clauses. Its derived values check out against the referenced rules: Initiative 12 = 10 + Dex 2; Passive Perception 9 = 10 + Wis −1; AC 15 = Leather 11 + Dex 2 + Shield 2; attack +4 = Dex 2 + PB 2. The 2024 changes are the Fey type, HP 10 (3d6) and the extra 1d4 damage when the attack roll had Advantage. Nimble Escape relies on the 2024 Disengage and Hide actions. Open questions: whether cancelled Advantage still adds the 1d4, whether a crit doubles it, a Two-Handed Shortbow alongside a Shield, and ammunition tracking (a gap)."
+ },
+ "problems": [],
+ "cost_usd": 0.20511600000000002,
+ "session": "cbb9a679-eb3f-4c1b-9e21-0e7646de501e"
+}

@@ -1,0 +1,40 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Mage Armor cast on a creature wearing armor is no longer refused. Following ruling R-15, it now counts as an invalid target: the slot is spent and nothing happens to the target (no AC change, no effect). The caster gets a player-visible \"Mage Armor does nothing to <target>\" event (rule SPELL.casting-spells.effects.targets#11, page 106, ruling R-15), and a GM-only invalid_target event records why (#8, R-15).\n\nThe previous attempt was rejected for leaving out ruling=\"R-15\" and for copying Hold Person's hand-written code, so this time both spells use one helper, `_invalid_target` in dungdra/spells.py. If the spell is harmless on a successful save (`save=`), the target appears to succeed without rolling (#10); otherwise the caster sees \"does nothing\" (#11). Either way the GM event explains why (#8/#9). All events carry ruling R-15. Hold Person now uses the helper too, which gives its events clause-numbered rules and the R-15 ruling; the player-visible text is unchanged.\n\nResults:\n- The T-40 test passes with --runxfail.\n- The full srd and scenarios run shows only the expected strict XPASS for T-40; the other 36 xfails are unchanged.\n- Unit tests: 344 passed.\n- `ruff check` and `ruff format --check` are clean, and dev-gate passes.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_mage_armor_on_an_armored_creature_spends_the_slot_and_says_it_did_nothing",
+   "tests/unit/test_spells.py::test_hold_person_on_a_non_humanoid_appears_to_save_under_r15"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#8]",
+   "SRD[SPELL.casting-spells.effects.targets#9]",
+   "SRD[SPELL.casting-spells.effects.targets#10]",
+   "SRD[SPELL.casting-spells.effects.targets#11]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "Each spell still decides its own target restriction in its handler (_mage_armor checks armor, _hold_person checks ctype). Give the restriction to the spell data as a predicate plus a reason and the save ability, and have the cast pipeline route failing targets to _invalid_target, so that every restricted spell follows R-15 without hand-written code.",
+    "kind": "refactor"
+   },
+   {
+    "title": "The Total Cover refusal in cast() (dungdra/spells.py:136) cites rule=\"SPELL.casting-spells.effects.targets\" without a clause number and has no SRD[...#2] tag. Tag it #2.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this change. Mage Armor cast on a creature wearing armor is no longer refused. It is handled as an invalid target: the slot is spent, nothing happens, and the caster sees a player-visible \"does nothing\" event (clause #11, page 106, ruling R-15). A GM-only invalid_target event gives the reason (#8). The previous attempt was rejected because R-15 was missing; that is fixed now. The new shared `_invalid_target` helper replaces the hand-written Hold Person path, so there is one mechanism instead of two. Its `save` argument chooses between the apparent save (#10) and the \"did nothing\" (#11) case. Hold Person's player-visible text doesn't change, and the existing #10 tests, including the no-hint abuse test, still pass. The Hold Person refactor goes slightly beyond the ticket, but it is the consolidation the previous review asked for and it doesn't change Hold Person's behaviour. The strict xfail removed in tests/srd is the one for this ticket. The new unit tests check behaviour: the slot is spent, AC doesn't change, no dice are rolled, and each event has the right visibility, rule, ruling and page."
+ },
+ "problems": [],
+ "cost_usd": 0.642,
+ "stash": ""
+}

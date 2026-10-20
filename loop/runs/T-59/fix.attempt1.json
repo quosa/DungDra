@@ -1,0 +1,27 @@
+{
+ "result": "dispute",
+ "fixer": {
+  "summary": "Spells whose area sits at a point are now range-checked on that point. A spell counts as point-placed when it has an `area` and a range in feet (Sleep, Web); Burning Hands and Thunderwave have a range of Self and are left alone.\n\nWhat changed in `dungdra/spells.py`:\n- **Point check:** `_range_check` now takes the point. For point-placed spells it refuses a point beyond the spell's range (`rule=\"SPELL.casting-spells.range\"`, `page=105`). It no longer refuses individual targets of those spells, because a creature inside an area placed within range can be farther away than the range.\n- **Point is always resolved:** a new `_area_point` runs before `_check` when the spell is cast, and again when a readied spell is released. If no point is given, it uses the position of the first creature named, other than the caster. If there is no creature either, it refuses with \"Choose a point within N ft …\" (`SPELL.casting-spells.effects.targets#4`, `page=106`). Either refusal comes before any slot or scroll is spent.\n- **Old Sleep fallback removed:** `_sphere_targets` always needs a point now, so the \"every listed creature is inside\" shortcut is gone and the 5-ft Sphere decides who is caught.\n\nThe ticket asked to require a point outright, but I didn't: several acceptance scenarios cast Sleep or Web without one (`tests/scenarios/test_spells.py:158/256/401`, `tests/scenarios/test_magic_items.py:127`, and the natural-language Web cast in `tests/scenarios/test_journeys.py:340`). Requiring a point would have broken them, and I can't change those tests. Centring the area on the creature it's aimed at keeps them passing. Like the existing Cone aim, this is an interface default for where the caster puts the area, not a new rule. If a person wants a point strictly required, those scenarios would need explicit points first.\n\nNot in scope: Web still doesn't check which creatures fall inside its 20-ft Cube.\n\nUnit tests: I replaced the old fallback test and added four new ones. The full suite (813), `ruff check`, `ruff format --check` and `dev-gate` all pass. The ticket names no acceptance tests, so there was no `--runxfail` run.",
+  "files": [
+   "dungdra/spells.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_spells.py::test_sleep_without_a_point_is_centred_on_the_first_named_creature",
+   "tests/unit/test_spells.py::test_sleep_with_neither_a_point_nor_a_creature_is_refused",
+   "tests/unit/test_spells.py::test_sleep_at_a_point_beyond_its_range_is_refused",
+   "tests/unit/test_spells.py::test_sleep_reaches_a_creature_past_its_range_inside_a_sphere_placed_within_it",
+   "tests/unit/test_spells.py::test_web_aimed_at_a_creature_beyond_its_range_is_refused"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.range]",
+   "SRD[SPELL.casting-spells.effects.targets#4]"
+  ],
+  "dispute": null,
+  "test_change_request": "The ticket asks to require a point for point-placed area spells, but these acceptance scenarios cast Sleep or Web without one: `tests/scenarios/test_spells.py:158`, `:256` and `:401`, `tests/scenarios/test_magic_items.py:127` and `:133`, and the natural-language Web cast in `tests/scenarios/test_journeys.py:340`. A strict requirement would break them. I implemented a default instead: with no point, the area is centred on the first named creature, and it's refused only when there's no creature either. If a person wants an explicit point required, those scenarios would first need a `point=` (and the natural-language parser a way to name one)."
+ },
+ "review": null,
+ "problems": [],
+ "cost_usd": 0.6743,
+ "stash": "srdloop: T-59 dispute"
+}

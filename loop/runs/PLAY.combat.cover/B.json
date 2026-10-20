@@ -1,0 +1,181 @@
+{
+ "verdicts": [
+  {
+   "item": "CMB-05",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "Half Cover gives +2 AC and Dex saves; Three-Quarters Cover gives +5.",
+   "rule_quote": "+5 bonus to AC and Dexterity saving throws",
+   "explanation": "Matches the table: Half +2, Three-Quarters +5, Total can't be targeted, and only the best degree applies."
+  },
+  {
+   "item": "tests/scenarios/test_combat.py::test_cmb05_ranged_cover",
+   "kind": "test",
+   "verdict": "under-asserts",
+   "evidence": "assert C.attack(game, lidda, gob, weapon=\"shortbow\").roll.target == 20  # only best degree",
+   "rule_quote": "+2 bonus to AC and Dexterity saving throws",
+   "explanation": "It checks the AC bonuses (+2, +5), the best-degree rule and the Total Cover refusal. It never checks the +2/+5 on Dexterity saves (#5, #7). It also doesn't check that another creature gives Half Cover (#6), that cover applies only when the attack comes from the opposite side (#3), or that Half Cover plus a lower source doesn't stack."
+  },
+  {
+   "item": "SPL-05",
+   "kind": "scenario",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "the third behind Total Cover inside the cone's area",
+   "rule_quote": "Can’t be targeted directly",
+   "explanation": "The scenario says a goblin behind Total Cover is unaffected by a cone. That depends on reading 'directly' as covering area effects, which is the unresolved ambiguity (reading B). The unit only says Total Cover stops direct targeting, and the 2014 area-of-effect exception was dropped."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spl05_burning_hands",
+   "kind": "test",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "game.scene.cover_all[g3.id] = \"total\"",
+   "rule_quote": "Can’t be targeted directly",
+   "explanation": "The test asserts g3 is untouched (hp == 10) by an area effect because of Total Cover. That commits to reading B of the Total Cover ambiguity."
+  },
+  {
+   "item": "SPL-06",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "The target behind Total Cover can't be targeted.",
+   "rule_quote": "Can’t be targeted directly",
+   "explanation": "A spell that picks a creature behind Total Cover is refused, which is the direct-targeting case the table states."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spl06_targeting",
+   "kind": "test",
+   "verdict": "consistent",
+   "evidence": "with pytest.raises(Refusal, match=\"Total Cover\"):",
+   "rule_quote": "Can’t be targeted directly",
+   "explanation": "A single-target spell (Guiding Bolt) against a creature with Total Cover is refused. This matches the rule for direct targeting."
+  },
+  {
+   "item": "SPELLS-05",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "The goblin gets **no** Half or Three-Quarters Cover bonus on its Dex save.",
+   "rule_quote": "+2 bonus to AC and Dexterity saving throws",
+   "explanation": "This is a Sacred Flame exception to the Cover table (the spell says the target gets no benefit from Half or Three-Quarters Cover). It overrides the general rule for that spell and doesn't contradict it."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spells05_cantrips",
+   "kind": "test",
+   "verdict": "consistent",
+   "evidence": "assert \"Cover\" not in game.log.last(\"save\").text",
+   "rule_quote": "+2 bonus to AC and Dexterity saving throws",
+   "explanation": "It checks that Sacred Flame ignores Half Cover on the save. This is a spell-specific exception and doesn't conflict with the table. It doesn't check that other Dex saves do get the bonus."
+  },
+  {
+   "item": "EXPL-03",
+   "kind": "scenario",
+   "verdict": "not-related",
+   "evidence": "LIDDA Hides behind a crate (Three-Quarters Cover, out of line of sight).",
+   "rule_quote": "An object that covers at least three-quarters of the target",
+   "explanation": "The scenario is about the Hide action and noticing. Cover appears only as a precondition for Hide, not as the AC/save benefit."
+  },
+  {
+   "item": "tests/scenarios/test_world.py::test_expl03_hide",
+   "kind": "test",
+   "verdict": "not-related",
+   "evidence": "r = actions.hide(game, lidda, cover=\"three-quarters\")",
+   "rule_quote": "An object that covers at least three-quarters of the target",
+   "explanation": "The test exercises the Hide DC, the Invisible condition and sound. It only passes a cover label."
+  },
+  {
+   "item": "CLS-ROG-02",
+   "kind": "scenario",
+   "verdict": "not-related",
+   "evidence": "She takes Hide as a Bonus Action from behind Three-Quarters Cover.",
+   "rule_quote": "An object that covers at least three-quarters of the target",
+   "explanation": "The scenario is about Cunning Action, Steady Aim and Fast Hands. Cover is incidental to Hide."
+  },
+  {
+   "item": "tests/scenarios/test_world.py::test_rog02",
+   "kind": "test",
+   "verdict": "not-related",
+   "evidence": "actions.hide(game, lidda, cover=\"three-quarters\", bonus=True, source=\"Cunning Action (Hide)\")",
+   "rule_quote": "An object that covers at least three-quarters of the target",
+   "explanation": "The test checks Rogue features. The cover argument only satisfies Hide's precondition."
+  },
+  {
+   "item": "dungdra/combat.py:678",
+   "kind": "code",
+   "verdict": "consistent",
+   "evidence": "page=15,",
+   "rule_quote": "Can’t be targeted directly",
+   "explanation": "This is the Refusal for an attack on a target with Total Cover (rule=\"PLAY.combat.cover\" at line 679). It matches the table. The +2/+5 AC bonus is applied separately at lines 825-826."
+  },
+  {
+   "item": "dungdra/combat.py:547",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "\"\"\"Opportunity Attacks (p.15, 185): leaving an enemy's reach with your own",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is about Opportunity Attacks. It matched only on the page number."
+  },
+  {
+   "item": "dungdra/combat.py:564",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=15,",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is the log call for Opportunity Attacks (rule GLOSS.opportunity-attacks), not cover."
+  },
+  {
+   "item": "dungdra/combat.py:777",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=15,",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is the melee reach Refusal (rule PLAY.combat.melee-attacks), not cover."
+  },
+  {
+   "item": "dungdra/mounted.py:1",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "\"\"\"Mounted combat (SRD p.15-16).\"\"\"",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "Mounted combat matched only on the page number."
+  },
+  {
+   "item": "dungdra/mounted.py:14",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=15,",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is a mounted-combat log or refusal call, not cover."
+  },
+  {
+   "item": "dungdra/mounted.py:19",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "f\"{steed.name} must be within 5 ft to mount it\", page=15, rule=\"PLAY.combat.mounted-combat\"",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is about mounting, not cover."
+  },
+  {
+   "item": "dungdra/mounted.py:25",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "raise Refusal(f\"Mounting costs {cost} ft of movement\", page=15, rule=\"PLAY.combat.mounted-combat\")",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is about mounting cost, not cover."
+  },
+  {
+   "item": "dungdra/mounted.py:35",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=15,",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is a mounted-combat call, not cover."
+  },
+  {
+   "item": "dungdra/mounted.py:67",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "\"mount\", f\"{rider.name} dismounts (costs {cost} ft)\", page=15, rule=\"PLAY.combat.mounted-combat\"",
+   "rule_quote": "Walls, trees, creatures, and other obstacles can provide cover, making a target more difficult to harm.",
+   "explanation": "This is about dismounting, not cover."
+  }
+ ],
+ "summary": "Nothing contradicts the SRD. CMB-05 and its test are the core cover items. The test checks the AC bonuses, best-degree-only and the Total Cover refusal, but not the Dexterity-save bonus, creature-as-Half-Cover, or the opposite-side clause, so it under-asserts. SPL-05 and its test depend on the Total Cover vs area effects ambiguity: they assume cover shields against a cone, which the unit doesn't say. SPL-06 and its test are consistent. The SPELLS-05 scenario and test are consistent: the no-cover result is a Sacred Flame exception. EXPL-03 and CLS-ROG-02 (scenarios and tests) are not related, since cover is only a precondition for Hide. In the code, combat.py:678 is the Total Cover refusal and is consistent. The other page-15 matches are Opportunity Attacks, melee reach and mounted combat, so they are not related. I didn't read game.py cover_between or the spell cover code at spells.py:129, 444, 471 and 920 in detail, so I gave them no verdicts."
+}

@@ -1,0 +1,117 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type",
+   "verdict": "keep",
+   "reason": "The expected result follows from clause #1. It checks every monster in the data and every fixture PC, and it is the strongest of the 'has a listed type' tests.",
+   "mutation": "creature.py:30 default ctype \"humanoid\" -> \"goblinoid\": the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_a_goblin_s_goblinoid_tag_isnt_its_type",
+   "verdict": "refute",
+   "reason": "Duplicate. tests/srd/test_monsters.py::test_goblin_warrior_is_a_small_fey_goblinoid_that_can_grapple_a_medium_creature already asserts gob.ctype == 'fey' and 'goblinoid' in gob.type_tags. The extra `not in ('goblinoid','humanoid')` follows from ctype == 'fey' and adds nothing.",
+   "mutation": "None needed. Any change that breaks this test also breaks the existing goblin test, because both rest on the same ctype == 'fey' assertion.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_hold_person_doesnt_reach_a_goblin_through_its_tag",
+   "verdict": "refute",
+   "reason": "Near-duplicate of tests/srd/test_monsters.py::test_hold_person_does_nothing_to_a_goblin_warrior_which_isnt_humanoid. Both check the same three things: not Paralyzed, no dice rolled, slot spent, against a Fey (Goblinoid) target. This one only swaps in a Goblin Boss and an unbeatable DC.",
+   "mutation": "data/spells.py:332 restriction changed to `t.ctype == \"humanoid\" or \"goblinoid\" in t.type_tags`: the test failed. The existing goblin-warrior test also exercises this restriction.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_study_of_fey_lore_uses_arcana_not_the_humanoid_history",
+   "verdict": "refute",
+   "reason": "Covered twice already. tests/scenarios/test_world.py::test_soc02 runs study(creature_type='fey') and asserts Arcana. test_creature_type_study_knows_each_of_the_fourteen_types checks fey->Arcana again. The goblin being Fey is covered by the existing goblin stat test. All this one adds is going through Session.",
+   "mutation": "actions.py:287 \"fey\": \"arcana\" -> \"history\": the test failed, but so do soc02 and the fourteen-types test.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_the_sample_party_is_humanoid_whatever_the_species",
+   "verdict": "keep",
+   "reason": "Matches clause #2. The SRD species entries give Creature Type: Humanoid, and the test checks it across four different species.",
+   "mutation": "creature.py:30 default ctype -> \"dwarf\": the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_hold_person_can_paralyze_a_humanoid_pc",
+   "verdict": "keep",
+   "reason": "Checks that a PC's Humanoid type works as a real target for a type-restricted rule. The existing Hold Person positive test uses a monster Bandit, not a PC.",
+   "mutation": "data/spells.py:332 restriction -> False: the test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_a_pc_s_species_isnt_its_type",
+   "verdict": "refute",
+   "reason": "The `ctype != species` half follows from the sample-party test's ctype == 'humanoid'. The type_tags half guards a 2014 subtype convention that no SRD 5.2.1 text mentions, and no engine code sets PC type tags. The test is close to vacuous and mostly duplicates the sample-party test.",
+   "mutation": "creature.py:45 type_tags with species names added: the test failed. That bug had to be invented; no rule code exists here to break.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_turn_undead_doesnt_touch_a_humanoid_pc",
+   "verdict": "keep",
+   "reason": "A negative case for the type filter, with a PC as the target. The scenario test only uses two Undead.",
+   "mutation": "class_actions.py:283 dropped `t.ctype != \"undead\" or`: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_study_knows_each_of_the_fourteen_types",
+   "verdict": "keep",
+   "reason": "Checks all 14 types against the GLOSS.study Areas of Knowledge table. I read the table myself and the mapping is right.",
+   "mutation": "actions.py:296 fiend -> arcana: the test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_every_in_scope_monster_type_is_on_the_list",
+   "verdict": "refute",
+   "reason": "Subsumed by test_creature_type_every_monster_and_pc_has_one_listed_type. monster.py:63 sets ctype=d['type'] unchanged, so that test already checks every MONSTERS type against the list.",
+   "mutation": "None separate. Any bad d['type'] value fails both tests.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
+   "verdict": "keep",
+   "reason": "A red test that fails for the reason it gives. Running with --runxfail gives KeyError: 'goblinoid' at actions.py:337 instead of a Refusal. The oracle is right: 'goblinoid' is not one of the 14 types.",
+   "mutation": "Red test: with --runxfail it failed with KeyError at actions.py:337, as the xfail reason says.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused",
+   "verdict": "refute",
+   "reason": "Fails for the reason it gives (KeyError: 'dwarf' at actions.py:337), but it is the same defect on the same line as the 'goblinoid' red test, and one fix clears both. It only adds the Session entry point. Sent to a person because the Session/API surface is arguably a separate interface.",
+   "mutation": "Red test: with --runxfail it failed with KeyError at actions.py:337, the same line as the other red test.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_turn_undead_affects_the_undead_and_not_the_giant",
+   "verdict": "keep",
+   "reason": "A mixed target list with one forced die, so the non-Undead must be skipped without rolling. The scenario test uses only Undead.",
+   "mutation": "class_actions.py:283 type filter dropped: the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_alone_changes_nothing_in_an_attack",
+   "verdict": "keep",
+   "reason": "A fair check of 'types don't have rules themselves': two Bandits identical except for type fare the same in an attack.",
+   "mutation": "creature.py:603 `if self.dead:` -> `if self.dead or self.ctype == \"undead\":`: the test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_studying_fey_lore_with_history_is_refused",
+   "verdict": "keep",
+   "reason": "Overlaps test_soc02, which checks Refusal match='Arcana' through actions.study. This one goes through Session and also checks, via assert_refused_cleanly, that state is unchanged, so it adds something.",
+   "mutation": "actions.py:338 skill-mismatch check -> `if False`: the test failed.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_type_hold_person_on_a_goblin_doesnt_reveal_its_type",
+   "verdict": "refute",
+   "reason": "A weaker duplicate of tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint, which runs the same R-15 path with a Wolf. Its hint list leaves out 'nothing', so it misses the main leak of the invalid-target path.",
+   "mutation": "spells.py:1316 `save=restrict.save` -> `save=None`, so the player sees 'Hold Person does nothing to Goblin Warrior': the test still PASSED. The existing wolf test FAILED under the same mutation.",
+   "confidence": 0.75
+  }
+ ],
+ "summary": "Of the 16 tests, I'd keep 9 and remove 7. One of the 7 has confidence below 0.5, so it goes to a person rather than being removed. Every oracle matched the SRD text, including the Areas of Knowledge table in GLOSS.study. All tests I mutated failed when their rule was broken, with one exception: hold_person_on_a_goblin_doesnt_reveal_its_type still passed when the player log said 'Hold Person does nothing to Goblin Warrior'. The existing wolf no-hint test caught that same leak. Both red tests fail for the reason they state (KeyError at actions.py:337). They are the same defect, so I refuted the Session-path one at 0.45 to send it to a person. The other refutations are duplicates: the goblin Fey type (already in test_monsters), Hold Person on a goblin (already in test_monsters), Fey lore via Study (already in soc02 and the fourteen-types test), monster types on the list (covered by the every-monster test), and PC species vs type, which mostly repeats the sample-party test and guards a 2014 convention the SRD never mentions."
+}

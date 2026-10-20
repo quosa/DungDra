@@ -1,0 +1,52 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The engine now works out who an area spell (Burning Hands, Thunderwave, Sleep) affects from the scene, as R-16 requires. The caller's list no longer decides it, and no acceptance tests were changed.\n\nResults:\n- **Unit tests:** 469 passed.\n- **Full suite:** 830 passed and 1 xfailed. The xfail is T-57's SPL-05, which still depends on the hand-set `in_cone` flag for burning objects. It is out of scope here; with `--runxfail` it is the only failure.\n- **Checks:** `ruff check` and `ruff format --check` are clean, and `dev-gate` passes.\n- **Ticket tests:** T-56 names no acceptance tests, so there was nothing to run with `--runxfail` for it.\n\nThe previous attempt was stashed, but I couldn't read the stash (git stash commands were denied), so this is a fresh rewrite.\n\n**How it works (following the person's decision):**\n- **Placement.** A new `_area_point` places the area at `point=` if one is given. Otherwise it uses the first named creature's position and elevation, skipping the caster for a range-Self spell. That position is the direction of a Cone or Cube from the caster, or the centre of a Sphere. The old fallback that aimed only a Cone at the first named creature is gone.\n- **Selection.** `_area_targets` now checks every living creature in `game.creatures` against the area. For an 'each creature' spell, anyone inside is affected whether they were named or not. Named creatures go first, so the order of forced dice stays stable. Sleep says 'each creature of your choice', so its spell data has a new `area_choice=True`, and only named creatures inside its Sphere are affected. A named creature outside the area is logged with page 106, rule `targets#4` and ruling R-16. A creature behind Total Cover from the origin is still dropped.\n- **Shapes and elevation (the reviewer's point).** Each shape's height limit now lives in `dungdra/geometry.py`, not in the spell code:\n  - `in_area` handles the Cone, Cube and Sphere, and refuses a missing direction or an unknown shape.\n  - The Cone is worked out in 3D, so it narrows upward the same way it narrows sideways.\n  - The new `in_cube_direction` places the Cube's origin at the centre of one face. It reaches its full side toward the aim, and half its side to either side, above and below. A 15-ft Cube therefore reaches 7.5 ft up.\n  - `dist_points` now accepts an elevation; a point without one is on the ground.\n- **Thunderwave** now passes `point=` through to the area; before, it was dropped.\n- **New refusal.** An area spell with no point and no creature to place it is refused in `_check` before the slot is spent (page 106, rule `targets#4`, ruling R-16).\n\n**Unit tests:** in `test_geometry.py`, Cone and Cube elevation, Cube extent, a Cube's origin and the space behind it are excluded, `in_area` for each shape, and its refusals. In `test_spells.py`, Sleep centred on a named creature, Sleep taking only the creatures chosen, a Cone hitting an unnamed creature inside it, a dead creature being skipped, a flyer above the Cube's height, a Cube aimed at a point, and the placement refusal. The old test that took Sleep's named creatures as inside the area was replaced.",
+  "files": [
+   "dungdra/geometry.py",
+   "dungdra/spells.py",
+   "dungdra/data/spells.py",
+   "tests/unit/test_geometry.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_geometry.py::test_a_cone_narrows_upward_as_it_does_sideways",
+   "tests/unit/test_geometry.py::test_a_cone_aimed_up_at_a_flyer_follows_it",
+   "tests/unit/test_geometry.py::test_a_cube_extends_its_side_from_the_origin_and_half_of_it_to_each_side",
+   "tests/unit/test_geometry.py::test_a_cube_doesnt_contain_its_origin_or_anything_behind_it",
+   "tests/unit/test_geometry.py::test_a_cube_reaches_half_its_side_above_and_below_its_origin",
+   "tests/unit/test_geometry.py::test_a_point_without_an_elevation_is_on_the_ground",
+   "tests/unit/test_geometry.py::test_in_area_measures_each_shape_from_its_origin",
+   "tests/unit/test_geometry.py::test_in_area_refuses_a_shape_without_a_direction_or_geometry",
+   "tests/unit/test_spells.py::test_sleep_without_a_point_is_centred_on_the_first_named_creature",
+   "tests/unit/test_spells.py::test_sleep_only_takes_the_creatures_of_the_casters_choice_in_its_sphere",
+   "tests/unit/test_spells.py::test_a_cone_hits_each_creature_inside_it_named_or_not",
+   "tests/unit/test_spells.py::test_a_dead_creature_in_the_area_isnt_affected",
+   "tests/unit/test_spells.py::test_a_cube_doesnt_reach_a_flyer_above_half_its_side",
+   "tests/unit/test_spells.py::test_a_point_aims_a_cube_from_the_caster",
+   "tests/unit/test_spells.py::test_an_area_with_nothing_to_place_it_is_refused_before_the_slot_is_spent"
+  ],
+  "srd_tags": [
+   "SRD[SPELL.casting-spells.effects.targets#4] in _area_targets: 'each creature' areas are selected from the scene",
+   "SRD[SPELL.casting-spells.effects.targets#4] in _area_targets: the area's geometry decides who is hit",
+   "SRD[SPELL.casting-spells.effects.targets#4] in _check: an area with nothing to place it is refused",
+   "SRD[SPELL.casting-spells.effects.targets#5] on geometry.in_area: the area shapes the engine has geometry for"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "Cube placement: SRD says a Cube's point of origin lies anywhere on a face, but in_cube_direction always puts the origin at the face's centre. Let the caster offset the Cube along the face (e.g. Thunderwave shifted to leave out an ally).",
+    "kind": "infra"
+   }
+  ],
+  "summary": "I'm approving this fix for T-56. It does what R-16 and the person's decision ask.\n\n**What the change does**\n- `_area_targets` now picks the affected creatures from the scene using shape, origin and direction, not from the caller's list. That applies to every \"each creature\" area (Burning Hands, Thunderwave), so a caller can no longer leave out a creature inside the area.\n- A named creature now just stands in for a position. `_area_point` gives `point=` if there is one, otherwise the position of the first named creature. That position is the direction of a Cone or Cube, or the centre of a Sphere, as the person's decision says.\n- Sleep's \"of your choice\" is stored in the spell data as `area_choice=True`. There's no special case for Sleep in the code, and the caller's list only narrows the choice for spells marked this way, as R-16 requires.\n- The geometry lives in `geometry.py`: `in_area` dispatches by shape, and there is a new Cube test plus 3D handling for Cone and distance.\n- An area spell with nothing to place it is refused in `_check` before a slot is spent. The refusal cites targets#4 and R-16.\n- The Thunderwave handler now accepts `point=`.\n- Dead creatures are skipped. Named objects still pass through unchecked; T-57 already covers that.\n\n**Tests**\nThe new unit tests check real behaviour:\n- a creature inside a Cone is hit even if not named;\n- the Cube's vertical limit;\n- a Cube aimed by `point=`;\n- choice-narrowing for Sleep;\n- the refusal leaves the slot unspent;\n- geometry edge cases.\n\nThe one changed unit test (Sleep without a point) had to change because the person's decision changed that behaviour. No acceptance tests were touched, and all gates pass.\n\n**One judgement call (not blocking)**\nThe Cube's origin is always the centre of the face nearest the caster. The SRD allows \"anywhere on a face\", so a caster can't yet shift a Cube sideways, for example to leave out an ally. I filed that as an infra follow-up instead of blocking: it's a capability the engine doesn't have yet, not a wrong result."
+ },
+ "problems": [],
+ "cost_usd": 1.3443,
+ "stash": ""
+}

@@ -1,0 +1,236 @@
+{
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "interactions",
+  "abuse",
+  "tests",
+  "not_testable",
+  "kind_waivers",
+  "scenario_changes",
+  "rulings_proposed",
+  "summary"
+ ],
+ "properties": {
+  "interactions": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "with",
+     "risk",
+     "note"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "with": {
+      "type": "string",
+      "description": "unit id, condition, item, spell, monster or feature"
+     },
+     "risk": {
+      "enum": [
+       "high",
+       "medium",
+       "low"
+      ]
+     },
+     "note": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "abuse": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "case",
+     "test",
+     "reason"
+    ],
+    "properties": {
+     "case": {
+      "type": "string"
+     },
+     "test": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
+  },
+  "tests": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "name",
+     "clause",
+     "kind",
+     "rule_quote",
+     "claim",
+     "ticket_title"
+    ],
+    "properties": {
+     "name": {
+      "type": "string",
+      "description": "pytest node id"
+     },
+     "clause": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "positive",
+       "negative",
+       "boundary",
+       "abuse"
+      ]
+     },
+     "rule_quote": {
+      "type": "string",
+      "description": "verbatim from the unit"
+     },
+     "claim": {
+      "enum": [
+       "green",
+       "red"
+      ]
+     },
+     "ticket_title": {
+      "type": [
+       "string",
+       "null"
+      ],
+      "description": "for red tests: what the engine gets wrong"
+     }
+    }
+   }
+  },
+  "not_testable": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "kind",
+     "reason",
+     "infra_ticket"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     },
+     "infra_ticket": {
+      "type": "string",
+      "description": "for missing: what the engine lacks; for out-of-scope: empty"
+     },
+     "kind": {
+      "enum": [
+       "missing",
+       "out-of-scope"
+      ],
+      "description": "missing: the engine should support this and doesn't (an infra ticket); out-of-scope: outside the implemented subset (an OutOfScope refusal, a class level above 3, content the engine doesn't have), no ticket"
+     }
+    }
+   }
+  },
+  "scenario_changes": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "scenario",
+     "change",
+     "note_row"
+    ],
+    "properties": {
+     "scenario": {
+      "type": "string"
+     },
+     "change": {
+      "type": "string"
+     },
+     "note_row": {
+      "type": "string",
+      "description": "row for docs/scenario-notes.md"
+     }
+    }
+   }
+  },
+  "rulings_proposed": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "ambiguity",
+     "ruling",
+     "tests"
+    ],
+    "properties": {
+     "ambiguity": {
+      "type": "string"
+     },
+     "ruling": {
+      "type": "string"
+     },
+     "tests": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      },
+      "description": "node ids of the tests that depend on this reading"
+     }
+    }
+   }
+  },
+  "summary": {
+   "type": "string"
+  },
+  "kind_waivers": {
+   "type": "array",
+   "description": "a negative or boundary test that has no meaningful form for one clause, with why",
+   "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "clause",
+     "kind",
+     "reason"
+    ],
+    "properties": {
+     "clause": {
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "negative",
+       "boundary"
+      ]
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }
+}

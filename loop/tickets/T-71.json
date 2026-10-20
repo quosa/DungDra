@@ -1,0 +1,18 @@
+{
+  "id": "T-71",
+  "kind": "bug",
+  "unit": "MONSTER.goblins.goblin-warrior",
+  "title": "SRD: a refused attack costs nothing; engine: an attack refused as out of reach or out of range has already spent the Attack action",
+  "tests": [
+    "tests/srd/test_monsters.py::test_scimitar_cant_reach_a_target_10_feet_away",
+    "tests/srd/test_monsters.py::test_shortbow_reaches_320_feet_but_not_325"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-71 is fixed. An attack refused because the target is out of reach or beyond long range no longer uses up the Attack action. The cause: in `attack()` (dungdra/combat.py), `_spend_attack` charged the turn before the reach, range and ammunition checks ran. I moved that call to just after those checks and before the Advantage/Disadvantage modifiers. Now an attack is paid for only once its reach or range allows it, and a refusal leaves the turn untouched. The new code is tagged SRD[MONSTER.goblins.goblin-warrior#18] and #21. One side effect: when an attack is both out of turn and out of range, the out-of-range refusal is now the one reported; it still costs nothing. Results: both T-71 tests pass with --runxfail. In the full suite their only failures are the expected strict XPASS, with nothing else failing. The 496 unit tests pass, ruff check and format are clean, and dev-gate passes. I added 4 unit tests in tests/unit/test_combat.py, using a small `_goblin_turn_at` helper built on the existing `_goblin_turn`. They check that a refusal out of reach or beyond long range leaves actions_used at 0 and attack_action_taken False. They also check that a later attack in range still spends the action, and that attacking out of turn is still refused. I couldn't confirm these tests fail without the fix, because running `git stash` to undo it temporarily was denied."
+    }
+  ]
+}

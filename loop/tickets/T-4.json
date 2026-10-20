@@ -1,0 +1,15 @@
+{
+  "id": "T-4",
+  "kind": "infra",
+  "unit": "GLOSS.grappled",
+  "title": "Support carrying a grappled creature during non-walking movement (climb/fly), not just move(drag=...)",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "A grappler can now carry a grappled creature while flying, not just by walking with move(drag=...). The ticket names no acceptance tests, so there was nothing xfail to un-mark. Unit tests pass (158), the SRD and scenario suites pass (177), ruff is clean, and dev-gate passes.\n\nClimb and swim already went through the same drag code, so they needed no change. Changes:\n- **`move` in `dungdra/combat.py`** now has a `mode=\"fly\"`. It uses the creature's Fly Speed and is refused (page 182) if the creature has none. A grappled creature's 0 Speed still blocks the move as before. The drag checks work the same in every mode: only the grappler can drag, every foot costs 1 extra foot unless the target is Tiny or 2+ sizes smaller, and the carried creature ends up next to the grappler.\n- **`Session.cmd_move` in `dungdra/api.py`** now takes a `drag` argument, so players and scenarios can drag or carry through the command API instead of only by calling `move` directly.\n\nPositions are still 2D, so carrying something while flying doesn't track height yet."
+    }
+  ]
+}

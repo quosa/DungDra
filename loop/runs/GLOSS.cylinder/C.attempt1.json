@@ -1,0 +1,82 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.cylinder#1",
+    "with": "GLOSS.area-of-effect (lines from the origin; Total Cover blocks, R-34)",
+    "risk": "medium",
+    "note": "Any Cylinder would reuse the area-of-effect cover rule from its origin. Nothing in scope creates a Cylinder, so this isn't reachable."
+   },
+   {
+    "clause": "GLOSS.cylinder#1",
+    "with": "GLOSS.cube / R-35 (point-placed area rests on the ground and extends upward)",
+    "risk": "medium",
+    "note": "Stage A proposes the same bottom-face convention. The 2014 ground-or-effect-height trap is relevant only once a Cylinder creator exists."
+   },
+   {
+    "clause": "GLOSS.cylinder#2",
+    "with": "GLOSS.sphere / R-32 (grid radius, centre to centre, inclusive)",
+    "risk": "medium",
+    "note": "The base radius would use R-32's metric. A height needs an elevation convention, which the register lacks (stage A gap)."
+   },
+   {
+    "clause": "GLOSS.cylinder#3",
+    "with": "R-33 (origin included, creature on it affected)",
+    "risk": "low",
+    "note": "This mirrors the Sphere ruling and is the opposite of Cones and Cubes (R-29, R-31)."
+   },
+   {
+    "clause": "GLOSS.cylinder#1-3",
+    "with": "in-scope content (32 spells, engine monsters)",
+    "risk": "low",
+    "note": "No in-scope spell or monster has a Cylinder area. Grep of dungdra/ (including data) finds no 'cylinder'. The Cylinder spells (Flame Strike, Ice Storm, Sleet Storm, Call Lightning, Moonbeam, Magic Circle) and the Cloud Giant are all outside §1.1. geometry.in_area has no Cylinder branch, and its single `size` can't carry both a radius and a height."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Hanging a Cylinder's origin in the air or measuring height from the wrong face so a column misses creatures on the ground (new, added to catalogue)",
+    "test": null,
+    "reason": "No in-scope effect creates a Cylinder, so there's no command to abuse."
+   },
+   {
+    "case": "Naming creatures for an area spell that the area can't hold / leaving creatures in an 'each creature' area off the list",
+    "test": null,
+    "reason": "Applies to Cylinders in principle. No in-scope Cylinder effect exists. Sphere, Cube and Cone already cover this."
+   },
+   {
+    "case": "Stretching an area with a higher slot",
+    "test": null,
+    "reason": "No in-scope Cylinder spell to upcast."
+   }
+  ],
+  "tests": [],
+  "not_testable": [
+   {
+    "clause": "GLOSS.cylinder#1",
+    "kind": "out-of-scope",
+    "reason": "Nothing in the implemented subset creates a Cylinder. None of the 32 in-scope spells has one, and no engine monster has one. The engine has no Cylinder geometry, and a test would have to invent the API for it (geometry.in_area takes one size, so it can't take a radius and a height). Per CLAUDE.md, content the engine doesn't implement gets no tests.",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "GLOSS.cylinder#2",
+    "kind": "out-of-scope",
+    "reason": "The radius and height come from the creating effect, and no in-scope effect gives one. The threshold (radius boundary, height versus elevation) can't be exercised without a Cylinder creator. Stage A's height and elevation gap needs a ruling before such content is added.",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "GLOSS.cylinder#3",
+    "kind": "out-of-scope",
+    "reason": "The origin being included can be observed only through an effect that places a Cylinder, and none is in scope.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [],
+  "scenario_changes": [],
+  "rulings_proposed": [],
+  "summary": "GLOSS.cylinder can't be tested inside the implemented subset. The Rules Glossary is in scope, but none of the 32 in-scope spells and no engine monster creates a Cylinder. There is no 'cylinder' anywhere in dungdra/, and geometry.in_area has no Cylinder shape (its single size parameter couldn't hold both a radius and a height). Writing tests would mean inventing an engine API for content the engine refuses, which CLAUDE.md rules out. So all three clauses are recorded as out-of-scope with no tests. When a Cylinder creator (Flame Strike, Ice Storm, Moonbeam, …) enters scope, its tests should build on stage A's proposed readings: R-32's grid radius, R-35's bottom-face origin with the Cylinder extending up, and R-33's included origin. The height-versus-elevation gap needs a ruling first. I added one cheat to loop/abuse-catalogue.md: an origin hung in the air or a height measured from the wrong face, plus leaving out the creature on the origin. No scenario verdicts needed action; stage B found only unrelated page-180 matches."
+ },
+ "problems": [],
+ "cost_usd": 0.4209486,
+ "session": "f023119e-7923-4926-b46e-2654f39b363d",
+ "error": null
+}

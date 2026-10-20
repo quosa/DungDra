@@ -1,0 +1,33 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Cover can now be looked up from a point of origin (a position given as (x, y) in feet), not only from a creature. The ticket listed no acceptance tests, so none had to turn green. Verified: `python -m pytest -q` gives 809 passed, unit tests alone give 447 passed, ruff check and ruff format are clean, and the dev-gate passes.\n\nChanges:\n\n- **`Game.cover_between`** (`dungdra/game.py`) now takes either a creature or a point as the origin. For a point:\n  - Scene cover labels are looked up under the key `(point, target id)`.\n  - The line used to find creatures in the way (which give Half Cover) starts at the point itself instead of at a creature's centre.\n  - \"Most protective degree only\" (#4) still applies.\n- **`cover_bonus`** works with a point origin too, and the log names \"the point of origin at …\".\n- **`Scene.to_dict`** no longer breaks when a cover key is a point.\n- **`spell_save`** (`dungdra/spells.py`) takes a new optional `origin=`. Dex saves get cover against that origin and fall back to the caster when none is given.\n- **Sphere targeting** (`_sphere_targets`, used by Sleep with a `point`) now leaves out creatures behind Total Cover from the Sphere's point of origin. It logs this with page 15 and rule `PLAY.combat.cover#3`.\n\nThese are tagged `SRD[PLAY.combat.cover#3]`. Unit tests were added in `tests/unit/test_game.py` and `tests/unit/test_spells.py`.",
+  "files": [
+   "dungdra/game.py",
+   "dungdra/spells.py",
+   "tests/unit/test_game.py",
+   "tests/unit/test_spells.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_game.py::test_cover_from_a_point_of_origin_reads_the_scene_label_for_that_point",
+   "tests/unit/test_game.py::test_a_creature_between_a_point_of_origin_and_the_target_gives_half_cover",
+   "tests/unit/test_game.py::test_cover_bonus_against_a_point_names_the_point_in_the_log",
+   "tests/unit/test_spells.py::test_a_dex_save_takes_cover_from_the_point_of_origin_when_one_is_given",
+   "tests/unit/test_spells.py::test_sleep_spares_a_creature_behind_total_cover_from_its_point_of_origin"
+  ],
+  "srd_tags": [
+   "SRD[PLAY.combat.cover#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "Approve. The fix adds what T-19 asks for: cover can now be looked up from a point of origin as well as from a creature, without adding a second cover mechanism.\n\n- **Lookup:** `cover_between`, `cover_bonus` and `creatures_in_the_way` accept a point (x, y). A point is looked up in the existing `scene.cover` table under (point, target id). The line used to find creatures in the way starts at the point itself.\n- **Area spells:** `_sphere_targets` now uses the lookup. A creature behind Total Cover from the Sphere's point isn't affected (PLAY.combat.cover#3).\n- **Dexterity saves:** `spell_save` gets an `origin` parameter, so cover on these saves can be counted from the point instead of the caster.\n- **Saving the scene:** the to_dict change keeps working with point keys. Nothing reads the cover table back in, so this doesn't break a load.\n- **Tests:** they check behaviour, not constants:\n  - the cover label applies to that point only, not the caster or another point;\n  - a creature between the point and the target gives Half Cover, but the same creature seen from the caster's side doesn't;\n  - a Dexterity save gets cover from the point and not from the caster's side;\n  - Sleep spares a creature inside its 5-ft radius only because of Total Cover from the point.\n\nTwo things fall short but don't block it:\n- `_sphere_targets` now repeats the Total Cover check that `_area_targets` already has. Parked ticket T-58 already covers merging the two helpers.\n- No spell in the engine passes `origin` to `spell_save` yet. The only point-placed area spell is Sleep, which uses a Wisdom save, so the parameter is only exercised by the unit test for now.\n\nI filed no follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.8673,
+ "stash": ""
+}

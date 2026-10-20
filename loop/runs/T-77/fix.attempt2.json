@@ -1,0 +1,50 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "The Bonus Action check is now decided in one place. The `dash` command no longer lets any creature Dash as a Bonus Action. This is a refactor, and it reworks the design that was rejected in attempt 1.\n\n- **One table:** `dungdra/class_actions.py` has `ACTION_GRANTS`. Each feature that lets a creature take an action as a Bonus Action is listed there once: how to tell a creature has it, which actions it allows, and its page and rule. Cunning Action allows Dash, Disengage or Hide (p.62). Nimble Escape allows Disengage or Hide (p.290, goblin-warrior#24).\n- **One check:** `_take_granted` checks the creature has the feature and the feature allows the action, then calls `actions.dash`, `actions.disengage` or `actions.hide` with `bonus=True` and a source of the form \"<Feature> (<Action>)\".\n- **Callers:**\n  - `cunning_action` and `nimble_escape` are now thin wrappers over that check, so there is no second list of allowed actions.\n  - `take_as_bonus` replaces `bonus_disengage`. It finds a feature that grants the requested action, or refuses citing p.10 `PLAY.actions.bonus-actions`.\n  - `nimble escape` joins the existing `BONUS_ACTIONS` registry.\n  - The actions layer stays free of class and monster names.\n- **Commands:** `cmd_dash` and `cmd_disengage` with `bonus=True` go through `CA.take_as_bonus`. `cmd_cunning_action` sends Hide through `CA.cunning_action` too, with three-quarters cover by default. The GM's Nimble Escape Hide now calls `CA.nimble_escape` instead of `actions.hide`.\n\nChanged behaviour:\n- Nimble Escape Disengage now always has the source \"Nimble Escape (Disengage)\", whichever way it is reached. This matches \"Nimble Escape (Hide)\" and \"Cunning Action (…)\".\n- A bonus Disengage without a granting feature now cites p.10 `PLAY.actions.bonus-actions` instead of goblin-warrior#24.\n- `cunning_action(…, \"hide\")` now takes the Hide action instead of returning None.\n\nNo acceptance test asserts on any of these. I updated the unit tests that expected the old values.\n\nThe ticket named no acceptance tests, so there was nothing to run with `--runxfail`. The full suite passes (960), `ruff check` and `ruff format --check` are clean, and `dev-gate` passes. The gate first flagged that unit tests covered only 85% of the changed engine lines (under its 90% bar), so I added tests for the `dash` and `cunning_action` commands and a new `tests/unit/test_gm.py`, and it then passed.",
+  "files": [
+   "dungdra/class_actions.py",
+   "dungdra/api.py",
+   "dungdra/gm.py",
+   "tests/unit/test_class_actions.py",
+   "tests/unit/test_api.py",
+   "tests/unit/test_gm.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_class_actions.py::test_take_as_bonus_disengage_is_refused_with_a_citation_without_a_granting_feature",
+   "tests/unit/test_class_actions.py::test_take_as_bonus_disengage_goes_through_nimble_escape",
+   "tests/unit/test_class_actions.py::test_nimble_escape_gives_the_same_source_whichever_way_it_is_reached",
+   "tests/unit/test_class_actions.py::test_take_as_bonus_disengage_goes_through_cunning_action",
+   "tests/unit/test_class_actions.py::test_take_as_bonus_dash_is_refused_for_a_goblin_whose_grant_does_not_allow_it",
+   "tests/unit/test_class_actions.py::test_take_as_bonus_dash_goes_through_cunning_action",
+   "tests/unit/test_class_actions.py::test_cunning_action_hide_takes_the_hide_action",
+   "tests/unit/test_class_actions.py::test_cunning_action_is_refused_with_a_citation_without_the_feature",
+   "tests/unit/test_class_actions.py::test_every_action_a_grant_allows_can_be_taken",
+   "tests/unit/test_api.py::test_disengage_command_as_a_bonus_action_is_refused_without_a_feature",
+   "tests/unit/test_api.py::test_disengage_command_as_a_bonus_action_uses_nimble_escape",
+   "tests/unit/test_api.py::test_dash_command_as_a_bonus_action_is_refused_without_a_feature",
+   "tests/unit/test_api.py::test_dash_command_as_a_bonus_action_uses_cunning_action",
+   "tests/unit/test_api.py::test_dash_command_without_bonus_uses_the_action",
+   "tests/unit/test_api.py::test_cunning_action_command_hides_behind_three_quarters_cover_by_default",
+   "tests/unit/test_api.py::test_cunning_action_command_refuses_an_action_it_does_not_allow",
+   "tests/unit/test_gm.py::test_a_goblin_with_cover_nearby_hides_with_nimble_escape",
+   "tests/unit/test_gm.py::test_a_creature_without_nimble_escape_does_not_hide"
+  ],
+  "srd_tags": [
+   "SRD[CLASS.rogue.level-2-cunning-action]",
+   "SRD[MONSTER.goblins.goblin-warrior#24]",
+   "SRD[PLAY.actions.bonus-actions]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I approve this fix: it solves T-77, and I found nothing to send back.\n\n**The ticket's problem is fixed.** `cmd_dash` with `bonus=True` now goes through `CA.take_as_bonus`. A creature with no granting feature gets a Refusal citing p.10 / `PLAY.actions.bonus-actions`, and nothing is spent. A goblin is refused too, because Nimble Escape allows only Disengage or Hide.\n\n**There is now one check instead of one per command.**\n- `ACTION_GRANTS` in `dungdra/class_actions.py` is a data table: for each feature it says who holds it and which actions it allows, with its page and rule.\n- Every way of taking an action as a Bonus Action now runs through `_take_granted`: the api's `cmd_dash` and `cmd_disengage`, `cunning_action`, `nimble_escape`, and the GM's Nimble Escape (Hide).\n- I grepped the engine: the only remaining caller of `actions.dash`, `actions.disengage` or `actions.hide` with `bonus=True` is that one function.\n- The ticket asked for the check \"in the actions layer\", but the check sits one layer up, in `class_actions`. I think that's the right place: `actions` doesn't know about features, and nothing calls it with `bonus=True` anymore except the grant table.\n- `bonus_disengage` and the separate Nimble Escape code are removed rather than left alongside the new path.\n\n**Scope is fine.** The changes to `cmd_cunning_action`, `gm.py` and adding `nimble escape` to `BONUS_ACTIONS` all move existing Bonus Action paths onto the same single mechanism, which is what the ticket asked for. Effect sources now read \"Nimble Escape (Disengage)\", and the unit tests were updated to match; the gates pass.\n\n**The tests check behaviour.** They cover:\n- refusals with their page and rule;\n- `bonus_used` and the remaining movement after a Dash;\n- the effect's source label;\n- Hide's result.\n\n`test_every_action_a_grant_allows_can_be_taken` compares two internal tables, but it guards a real invariant: every action a feature allows must actually be takeable."
+ },
+ "problems": [],
+ "cost_usd": 1.1473,
+ "stash": ""
+}

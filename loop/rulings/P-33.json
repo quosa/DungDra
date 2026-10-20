@@ -1,0 +1,13 @@
+{
+  "id": "P-33",
+  "unit": "GLOSS.creature-type",
+  "ambiguity": "GLOSS.creature-type ambiguity 1: does a creature have exactly one type, and is a parenthetical stat-block descriptor (Goblinoid) or a species a type?",
+  "ruling": "Reading A: each creature has exactly one creature type from the 14 listed. A parenthetical descriptor or a PC's species is not a creature type for rules that name types.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type"
+  ],
+  "status": "accepted",
+  "register_id": "R-38",
+  "note": "'the type' is singular; species and descriptors aren't types.",
+  "reason": ""
+}

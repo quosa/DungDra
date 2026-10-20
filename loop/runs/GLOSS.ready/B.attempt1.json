@@ -1,0 +1,9 @@
+{
+ "output": {
+  "verdicts": [],
+  "summary": "GLOSS.ready has no related scenarios, SRD tests or SRD-tagged code, so there is nothing that needs a verdict. The 14 candidate code lines were matched only by page number (p.186–187). I grepped `dungdra/` for \"GLOSS.ready\", \"Ready action\" and \"readied\" and found no matches. The candidate lines belong to other rules: Search/Study, Prone, saving throws, Short Rest, and a spell-related line at `dungdra/spells.py:92` that I did not open. The engine does not implement Ready, and no test covers it. Stage C should treat all clauses (#1–#9) as having no existing coverage."
+ },
+ "problems": [],
+ "cost_usd": 0.012337200000000001,
+ "session": "9d7ddd41-e751-4ac3-8146-99fe59c33194"
+}

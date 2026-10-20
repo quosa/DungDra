@@ -1,0 +1,33 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "combat.move() now finds the mode's MOVE_MODES entry before the Prone checks. While Prone, only modes whose spec.speed == \"walk\" are allowed; anything else is refused with page 186 and rule GLOSS.prone#1. A mode not in the table is also refused while Prone, as before. The double cost for crawling now uses spec.speed == \"walk\" instead of mode == \"walk\". Two unit tests were added: a Prone creature that walks pays double, and a Prone creature is refused a mode that isn't in the table. Unit tests: 362 passed. SRD and scenario tests: 329 passed, 33 xfailed. ruff check, ruff format --check and dev-gate all pass.",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_a_prone_creature_walking_crawls_at_double_cost",
+   "tests/unit/test_combat.py::test_a_prone_creature_is_refused_a_mode_outside_the_move_modes_table"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.prone#1] (existing tag, comment updated)"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "dungdra/combat.py move(): crawling's doubled cost is still chosen by name (`mode == \"crawl\"`). Give MoveMode a field such as `crawling: bool` (or an extra-cost flag) and set it on the \"crawl\" entry of MOVE_MODES, so the crawl cost comes from that table like the Prone check now does.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this change. Both Prone checks in move() now read the MOVE_MODES table and no longer name the modes: a mode is open to a Prone creature only if it spends walking Speed. That keeps the old behaviour. Only \"walk\" and \"crawl\" spend walking Speed, and a mode missing from the table is still refused while Prone. When the creature isn't Prone, an unknown mode still falls back to walking. The refusal still cites p.186 and GLOSS.prone#1, and it carries the SRD tag. The two new unit tests check real behaviour: walking while Prone costs double and is noted as crawling, and a mode not in the table (burrow) is refused with the page and rule cited and the creature doesn't move. There's no scope creep; the costs.jsonl line is loop bookkeeping. The `mode == \"crawl\"` check for the doubled cost still uses the mode's name. The ticket didn't cover that check, so I've filed it as a follow-up instead of a finding."
+ },
+ "problems": [],
+ "cost_usd": 0.3361,
+ "stash": ""
+}

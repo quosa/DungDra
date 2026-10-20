@@ -1,0 +1,181 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "SPELL.casting-spells.effects.targets#2",
+    "with": "GLOSS.cover / R-09 / R-10 / R-11",
+    "risk": "high",
+    "note": "Only Total Cover blocks a chosen target. Creatures give at most Half Cover. Area spells aren't refused. Existing tests cover the session refusal, Three-Quarters cover, a creature in the line, and a multi-target Bless."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#4",
+    "with": "GLOSS.cone / Burning Hands / R-16 / R-26 / R-27",
+    "risk": "high",
+    "note": "An 'each creature' area must take in unnamed creatures inside it and leave out named ones outside it. The new positive and abuse tests aim the Cone and leave a creature that is inside it off the list."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#4",
+    "with": "GLOSS.sphere / Sleep (area_choice) / R-33",
+    "risk": "medium",
+    "note": "For an 'of your choice' area, the caller's list only narrows. Already covered by test_sleep_doesnt_reach_a_creature_outside_its_sphere."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#3",
+    "with": "Magic Missile / SPELL.shield reaction",
+    "risk": "medium",
+    "note": "Self-targeting with Magic Missile sets off the caster's own Shield offer. The test answers it False, so the darts' damage is what gets checked."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#3",
+    "with": "Light (object target)",
+    "risk": "medium",
+    "note": "Choosing yourself applies only when the spell targets a creature. Light on the caster must be refused."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#8",
+    "with": "Hold Person / Wolf (Beast) / R-15",
+    "risk": "high",
+    "note": "An invalid target must stay unaffected even when the save could not have succeeded. The DC is raised past any d20 so the test can't pass on a lucky seed, which is the reason the earlier tests were refuted."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#9",
+    "with": "range check / refusal",
+    "risk": "medium",
+    "note": "The slot is spent only when the spell is actually cast. A target out of range is refused before any slot is spent."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#10",
+    "with": "Hold Person save / log visibility",
+    "risk": "high",
+    "note": "The player must not be able to probe a creature's type. Already covered by existing tests."
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#11",
+    "with": "Mage Armor restriction / R-15",
+    "risk": "medium",
+    "note": "A spell with no save shows a visible 'did nothing'. Already covered by existing tests."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Getting the slot back by casting at an invalid target (the slot is still expended).",
+    "test": "tests/srd/test_spells.py::test_hold_person_on_a_wolf_through_the_session_spends_the_slot_and_does_nothing",
+    "reason": "A Hold Person at a Wolf through Session.execute spends the slot and does nothing to the Wolf."
+   },
+   {
+    "case": "Naming creatures for an area spell that the area can't hold … Leaving creatures that are in the area off the list to spare them from a spell that hits every creature in it.",
+    "test": "tests/srd/test_spells.py::test_leaving_a_creature_in_the_cone_off_the_list_doesnt_spare_it",
+    "reason": "Burning Hands is named at the far goblin. The near goblin, also inside the Cone, still takes the damage."
+   },
+   {
+    "case": "Naming yourself as the target of an object-targeting spell (Light on the caster)",
+    "test": "tests/srd/test_spells.py::test_the_caster_cant_choose_themself_for_a_spell_that_targets_an_object",
+    "reason": "New catalogue entry. Light on the caster is refused cleanly with an 'object' message."
+   },
+   {
+    "case": "Probing a creature's type or immunities by casting at it and reading the refusal or the log",
+    "test": "tests/srd/test_spells.py::test_an_invalid_target_gives_the_player_no_hint",
+    "reason": "Already committed. Not rewritten."
+   },
+   {
+    "case": "Targeting yourself, or an ally, where the rule says a creature you can see or an enemy.",
+    "test": null,
+    "reason": "No in-scope spell requires a Hostile creature or a creature other than the caster, so the exclusion has nothing to test against. See not_testable for #3."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_spells.py::test_light_targets_the_object_its_description_names",
+    "clause": "SPELL.casting-spells.effects.targets#1",
+    "kind": "positive",
+    "rule_quote": "A spell’s description says whether the spell targets creatures, objects, or something else.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_the_caster_cant_choose_themself_for_a_spell_that_targets_an_object",
+    "clause": "SPELL.casting-spells.effects.targets#3",
+    "kind": "negative",
+    "rule_quote": "If a spell targets a creature of your choice, you can choose yourself",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_magic_missile_darts_can_go_to_the_caster",
+    "clause": "SPELL.casting-spells.effects.targets#3",
+    "kind": "positive",
+    "rule_quote": "If a spell targets a creature of your choice, you can choose yourself",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_burning_hands_hits_a_creature_in_the_cone_that_wasnt_named",
+    "clause": "SPELL.casting-spells.effects.targets#4",
+    "kind": "positive",
+    "rule_quote": "The area determines what the spell targets.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_leaving_a_creature_in_the_cone_off_the_list_doesnt_spare_it",
+    "clause": "SPELL.casting-spells.effects.targets#4",
+    "kind": "abuse",
+    "rule_quote": "The area determines what the spell targets.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_wolf_that_couldnt_have_saved",
+    "clause": "SPELL.casting-spells.effects.targets#8",
+    "kind": "positive",
+    "rule_quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_hold_person_on_a_wolf_through_the_session_spends_the_slot_and_does_nothing",
+    "clause": "SPELL.casting-spells.effects.targets#8",
+    "kind": "abuse",
+    "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_spells.py::test_a_target_out_of_range_is_refused_before_the_slot_is_spent",
+    "clause": "SPELL.casting-spells.effects.targets#9",
+    "kind": "negative",
+    "rule_quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "SPELL.casting-spells.effects.targets#3",
+    "kind": "out-of-scope",
+    "reason": "Only the exclusion is out of scope: 'unless the creature must be Hostile or specifically a creature other than you'. No in-scope spell requires a Hostile creature or a creature other than the caster. The positive half is tested (Cure Wounds, Healing Word, Mage Armor, Magic Missile on the caster), and so is a negative (Light can't be pointed at the caster).",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#6",
+    "kind": "out-of-scope",
+    "reason": "Every in-scope spell that targets another creature has a perceptible effect (damage, a condition, a visible ward, a spoken Command). No subset spell has a subtle effect whose target could fail to notice it.",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "SPELL.casting-spells.effects.targets#7",
+    "kind": "out-of-scope",
+    "reason": "The example subtle effect, reading thoughts (Detect Thoughts and similar), isn't in the implemented spell subset.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [],
+  "scenario_changes": [],
+  "rulings_proposed": [],
+  "summary": "This is a revisit. Before it, the unit's committed tests had no positive for #1, #4 and #8 and no negative for #3 and #9. I added 8 tests to tests/srd/test_spells.py, all green. All 83 tests in the file pass, and ruff check and ruff format are clean.\n\n- **#1 positive:** Light makes a named object glow.\n- **#3:** Magic Missile can send its darts at the caster (positive; the test declines her automatic Shield reaction). Light on the caster is refused with an 'object' reason (negative).\n- **#4:** an aimed Burning Hands hits a goblin inside the Cone that wasn't named (positive). Leaving that goblin off the list doesn't spare it (abuse).\n- **#8:** Hold Person at a Wolf leaves it unaffected and rolls no save (positive). The test raises the DC above any d20 result, so it can't pass on a lucky seed, the reason the earlier tests were refuted. The same cast through Session.execute spends the slot and does nothing (abuse).\n- **#9 negative:** a target out of range is refused with 'range' before the slot is spent.\n\nI didn't rewrite the refuted duplicates. #3's Hostile / other-than-you exclusion, #6 and #7 stay out of scope. I added one cheat to the abuse catalogue: naming yourself as the target of an object-only spell."
+ },
+ "problems": [],
+ "cost_usd": 1.4501806000000002,
+ "session": "72076c12-71ec-447a-8105-762113e73620",
+ "error": null
+}

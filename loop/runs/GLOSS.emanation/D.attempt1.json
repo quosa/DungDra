@@ -1,0 +1,10 @@
+{
+ "output": {
+  "verdicts": [],
+  "summary": "The test list for GLOSS.emanation is empty, so I had nothing to review and returned no verdicts. I ran no mutations and changed nothing. One possible coverage gap: the unit has four clauses that could be tested (how far an Emanation reaches, moving with its origin unless the effect is instantaneous or stationary, and the origin being left out unless its creator includes it). If the engine supports any Emanation effects, an empty suite is a gap rather than a deliberate scope decision. Someone should check whether this unit was marked out of scope or its tests were never written."
+ },
+ "problems": [],
+ "cost_usd": 0.061259999999999995,
+ "session": "da051928-3e25-4042-b1fe-0ad24f4ec7dd",
+ "error": null
+}

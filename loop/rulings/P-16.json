@@ -1,0 +1,15 @@
+{
+  "id": "P-16",
+  "unit": "GLOSS.ready",
+  "ambiguity": "GLOSS.ready #4: is the readied response checked when you ready it, or only when the trigger occurs?",
+  "ruling": "It is checked when you ready it. A response that isn't one action, or one move up to your Speed, is refused cleanly on your turn before the action is spent.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_readied_move_beyond_speed_refused",
+    "tests/srd/test_glossary.py::test_readying_a_bonus_action_refused",
+    "tests/srd/test_glossary.py::test_readying_an_action_and_a_move_together_refused"
+  ],
+  "status": "accepted",
+  "register_id": "R-20",
+  "note": "when you ready it, not when the trigger occurs",
+  "reason": ""
+}

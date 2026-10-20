@@ -1,0 +1,30 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "`grappled_by` is now defined once, in the new `tests/unit/helpers.py`, instead of in three test files. That is not where the ticket asked for it. The ticket names `tests/support/helpers.py`, but I may not write there, and that is why attempt 1 was rejected. The kept copy is the version that takes any number of grapplers, so every existing call works unchanged. I removed the local copies from `test_api.py`, `test_combat.py` and `test_effects.py`, which now import it from `tests.unit.helpers`. `test_api.py` no longer used `Condition`, so I removed that import; `test_combat.py` and `test_effects.py` still use it and keep it. No engine code changed and no tests were added, so there are no SRD tags or new unit tests. The ticket names no acceptance tests, so there were none to run with `--runxfail`. `ruff check` and `ruff format --check` are clean, all 335 unit tests pass, and `dev-gate` passes. If you want the helper in `tests/support/helpers.py` as the ticket says, a person needs to move it there.",
+  "files": [
+   "tests/unit/helpers.py",
+   "tests/unit/test_api.py",
+   "tests/unit/test_combat.py",
+   "tests/unit/test_effects.py"
+  ],
+  "unit_tests": [],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "findings": [],
+  "followups": [
+   {
+    "title": "grappled_by now lives in a new tests/unit/helpers.py, beside the shared tests/support/helpers.py (pc, mon). The ticket asked for tests/support/helpers.py, but the loop forbids fixers to edit it (T-33 attempt 1 failed on that). A person should either move the helper into tests/support/helpers.py and delete tests/unit/helpers.py, or confirm tests/unit/helpers.py as the home for unit-only helpers, so there is one place for shared test helpers.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "Approve. All three copies of grappled_by are gone, and the three test files import one helper. That helper takes `*grapplers`, so it covers the two-argument calls in test_combat and test_api as well as the multi-grappler calls in test_effects. The helper is unchanged and no calls changed, so test behaviour is the same. Nothing is hard-coded and no engine code changed. The new module isn't where the ticket asked: it is tests/unit/helpers.py, not tests/support/helpers.py. That's because attempt 1 was refused with \"fixer may not change tests/support/helpers.py\", so the requested spot was blocked. Keeping a unit-only helper under tests/unit is a reasonable second choice. It does leave two helper modules side by side, so I filed a follow-up for a person to choose one home. The loop/costs.jsonl line is the loop's own bookkeeping.",
+  "verdict": "approve"
+ },
+ "problems": [],
+ "cost_usd": 0.3483,
+ "stash": ""
+}

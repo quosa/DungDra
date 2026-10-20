@@ -1,0 +1,117 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_party_member_next_to_the_target_is_an_ally",
+   "verdict": "refute",
+   "reason": "Duplicate. tests/scenarios/test_combat.py::test_rog01a_ally_adjacent has the same setup: LIDDA at (0,0), a goblin at (5,0) with 100 HP, BROM at (10,0), dice d20=[15]; d6=[4,5]. It asserts the same damage, 12. The oracle is correct, but the ally test adds nothing.",
+   "mutation": "game.py:151 changed `x.team == c.team` to `False`, so allies_of returns nothing. The sibling Session test failed. This test hits the same path, and so does rog01a.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_party_member_is_an_ally_through_the_session",
+   "verdict": "refute",
+   "reason": "This is the scenario above (and rog01a) sent through Session.execute. The Session attack path has no ally or team logic of its own (api.py only snapshots turn state), so it only tests the plumbing a second time.",
+   "mutation": "game.py:151 changed `x.team == c.team` to `False`. The test failed, but rog01a and the previous test catch the same break.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally",
+   "verdict": "keep",
+   "reason": "The bystander is neutral, indifferent and not designated, so it meets none of the four conditions. That holds under any reading. No existing test covers a neutral creature next to the target.",
+   "mutation": "game.py:151 changed `x.team == c.team` to `x.team in (c.team, \"neutral\")`, so neutrals count as allies. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_you_are_not_your_own_ally",
+   "verdict": "refute",
+   "reason": "Duplicate of tests/scenarios/test_combat.py::test_rog01b_no_ally: same LIDDA and goblin setup with no other creature, expecting 7 damage and no Sneak Attack. The only extra is a check of the log text. The oracle (Sneak Attack needs another creature) is sound.",
+   "mutation": "game.py:151 changed `x is not c` to `True`, so a creature counts as its own ally. The test failed, and rog01b would fail on the same break.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused",
+   "verdict": "keep",
+   "reason": "Help (GLOSS.help) says 'one ally ... when they make an ability check', which reads naturally as someone else. That backs stage A's proposed reading A (you aren't your own ally), although the register has no row for it yet. With --runxfail it fails for the stated reason: help_check returned an AdvNext instead of refusing.",
+   "mutation": "Red test, so no mutation. Running it with --runxfail gave 'expected a refusal, got <AdvNext Help from LIDDA (Perception)>', which matches the T-new reason.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally",
+   "verdict": "refute",
+   "reason": "Possible wrong oracle that needs a person's ruling. Stage A lists 'your friend' as a gap: the SRD never defines it as a game state. The test assumes, without a register ruling, that an NPC with attitude 'friendly' (the Influence attitude) is 'your friend' and so an ally for Sneak Attack. CLAUDE.md says to propose a reading, not invent one. The reading is plausible, so this goes to a person rather than being removed.",
+   "mutation": "Red test. With --runxfail it fails 7 != 12 because allies_of uses team only. That matches the stated reason.",
+   "confidence": 0.4
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_an_indifferent_npc_is_not_a_friend",
+   "verdict": "refute",
+   "reason": "Exact duplicate of test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally. bystander() already defaults to attitude='indifferent', so both tests run identical code with identical assertions.",
+   "mutation": "game.py:151 changed to `x.team in (c.team, \"neutral\")`. The twin test failed, and this one runs the same code.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side",
+   "verdict": "keep",
+   "reason": "Help (assist an attack) helps an ally, and BROM and LIDDA are on the same side. No existing test checks that HelpAttack gives Advantage (core06 only checks range and that the effect exists).",
+   "mutation": "effects.py:350 changed `ctx.actor.team == helper.team` to `False`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_help_gives_no_advantage_to_a_creature_on_the_other_side",
+   "verdict": "keep",
+   "reason": "A goblin on the other side isn't the helper's ally, so it gets no Advantage. The oracle follows from 'on your side in combat', and no other test covers this.",
+   "mutation": "effects.py:350 changed `ctx.actor.team == helper.team` to `True`. The test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_pack_tactics_counts_a_wolf_on_the_same_side",
+   "verdict": "refute",
+   "reason": "Duplicate. tests/scenarios/test_world.py::test_mon02_traits already has a wolf attack BROM with a second wolf next to him and asserts Advantage from Pack Tactics.",
+   "mutation": "combat.py:1064 changed `game.allies_of(attacker)` to `[]`. The test failed, and mon02 would fail too.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_the_target_s_side_is_not_the_attacker_s_ally",
+   "verdict": "keep",
+   "reason": "LIDDA next to BROM is on the target's side, so she doesn't trigger the wolf's Pack Tactics. The oracle is sound, and no existing test covers this negative.",
+   "mutation": "combat.py:1064 changed allies_of(attacker) to every creature except the attacker. The test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack",
+   "verdict": "keep",
+   "reason": "The target's comrade isn't the rogue's ally, so there is no Sneak Attack. The oracle is sound, and no scenario covers an enemy standing next to the target.",
+   "mutation": "combat.py:1701 changed allies_of(rogue) to every creature except the rogue and the target. The test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally",
+   "verdict": "keep",
+   "reason": "A creature the GM puts on the party's side matches clause #4, and the oracle (Sneak Attack, damage 12) is right. It fails for the stated reason: a team='party' monster joins game.party, and the next command crashes in Session._snapshot_turn (api.py:107, `c.wielded`). Note that the failure is a Session bug, not a gap in the ally logic itself.",
+   "mutation": "Red test. With --runxfail it raised AttributeError: 'Monster' object has no attribute 'wielded' at api.py:107, which matches the reason.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_a_controlled_mount_is_designated_the_rider_s_ally",
+   "verdict": "keep",
+   "reason": "The mounted-combat rules don't call a controlled mount an ally, so the 'rules designate' framing overstates them. But a controlled mount acts on your Initiative under your control, so it is 'on your side in combat' and the expected outcome still holds. No other test covers this.",
+   "mutation": "mounted.py:31 changed `rider.team if controlled else steed.team` to `steed.team`. The test failed.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally",
+   "verdict": "refute",
+   "reason": "Possible wrong oracle that needs a person's ruling. Nothing in the SRD says an independent mount is not your ally. A creature that lets you ride it may well be your friend or on your side (clauses #2 and #3). The test asserts it is not in allies_of at all, not just 'not designated', and so picks an unruled reading.",
+   "mutation": "mounted.py:31 changed to always `rider.team`. The test failed, so the mechanism is exercised; the problem is the oracle.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused",
+   "verdict": "keep",
+   "reason": "GLOSS.help says 'one ally who is near enough', and an enemy goblin isn't the helper's ally under any clause. With --runxfail it fails for the stated reason. It is filed under clause #4, though it would fit #3 better.",
+   "mutation": "Red test. With --runxfail it gave 'expected a refusal, got <AdvNext Help from LIDDA (Perception)>', which matches the reason.",
+   "confidence": 0.8
+  }
+ ],
+ "summary": "I keep 9 of the 16 tests and refute 7. Four refutations are duplicates (above 0.5, so they are removed); three get confidence 0.5 or less and go to a person.\n\nI broke the ally logic in a scratch copy once for each of the 12 green tests, and every test failed. The four red tests fail for the reasons their markers state.\n\n**Duplicates (removed):**\n- `party_member_next_to_the_target` is the same scenario as `rog01a`.\n- `you_are_not_your_own_ally` is the same as `rog01b`.\n- `pack_tactics_counts_a_wolf_on_the_same_side` is already covered by `mon02_traits`.\n- `indifferent_npc_is_not_a_friend` runs the same code as `outside_the_party_and_off_both_sides`, because `bystander()` defaults to indifferent.\n\n**Sent to a person:**\n- `through_the_session` (0.55, so removed rather than sent): it adds only Session plumbing on top of the same scenario.\n- `friendly_npc_next_to_the_target` (0.4): it treats the Friendly attitude as 'your friend', but stage A lists 'friend' as an undefined gap and the register has no ruling.\n- `independent_mount_is_not_designated_an_ally` (0.45): no SRD text says an independent mount isn't your ally, and it could still be your friend or on your side.\n\n**Kept, with notes:**\n- `controlled_mount`: the mounted-combat rules don't 'designate' a mount as an ally, but it qualifies as 'on your side in combat'.\n- `gm_puts_on_the_party_s_side`: its red status comes from a crash in Session (`api.py:107`, `c.wielded` on a Monster in `game.party`), not from the ally rule itself.\n- `helping_yourself`: it relies on the proposed, not yet ratified, reading that you aren't your own ally, though Help's 'one ally … when they make a check' supports it."
+}

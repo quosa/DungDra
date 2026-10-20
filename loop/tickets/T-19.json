@@ -1,0 +1,15 @@
+{
+  "id": "T-19",
+  "kind": "infra",
+  "unit": "PLAY.combat.cover",
+  "title": "Cover lookup by point of origin (a position, not only a creature) for area effects and other effects that don't originate at the caster",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Cover can now be looked up from a point of origin (a position given as (x, y) in feet), not only from a creature. The ticket listed no acceptance tests, so none had to turn green. Verified: `python -m pytest -q` gives 809 passed, unit tests alone give 447 passed, ruff check and ruff format are clean, and the dev-gate passes.\n\nChanges:\n\n- **`Game.cover_between`** (`dungdra/game.py`) now takes either a creature or a point as the origin. For a point:\n  - Scene cover labels are looked up under the key `(point, target id)`.\n  - The line used to find creatures in the way (which give Half Cover) starts at the point itself instead of at a creature's centre.\n  - \"Most protective degree only\" (#4) still applies.\n- **`cover_bonus`** works with a point origin too, and the log names \"the point of origin at …\".\n- **`Scene.to_dict`** no longer breaks when a cover key is a point.\n- **`spell_save`** (`dungdra/spells.py`) takes a new optional `origin=`. Dex saves get cover against that origin and fall back to the caster when none is given.\n- **Sphere targeting** (`_sphere_targets`, used by Sleep with a `point`) now leaves out creatures behind Total Cover from the Sphere's point of origin. It logs this with page 15 and rule `PLAY.combat.cover#3`.\n\nThese are tagged `SRD[PLAY.combat.cover#3]`. Unit tests were added in `tests/unit/test_game.py` and `tests/unit/test_spells.py`."
+    }
+  ]
+}

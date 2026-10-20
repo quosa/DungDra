@@ -1,0 +1,55 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.creature-type#1",
+   "text": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.creature-type#2",
+   "text": "Most player characters are of the Humanoid type.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.creature-type#3",
+   "text": "These are the game’s creature types:",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.creature-type#4",
+   "text": "The types don’t have rules themselves, but some rules in the game affect creatures of certain types in different ways.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "has a tag in the rules that identifies the type of creature it is",
+   "reading_a": "Each creature has exactly one creature type from the list, and any parenthetical stat-block descriptor (such as a subgroup) isn't a type.",
+   "reading_b": "A creature may carry more than one type tag, so a rule that names any of its types affects it.",
+   "proposed_ruling": "Reading A: each creature has exactly one creature type from the 14 listed. A stat-block descriptor in parentheses is not a creature type for rules that name types.",
+   "confidence": 0.75
+  },
+  {
+   "quote": "These are the game’s creature types:",
+   "reading_a": "The list is closed: the engine rejects any creature type not among the 14.",
+   "reading_b": "The list is only illustrative, so content may add other types.",
+   "proposed_ruling": "Reading A: the 14 listed types are the only valid values. Content that uses any other type is refused as a data error.",
+   "confidence": 0.7
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+   "explanation": "This unit doesn't say whether a creature's type can change, or which type applies while an effect replaces or alters its form (for example, taking on a Beast's stat block). Only the rules that change a form can answer that."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "Most player characters are of the Humanoid type.",
+   "note": "In 2014, a player character's type came from its race, with Humanoid subtype tags in parentheses such as '(elf)' or '(goblinoid)'. In 2024 the term is 'species', and a parenthetical tag on a stat block isn't a separate type. Don't model a Humanoid subtype as a creature type."
+  }
+ ],
+ "summary": "Glossary definition. Every creature, player characters included, has a creature-type tag. The 14 types are listed, most player characters are Humanoid, and the types carry no rules themselves: only other rules that name a type make it matter. There are no thresholds, relations or conflicts. The two ambiguities are minor: whether a creature has exactly one type, and whether the list is closed."
+}

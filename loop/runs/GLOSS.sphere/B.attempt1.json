@@ -1,0 +1,43 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "SPELLS-02",
+    "kind": "scenario",
+    "verdict": "under-asserts",
+    "evidence": "A 5-ft-radius Sphere catches Goblin Warrior A, Goblin Warrior B, a Skeleton and an Elf NPC.",
+    "rule_quote": "The effect that creates a Sphere specifies the distance it extends as the radius of the Sphere.",
+    "explanation": "The scenario uses a 5-ft-radius Sphere but only lists the targets it catches. It doesn't say who is outside the radius, whether the edge counts, or how the origin is placed. It checks none of clauses #1 to #3. Its Pass lines are about the spell's effects, not the area."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spells02_sleep",
+    "kind": "test",
+    "verdict": "under-asserts",
+    "evidence": "S.cast(game, m, \"sleep\", [a, b, sk, elf])",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "explanation": "The test passes the targets as an explicit list. No Sphere origin or radius is used to pick them, and the creatures sit at (30,0), (30,5), (35,0) and (35,5). So it doesn't check #1 (area extent), #2 (radius) or #3 (origin included), and it never shows a creature outside the radius being left out."
+   },
+   {
+    "item": "dungdra/combat.py:574",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "raise Refusal(f\"{c.name}'s Speed is 0\", page=188, rule=\"GLOSS.speed\")",
+    "rule_quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "explanation": "This line is about Speed and cites GLOSS.speed. It matched only because Speed is on the same page (p.188)."
+   },
+   {
+    "item": "dungdra/monster.py:1",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"Monsters built from stat blocks (SRD p.254-255, glossary \"Stat Block\" p.188-189).\"\"\"",
+    "rule_quote": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "explanation": "This docstring is about stat blocks. It matched only by page number."
+   }
+  ],
+  "summary": "The only related scenario, SPELLS-02, and its test, test_spells02_sleep, are about Sleep's effects. Neither checks Sphere geometry: radius, edge, origin inclusion, or the centre-of-space test. Both are marked under-asserts. The two code lines matched only by page number and are not-related. No engine code carries an SRD[GLOSS.sphere#…] tag. There are no SRD tests for this unit."
+ },
+ "problems": [],
+ "cost_usd": 0.047866,
+ "session": "9921300d-3b0d-482f-917e-8aadd3ef364c",
+ "error": null
+}

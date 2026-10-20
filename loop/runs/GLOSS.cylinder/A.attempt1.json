@@ -1,0 +1,63 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.cylinder#1",
+    "text": "A Cylinder is an area of effect that extends in straight lines from a point of origin located at the center of the circular top or bottom of the Cylinder.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.cylinder#2",
+    "text": "The effect that creates a Cylinder specifies the radius of the Cylinder’s base and the Cylinder’s height.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.cylinder#3",
+    "text": "A Cylinder’s point of origin is included in the area of effect.",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "specifies the radius of the Cylinder’s base",
+    "reading_a": "The radius is measured with the grid distance used for range and movement (every square, diagonals included, counts 5 ft), centre of the origin's space to centre of the creature's space. A creature exactly at the radius is inside.",
+    "reading_b": "The radius is a true Euclidean circle, so diagonal squares at the nominal radius fall outside and the base is a rounder shape on the grid.",
+    "proposed_ruling": "Measure the base radius the same way R-32 measures a Sphere's radius: grid distance from centre to centre, with a creature exactly at the radius inside. A 10-ft-radius Cylinder then covers the 5×5 block of squares around its origin square.",
+    "confidence": 0.75
+   },
+   {
+    "quote": "located at the center of the circular top or bottom of the Cylinder",
+    "reading_a": "For a Cylinder placed at a point, the origin is the centre of the bottom face. The Cylinder rests on the ground there and extends upward by its height.",
+    "reading_b": "The creator chooses top or bottom, so the origin can be up in the air and the Cylinder extends downward from it. This can leave ground-level creatures outside it when the height is less than the elevation of the origin.",
+    "proposed_ruling": "Unless the effect says otherwise, the origin is the centre of the bottom face at ground level and the Cylinder extends upward, consistent with R-35 for Cubes. Origins placed in the air are left for a later ticket.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "A Cylinder’s point of origin is included in the area of effect.",
+    "reading_a": "A creature whose space holds the point of origin is in the Cylinder and is affected like any other creature in it, including a caster who centres the Cylinder on their own space.",
+    "reading_b": "Only the point itself is included. The creature occupying it is excluded unless the creator chooses to include it, as with Cones and Cubes (R-29, R-31).",
+    "proposed_ruling": "Reading A, the same as R-33 for Spheres: a creature whose space holds the origin is in the area and is affected.",
+    "confidence": 0.8
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "the Cylinder’s height",
+    "explanation": "No rule says how height is compared with a creature's position. It is unclear whether a creature is in the Cylinder when its space's centre is within the base radius and its elevation is between the base and the height, or whether any creature over the base counts regardless of elevation. The register has no elevation convention for areas (R-35 avoids one). A ruling is needed before flying creatures can be tested against a Cylinder."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "located at the center of the circular top or bottom of the Cylinder",
+    "note": "The 2014 rules required the circle to be on the ground or at the height of the spell effect. The effect then shot up from the base or down from the top. 2024 drops that placement constraint and only says the origin is at the centre of the top or bottom face. Code written from memory may enforce the 2014 ground-or-effect-height restriction, which 2024 does not state."
+   }
+  ],
+  "summary": "GLOSS.cylinder defines the Cylinder area: its origin is at the centre of the circular top or bottom, the creating effect gives the base radius and the height, and the origin is included (unlike Cones and Cubes). Three ambiguities: how the radius is measured on a grid (propose R-32's grid metric), top versus bottom placement (propose bottom on the ground, extending up), and whether a creature on the origin is affected (propose yes, like R-33). One gap: how height and elevation decide who is inside. One trap: 2024 drops 2014's ground-or-effect-height placement rule."
+ },
+ "problems": [],
+ "cost_usd": 0.1845974,
+ "session": "8b9c7c36-085b-4d84-8a0d-ecc12087c2be",
+ "error": null
+}

@@ -1,0 +1,17 @@
+{
+  "id": "T-3",
+  "kind": "bug",
+  "unit": "GLOSS.grappled",
+  "title": "move(drag=...) lets a non-grappler drag a creature someone else is grappling",
+  "tests": [
+    "tests/srd/test_glossary.py::test_cant_drag_a_creature_someone_else_grapples"
+  ],
+  "status": "fixed",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-2"
+    }
+  ]
+}

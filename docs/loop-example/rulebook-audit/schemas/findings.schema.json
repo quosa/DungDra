@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "required": ["findings", "checked"],
+  "properties": {
+    "checked": {
+      "type": "array",
+      "description": "Rule ids this run actually examined (lets the harness detect silently skipped rules).",
+      "items": { "type": "string" }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_ids", "kind", "severity", "evidence", "explanation", "confidence"],
+        "properties": {
+          "rule_ids":   { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "kind":       { "enum": ["violation", "conflict", "gap", "ambiguity", "unverifiable"] },
+          "severity":   { "enum": ["high", "medium", "low"] },
+          "file":       { "type": "string", "description": "Repo-relative path. Empty for rulebook-only findings." },
+          "line_start": { "type": "integer" },
+          "line_end":   { "type": "integer" },
+          "evidence":   { "type": "string", "description": "VERBATIM quote from the code (or rulebook for conflicts/gaps). Checked mechanically." },
+          "rule_quote": { "type": "string", "description": "VERBATIM quote of the rule text being applied." },
+          "explanation":{ "type": "string" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    }
+  }
+}

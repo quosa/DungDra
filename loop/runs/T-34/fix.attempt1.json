@@ -1,0 +1,25 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I changed Dodge.d20 (dungdra/effects.py:370) to use `ctx.is_save` instead of `ctx.kind == \"save\"`, so every save effect now goes through the one predicate. Behaviour stays the same: a death save has no ability, so the `ability == \"dex\"` check still leaves it out. I added a unit test that checks Dodge gives advantage on a Dex save and not on a Con save, a Dex check or a death save. Unit tests pass (332), ruff check and ruff format --check are clean, and dev-gate passes. The ticket names no acceptance tests, so there were none to run with --runxfail.",
+  "files": [
+   "dungdra/effects.py",
+   "tests/unit/test_effects.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_dodge_gives_advantage_on_dex_saves_only"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix is a one-line change. Dodge.d20 now uses the `ctx.is_save` property (effects.py:42) in place of `ctx.kind == \"save\"`, and no `kind == \"save\"` checks are left in dungdra/. Behaviour doesn't change: a death-save Ctx has no ability, so the `ability == \"dex\"` check still rules it out. The new unit test runs through the real gather path, not a mock. It checks that Dodge gives advantage on a Dex save, and not on a Con save, a Dex check or a death save. It follows the existing Restrained test. The costs.jsonl line is the loop's own bookkeeping. Nothing in the change goes beyond the ticket."
+ },
+ "problems": [],
+ "cost_usd": 0.3718,
+ "stash": ""
+}

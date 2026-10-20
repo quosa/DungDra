@@ -1,0 +1,55 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.cube#1",
+    "text": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.cube#2",
+    "text": "The effect that creates a Cube specifies its size, which is the length of each side.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.cube#3",
+    "text": "A Cube’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "A Cube’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+    "reading_a": "The point of origin stands for a space: a creature whose space holds the point of origin (e.g. the caster of a Cube that originates from them) is outside the area unless the creator chooses to include it.",
+    "reading_b": "The point of origin is only a geometric point on the Cube's face; excluding it removes no creature, and a creature whose space overlaps the Cube is affected even if the origin lies in its space.",
+    "proposed_ruling": "Reading A, consistent with P-25 for Cones: a creature whose position is the point of origin isn't affected unless the creator chooses to include it. The engine doesn't offer that choice yet.",
+    "confidence": 0.65
+   },
+   {
+    "quote": "from a point of origin located anywhere on a face of the Cube",
+    "reading_a": "On a grid the Cube is aligned to the grid: the origin sits on a face, the Cube extends away from that face, and it covers whole squares (a 15-ft Cube is 3×3 squares).",
+    "reading_b": "The origin can be any point on a face, edges and corners included, and the Cube can be offset or rotated freely; squares it only partly covers are decided some other way.",
+    "proposed_ruling": "Grid-aligned Cube with the origin on a face, extending perpendicular to that face, away from it. A creature is in the area when the centre of its space lies inside the Cube (matches P-23), so a 15-ft Cube covers exactly 3×3 squares.",
+    "confidence": 0.55
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "extends in straight lines from a point of origin located anywhere on a face of the Cube",
+    "explanation": "The unit doesn't say which way the Cube extends from the origin. It implies 'into the Cube, away from the face holding the origin', but nothing states how the creator picks the face or direction. It also doesn't say how much of a creature's space must be inside the Cube for the creature to be affected."
+   },
+   {
+    "quote": "which is the length of each side",
+    "explanation": "A Cube is three-dimensional, so it also reaches up to its side length in height. No rule here says how that applies to flying or elevated creatures on a 2D grid."
+   }
+  ],
+  "traps": [],
+  "summary": "GLOSS.cube defines the Cube area of effect: the point of origin lies anywhere on one face, the effect sets the size as the length of each side, and the origin is excluded unless the creator chooses otherwise. The wording matches the 2014 rules in substance, so there are no traps. The open questions are the direction the Cube extends, how it fits a grid, how partly covered spaces count, its vertical extent, and whether 'origin not included' takes out the creature standing at the origin. The proposed rulings follow P-23 and P-25, which are still undecided."
+ },
+ "problems": [],
+ "cost_usd": 0.1068412,
+ "session": "2e47f30f-52d9-4680-9d61-b40bd32c6284",
+ "error": null
+}

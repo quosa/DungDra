@@ -1,0 +1,13 @@
+{
+  "id": "P-2",
+  "unit": "GLOSS.grappled",
+  "ambiguity": "“any target other than the grappler” when two creatures grapple you.",
+  "ruling": "Attacks against any of your current grapplers have no Disadvantage from Grappled; attacks against anyone else have it.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_two_grapplers_neither_attack_has_disadvantage"
+  ],
+  "status": "accepted",
+  "register_id": "R-06",
+  "note": "The rule's intent; the reviewer doesn't fully agree with the rule itself.",
+  "reason": ""
+}

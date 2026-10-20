@@ -1,0 +1,63 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.sphere#1",
+    "text": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.sphere#2",
+    "text": "The effect that creates a Sphere specifies the distance it extends as the radius of the Sphere.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.sphere#3",
+    "text": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "specifies the distance it extends as the radius of the Sphere",
+    "reading_a": "Distance from the origin is measured as true (Euclidean) 3D distance, so a 20-ft Sphere is round on the grid.",
+    "reading_b": "Distance is measured with the grid movement count (each square, diagonal included, costs 5 ft), so a 20-ft Sphere covers a square block of squares on the grid.",
+    "proposed_ruling": "Measure with the same distance metric the engine uses for range and movement on the grid (5 ft per square, diagonals included), so areas and ranges agree. A point exactly at the radius is inside.",
+    "confidence": 0.5
+   },
+   {
+    "quote": "extends in straight lines from a point of origin outward in all directions",
+    "reading_a": "A creature is in the Sphere when the centre of its space lies within the radius (as P-23/P-26).",
+    "reading_b": "A creature is in the Sphere when any part of its space lies within the radius.",
+    "proposed_ruling": "Use the centre of the creature's space, as proposed for Cone and Cube (P-23, P-26), so all areas follow one test.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "reading_a": "A creature whose space holds the point of origin (for example, a creature targeted as the centre of the Sphere) is affected like any other creature in the area.",
+    "reading_b": "Only the point itself is part of the area; whether a creature at that point is affected still depends on the effect's wording.",
+    "proposed_ruling": "Reading A: a creature whose space holds the origin is in the area and is affected if the effect affects creatures in its area. This is the opposite of P-25/P-27 for Cones and Cubes.",
+    "confidence": 0.75
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "from a point of origin outward in all directions",
+    "explanation": "The unit doesn't say where a point of origin may sit on a grid: at a square's centre, at a grid intersection, or anywhere. This changes which squares a Sphere of a given radius covers (an even block from an intersection or an odd one from a centre)."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "A Sphere’s point of origin is included in the Sphere’s area of effect.",
+    "note": "The Sphere text matches 2014, but 2024 adds Emanation as a separate shape for effects that come from a creature (for example Spirit Guardians, which was a Sphere centred on you in 2014). If an implementation built from memory models self-centred auras as Spheres, the origin creature ends up in the area. Spheres include the origin; the Cone and Cube rules leave it out."
+   }
+  ],
+  "summary": "Sphere has 3 clauses: it extends in straight lines in all directions from a point of origin, the effect sets its radius, and the point of origin is in the area. I was given no referenced units, so there are no relations or conflicts. The open questions are which distance metric to use and whether the edge counts, the inclusion test on a grid (centre of the space, as in P-23/P-26), and whether a creature at the origin is affected. Unlike Cone and Cube, a Sphere includes its origin. One gap: where the origin may sit on a grid. One trap: Emanation is new in 2024, so self-centred auras that were Spheres in 2014 are no longer Spheres."
+ },
+ "problems": [],
+ "cost_usd": 0.1013052,
+ "session": "ecd0afdf-e0e0-4473-9300-3355aebf374a",
+ "error": null
+}

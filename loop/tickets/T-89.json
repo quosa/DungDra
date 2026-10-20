@@ -1,0 +1,17 @@
+{
+  "id": "T-89",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: Help assists the ability check of one ally, and an enemy isn't one; engine: help_check gives Advantage to any creature named, including an enemy",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "help_check now refuses any target that game.is_ally doesn't count as the helper's ally (an enemy, for example). The refusal carries page=176 and rule=GLOSS.ally#3. It runs after the R-36 self-check and before the proficiency checks, so nothing is spent and no effect is added. It reuses is_ally (party, team, friendly attitude, GM team designation) rather than adding a second ally test. The ticket test passes with --runxfail. In the normal run its only failure is the strict XPASS, which goes away when the harness removes the marker. Unit tests: 543 passed. Acceptance suites otherwise green. dev-gate: PASS. ruff check and ruff format --check are clean."
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.tremorsense#1",
+    "text": "A creature with Tremorsense can pinpoint the location of creatures and moving objects within a specific range",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.tremorsense#2",
+    "text": "provided that the creature with Tremorsense and anything it is detecting are both in contact with the same surface (such as the ground, a wall, or a ceiling) or the same liquid",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.tremorsense#3",
+    "text": "Tremorsense can’t detect creatures or objects in the air",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.tremorsense#4",
+    "text": "it doesn’t count as a form of sight",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "creatures and moving objects",
+    "reading_a": "'moving' qualifies only 'objects': a creature is detected even if it holds perfectly still, and an object only while it moves.",
+    "reading_b": "'moving' qualifies both (the 2014 'vibrations' sense): a creature that stays still can't be detected.",
+    "proposed_ruling": "Reading A. Creatures in contact with the shared surface are detected whether they move or not; objects are detected only while moving.",
+    "confidence": 0.75
+   },
+   {
+    "quote": "in contact with the same surface (such as the ground, a wall, or a ceiling)",
+    "reading_a": "Any continuous connected structure counts as one surface, so a sensor on the floor detects a creature clinging to an attached wall or ceiling.",
+    "reading_b": "It has to be the same face: floor to floor or wall to wall. Touching connected but different surfaces doesn't count.",
+    "proposed_ruling": "Connected solid surfaces (floor, the walls joined to it, the ceiling) count as the same surface. Separate structures (a separate boat, a detached platform, a creature standing on another creature) don't.",
+    "confidence": 0.55
+   },
+   {
+    "quote": "the same liquid",
+    "reading_a": "A creature on a lakebed counts as being in contact with the lake water, so it detects swimmers in that water.",
+    "reading_b": "Both creatures must be immersed in the liquid; a creature touching the liquid only from the ground doesn't count.",
+    "proposed_ruling": "Any creature or object touching the body of liquid (immersed, or partly in it) is in contact with it, as long as the tremorsense creature also touches that liquid.",
+    "confidence": 0.5
+   },
+   {
+    "quote": "Tremorsense can’t detect creatures or objects in the air",
+    "reading_a": "Only creatures or objects that are fully airborne (flying, hovering, falling, or mid-jump) and touching no shared surface are undetectable.",
+    "reading_b": "Any flying creature is undetectable, even one that has landed or is clinging to a wall.",
+    "proposed_ruling": "Reading A. What matters is whether it touches a shared surface or liquid at the moment of checking, not whether it has a Fly Speed.",
+    "confidence": 0.8
+   },
+   {
+    "quote": "pinpoint the location",
+    "reading_a": "Pinpointing removes the benefit of being unseen: the target's location is known, so it isn't hidden, but attacks against it still count as attacking a target you can't see.",
+    "reading_b": "Pinpointing counts as perceiving the target well enough to cancel Disadvantage on attacks against an unseen target.",
+    "proposed_ruling": "Reading A. The location is known (no guessing which space it's in), but since Tremorsense doesn't count as sight, the attack and target-you-can-see rules still treat the target as unseen.",
+    "confidence": 0.7
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "within a specific range",
+    "explanation": "No default range is given. It has to come from the stat block or feature that grants Tremorsense, measured in feet from the creature."
+   },
+   {
+    "quote": "pinpoint the location",
+    "explanation": "No rule says what pinpointing does mechanically: whether it ends the Hide action's Invisible condition, reveals the creature to allies, or affects Opportunity Attacks or spells that need a target you can see."
+   },
+   {
+    "quote": "it doesn’t count as a form of sight",
+    "explanation": "The unit doesn't say how this interacts with the Blinded condition. It suggests Tremorsense keeps working while Blinded, but no rule states it."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "creatures and moving objects",
+    "note": "The 2014 Monster Manual defined tremorsense as detecting the origin of vibrations. Built from memory, an engine might require creatures to move. The 2024 wording detects creatures in contact without requiring movement."
+   },
+   {
+    "quote": "or the same liquid",
+    "note": "2014 said 'the same ground or substance'. 2024 names liquid explicitly, so detection through water must work."
+   },
+   {
+    "quote": "Tremorsense can’t detect creatures or objects in the air",
+    "note": "2014 excluded flying and incorporeal creatures. 2024 drops the incorporeal exclusion and uses 'in the air' instead of 'flying', so a flyer that has landed or is clinging to a wall can be detected, and an airborne non-flyer (one that is falling or jumping) can't."
+   },
+   {
+    "quote": "it doesn’t count as a form of sight",
+    "note": "This is stated explicitly in 2024. Don't treat Tremorsense like Blindsight or Darkvision for anything that requires seeing a target."
+   }
+  ],
+  "summary": "Tremorsense pinpoints the location of creatures (and of objects only while they move) within a range set by its source. Both sides must touch the same surface or the same liquid. It never detects anything in the air and doesn't count as sight. The main open questions are whether a creature has to move to be detected, what counts as the same surface or liquid, and what pinpointing does mechanically without sight."
+ },
+ "problems": [],
+ "cost_usd": 0.10139200000000001,
+ "session": "263c7b2b-8fa4-4619-b160-2fe8b760f446"
+}

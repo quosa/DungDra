@@ -1,0 +1,61 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_spells.py::test_light_targets_the_object_its_description_names",
+   "verdict": "keep",
+   "reason": "Light (2024) touches an object and sheds 20 ft Bright + 20 ft Dim; the test checks that an object target is accepted and lit, which follows from #1. No other test checks the positive object case.",
+   "mutation": "spells.py:511 `if is_creature(t):` -> `if True:` (Light refuses every target): test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_the_caster_cant_choose_themself_for_a_spell_that_targets_an_object",
+   "verdict": "refute",
+   "reason": "Wrong clause and a duplicate. Clause #3 only grants self-targeting for 'a creature of your choice'; refusing Light on a creature comes from #1 (the description names an object). The same mutation also breaks the existing test_light_cant_target_a_creature (#1 abuse, line 620): both check Light refused on a creature. The second assertion (no object has light_spell == caster) can only fail if the refusal let Light take effect anyway.",
+   "mutation": "spells.py:511 `if is_creature(t):` -> `if False:`: this test failed, and so did the existing test_light_cant_target_a_creature under the same mutation.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_magic_missile_darts_can_go_to_the_caster",
+   "verdict": "keep",
+   "reason": "Magic Missile's darts each strike 'a creature of your choice', so by #3 the caster may choose themself. Shield is declined, and the 3x(1+1) damage is correct.",
+   "mutation": "spells.py:1343 `if t.find_effects(cls=ShieldSpell):` -> `if t is c.caster or t.find_effects(cls=ShieldSpell):` (darts skip the caster): test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_burning_hands_hits_a_creature_in_the_cone_that_wasnt_named",
+   "verdict": "keep",
+   "reason": "#4 'The area determines what the spell targets' (R-16): an unnamed goblin in the 15-ft Cone takes 3d6 on a failed save. Point given explicitly; dice and damage correct.",
+   "mutation": "spells.py:1129 candidates = named + scene -> `candidates = named`: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_leaving_a_creature_in_the_cone_off_the_list_doesnt_spare_it",
+   "verdict": "refute",
+   "reason": "Near-duplicate of test_burning_hands_hits_a_creature_in_the_cone_that_wasnt_named: same spell, same layout (near goblin unnamed, far goblin named), same assertion that the unnamed one is burned. One mutation breaks both. The only difference is that the cone is aimed from the named target instead of point=, which isn't a separate rule in this clause.",
+   "mutation": "spells.py:1129 `candidates = named`: failed. The positive test fails to the same mutation.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_does_nothing_to_a_wolf_that_couldnt_have_saved",
+   "verdict": "keep",
+   "reason": "Hold Person requires a Humanoid, so a Wolf is an invalid target and nothing happens (#8). Under R-15 it rolls no save. The DC is set out of reach, so it would be Paralyzed if affected, and the dice-history check proves no roll was made.",
+   "mutation": "spells.py:1314 `if is_creature(t) and not restrict.affects(t):` -> `if False:`: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_hold_person_on_a_wolf_through_the_session_spends_the_slot_and_does_nothing",
+   "verdict": "keep",
+   "reason": "Combines #8 and the slot rule through the Session command path, the only invalid-target test that goes through it. The slot check partly overlaps the existing #9 positive test, but the player path is new.",
+   "mutation": "spells.py:1314 restriction disabled: failed. spells.py:171 slot spend -> `pass`: failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_spells.py::test_a_target_out_of_range_is_refused_before_the_slot_is_spent",
+   "verdict": "keep",
+   "reason": "Contrasts with #9: an invalid but legal target costs the slot, but a target you can't choose (Hold Person range 60 ft, wolf at 65 ft) stops the casting before payment. The refusal comes from the Range rule, not clause #9 itself. The Bless range tests already check a clean refusal, but this one contrasts it with the invalid-target slot case.",
+   "mutation": "spells.py:248 `_range_check(...)` -> `pass`: test failed (cast went ahead, slot spent).",
+   "confidence": 0.6
+  }
+ ],
+ "summary": "I mutated the rule each test exercises; all eight then failed, so none passes for the wrong reason. Refuted two: (1) the Light-on-self test, filed under #3 though its refusal comes from #1, which duplicates the existing test_light_cant_target_a_creature (the same mutation breaks both); (2) the Burning Hands abuse test, a near-duplicate of the positive cone test (same layout and assertion, broken by the same mutation; only the aiming default differs; confidence 0.55). Kept the other six; their expected results follow from the SRD text. Side note: _light sets the lit object's position to the caster's square (spells.py:1011), which the Light test doesn't check."
+}

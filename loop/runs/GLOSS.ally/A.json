@@ -1,0 +1,59 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.ally#1",
+   "text": "A creature is your ally if it is a member of your adventuring party",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ally#2",
+   "text": "your friend",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ally#3",
+   "text": "on your side in combat",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.ally#4",
+   "text": "a creature that the rules or the GM designates as your ally",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "A creature is your ally if it is a member of your adventuring party",
+   "reading_a": "A creature is never its own ally. 'Your ally' means some other creature, so an effect that targets 'an ally' can't target its user unless it also says 'you'.",
+   "reading_b": "You belong to your own adventuring party and are on your own side, so you count as your own ally under the definition's wording.",
+   "proposed_ruling": "Reading A. A creature is not its own ally. Effects that include the user say so explicitly ('you or an ally').",
+   "confidence": 0.75
+  },
+  {
+   "quote": "on your side in combat",
+   "reading_a": "Sides are fixed when the encounter starts (party versus hostiles), and only a designation by the rules or the GM changes them.",
+   "reading_b": "Sides follow behaviour moment to moment. A creature that turns on the party (for example, by switching allegiance mid-fight) stops being an ally straight away, without any explicit designation.",
+   "proposed_ruling": "Reading A. Ally status comes from the encounter's faction assignment, and the GM or a rule changes it explicitly through the designation clause. The change is logged.",
+   "confidence": 0.6
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "your friend",
+   "explanation": "The SRD never defines 'friend' as a game state. A single-player engine needs a concrete source for it, such as a faction or attitude flag. Without one, this branch can't be evaluated, and the definition reduces to party membership, side in combat, or designation."
+  },
+  {
+   "quote": "a creature that the rules or the GM designates as your ally",
+   "explanation": "The unit doesn't say whether an effect that makes a creature friendly makes it an ally (for example, a Charmed creature that regards you as a friendly acquaintance). Nor does it define the opposite term (enemy or hostile). Whether such effects confer ally status is left to the GM designation."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "A creature is your ally if it is a member of your adventuring party, your friend, on your side in combat, or a creature that the rules or the GM designates as your ally.",
+   "note": "The 2014 rules had no glossary definition of 'ally'; the term was left to plain English. An implementation built from memory may treat 'ally' as 'any creature other than you' or as 'party members only'. The 2024 definition also counts friends, combat-side creatures (summons, friendly NPCs) and GM- or rule-designated creatures."
+  }
+ ],
+ "summary": "GLOSS.ally defines 'ally' as a creature that matches any of four conditions: a member of your party, your friend, on your side in combat, or designated as an ally by the rules or the GM. There are no thresholds and no referenced units. The open questions are whether you count as your own ally (proposed: no) and how 'friend' and 'side' map to concrete engine state."
+}

@@ -1,0 +1,17 @@
+{
+  "id": "T-92",
+  "kind": "bug",
+  "unit": "GLOSS.creature-type",
+  "title": "SRD: only the 14 listed creature types exist; engine: a study command naming a species (dwarf) as a type raises KeyError out of Session.execute",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
+  ],
+  "status": "fixed",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-91"
+    }
+  ]
+}

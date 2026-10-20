@@ -1,0 +1,15 @@
+{
+  "id": "T-60",
+  "kind": "coverage",
+  "unit": "GLOSS.ready",
+  "title": "A readied spell whose release is refused (handler raises Refusal after _release has ended the holding Concentration) is restored to cb.readied with no Concentration and no on_concentration_end hook. Either check the release before ending Concentration or don't restore a held spell, and add a unit test for it.",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I fixed T-60: a readied spell is no longer put back into `cb.readied` after a refused release has already ended the Concentration holding it.\n\n**The bug.** `_release` (in `dungdra/spells.py`) ends the holding Concentration first. If the spell handler then raised a `Refusal`, `combat._readied_triggers` put the readied response back anyway. That left a \"held\" spell with no Concentration and no `on_concentration_end` hook.\n\n**The fix.** I took the ticket's second option: don't restore a held spell. In the `except Refusal` branch of `_readied_triggers`, if the response holds a spell and the readier is no longer concentrating on it, the spell dissipates without taking effect. It is not restored, and the event is logged with `page=187, rule=\"GLOSS.ready#9\"`, tagged `# SRD[GLOSS.ready#9]`. The Reaction is still given back, as before, since nothing was taken. A refused release that hasn't ended Concentration (attacks, moves, or a spell still held) keeps the readied response as before.\n\nI didn't take the other option (checking the release before ending Concentration). The handlers mix their checks with their effects, so it can't be done cleanly. Also, a spell that needs Concentration itself ends the held Concentration when it starts.\n\n**Checks.** All 422 unit tests pass, the 13 `ready` acceptance tests in `tests/srd` pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes. The ticket named no acceptance tests, so there was nothing to run with `--runxfail`."
+    }
+  ]
+}

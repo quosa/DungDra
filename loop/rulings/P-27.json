@@ -1,0 +1,14 @@
+{
+  "id": "P-27",
+  "unit": "GLOSS.cube",
+  "ambiguity": "GLOSS.cube ambiguity 1: does 'the point of origin isn't included' leave out the creature whose space holds it (the caster of a Cube that originates from them)?",
+  "ruling": "Reading A, as P-25 for Cones: the creature at the point of origin isn't affected unless the creator chooses to include it, even if they name themself.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_the_caster_at_the_cubes_origin_isnt_affected",
+    "tests/srd/test_glossary.py::test_naming_yourself_doesnt_aim_the_cube_or_put_you_in_it"
+  ],
+  "status": "accepted",
+  "register_id": "R-31",
+  "note": "'As P-25' means R-29.",
+  "reason": ""
+}

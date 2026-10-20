@@ -1,0 +1,14 @@
+{
+  "id": "P-12",
+  "unit": "SPELL.casting-spells.effects.targets",
+  "ambiguity": "'The area determines what the spell targets': for an area spell that affects 'each creature' in the area (Thunderwave), does the engine work out who is in the area, or does it rely on a list the caller supplies?",
+  "ruling": "The engine works out the creatures in the area from the scene, using the shape, point of origin and direction. A caller's list can only narrow the choice where the spell says 'of your choice' (Sleep). It never adds creatures outside the area or drops creatures inside an 'each creature' area.",
+  "tests": [
+    "tests/srd/test_spells.py::test_one_cone_cant_reach_both_sides_of_the_caster",
+    "tests/srd/test_spells.py::test_sleep_doesnt_reach_a_creature_outside_its_sphere"
+  ],
+  "status": "accepted",
+  "register_id": "R-16",
+  "note": "The engine selects creatures in the area from positions, shape, origin and direction; a caller list only narrows 'of your choice' spells.",
+  "reason": ""
+}

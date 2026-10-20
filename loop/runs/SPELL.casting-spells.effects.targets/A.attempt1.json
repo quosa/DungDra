@@ -1,0 +1,175 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "SPELL.casting-spells.effects.targets#1",
+    "text": "A spell’s description says whether the spell targets creatures, objects, or something else.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#2",
+    "text": "To target something with a spell, a caster must have a clear path to it, so it can’t be behind Total Cover.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#3",
+    "text": "If a spell targets a creature of your choice, you can choose yourself unless the creature must be Hostile or specifically a creature other than you.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#4",
+    "text": "The area determines what the spell targets.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#5",
+    "text": "The description of a spell specifies whether it has an area of effect, which is typically one of these shapes: Cone, Cube, Cylinder, Emanation, Line, or Sphere.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#6",
+    "text": "Unless a spell has a perceptible effect, a creature doesn’t know it was targeted by the spell.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#7",
+    "text": "a more subtle effect, such as an attempt to read thoughts, goes unnoticed unless a spell’s description says otherwise.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#8",
+    "text": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#9",
+    "text": "if you used a spell slot to cast the spell, the slot is still expended.",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#10",
+    "text": "If the spell normally has no effect on a target that succeeds on a saving throw, the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+    "threshold": false
+   },
+   {
+    "id": "SPELL.casting-spells.effects.targets#11",
+    "text": "Otherwise, you perceive that the spell did nothing to the target.",
+    "threshold": false
+   }
+  ],
+  "relations": [
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cover",
+    "evidence": "Total Cover (can’t be targeted directly)"
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.hostile",
+    "evidence": "unless the creature must be Hostile or specifically a creature other than you"
+   },
+   {
+    "type": "same_concept_as",
+    "target": "GLOSS.target",
+    "evidence": "selected to receive the effects of a spell or another phenomenon"
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cone",
+    "evidence": "A Cone is an area of effect that extends in straight lines from a point of origin in a direction its creator chooses."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cube",
+    "evidence": "A Cube is an area of effect that extends in straight lines from a point of origin located anywhere on a face of the Cube."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.cylinder",
+    "evidence": "A Cylinder is an area of effect that extends in straight lines from a point of origin located at the center of the circular top or bottom of the Cylinder."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.emanation",
+    "evidence": "An Emanation is an area of effect that extends in straight lines from a creature or an object in all directions."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.line",
+    "evidence": "A Line is an area of effect that extends from a point of origin in a straight path along its length and covers an area defined by its width."
+   },
+   {
+    "type": "interacts_with",
+    "target": "GLOSS.sphere",
+    "evidence": "A Sphere is an area of effect that extends in straight lines from a point of origin outward in all directions."
+   }
+  ],
+  "ambiguities": [
+   {
+    "quote": "If you cast a spell on someone or something that can’t be affected by it, nothing happens to that target",
+    "reading_a": "The caster may pick a target that fails the spell's restriction (e.g. a non-Humanoid for a Humanoid-only spell); casting goes ahead, the slot is spent, and that target is silently unaffected.",
+    "reading_b": "The engine refuses to let the caster pick a target that fails the spell's restriction, so the invalid-target rule only applies to hidden immunities.",
+    "proposed_ruling": "Reading A. Let the caster pick any target that meets the visible conditions (range, clear path, sight if the spell needs it). If a target fails a restriction based on its nature (creature type, immunity), resolve it under the invalid-target rule rather than refusing it, so the restriction isn't revealed.",
+    "confidence": 0.75
+   },
+   {
+    "quote": "Unless a spell has a perceptible effect, a creature doesn’t know it was targeted by the spell.",
+    "reading_a": "Making a saving throw against a subtle spell isn't itself perceptible, so a creature that succeeds still doesn't know it was targeted.",
+    "reading_b": "Being forced to make a saving throw always tells the creature that something targeted it.",
+    "proposed_ruling": "Reading A. Only the spell's described effects count as perceptible; the save itself reveals nothing unless the spell's description says otherwise.",
+    "confidence": 0.55
+   },
+   {
+    "quote": "a caster must have a clear path to it, so it can’t be behind Total Cover",
+    "reading_a": "A clear path means exactly that the target isn't behind Total Cover; nothing short of Total Cover blocks targeting.",
+    "reading_b": "A clear path is a stricter test, so other obstructions (e.g. a creature in the line) also block targeting.",
+    "proposed_ruling": "Reading A. The 'so' clause defines the test as Total Cover from the caster, worked out per R-09/R-11, and R-10 limits it to effects that select the target directly.",
+    "confidence": 0.8
+   },
+   {
+    "quote": "unless the creature must be Hostile",
+    "reading_a": "'Hostile' is the Attitude term from GLOSS.hostile (a creature that views you unfavorably).",
+    "reading_b": "'Hostile' loosely means an enemy or opponent in the current encounter.",
+    "proposed_ruling": "Either way, the caster is never Hostile to themself, so the self-choice is excluded whenever a spell requires a Hostile creature. For other targets, follow the spell's own wording and defer to GLOSS.hostile.",
+    "confidence": 0.7
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "if you used a spell slot to cast the spell, the slot is still expended.",
+    "explanation": "Only spell slots are mentioned. The unit doesn't say whether other resources are also used up when a target is invalid, such as limited-use casts (1/day features), consumed Material components, or the action. Presumably they are, since the spell was cast, but no rule says so."
+   },
+   {
+    "quote": "Unless a spell has a perceptible effect",
+    "explanation": "'Perceptible effect' is never defined beyond the lightning and read-thoughts examples. Each spell needs a flag for whether it's perceptible, and nothing says who decides the borderline cases."
+   },
+   {
+    "quote": "The area determines what the spell targets.",
+    "explanation": "Nothing here says whether an area spell's point of origin needs a clear path from the caster. The clear-path rule covers only 'something' that is targeted. R-10 settles creatures behind Total Cover within an area, but not where the origin itself can be placed."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "Unless a spell has a perceptible effect, a creature doesn’t know it was targeted by the spell.",
+    "note": "The 2014 PHB said a creature 'might not know' it was targeted, which left it to the DM. The 2024 text is absolute: without a perceptible effect, the creature doesn't know."
+   },
+   {
+    "quote": "Cone, Cube, Cylinder, Emanation, Line, or Sphere",
+    "note": "Emanation is new in 2024. In 2014, self-centred auras (e.g. Spirit Guardians) were described as a radius or sphere around you. An Emanation moves with its origin and excludes the origin creature unless its creator decides otherwise, so a 2014-style sphere around the caster gets both the origin and the movement wrong."
+   },
+   {
+    "quote": "the invalid target appears to have succeeded on its saving throw, even though it didn’t attempt one",
+    "note": "The 2014 PHB had no invalid-target rule (it appeared later in Xanathar's). An engine built from PHB memory may refuse the target, refund the slot, or reveal immunity. Here the slot is spent and the result is disguised as a successful save."
+   },
+   {
+    "quote": "unless the creature must be Hostile",
+    "note": "In 2024, Hostile is a capitalized Attitude glossary term, not the loose 2014 word 'hostile'. Don't treat it as meaning 'in combat with'."
+   }
+  ],
+  "summary": "The unit sets the general targeting rules for spells. Targets need a clear path (not behind Total Cover). The caster can choose themself unless the spell requires a Hostile creature or a creature other than the caster. Areas of effect use the glossary shapes, including the new Emanation. Subtle spells go unnoticed. Against an invalid target, nothing happens to it, any spell slot is still spent, and where a successful save would mean no effect, the target appears to have saved. There are 11 atomic clauses and no numeric thresholds. The open questions are whether invalid targets can be selected, whether making a save reveals a subtle spell, and resources other than slots."
+ },
+ "problems": [],
+ "cost_usd": 0.208828,
+ "session": "45bbb19f-10f3-45a0-8888-8ba8f69b2f3e"
+}

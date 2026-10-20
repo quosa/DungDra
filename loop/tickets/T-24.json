@@ -1,0 +1,15 @@
+{
+  "id": "T-24",
+  "kind": "coverage",
+  "unit": "PLAY.combat.cover",
+  "title": "Unit test for _save_for_half: every target makes its save, using the cover it has at that moment, before any target takes damage, so a creature killed by the effect still gives Half Cover to the one behind it. Today only scenario SPL-05 exercises this.",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "I added three unit tests in tests/unit/test_spells.py that call _save_for_half directly with a Casting at DC 13, against two goblin warriors in a line (Front stands between the caster and Back). The engine itself is unchanged.\n\n1. Every target saves before anyone takes damage: with dice forced to 3d6=12 and d20=9 for both, Front fails (11) and dies, but Back has already saved with Front's Half Cover (9+2+2=13, success) and takes 6. The test checks the log order (save, save, damage, death, damage) and that exactly one cover event cites PLAY.combat.cover#5. If saves and damage were interleaved, Back would lose the cover, fail the save and die, so this test would catch it.\n2. A creature already dead before the effect gives no cover: no cover event is logged, and Back fails and dies.\n3. on_fail runs only for a living target that failed its save.\n\nResults: tests/unit gives 297 passed; ruff check and ruff format --check are clean; the dev gate passes. The ticket names no acceptance tests, so I had no xfail tests to run with --runxfail."
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "SPL-05",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "G3 behind Total Cover inside the cone's area",
+    "rule_quote": "To block a line, an obstruction must provide Total Cover.",
+    "explanation": "The scenario excludes the goblin behind Total Cover from the area, and it gives G1 (a creature) only Half Cover for G2. That matches clauses #3 and #4 and R-09, where creatures never give Total Cover. It doesn't cover #5 (unseen point), but that isn't what it's about."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spl05_burning_hands",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "game.scene.cover_all[g3.id] = \"total\"",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "explanation": "The test puts G3 behind Total Cover and asserts g3.hp == 10 with only 2 saves rolled. This checks that a location with Total Cover from the origin is excluded (#3/#4). It also checks that a creature in front gives only Half Cover (g2.hp == 10 - 6). It doesn't test the unseen-point placement in #5."
+   },
+   {
+    "item": "dungdra/combat.py:1262",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# equip/draw as part of the attack (p.177)",
+    "rule_quote": "The descriptions of many spells and other features specify that they have an area of effect",
+    "explanation": "p.177 here is the Attack glossary entry (draw a weapon as part of an attack). It has nothing to do with areas of effect."
+   },
+   {
+    "item": "dungdra/combat.py:1270",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=177,",
+    "rule_quote": "The descriptions of many spells and other features specify that they have an area of effect",
+    "explanation": "The log event is tagged rule=\"GLOSS.attack\". It matched on page number only."
+   },
+   {
+    "item": "dungdra/spells.py:1136",
+    "kind": "code",
+    "verdict": "affected-by-ambiguity",
+    "evidence": "if game.cover_between(caster if from_self else place[:2], t) == \"total\":",
+    "rule_quote": "If all straight lines extending from the point of origin to a location in the area of effect are blocked, that location isn’t included in the area of effect.",
+    "explanation": "The code excludes a target when it has Total Cover from the point of origin. That is reading A of both the 'location' and the 'per location' ambiguities (consistent with R-10), and it gives no special treatment to creatures. The code relies on that reading, so it's affected by the ambiguity. For an Emanation or from_self area it uses the caster's space as origin, which is the stage-A gap. The log tag has no clause number (`rule=\"GLOSS.area-of-effect\"`)."
+   }
+  ],
+  "summary": "I checked 5 items against GLOSS.area-of-effect. The SPL-05 scenario and its test agree with clauses #3 and #4 (a target behind Total Cover is excluded, and a creature gives only Half Cover). The spells.py cover check at line 1136 follows reading A of the stage-A ambiguities. The two combat.py lines are about the Attack glossary entry and matched on page 177 only. None of the items covers clause #5 (an unseen point behind an obstruction)."
+ },
+ "problems": [],
+ "cost_usd": 0.0700246,
+ "session": "3b7caa8c-77ee-4c19-b97b-9f925d815849",
+ "error": null
+}

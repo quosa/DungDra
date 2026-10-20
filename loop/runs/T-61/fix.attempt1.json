@@ -1,0 +1,34 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Removed the hand-kept BONUS_ACTION_COMMANDS list from the interface layer (dungdra/api.py). The Ready refusal now asks the engine through a new class_actions.is_bonus_action(name), which checks the existing BONUS_ACTIONS registry (the features whose handlers spend 'bonus'). That registry now also includes 'cunning action', so it is the one record of which features cost a Bonus Action. Stonecunning, which was missing from the old list, is now refused as a Ready response too. The bonus_action() dispatch works as before. ruff is clean; unit tests pass (415 passed); the Ready and bonus-action srd/scenario tests pass (19 passed); dev-gate PASS. The ticket names no acceptance tests.",
+  "files": [
+   "dungdra/api.py",
+   "dungdra/class_actions.py",
+   "tests/unit/test_class_actions.py",
+   "tests/unit/test_api.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_class_actions.py::test_is_bonus_action_comes_from_the_bonus_action_registry",
+   "tests/unit/test_class_actions.py::test_is_bonus_action_is_false_for_actions_and_unknown_names",
+   "tests/unit/test_api.py::test_ready_command_refuses_each_registered_bonus_action"
+  ],
+  "srd_tags": [],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "class_actions.bonus_action still special-cases the \"cunning action\" name with its own startswith/split(':') parsing, and is_bonus_action now repeats that 'feature: option' parsing. The \"cunning action\" entry added to BONUS_ACTIONS is never used for dispatch. Parse the feature name and option once and dispatch every entry, Cunning Action included, through BONUS_ACTIONS.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this change. The interface layer's hand-kept list `BONUS_ACTION_COMMANDS` is gone. The Ready refusal in `cmd_ready` now asks the engine through `class_actions.is_bonus_action`, which reads `BONUS_ACTIONS`, the same registry that `bonus_action` uses to dispatch features. That puts the rule in the engine layer, as T-61 asked. The refusal still carries `rule=\"GLOSS.ready#4\"` and `ruling=\"R-20\"`. `is_bonus_action` matches API command names (`second_wind`, `cunning_action`) through `norm`. Adding `\"cunning action\"` to `BONUS_ACTIONS` changes no behaviour, because `bonus_action` handles that name before it looks in the registry. `stonecunning` now counts as a Bonus Action without a separate entry, which shows the list really comes from the registry. The tests check behaviour:\n- the API test runs each registered Bonus Action through Ready and checks the refusal, its rule and that no action was spent;\n- the new `tests/unit/test_class_actions.py` (untracked, so not in the diff) checks name normalization, the \"cunning action: dash\" form, and that actions such as attack and action surge, unknown names and `None` aren't Bonus Actions.\n\nOne small leftover: `bonus_action` and `is_bonus_action` now each parse the \"feature: option\" form, which I filed as a refactor follow-up. The change stays within the ticket's scope. All gates pass."
+ },
+ "problems": [],
+ "cost_usd": 0.5851,
+ "stash": ""
+}

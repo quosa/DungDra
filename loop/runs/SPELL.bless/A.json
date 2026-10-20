@@ -1,0 +1,115 @@
+{
+ "clauses": [
+  {
+   "id": "SPELL.bless#1",
+   "text": "Level 1 Enchantment (Cleric, Paladin)",
+   "threshold": false
+  },
+  {
+   "id": "SPELL.bless#2",
+   "text": "Casting Time: Action",
+   "threshold": false
+  },
+  {
+   "id": "SPELL.bless#3",
+   "text": "Range: 30 feet",
+   "threshold": true
+  },
+  {
+   "id": "SPELL.bless#4",
+   "text": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+   "threshold": true
+  },
+  {
+   "id": "SPELL.bless#5",
+   "text": "Duration: Concentration, up to 1 minute",
+   "threshold": true
+  },
+  {
+   "id": "SPELL.bless#6",
+   "text": "You bless up to three creatures within range.",
+   "threshold": true
+  },
+  {
+   "id": "SPELL.bless#7",
+   "text": "Whenever a target makes an attack roll or a saving throw before the spell ends, the target adds 1d4 to the attack roll or save.",
+   "threshold": false
+  },
+  {
+   "id": "SPELL.bless#8",
+   "text": "You can target one additional creature for each spell slot level above 1.",
+   "threshold": true
+  }
+ ],
+ "relations": [
+  {
+   "type": "requires",
+   "target": "GLOSS.concentration",
+   "evidence": "Duration: Concentration, up to 1 minute"
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.concentration",
+   "evidence": "If the effect’s creator loses Concentration, the effect ends."
+  },
+  {
+   "type": "requires",
+   "target": "GLOSS.action",
+   "evidence": "Casting Time: Action"
+  },
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.spell",
+   "evidence": "A spell is a magical effect that has the characteristics described in “Spells.”"
+  }
+ ],
+ "ambiguities": [
+  {
+   "quote": "Whenever a target makes an attack roll or a saving throw before the spell ends",
+   "reading_a": "Every saving throw counts, including Death Saving Throws and the Constitution save to keep Concentration.",
+   "reading_b": "Only ordinary saving throws against effects count; Death Saving Throws are a special roll and get no bonus.",
+   "proposed_ruling": "Any roll the rules call a saving throw gets the 1d4, including Death Saving Throws and Concentration saves.",
+   "confidence": 0.75
+  },
+  {
+   "quote": "You bless up to three creatures within range.",
+   "reading_a": "The caster can be one of the targets, since the caster is a creature within 30 feet of itself.",
+   "reading_b": "The targets must be creatures other than the caster.",
+   "proposed_ruling": "The caster can bless themself as one of the targets.",
+   "confidence": 0.9
+  },
+  {
+   "quote": "You bless up to three creatures within range.",
+   "reading_a": "Range matters only when the spell is cast; a target that later moves beyond 30 feet stays blessed.",
+   "reading_b": "A target has to stay within range to keep the benefit.",
+   "proposed_ruling": "Range is checked only at casting. The benefit lasts until the spell ends, wherever the target goes.",
+   "confidence": 0.85
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "You bless up to three creatures within range.",
+   "explanation": "None of the units given says what happens when the same creature gets two castings of Bless, from one caster or two. Whether the d4s stack depends on the general Spells rule for combining magical effects, which isn't among the referenced units."
+  },
+  {
+   "quote": "You bless up to three creatures within range.",
+   "explanation": "The unit doesn't say whether a target must be visible or have a clear path to the caster. The general Spells targeting rules decide that, and they aren't among the referenced units."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "Components: V, S, M (a Holy Symbol worth 5+ GP)",
+   "note": "In 2014 the material component was a sprinkling of holy water with no listed cost. The 2024 version needs a Holy Symbol worth 5+ GP, so code that checks for holy water, or for no costed component, is wrong."
+  },
+  {
+   "quote": "the target adds 1d4 to the attack roll or save",
+   "note": "The 2014 wording was 'can roll a d4 and add the number rolled', which read as optional. The 2024 wording 'adds' makes the bonus automatic on every qualifying roll, so don't implement it as an opt-in prompt."
+  },
+  {
+   "quote": "Casting Time: Action",
+   "note": "In 2024 casting a spell is done with the Magic action, not the 2014 'Cast a Spell' action. Map casting time 'Action' to the Magic action."
+  }
+ ],
+ "summary": "Bless is a level 1 Enchantment with a 30 ft range, cast as an Action, with Concentration for up to 1 minute. It targets up to 3 creatures, plus 1 for each slot level above 1, and each target adds 1d4 to every attack roll and saving throw until the spell ends. The spell depends on Concentration (losing it ends the spell for all targets) and on the Action rules. Open points: whether the d4 applies to Death Saving Throws, whether the caster can target themself, and whether range is checked only at casting. Stacking and targeting prerequisites aren't covered by the units given. 2014 traps: the material component changed from holy water to a costed Holy Symbol, and the bonus is now automatic."
+}
