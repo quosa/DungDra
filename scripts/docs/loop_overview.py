@@ -505,7 +505,7 @@ def draw(out: Path, root: Path = Path(".")) -> None:
         dy,
         HW,
         FOUND,
-        "Parked follow-ups",
+        "Follow-ups (parked)",
         "at most one per bug or infra fix, none for refactors · built only when named",
         h=48,
     )
