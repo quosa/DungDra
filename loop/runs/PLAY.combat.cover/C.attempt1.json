@@ -1,0 +1,184 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "PLAY.combat.cover#6",
+    "with": "R-09 (creature size doesn't matter)",
+    "risk": "high",
+    "note": "A Small Giant Rat in front of a Large Ogre still gives Half Cover; several creatures still give only Half."
+   },
+   {
+    "clause": "PLAY.combat.cover#3",
+    "with": "game.creatures_in_the_way (per-origin line)",
+    "risk": "high",
+    "note": "Creature cover must be worked out per attacker: it covers against an attacker whose line crosses the creature and not against others. It covers PCs against monsters as well as the other way round."
+   },
+   {
+    "clause": "PLAY.combat.cover#5",
+    "with": "spell attacks (Fire Bolt), weapon attacks, monster stat-block attacks",
+    "risk": "medium",
+    "note": "The +2 has to reach every attack path, including a monster attacking a PC."
+   },
+   {
+    "clause": "PLAY.combat.cover#5",
+    "with": "Dexterity saves from area spells (Burning Hands)",
+    "risk": "medium",
+    "note": "A creature standing between the caster and the target inside the area gives Half Cover on the Dex save."
+   },
+   {
+    "clause": "PLAY.combat.cover#9",
+    "with": "R-10 / GLOSS.area-of-effect",
+    "risk": "medium",
+    "note": "An area spell isn't refused. Total Cover only cuts the creature out of the area. Covered by the existing tests."
+   },
+   {
+    "clause": "PLAY.combat.cover#9",
+    "with": "Sacred Flame",
+    "risk": "low",
+    "note": "The spell's exception ignores only Half and Three-Quarters Cover. Covered by the existing tests."
+   },
+   {
+    "clause": "PLAY.combat.cover#6",
+    "with": "Session.execute attack",
+    "risk": "low",
+    "note": "The player-facing path has to apply creature cover too."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Shooting past a Small creature in front of a Large target as if it gave no cover",
+    "test": "tests/srd/test_playing_the_game.py::test_small_creature_in_front_of_a_large_one_gives_half_cover",
+    "reason": "R-09: any creature in the line gives Half Cover."
+   },
+   {
+    "case": "Claiming Half Cover from a creature behind the attacker",
+    "test": "tests/srd/test_playing_the_game.py::test_creature_behind_the_attacker_gives_no_cover",
+    "reason": "Only a creature between the origin and the target counts."
+   },
+   {
+    "case": "Using creature cover from one attacker's line against every attacker",
+    "test": "tests/srd/test_playing_the_game.py::test_creature_cover_is_worked_out_per_attacker",
+    "reason": "Cover only applies against an effect from the opposite side."
+   },
+   {
+    "case": "Using a creature as Three-Quarters or Total Cover",
+    "test": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_never_gives_total_cover",
+    "reason": "Existing test; the table offers only Half Cover from a creature."
+   },
+   {
+    "case": "Slipping a Total Cover target into a multi-target spell",
+    "test": "tests/srd/test_playing_the_game.py::test_total_cover_target_cant_be_slipped_into_a_multi_target_spell",
+    "reason": "Existing test."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_small_creature_in_front_of_a_large_one_gives_half_cover",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "boundary",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_on_a_diagonal_line_gives_half_cover",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "positive",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_behind_the_attacker_gives_no_cover",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "negative",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_cover_is_worked_out_per_attacker",
+    "clause": "PLAY.combat.cover#3",
+    "kind": "negative",
+    "rule_quote": "A target can benefit from cover only when an attack or other effect originates on the opposite side of the cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_cover_protects_a_pc_from_a_monster",
+    "clause": "PLAY.combat.cover#3",
+    "kind": "positive",
+    "rule_quote": "A target can benefit from cover only when an attack or other effect originates on the opposite side of the cover.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_half_cover_raises_a_pcs_ac_against_a_monster",
+    "clause": "PLAY.combat.cover#5",
+    "kind": "positive",
+    "rule_quote": "+2 bonus to AC and Dexterity saving throws",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover_to_a_spell_attack",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "positive",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_in_the_way_gives_half_cover_to_a_dex_save",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "positive",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_playing_the_game.py::test_creature_cover_applies_through_the_session",
+    "clause": "PLAY.combat.cover#6",
+    "kind": "positive",
+    "rule_quote": "Another creature or an object that covers at least half of the target",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "PLAY.combat.cover#8",
+    "kind": "missing",
+    "reason": "The scene has no object geometry. An object's degree of cover comes from a scene label, so the engine can't decide whether an object covers 'at least three-quarters' of a target.",
+    "infra_ticket": "Scene objects with geometry (walls, trees, arrow slits) so that the degree of cover an object gives is computed from the map, not from hand-set labels"
+   },
+   {
+    "clause": "PLAY.combat.cover#10",
+    "kind": "missing",
+    "reason": "Same as #8: 'covers the whole target' only exists as a 'total' label. The positive is tested through the label.",
+    "infra_ticket": "Scene objects with geometry (walls, trees, arrow slits) so that the degree of cover an object gives is computed from the map, not from hand-set labels"
+   }
+  ],
+  "kind_waivers": [],
+  "scenario_changes": [
+   {
+    "scenario": "tests/scenarios/test_combat.py::test_cmb05_ranged_cover",
+    "change": "Under-asserts verdict: added the missing #6 check. The incapacitated Adjacent goblin standing in the line gives Half Cover (AC 17). Moved off the line, it gives none (AC 15). The Dex-save +2/+5, opposite-side and two-halves checks were already present.",
+    "note_row": "| CMB-05 | test_cmb05_ranged_cover | under-asserts (PLAY.combat.cover) | Added: a creature in the line gives Half Cover; off the line it gives none |"
+   }
+  ],
+  "rulings_proposed": [],
+  "summary": "Revisit of PLAY.combat.cover. The 38 existing tests all pass now, including the earlier xfails: T-16 added creature cover. I added 9 green tests to tests/srd/test_playing_the_game.py. They cover creature Half Cover on a diagonal line, on a spell attack, on a Dexterity save inside a Burning Hands cone, and through Session.execute. Under R-09, a Small rat in front of a Large ogre still gives Half Cover. A creature behind the attacker gives none. Creature cover is worked out per attacker, and it protects PCs against monster attacks; object Half Cover on a PC's AC is tested too. I extended the CMB-05 scenario test, which stage B found under-asserting, with the creature-cover check. I also added three cheats to the abuse catalogue. The whole file passes (47 tests), and ruff check and ruff format --check are clean. I didn't add a row to docs/scenario-notes.md, because the instructions only ask for one on a contradicts-srd verdict; the row is ready in scenario_changes if the harness wants it. #8 and #10 (how much of the target an object covers) can't be computed: object cover exists only as a scene label, so I filed both as missing infra. They're tested through the labels."
+ },
+ "problems": [
+  "clause PLAY.combat.cover#1: no negative, positive test",
+  "clause PLAY.combat.cover#2: no negative, positive test",
+  "clause PLAY.combat.cover#4: no negative, positive test",
+  "clause PLAY.combat.cover#5: no boundary, negative test",
+  "clause PLAY.combat.cover#7: no boundary, negative, positive test",
+  "clause PLAY.combat.cover#9: no negative, positive test"
+ ],
+ "cost_usd": 1.082216,
+ "session": "cef5e4a9-6985-46af-afb7-9098f8c56ba1",
+ "error": null
+}

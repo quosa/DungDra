@@ -233,3 +233,6 @@ loop/queue.json
 
 # SRD loop: decision sheets written by /srd-triage
 loop/triage/
+
+# The loop run records of a unit whose id ends in ".cover" (PLAY.combat.cover), which *.cover above hides
+!loop/runs/*.cover/
