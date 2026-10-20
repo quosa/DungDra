@@ -1,0 +1,51 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/actions.py:2",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "Study, Utilize (tools), Dash, Disengage, Dodge, Ready (p.176-191).\"\"\"",
+    "rule_quote": "Here are definitions of various rules.",
+    "explanation": "Matched by page only. It cites the action definitions, which belong to the individual GLOSS.* units, not to the intro sentence."
+   },
+   {
+    "item": "dungdra/actions.py:32",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=176,",
+    "rule_quote": "Here are definitions of various rules.",
+    "explanation": "A page number in an action's log or refusal. It implements a specific glossary definition, not the introduction."
+   },
+   {
+    "item": "dungdra/actions.py:41",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=176,",
+    "rule_quote": "Here are definitions of various rules.",
+    "explanation": "Same as line 32. A page-only match to a specific glossary action."
+   },
+   {
+    "item": "dungdra/effects.py:151",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# Conditions (Rules Glossary p.176-191)",
+    "rule_quote": "Here are definitions of various rules.",
+    "explanation": "A section comment about conditions. The conditions are defined in their own units, and the intro has no testable clause."
+   },
+   {
+    "item": "dungdra/game.py:157",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"Whether ``b`` is ``a``'s ally (p.176). Never yourself (R-36).\"\"\"",
+    "rule_quote": "Here are definitions of various rules.",
+    "explanation": "This implements the Ally definition (a separate GLOSS unit) and register ruling R-36. The intro unit says nothing about it."
+   }
+  ],
+  "summary": "GLOSS.rules-definitions is only an intro sentence with no clauses. It has no scenarios or SRD tests. All 5 candidate code lines matched by page number only and belong to other glossary units, so each is not-related."
+ },
+ "problems": [],
+ "cost_usd": 0.046358,
+ "session": "91707d70-4788-4716-ba6d-0998e61b48df",
+ "error": null
+}

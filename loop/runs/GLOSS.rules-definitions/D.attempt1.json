@@ -1,0 +1,10 @@
+{
+ "output": {
+  "verdicts": [],
+  "summary": "No tests were submitted for GLOSS.rules-definitions (SRD p.176). The unit is only the Rules Glossary intro line \"Here are definitions of various rules.\" It sets no rule, so an empty test set is right and there is nothing to keep or refute. I ran no mutations because there was nothing to run them against."
+ },
+ "problems": [],
+ "cost_usd": 0.11177200000000001,
+ "session": "1f4c2afc-e72a-433c-b0f1-48411bdfddb3",
+ "error": null
+}

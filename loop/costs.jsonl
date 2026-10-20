@@ -268,3 +268,7 @@
 {"at": 1792527218, "about": "T-91", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1337, "seconds": 26.3, "session_id": "bdf5591c-87d0-4f60-9314-96065d0305f9", "exit": 0}
 {"at": 1792528096, "about": "T-93", "stage": "fix", "role": "fixer", "model": "opus", "cost_usd": 0.4705, "seconds": 206.9, "session_id": "51c7b816-7f47-4cb5-a733-5ae898ff6632", "exit": 0}
 {"at": 1792528480, "about": "T-93", "stage": "review", "role": "fix-reviewer", "model": "opus", "cost_usd": 0.1228, "seconds": 12.5, "session_id": "09055c3a-e683-45ab-8b1e-c903a6619b0b", "exit": 0}
+{"at": 1792531461, "about": "GLOSS.rules-definitions", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.1125, "seconds": 6.2, "session_id": "d7e7a0d2-60c2-40d3-aec6-4317dc6c0440", "exit": 0}
+{"at": 1792531468, "about": "GLOSS.rules-definitions", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0464, "seconds": 7.8, "session_id": "91707d70-4788-4716-ba6d-0998e61b48df", "exit": 0}
+{"at": 1792531475, "about": "GLOSS.rules-definitions", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.2268, "seconds": 8.3, "session_id": "da500b12-f4e4-45b0-b3a0-6a813cac31f4", "exit": 0}
+{"at": 1792531484, "about": "GLOSS.rules-definitions", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.1118, "seconds": 6.8, "session_id": "1f4c2afc-e72a-433c-b0f1-48411bdfddb3", "exit": 0}
