@@ -1,9 +1,6 @@
 {
   "fingerprint": "d74ca421fbc10450",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally",
-    "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally"
-  ],
+  "for_review": [],
   "id": "GLOSS.ally",
   "kind_waivers": [
     {
@@ -36,6 +33,18 @@
     "tests/srd/test_glossary.py::test_ally_pack_tactics_counts_a_wolf_on_the_same_side"
   ],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally"
+    },
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1792522749,

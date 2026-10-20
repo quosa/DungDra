@@ -1,8 +1,6 @@
 {
   "fingerprint": "17573d648128057a",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
-  ],
+  "for_review": [],
   "id": "GLOSS.creature-type",
   "kind_waivers": [
     {
@@ -41,6 +39,13 @@
     "tests/srd/test_glossary.py::test_creature_type_hold_person_on_a_goblin_doesnt_reveal_its_type"
   ],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "Backed by R-36..R-39; #3 covers the Session entry point",
+      "test": "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1792523180,
