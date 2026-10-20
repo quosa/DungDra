@@ -2252,7 +2252,7 @@ def last_study_check(game, start):
 
 
 # ---------------------------------------------------------------- #1 every creature has a type tag
-@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#1", kind="positive", ruling="P-33")
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#1", kind="positive", ruling="R-38")
 def test_creature_type_every_monster_and_pc_has_one_listed_type(game):
     from dungdra.data.monsters import MONSTERS
 

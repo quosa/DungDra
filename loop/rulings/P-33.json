@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-38",
+  "note": "'the type' is singular; species and descriptors aren't types.",
   "reason": ""
 }
