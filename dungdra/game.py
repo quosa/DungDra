@@ -117,7 +117,9 @@ class Game:
             creature.team = team
         if position is not None:
             creature.position = tuple(position)
-        if creature.team == "party" and creature.id not in self.party:
+        # SRD[GLOSS.ally#4] a creature the GM puts on the party's side is an ally through its team
+        # (is_ally); a stat-block monster doesn't join the adventuring party's roster.
+        if creature.team == "party" and creature.kind != "monster" and creature.id not in self.party:
             self.party.append(creature.id)
         creature.on_added(self)
         return creature

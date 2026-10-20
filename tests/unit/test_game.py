@@ -151,3 +151,13 @@ def test_creatures_on_the_same_side_are_allies_and_the_other_side_is_not(game):
     assert game.is_ally(lidda, brom)
     assert brom in game.allies_of(lidda)
     assert gob not in game.allies_of(lidda)
+
+
+def test_a_monster_added_to_the_party_side_is_an_ally_but_not_on_the_pc_roster(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    g = mon(game, "guard", (10, 0))
+    game.remove(g)
+    game.add(g, team="party", position=(10, 0))
+    assert g in game.allies_of(lidda)
+    assert lidda in game.allies_of(g)
+    assert game.pcs() == [lidda]

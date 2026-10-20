@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-88 is fixed. The crash happened because `Game.add` put every creature on team 'party' into `game.party`. `game.party` is the roster that `pcs()` returns, and about 28 places use it as if every entry had character attributes such as `wielded` and `level`. Now a stat-block monster (kind 'monster') on the party's side doesn't join that roster. It still counts as an ally through its team in `is_ally`, which covers GLOSS.ally#4. Bare `Creature`s still join, because the scenario tests use them as stand-in party members (`test_core02d` depends on this). The fix is in `dungdra/game.py` and tagged `SRD[GLOSS.ally#4]`. I added a unit test in `tests/unit/test_game.py`: a monster added with team='party' is an ally both ways, and `pcs()` still lists only LIDDA.\n\nResults: the ticket's test passes with `--runxfail`. Without that flag it still reports FAILED, only because its strict xfail marker is still in place. All 541 unit tests pass, the rest of `tests/srd` and `tests/scenarios` pass, `ruff check` and `ruff format --check` are clean, and `dev-gate` passes."
+    }
+  ]
 }

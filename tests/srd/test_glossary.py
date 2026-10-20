@@ -2158,12 +2158,6 @@ def test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack(game):
 
 # ---------------- #4 · designated as your ally by the rules or the GM ----------------
 @pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-88: a creature the GM puts on the party's side is an ally; engine: a monster "
-    "spawned with team='party' joins game.party and the next Session command crashes "
-    "('Monster' object has no attribute 'wielded')",
-)
 def test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally(game):
     lidda, gob = sneak_setup(game)
     s = Session(game)
