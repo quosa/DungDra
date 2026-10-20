@@ -1,0 +1,12 @@
+{
+  "id": "T-87",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: a creature that is your friend (Friendly attitude) is your ally; engine: allies are only creatures on the same team, so a Friendly NPC never counts",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

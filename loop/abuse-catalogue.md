@@ -41,6 +41,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 
 ## Targets
 - Targeting a hidden, invisible, unseen, dead or out-of-range creature.
+- Naming yourself as "an ally" (Help on your own ability check, counting yourself as the ally
+  next to the target for Sneak Attack), or naming an enemy as one (Help on a foe's check).
+- Counting a creature on the other side, or one that is merely nearby, as an ally to switch on
+  an ally-based benefit (Sneak Attack, Pack Tactics, Help on an attack roll).
 - Targeting yourself, or an ally, where the rule says a creature you can see or an enemy.
 - More targets than a spell or feature allows.
 - Using a non-sight sense (Tremorsense, a sense that only pinpoints a location) as "a creature

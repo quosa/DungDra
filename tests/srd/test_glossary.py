@@ -8,6 +8,7 @@ from dungdra import combat as C
 from dungdra import spells as S
 from dungdra.api import Session
 from dungdra.effects import SpeedPenalty
+from dungdra.mounted import mount
 from tests.support import ready as RDY
 from tests.support.helpers import mon, pc
 from tests.support.srd import assert_refused_cleanly
@@ -2053,3 +2054,160 @@ def test_a_column_of_creatures_cant_be_used_as_a_wall_against_the_area(game):
     _, gobs = burn(game, [(5, 0), (10, 0), (15, 0)], hits=3)
     assert hit(gobs) == [True, True, True]
     assert aoe_exclusions(game) == []
+
+
+# ================ GLOSS.ally ================
+ALLY = "GLOSS.ally"
+
+
+def sneak_setup(game):
+    """LIDDA (rogue, shortsword) next to a sturdy goblin. Sneak Attack turns on an ally of hers
+    within 5 ft of the target: 1d6+3 without one, plus 1d6 Sneak Attack with one there."""
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    return lidda, gob
+
+
+def stab(game, lidda, gob):
+    """A hit (d6=4, +3); the second d6 (5) is the Sneak Attack die an ally enables."""
+    game.dice.force_str("d20=[15]; d6=[4,5]")
+    return C.attack(game, lidda, gob, weapon="shortsword").damage
+
+
+def assert_stab_without_sneak_attack(game, lidda, gob):
+    game.dice.force_str("d20=[15]; d6=[4]")
+    assert C.attack(game, lidda, gob, weapon="shortsword").damage == 7
+    assert any("No Sneak Attack" in e.text for e in game.log.of_kind("sneak"))
+
+
+def bystander(game, pos=(10, 0), attitude="indifferent"):
+    """A guard who isn't in the party and isn't fighting on either side."""
+    g = mon(game, "guard", pos, name="WATCHMAN")
+    g.team = "neutral"
+    g.attitude = attitude
+    return g
+
+
+# ---------------- #1 · a member of your adventuring party ----------------
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#1", kind="negative")
+def test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally(game):
+    # Not a party member, on no side, not friendly, not designated: no Sneak Attack.
+    lidda, gob = sneak_setup(game)
+    bystander(game)
+    assert_stab_without_sneak_attack(game, lidda, gob)
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#1", kind="abuse", ruling="P-31")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-86: you aren't your own ally, so Help can't assist your own ability check; "
+    "engine: help_check accepts the helper as the ally and gives them Advantage",
+)
+def test_ally_helping_yourself_as_your_own_ally_is_refused(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    assert_refused_cleanly(game, actions.help_check, game, lidda, lidda, skill="perception")
+
+
+# ---------------- #2 · your friend ----------------
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#2", kind="positive", ruling="P-32")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-87: a creature Friendly to the party is its friend and so its ally; "
+    "engine: allies are only creatures on the same team, so a Friendly NPC never counts",
+)
+def test_ally_a_friendly_npc_next_to_the_target_is_an_ally(game):
+    lidda, gob = sneak_setup(game)
+    bystander(game, attitude="friendly")
+    assert stab(game, lidda, gob) == 12
+
+
+# ---------------- #3 · on your side in combat ----------------
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="positive")
+def test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side(game):
+    lidda, gob = sneak_setup(game)
+    brom = pc(game, "BROM", (5, 5))
+    actions.help_attack(game, brom, gob)
+    game.dice.force_str("d20=[3,15]; d6=[4,5]")
+    r = C.attack(game, lidda, gob, weapon="shortsword")
+    assert r.roll.mode == "advantage"
+    assert r.hit
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
+def test_ally_help_gives_no_advantage_to_a_creature_on_the_other_side(game):
+    lidda, gob = sneak_setup(game)
+    brom = pc(game, "BROM", (5, 5))
+    other = mon(game, "goblin warrior", (10, 0), name="SECOND GOBLIN")
+    actions.help_attack(game, brom, gob)
+    # A goblin on the goblins' side isn't BROM's ally, even when it attacks BROM's enemy.
+    game.dice.force_str("d20=[15]; d6=[3]")
+    r = C.attack(game, other, gob)
+    assert r.roll.mode != "advantage"
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
+def test_ally_the_target_s_side_is_not_the_attacker_s_ally(game):
+    # LIDDA stands next to BROM, but she is on BROM's side, not the wolf's.
+    brom = pc(game, "BROM", (0, 0))
+    wolf = mon(game, "wolf", (5, 0))
+    pc(game, "LIDDA", (0, 5))
+    game.dice.force_str("d20=[18]; d6=[3]")
+    r = C.attack(game, wolf, brom)
+    assert r.roll.mode != "advantage"
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
+def test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack(game):
+    lidda, gob = sneak_setup(game)
+    mon(game, "goblin warrior", (10, 0), name="SECOND GOBLIN")
+    assert_stab_without_sneak_attack(game, lidda, gob)
+
+
+# ---------------- #4 · designated as your ally by the rules or the GM ----------------
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-88: a creature the GM puts on the party's side is an ally; engine: a monster "
+    "spawned with team='party' joins game.party and the next Session command crashes "
+    "('Monster' object has no attribute 'wielded')",
+)
+def test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally(game):
+    lidda, gob = sneak_setup(game)
+    s = Session(game)
+    out = s.execute({"cmd": "spawn", "monsters": ["guard"], "positions": [[10, 0]], "team": "party"})
+    assert out["ok"], out
+    game.dice.force_str("d20=[15]; d6=[4,5]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": gob.id, "weapon": "shortsword"})
+    assert out["result"]["damage"] == 12
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="positive")
+def test_ally_a_controlled_mount_is_designated_the_rider_s_ally(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    horse = mon(game, "riding horse", (5, 0))
+    horse.team = "neutral"
+    mount(game, jozan, horse, controlled=True)
+    assert horse in game.allies_of(jozan)
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="negative")
+def test_ally_an_independent_mount_is_not_designated_an_ally(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    horse = mon(game, "riding horse", (5, 0))
+    horse.team = "neutral"
+    mount(game, jozan, horse, controlled=False)
+    assert horse not in game.allies_of(jozan)
+
+
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-89: Help assists the ability check of 'one ally'; "
+    "engine: help_check gives Advantage to any creature named, including an enemy",
+)
+def test_ally_helping_an_enemy_s_ability_check_is_refused(game):
+    lidda, gob = sneak_setup(game)
+    assert_refused_cleanly(game, actions.help_check, game, lidda, gob, skill="perception")

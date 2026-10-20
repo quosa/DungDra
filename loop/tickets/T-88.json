@@ -1,0 +1,12 @@
+{
+  "id": "T-88",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: a creature the GM designates as your ally counts as one; engine: a monster spawned with team='party' joins game.party and the next Session command crashes ('Monster' object has no attribute 'wielded')",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

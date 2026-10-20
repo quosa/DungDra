@@ -1,0 +1,13 @@
+{
+  "id": "P-32",
+  "unit": "GLOSS.ally",
+  "ambiguity": "GLOSS.ally gap: 'your friend' has no game state",
+  "ruling": "A creature whose attitude toward the party is Friendly (the GLOSS.influence attitudes) is the party's friend and so its ally, even if it isn't fighting on a side. An Indifferent or Hostile creature isn't a friend.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

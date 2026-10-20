@@ -1,0 +1,12 @@
+{
+  "id": "T-89",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: Help assists the ability check of one ally, and an enemy isn't one; engine: help_check gives Advantage to any creature named, including an enemy",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

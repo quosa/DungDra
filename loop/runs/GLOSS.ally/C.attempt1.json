@@ -1,0 +1,266 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.ally#1",
+    "with": "CLASS.rogue.level-1-sneak-attack",
+    "risk": "high",
+    "note": "Sneak Attack is switched on by an ally of the rogue within 5 ft of the target. game.allies_of is team-based and leaves out the rogue herself."
+   },
+   {
+    "clause": "GLOSS.ally#1",
+    "with": "GLOSS.help (Assist an Ability Check)",
+    "risk": "high",
+    "note": "Help says 'one ally', but help_check accepts any creature, including the helper and enemies."
+   },
+   {
+    "clause": "GLOSS.ally#3",
+    "with": "GLOSS.help (Assist an Attack Roll)",
+    "risk": "medium",
+    "note": "HelpAttack gives Advantage when actor.team == helper.team and actor isn't the helper."
+   },
+   {
+    "clause": "GLOSS.ally#3",
+    "with": "Pack Tactics (wolf, goblin)",
+    "risk": "medium",
+    "note": "Uses allies_of(attacker). Creatures on the target's side must not count."
+   },
+   {
+    "clause": "GLOSS.ally#2",
+    "with": "GLOSS.influence attitudes (Friendly/Indifferent/Hostile)",
+    "risk": "high",
+    "note": "'Friend' has no game state except the NPC attitude. The engine ignores attitude when it works out allies."
+   },
+   {
+    "clause": "GLOSS.ally#4",
+    "with": "PLAY.combat.mounted-combat (controlled mount)",
+    "risk": "medium",
+    "note": "A controlled mount takes the rider's team. This is a rules designation."
+   },
+   {
+    "clause": "GLOSS.ally#4",
+    "with": "Session spawn team='party' (GM designation)",
+    "risk": "high",
+    "note": "The spawned creature joins game.party, and Session._snapshot_turn crashes on Monster.wielded."
+   },
+   {
+    "clause": "GLOSS.ally#4",
+    "with": "Alert (swap Initiative with a willing ally), Redirect Attack (Goblin Boss)",
+    "risk": "low",
+    "note": "Both use team equality. Not tested here."
+   },
+   {
+    "clause": "GLOSS.ally#3",
+    "with": "GLOSS.charmed",
+    "risk": "low",
+    "note": "Whether Charmed makes a creature an ally isn't stated (gap). Untested."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Help your own ability check by naming yourself as the ally",
+    "test": "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused",
+    "reason": "'Targeting yourself, or an ally, where the rule says…' A creature isn't its own ally (proposed reading A)."
+   },
+   {
+    "case": "Help an enemy's ability check",
+    "test": "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused",
+    "reason": "Help assists 'one ally'."
+   },
+   {
+    "case": "Count yourself as the ally next to the target for Sneak Attack",
+    "test": "tests/srd/test_glossary.py::test_ally_you_are_not_your_own_ally",
+    "reason": "A creature isn't its own ally."
+   },
+   {
+    "case": "Count an enemy or a bystander next to the target as an ally for Sneak Attack, Pack Tactics or Help",
+    "test": "tests/srd/test_glossary.py::test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack",
+    "reason": "Only creatures on your side count. Also covered by test_ally_the_target_s_side_is_not_the_attacker_s_ally and test_ally_help_gives_no_advantage_to_a_creature_on_the_other_side."
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_party_member_next_to_the_target_is_an_ally",
+    "clause": "GLOSS.ally#1",
+    "kind": "positive",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_party_member_is_an_ally_through_the_session",
+    "clause": "GLOSS.ally#1",
+    "kind": "positive",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally",
+    "clause": "GLOSS.ally#1",
+    "kind": "negative",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party, your friend, on your side in combat, or a creature that the rules or the GM designates as your ally.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_you_are_not_your_own_ally",
+    "clause": "GLOSS.ally#1",
+    "kind": "negative",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused",
+    "clause": "GLOSS.ally#1",
+    "kind": "abuse",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party",
+    "claim": "red",
+    "ticket_title": "SRD: you aren't your own ally, so Help can't assist your own ability check; engine: help_check accepts the helper as the ally and gives them Advantage"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally",
+    "clause": "GLOSS.ally#2",
+    "kind": "positive",
+    "rule_quote": "your friend",
+    "claim": "red",
+    "ticket_title": "SRD: a creature that is your friend (Friendly attitude) is your ally; engine: allies are only creatures on the same team, so a Friendly NPC never counts"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_an_indifferent_npc_is_not_a_friend",
+    "clause": "GLOSS.ally#2",
+    "kind": "negative",
+    "rule_quote": "your friend",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side",
+    "clause": "GLOSS.ally#3",
+    "kind": "positive",
+    "rule_quote": "on your side in combat",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_help_gives_no_advantage_to_a_creature_on_the_other_side",
+    "clause": "GLOSS.ally#3",
+    "kind": "negative",
+    "rule_quote": "on your side in combat",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_pack_tactics_counts_a_wolf_on_the_same_side",
+    "clause": "GLOSS.ally#3",
+    "kind": "positive",
+    "rule_quote": "on your side in combat",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_the_target_s_side_is_not_the_attacker_s_ally",
+    "clause": "GLOSS.ally#3",
+    "kind": "negative",
+    "rule_quote": "on your side in combat",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_an_enemy_next_to_the_target_doesnt_enable_sneak_attack",
+    "clause": "GLOSS.ally#3",
+    "kind": "negative",
+    "rule_quote": "on your side in combat",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_creature_the_gm_puts_on_the_party_s_side_is_an_ally",
+    "clause": "GLOSS.ally#4",
+    "kind": "positive",
+    "rule_quote": "a creature that the rules or the GM designates as your ally",
+    "claim": "red",
+    "ticket_title": "SRD: a creature the GM designates as your ally counts as one; engine: a monster spawned with team='party' joins game.party and the next Session command crashes ('Monster' object has no attribute 'wielded')"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_a_controlled_mount_is_designated_the_rider_s_ally",
+    "clause": "GLOSS.ally#4",
+    "kind": "positive",
+    "rule_quote": "a creature that the rules or the GM designates as your ally",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_an_independent_mount_is_not_designated_an_ally",
+    "clause": "GLOSS.ally#4",
+    "kind": "negative",
+    "rule_quote": "a creature that the rules or the GM designates as your ally",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_ally_helping_an_enemy_s_ability_check_is_refused",
+    "clause": "GLOSS.ally#4",
+    "kind": "abuse",
+    "rule_quote": "A creature is your ally if it is a member of your adventuring party, your friend, on your side in combat, or a creature that the rules or the GM designates as your ally.",
+    "claim": "red",
+    "ticket_title": "SRD: Help assists the ability check of one ally, and an enemy isn't one; engine: help_check gives Advantage to any creature named, including an enemy"
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.ally#4",
+    "kind": "missing",
+    "reason": "Neither the Session nor the GM layer has a command to re-designate an existing creature's side mid-encounter (for example, a goblin that surrenders and joins the party), and nothing logs the change. Sides can only be set at spawn or through mounting.",
+    "infra_ticket": "A GM command to designate an existing creature as the party's ally (or to remove that status) mid-encounter, logged with page=176 and rule='GLOSS.ally#4'"
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.ally#1",
+    "kind": "boundary",
+    "reason": "No threshold: party membership is yes or no. The 5-ft reach of Sneak Attack and Help belongs to those units."
+   },
+   {
+    "clause": "GLOSS.ally#2",
+    "kind": "boundary",
+    "reason": "No threshold: an attitude is Friendly or it isn't."
+   },
+   {
+    "clause": "GLOSS.ally#3",
+    "kind": "boundary",
+    "reason": "No threshold: a creature is on your side or not."
+   },
+   {
+    "clause": "GLOSS.ally#4",
+    "kind": "boundary",
+    "reason": "No threshold: a creature is designated or not."
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.ally ambiguity 1: is a creature its own ally?",
+    "ruling": "Reading A: a creature is never its own ally. Effects that include the user say 'you or an ally'. So a rogue next to the target doesn't count as an ally for her own Sneak Attack, and Help can't assist the helper's own check.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_ally_you_are_not_your_own_ally",
+     "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.ally gap: 'your friend' has no game state",
+    "ruling": "A creature whose attitude toward the party is Friendly (the GLOSS.influence attitudes) is the party's friend and so its ally, even if it isn't fighting on a side. An Indifferent or Hostile creature isn't a friend.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally",
+     "tests/srd/test_glossary.py::test_ally_an_indifferent_npc_is_not_a_friend"
+    ]
+   }
+  ],
+  "summary": "I added 16 GLOSS.ally tests to tests/srd/test_glossary.py. Each clause is tested through its effects: Sneak Attack's ally within 5 ft, Help on an attack roll, Pack Tactics, controlled mounts, and the Session attack and spawn commands. 12 pass and 4 are strict xfail (red): (1) Help's ability-check assist accepts the helper as their own ally; (2) Help's ability-check assist accepts an enemy; (3) a Friendly-attitude NPC is never an ally, because allies are team-only; (4) a monster spawned through the Session with team='party' crashes the next command (Monster has no 'wielded'). I proposed two rulings: you aren't your own ally, and a Friendly attitude means 'friend'. One infra ticket: there's no GM command to re-designate a creature's side mid-encounter. I added two cheats to the abuse catalogue. One mistake on the way: a sed of mine briefly rewrote 11 assertions in the existing prone tests. I reverted it, and git diff now shows only additions. tests/srd passes with 389 passed and 4 xfailed, and ruff check and ruff format are clean."
+ },
+ "problems": [],
+ "cost_usd": 1.4447956000000002,
+ "session": "08b01033-3e43-4388-8595-14b7e159bc03",
+ "error": null
+}

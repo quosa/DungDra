@@ -1,0 +1,21 @@
+{
+ "verdicts": [
+  {
+   "item": "dungdra/actions.py:2",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "Study, Utilize (tools), Dash, Disengage, Dodge, Ready (p.176-191).",
+   "rule_quote": "A creature is your ally if it is a member of your adventuring party, your friend, on your side in combat, or a creature that the rules or the GM designates as your ally.",
+   "explanation": "This docstring line lists actions and cites a page range that happens to include p.176. It has nothing to do with the definition of an ally."
+  },
+  {
+   "item": "dungdra/effects.py:151",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# Conditions (Rules Glossary p.176-191)",
+   "rule_quote": "A creature is your ally if it is a member of your adventuring party, your friend, on your side in combat, or a creature that the rules or the GM designates as your ally.",
+   "explanation": "This comment heads the conditions section and matches only by page number. It doesn't implement or use ally status."
+  }
+ ],
+ "summary": "No scenarios or SRD tests were given for GLOSS.ally. The two code lines were matched only by page range (p.176-191) and have nothing to do with ally status, so both are not-related. Nothing in the engine or tests currently covers this unit's four clauses, which is a coverage gap rather than a contradiction."
+}
