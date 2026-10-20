@@ -2423,3 +2423,183 @@ def test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature(g
     brom, before, gob = wave_over_brom(game, name_brom=False)
     assert brom.hp == before - 4
     assert gob.hp == 26
+
+
+# ================= GLOSS.deafened =================
+DEAF = "GLOSS.deafened"
+
+
+def deafened_brom(game, pos=(0, 0)):
+    brom = pc(game, "BROM", pos)
+    brom.add_condition("deafened", "test")
+    assert brom.has("deafened")
+    return brom
+
+
+# ---------------- #1 · You can't hear ----------------
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="positive")
+def test_deafened_listening_search_doesnt_find_a_hidden_creature(game):
+    # A deafened creature listening for a hidden goblin can't hear it: the Search fails
+    # without a roll and the goblin stays hidden
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.hidden_total = 12
+    r = actions.search(game, brom, "perception", tags={"hearing"}, what="listening for footsteps")
+    assert r.success is False
+    assert r.dice == []
+    assert gob.hidden_total == 12
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-35")
+def test_deafened_searching_by_sight_still_finds_a_hidden_creature(game):
+    # Not hearing doesn't stop a creature from seeing: a Perception Search by sight is rolled
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.hidden_total = 12
+    game.dice.force_str("d20=[20]")
+    r = actions.search(game, brom, "perception", what="looking around")
+    assert r.dice == [20]
+    assert gob.hidden_total is None
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-36")
+def test_deafened_gives_no_advantage_on_attacks_against_it(game):
+    # Unlike Blinded, not hearing gives attackers nothing: a goblin's attack is a normal roll
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.dice.force_str("d20=[5]")
+    r = C.attack(game, gob, brom, attack_name="scimitar")
+    assert r.roll.mode == "normal"
+    assert r.roll.dice == [5]
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-36")
+def test_deafened_attack_rolls_are_normal(game):
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[5]")
+    r = C.attack(game, brom, gob, weapon="longsword")
+    assert r.roll.mode == "normal"
+    assert r.roll.dice == [5]
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative")
+def test_deafened_saving_throws_are_rolled_normally(game):
+    # Deafened names only ability checks; a saving throw isn't one, so it is rolled
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[19]")
+    r = brom.save("wis", dc=10)
+    assert r.dice == [19]
+    assert r.success is True
+
+
+# ---------------- #2 · automatically fail checks that require hearing ----------------
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_hearing_check_fails_automatically(game):
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"})
+    assert r.success is False
+    assert r.auto == "fail"
+    assert r.dice == []
+    assert "Deafened" in r.auto_reason
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_any_ability_check_requiring_hearing_fails(game):
+    # 'any ability check': not only Perception. Insight from a voice heard through a door
+    brom = deafened_brom(game)
+    r = brom.check("insight", dc=1, tags={"hearing"})
+    assert r.success is False
+    assert r.dice == []
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_automatic_failure_is_logged(game):
+    brom = deafened_brom(game)
+    start = len(game.log.events)
+    brom.check("perception", dc=1, tags={"hearing"})
+    texts = [e.text for e in game.log.since(start)]
+    assert any("automatic failure" in t and "Deafened" in t for t in texts)
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-94: Deafened's automatic failure is logged under the generic d20 rule, "
+    "not GLOSS.deafened#2 on p.181",
+)
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_automatic_failure_cites_the_rule(game):
+    brom = deafened_brom(game)
+    start = len(game.log.events)
+    brom.check("perception", dc=1, tags={"hearing"})
+    events = [e for e in game.log.since(start) if "Deafened" in e.text]
+    assert events
+    assert events[0].rule == f"{DEAF}#2"
+    assert str(events[0].page) == "181"
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_hearing_check_without_deafened_is_rolled(game):
+    brom = pc(game, "BROM", (0, 0))
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5, tags={"hearing"})
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_deafened_check_not_requiring_hearing_is_rolled(game):
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    r = brom.check("athletics", dc=5)
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="P-35")
+def test_deafened_perception_by_sight_is_rolled(game):
+    # Reading A: a Perception check that can succeed by sight doesn't require hearing
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5)
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="P-35")
+def test_deafened_check_command_rolls_an_ordinary_perception_check(game):
+    s = Session(game)
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    out = s.execute({"cmd": "check", "actor": brom.id, "skill": "perception", "dc": 5})
+    assert out["ok"] is True
+    assert out["result"]["success"] is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_hearing_check_rolls_again_once_deafened_ends(game):
+    brom = deafened_brom(game)
+    brom.remove_condition("deafened")
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5, tags={"hearing"})
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="abuse")
+def test_deafened_hearing_check_with_advantage_still_fails(game):
+    # Advantage (from Help or anywhere else) can't rescue a check that fails automatically
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"}, adv=("Help",))
+    assert r.success is False
+    assert r.dice == []
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="abuse")
+def test_deafened_hearing_check_with_a_bonus_still_fails(game):
+    # A flat bonus that would beat the DC on any roll doesn't turn an automatic failure into a roll
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"}, bonus=[(20, "test bonus")])
+    assert r.success is False
+    assert r.dice == []

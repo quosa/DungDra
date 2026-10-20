@@ -1,0 +1,10 @@
+{
+  "id": "T-96",
+  "kind": "infra",
+  "unit": "GLOSS.deafened",
+  "title": "Let player-facing check and Search commands say which sense the check relies on (e.g. listening vs looking), so a check that requires hearing can be made through Session.execute.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -1,0 +1,65 @@
+{
+  "fingerprint": "85ac42df33280878",
+  "for_review": [
+    "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
+    "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check"
+  ],
+  "id": "GLOSS.deafened",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.deafened#1",
+      "kind": "boundary",
+      "reason": "No threshold: you either have the condition or you don't."
+    },
+    {
+      "clause": "GLOSS.deafened#2",
+      "kind": "boundary",
+      "reason": "No threshold: the failure is automatic whatever the DC or roll. The abuse tests use DC 1 and +20 bonuses to show that."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792531789,
+      "summary": "The Deafened condition has one effect, Can't Hear. The creature can't hear, and it automatically fails any ability check that requires hearing. Unlike Blinded, it doesn't affect attack rolls or saving throws. The open question is which checks count as requiring hearing, because no rule defines that."
+    },
+    "B": {
+      "at": 1792531808,
+      "summary": "The engine fails a check for Deafened only when the check is tagged \"hearing\" (dungdra/effects.py:205), which is a reasonable reading of clause 2 but depends on the unresolved gap about which checks require hearing. COND-03 is consistent. The COND-03 test checks only one tagged check, so it under-as"
+    },
+    "C": {
+      "at": 1792531984,
+      "summary": "I wrote 16 tests for GLOSS.deafened in tests/srd/test_glossary.py: 15 green and 1 red (xfail). Clause #2 is implemented correctly. A check tagged 'hearing' fails automatically with no die rolled, and Advantage or a +20 bonus can't rescue it. Checks that don't need hearing, saves and attacks are roll"
+    },
+    "D": {
+      "at": 1792532098,
+      "summary": "I'd keep 14 of the 16 Deafened tests. Every green test failed under at least one targeted mutation. Two of my mutations had no effect at first, and both turned out to be my mistakes, not weak tests. Treating Deafened as Blinded in game.can_see doesn't reach the check, which goes through Condition.d2"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_deafened_listening_search_doesnt_find_a_hidden_creature",
+    "tests/srd/test_glossary.py::test_deafened_searching_by_sight_still_finds_a_hidden_creature",
+    "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
+    "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal",
+    "tests/srd/test_glossary.py::test_deafened_saving_throws_are_rolled_normally",
+    "tests/srd/test_glossary.py::test_deafened_hearing_check_fails_automatically",
+    "tests/srd/test_glossary.py::test_deafened_any_ability_check_requiring_hearing_fails",
+    "tests/srd/test_glossary.py::test_deafened_automatic_failure_is_logged",
+    "tests/srd/test_glossary.py::test_deafened_automatic_failure_cites_the_rule",
+    "tests/srd/test_glossary.py::test_hearing_check_without_deafened_is_rolled",
+    "tests/srd/test_glossary.py::test_deafened_check_not_requiring_hearing_is_rolled",
+    "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
+    "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check",
+    "tests/srd/test_glossary.py::test_hearing_check_rolls_again_once_deafened_ends",
+    "tests/srd/test_glossary.py::test_deafened_hearing_check_with_advantage_still_fails",
+    "tests/srd/test_glossary.py::test_deafened_hearing_check_with_a_bonus_still_fails"
+  ],
+  "tickets": [
+    "T-94",
+    "T-95",
+    "T-96"
+  ]
+}

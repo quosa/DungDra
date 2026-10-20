@@ -134,6 +134,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
   Long Rest, a Potion of Healing), or getting more from Remove Curse or Greater Restoration than
   their own text gives (keeping a cursed item while its curse goes, every curse from one
   Greater Restoration).
+- Turning a condition's automatic failure (Deafened on a check that requires hearing, Blinded on
+  one that requires sight) back into a roll with Advantage, a flat bonus or a reroll; or
+  relabelling a check that relies on the lost sense as one that doesn't.
 - Shedding a curse by shape-shifting or by changing the cursed item's owner, when the curse's
   own effect doesn't say it ends that way.
 

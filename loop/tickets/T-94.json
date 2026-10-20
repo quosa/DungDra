@@ -1,0 +1,12 @@
+{
+  "id": "T-94",
+  "kind": "bug",
+  "unit": "GLOSS.deafened",
+  "title": "SRD: Deafened's automatic failure on a hearing check is a rule event citing p.181; engine: logged under the generic d20-test rule (PLAY.d20-tests), with no Deafened rule or page",
+  "tests": [
+    "tests/srd/test_glossary.py::test_deafened_automatic_failure_cites_the_rule"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

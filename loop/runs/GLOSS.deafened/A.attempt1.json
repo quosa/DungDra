@@ -1,0 +1,50 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.deafened#1",
+    "text": "You can’t hear",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.deafened#2",
+    "text": "automatically fail any ability check that requires hearing",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "any ability check that requires hearing",
+    "reading_a": "Only checks that can succeed solely through hearing fail automatically, such as a Wisdom (Perception) check to notice a sound. A check that could also succeed by sight, such as Perception to spot a hidden creature, is made normally.",
+    "reading_b": "Any check where hearing plays a part (all Perception checks, Insight from a creature's tone of voice) fails automatically.",
+    "proposed_ruling": "Reading A. The check fails automatically only when it relies on hearing alone. A check that can also use another sense is made normally, without this automatic failure.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "You can’t hear",
+    "reading_a": "Not being able to hear only matters where another rule needs hearing: effects that need the target to hear you, and ability checks that need hearing. Deafened adds no other penalty.",
+    "reading_b": "Not being able to hear also stops the creature noticing anything that only makes a sound (for example, it can't tell where an unseen creature is from its noise), even outside ability checks.",
+    "proposed_ruling": "Reading A for the mechanics. Deafened has no automatic effect except on rules that name hearing. The game doesn't tell the creature about anything it could only have heard.",
+    "confidence": 0.55
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "any ability check that requires hearing",
+    "explanation": "No rule lists which ability checks require hearing. Each check needs a flag saying whether it relies on hearing, and someone has to decide that flag, since the SRD doesn't."
+   },
+   {
+    "quote": "You can’t hear",
+    "explanation": "The unit doesn't say how Deafened affects other rules that need hearing, such as effects that need the target to hear the speaker. Those rules have to check for Deafened themselves, and no rule given here says so."
+   }
+  ],
+  "traps": [],
+  "summary": "The Deafened condition has one effect, Can't Hear. The creature can't hear, and it automatically fails any ability check that requires hearing. Unlike Blinded, it doesn't affect attack rolls or saving throws. The open question is which checks count as requiring hearing, because no rule defines that. Its wording matches the 2014 rules, so building it from memory won't go wrong."
+ },
+ "problems": [],
+ "cost_usd": 0.0974902,
+ "session": "39315091-44ee-40db-bcfa-dc2ab1257114",
+ "error": null
+}

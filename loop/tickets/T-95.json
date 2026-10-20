@@ -1,0 +1,10 @@
+{
+  "id": "T-95",
+  "kind": "infra",
+  "unit": "GLOSS.deafened",
+  "title": "Model hearing as a sense: whether a creature can hear a sound or another creature (used for locating unseen creatures and for player-visible narration of sounds), so Deafened can remove it.",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
