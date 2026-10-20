@@ -1,0 +1,14 @@
+{
+  "id": "P-34",
+  "unit": "GLOSS.creature-type",
+  "ambiguity": "GLOSS.creature-type ambiguity 2: is the list of 14 types closed?",
+  "ruling": "Reading A: the 14 listed types are the only valid values. A command or rule that names any other type is refused cleanly, citing p.179.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
+    "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

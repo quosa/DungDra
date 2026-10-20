@@ -64,6 +64,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
   behind Total Cover.
 - Using Tremorsense to detect a creature in the air (flying, jumping, falling), on a separate
   surface, or beyond its range.
+- Treating a stat block's parenthetical tag (Goblinoid) or a PC's species (Dwarf) as a creature
+  type, or naming a type that isn't one of the 14, to bring a type-based rule into play or keep it
+  out (Hold Person on a goblin as a 2014 "Humanoid (goblinoid)", History lore for a Fey goblin).
 
 ## Spells and effects
 - Casting while unable to speak (Verbal) or without a free hand (Somatic).

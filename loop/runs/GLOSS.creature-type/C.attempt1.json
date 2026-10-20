@@ -1,0 +1,251 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.creature-type#1",
+    "with": "MONSTER.goblins.goblin-warrior / goblin boss (Small Fey (Goblinoid))",
+    "risk": "high",
+    "note": "2014 trap: a goblin was Humanoid (goblinoid). The parenthetical tag must not count as a type for Hold Person or Study."
+   },
+   {
+    "clause": "GLOSS.creature-type#4",
+    "with": "SPELL.hold-person (Humanoid only), with R-15",
+    "risk": "high",
+    "note": "Type-gated invalid target: the slot is spent, nothing happens, and the player-visible text must not reveal the type."
+   },
+   {
+    "clause": "GLOSS.creature-type#4",
+    "with": "CLASS.cleric.level-2-channel-divinity (Turn Undead)",
+    "risk": "medium",
+    "note": "Only Undead make the save. A Giant or a Humanoid PC in range rolls nothing."
+   },
+   {
+    "clause": "GLOSS.creature-type#3",
+    "with": "GLOSS.study (lore skill by creature type)",
+    "risk": "medium",
+    "note": "The Study table maps each of the 14 types to a skill. A non-type (goblinoid, dwarf) must be refused cleanly; the engine raises KeyError."
+   },
+   {
+    "clause": "GLOSS.creature-type#2",
+    "with": "Species (PC origins: dwarf, elf, halfling, human)",
+    "risk": "medium",
+    "note": "The species isn't the type or a type tag. All four sample PCs are Humanoid."
+   },
+   {
+    "clause": "GLOSS.creature-type#1",
+    "with": "Forms that change type (e.g. a Beast stat block)",
+    "risk": "low",
+    "note": "Stage A gap. No in-scope effect replaces a creature's form, so it isn't tested."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Probing a creature's type by casting a type-gated spell at it and reading the log",
+    "test": "tests/srd/test_glossary.py::test_creature_type_hold_person_on_a_goblin_doesnt_reveal_its_type",
+    "reason": "Hold Person on a Fey goblin must look like a successful save, with no 'Fey'/'Humanoid'/'invalid' hint"
+   },
+   {
+    "case": "Counting a stat-block tag (Goblinoid) as the type, so a Humanoid-only spell lands (new catalogue entry)",
+    "test": "tests/srd/test_glossary.py::test_creature_type_hold_person_doesnt_reach_a_goblin_through_its_tag",
+    "reason": "Uses an unbeatable DC, so any affected goblin would be Paralyzed"
+   },
+   {
+    "case": "Claiming the 2014 Humanoid lore skill (History) for a Fey goblin (new catalogue entry)",
+    "test": "tests/srd/test_glossary.py::test_creature_type_studying_fey_lore_with_history_is_refused",
+    "reason": "Study by type picks the skill. The wrong skill is refused cleanly through Session.execute"
+   },
+   {
+    "case": "Naming a type that isn't one of the 14 (goblinoid, a species)",
+    "test": "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused",
+    "reason": "Must be a clean refusal, not a crash"
+   }
+  ],
+  "tests": [
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type",
+    "clause": "GLOSS.creature-type#1",
+    "kind": "positive",
+    "rule_quote": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_a_goblin_s_goblinoid_tag_isnt_its_type",
+    "clause": "GLOSS.creature-type#1",
+    "kind": "negative",
+    "rule_quote": "has a tag in the rules that identifies the type of creature it is",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_hold_person_doesnt_reach_a_goblin_through_its_tag",
+    "clause": "GLOSS.creature-type#1",
+    "kind": "negative",
+    "rule_quote": "has a tag in the rules that identifies the type of creature it is",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_study_of_fey_lore_uses_arcana_not_the_humanoid_history",
+    "clause": "GLOSS.creature-type#1",
+    "kind": "positive",
+    "rule_quote": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_the_sample_party_is_humanoid_whatever_the_species",
+    "clause": "GLOSS.creature-type#2",
+    "kind": "positive",
+    "rule_quote": "Most player characters are of the Humanoid type.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_hold_person_can_paralyze_a_humanoid_pc",
+    "clause": "GLOSS.creature-type#2",
+    "kind": "positive",
+    "rule_quote": "Most player characters are of the Humanoid type.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_a_pc_s_species_isnt_its_type",
+    "clause": "GLOSS.creature-type#2",
+    "kind": "negative",
+    "rule_quote": "Most player characters are of the Humanoid type.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_turn_undead_doesnt_touch_a_humanoid_pc",
+    "clause": "GLOSS.creature-type#2",
+    "kind": "negative",
+    "rule_quote": "Most player characters are of the Humanoid type.",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_study_knows_each_of_the_fourteen_types",
+    "clause": "GLOSS.creature-type#3",
+    "kind": "positive",
+    "rule_quote": "These are the game’s creature types:",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_every_in_scope_monster_type_is_on_the_list",
+    "clause": "GLOSS.creature-type#3",
+    "kind": "positive",
+    "rule_quote": "These are the game’s creature types:",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
+    "clause": "GLOSS.creature-type#3",
+    "kind": "negative",
+    "rule_quote": "These are the game’s creature types:",
+    "claim": "red",
+    "ticket_title": "SRD: only the 14 listed creature types exist; engine: Study naming another type (goblinoid) crashes with a KeyError instead of a clean refusal"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused",
+    "clause": "GLOSS.creature-type#3",
+    "kind": "negative",
+    "rule_quote": "These are the game’s creature types:",
+    "claim": "red",
+    "ticket_title": "SRD: only the 14 listed creature types exist; engine: a study command naming a species (dwarf) as a type raises KeyError out of Session.execute"
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_turn_undead_affects_the_undead_and_not_the_giant",
+    "clause": "GLOSS.creature-type#4",
+    "kind": "positive",
+    "rule_quote": "some rules in the game affect creatures of certain types in different ways",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_alone_changes_nothing_in_an_attack",
+    "clause": "GLOSS.creature-type#4",
+    "kind": "negative",
+    "rule_quote": "The types don’t have rules themselves",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_studying_fey_lore_with_history_is_refused",
+    "clause": "GLOSS.creature-type#4",
+    "kind": "abuse",
+    "rule_quote": "some rules in the game affect creatures of certain types in different ways",
+    "claim": "green",
+    "ticket_title": null
+   },
+   {
+    "name": "tests/srd/test_glossary.py::test_creature_type_hold_person_on_a_goblin_doesnt_reveal_its_type",
+    "clause": "GLOSS.creature-type#4",
+    "kind": "abuse",
+    "rule_quote": "some rules in the game affect creatures of certain types in different ways",
+    "claim": "green",
+    "ticket_title": null
+   }
+  ],
+  "not_testable": [
+   {
+    "clause": "GLOSS.creature-type#1",
+    "kind": "out-of-scope",
+    "reason": "Stage A gap: a creature's type while an effect changes its form (e.g. a Beast stat block). No in-scope spell or feature changes a creature's form.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [
+   {
+    "clause": "GLOSS.creature-type#1",
+    "kind": "boundary",
+    "reason": "No threshold: a creature either has a type tag or not."
+   },
+   {
+    "clause": "GLOSS.creature-type#2",
+    "kind": "boundary",
+    "reason": "No threshold: 'most' PCs being Humanoid has no numeric edge."
+   },
+   {
+    "clause": "GLOSS.creature-type#3",
+    "kind": "boundary",
+    "reason": "No threshold: the list is a closed set of 14 names, with no edge value."
+   },
+   {
+    "clause": "GLOSS.creature-type#4",
+    "kind": "boundary",
+    "reason": "No threshold: the clause says types carry no rules of their own."
+   }
+  ],
+  "scenario_changes": [],
+  "rulings_proposed": [
+   {
+    "ambiguity": "GLOSS.creature-type ambiguity 1: does a creature have exactly one type, and is a parenthetical stat-block descriptor (Goblinoid) or a species a type?",
+    "ruling": "Reading A: each creature has exactly one creature type from the 14 listed. A parenthetical descriptor or a PC's species is not a creature type for rules that name types.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type",
+     "tests/srd/test_glossary.py::test_creature_type_a_goblin_s_goblinoid_tag_isnt_its_type",
+     "tests/srd/test_glossary.py::test_creature_type_hold_person_doesnt_reach_a_goblin_through_its_tag",
+     "tests/srd/test_glossary.py::test_creature_type_a_pc_s_species_isnt_its_type"
+    ]
+   },
+   {
+    "ambiguity": "GLOSS.creature-type ambiguity 2: is the list of 14 types closed?",
+    "ruling": "Reading A: the 14 listed types are the only valid values. A command or rule that names any other type is refused cleanly, citing p.179.",
+    "tests": [
+     "tests/srd/test_glossary.py::test_creature_type_every_in_scope_monster_type_is_on_the_list",
+     "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
+     "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
+    ]
+   }
+  ],
+  "summary": "I added 16 tests for GLOSS.creature-type to tests/srd/test_glossary.py: 14 pass and 2 are strict xfails. They check four things. First, every in-scope monster and sample PC has one type from the list of 14. Second, a goblin is Fey: its Goblinoid tag doesn't count as a type, so Hold Person has no effect on it. Third, PCs are Humanoid whatever their species: Hold Person can paralyze a PC, and Turn Undead skips one. Fourth, the type changes an outcome only through rules that name a type (Turn Undead, Hold Person, the Study lore skill), and two Bandits that differ only in type take the same attack result. The two abuse tests pass: History lore for a Fey goblin is refused, and Hold Person doesn't reveal the goblin's type. The finding: Study naming a type that isn't on the list ('goblinoid', 'dwarf') crashes with a KeyError, directly and through Session.execute, instead of a clean refusal. I added a new cheat to the abuse catalogue and proposed rulings for both stage A ambiguities. No stage B verdict needed a scenario change, and ruff is clean."
+ },
+ "problems": [],
+ "cost_usd": 1.0028810000000001,
+ "session": "9e8a9339-8bf9-4c94-9b53-690d12d71571",
+ "error": null
+}

@@ -2211,3 +2211,167 @@ def test_ally_an_independent_mount_is_not_designated_an_ally(game):
 def test_ally_helping_an_enemy_s_ability_check_is_refused(game):
     lidda, gob = sneak_setup(game)
     assert_refused_cleanly(game, actions.help_check, game, lidda, gob, skill="perception")
+
+
+# ==================================================================================================
+# GLOSS.creature-type (p.179): Creature Type
+# ==================================================================================================
+CTYPE = "GLOSS.creature-type"
+CREATURE_TYPES = {
+    "aberration",
+    "beast",
+    "celestial",
+    "construct",
+    "dragon",
+    "elemental",
+    "fey",
+    "fiend",
+    "giant",
+    "humanoid",
+    "monstrosity",
+    "ooze",
+    "plant",
+    "undead",
+}
+FIXTURE_PCS = ("BROM", "LIDDA", "MIALEE", "JOZAN")
+
+
+def hold_person_jozan(game, pos=(0, 0)):
+    """JOZAN at level 3 (two level 2 slots) with Hold Person prepared."""
+    j = pc(game, "JOZAN", pos)
+    j.award_xp(900)
+    j.prepared.append("hold person")
+    return j
+
+
+def last_study_check(game, start):
+    """The text of the last Study check logged since `start`."""
+    checks = [e.text for e in game.log.since(start) if "Study" in e.text]
+    assert checks, "no Study check was logged"
+    return checks[-1]
+
+
+# ---------------------------------------------------------------- #1 every creature has a type tag
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#1", kind="positive", ruling="P-33")
+def test_creature_type_every_monster_and_pc_has_one_listed_type(game):
+    from dungdra.data.monsters import MONSTERS
+
+    for i, key in enumerate(MONSTERS):
+        m = mon(game, key, (5 * i, 20))
+        assert isinstance(m.ctype, str) and m.ctype in CREATURE_TYPES, (key, m.ctype)
+    for i, name in enumerate(FIXTURE_PCS):
+        c = pc(game, name, (5 * i, 0))
+        assert isinstance(c.ctype, str) and c.ctype in CREATURE_TYPES, (name, c.ctype)
+
+
+# ---------------------------------------------------------------- #2 most PCs are Humanoid
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#2", kind="positive")
+def test_creature_type_the_sample_party_is_humanoid_whatever_the_species(game):
+    seen = set()
+    for i, name in enumerate(FIXTURE_PCS):
+        c = pc(game, name, (5 * i, 0))
+        seen.add(c.species)
+        assert c.ctype == "humanoid", (name, c.species, c.ctype)
+    assert seen == {"dwarf", "halfling", "elf", "human"}
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#2", kind="positive")
+def test_creature_type_hold_person_can_paralyze_a_humanoid_pc(game):
+    j = hold_person_jozan(game)
+    lidda = pc(game, "LIDDA", (10, 0))
+    game.dice.force_str("d20=[2]")
+    S.cast(game, j, "hold person", lidda)
+    assert lidda.has("paralyzed")
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#2", kind="negative")
+def test_creature_type_turn_undead_doesnt_touch_a_humanoid_pc(game):
+    j = pc(game, "JOZAN", (0, 0))
+    j.award_xp(300)  # level 2: Channel Divinity
+    brom = pc(game, "BROM", (10, 0))
+    rolled = len(game.dice.history)
+    CA.turn_undead(game, j, [brom])
+    assert len(game.dice.history) == rolled, "a Humanoid made a save against Turn Undead"
+    assert not brom.has("frightened") and not brom.has("incapacitated")
+
+
+# ---------------------------------------------------------------- #3 the list of creature types
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="positive")
+def test_creature_type_study_knows_each_of_the_fourteen_types(game):
+    lore = {
+        "arcana": {"aberration", "construct", "elemental", "fey", "monstrosity"},
+        "history": {"giant", "humanoid"},
+        "nature": {"beast", "dragon", "ooze", "plant"},
+        "religion": {"celestial", "fiend", "undead"},
+    }
+    assert set().union(*lore.values()) == CREATURE_TYPES
+    mialee = pc(game, "MIALEE", (0, 0))
+    for skill, types in lore.items():
+        for t in sorted(types):
+            start = len(game.log.events)
+            actions.study(game, mialee, creature_type=t, dc=10)
+            assert skill.title() in last_study_check(game, start), t
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="P-34")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-91: the 14 listed types are the game's creature types; "
+    "engine: Study naming 'goblinoid' as a creature type crashes with a KeyError instead of a clean refusal",
+)
+def test_creature_type_study_of_a_type_not_on_the_list_is_refused(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    assert_refused_cleanly(game, actions.study, game, mialee, creature_type="goblinoid")
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="P-34")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-92: the 14 listed types are the game's creature types; "
+    "engine: a study command naming 'dwarf' as a creature type raises KeyError out of Session.execute",
+)
+def test_creature_type_study_command_naming_a_species_as_a_type_is_refused(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    s = Session(game)
+    assert_refused_cleanly(game, s.execute, {"cmd": "study", "actor": mialee.id, "creature_type": "dwarf"})
+
+
+# ---------------------------------------------------------------- #4 types have no rules themselves
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#4", kind="positive")
+def test_creature_type_turn_undead_affects_the_undead_and_not_the_giant(game):
+    j = pc(game, "JOZAN", (0, 0))
+    j.award_xp(300)  # level 2: Channel Divinity
+    skel = mon(game, "skeleton", (10, 0))
+    ogre = mon(game, "ogre", (15, 0))
+    game.dice.force_str("d20=[1]")  # one save only: the Skeleton's
+    CA.turn_undead(game, j, [skel, ogre])
+    assert skel.has("frightened") and skel.has("incapacitated")
+    assert not ogre.has("frightened") and not ogre.has("incapacitated")
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#4", kind="negative")
+def test_creature_type_alone_changes_nothing_in_an_attack(game):
+    # two Bandits identical but for the type tag: no rule here names a type, so both fare the same
+    brom = pc(game, "BROM", (0, 0))
+    a = mon(game, "bandit", (5, 0), name="Bandit A")
+    b = mon(game, "bandit", (0, 5), name="Bandit B")
+    b.ctype = "undead"
+    game.dice.force_str("d20=[12,12]; d8=[5,5]")
+    ra = C.attack(game, brom, a, weapon="longsword")
+    rb = C.attack(game, brom, b, weapon="longsword")
+    assert ra.hit and rb.hit
+    assert ra.damage == rb.damage > 0
+    assert a.hp == b.hp < a.max_hp
+
+
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#4", kind="abuse")
+def test_creature_type_studying_fey_lore_with_history_is_refused(game):
+    # claiming the 2014 Humanoid lore skill (History) for a Fey goblin
+    mialee = pc(game, "MIALEE", (0, 0))
+    s = Session(game)
+    assert_refused_cleanly(
+        game,
+        s.execute,
+        {"cmd": "study", "actor": mialee.id, "creature_type": "fey", "skill": "history"},
+        match="Arcana",
+    )

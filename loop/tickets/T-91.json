@@ -1,0 +1,12 @@
+{
+  "id": "T-91",
+  "kind": "bug",
+  "unit": "GLOSS.creature-type",
+  "title": "SRD: only the 14 listed creature types exist; engine: Study naming another type (goblinoid) crashes with a KeyError instead of a clean refusal",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}
