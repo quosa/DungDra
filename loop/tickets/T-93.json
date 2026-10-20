@@ -1,0 +1,15 @@
+{
+  "id": "T-93",
+  "kind": "refactor",
+  "unit": "GLOSS.ally",
+  "title": "The ally rule is still decided by team equality outside Game.is_ally: HelpAttack.as_target (effects.py:350, `ctx.actor.team == helper.team`) and the Alert initiative swap (combat.py:252) ignore R-37, so a Friendly NPC gets no Advantage from a PC's Help and can't be swapped with. Route them through Game.is_ally",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-87"
+    }
+  ]
+}

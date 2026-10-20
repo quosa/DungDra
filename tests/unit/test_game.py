@@ -108,3 +108,46 @@ def test_cover_bonus_against_a_point_names_the_point_in_the_log(game):
     assert game.cover_bonus([40, 0], gob, "the Dexterity saving throw") == [(2, "Half Cover")]
     (ev,) = game.log.applied(rule="PLAY.combat.cover")
     assert "point of origin at [40, 0]" in ev.text and ev.rule == "PLAY.combat.cover#5"
+
+
+def guard(game, attitude):
+    g = mon(game, "guard", (10, 0), name="WATCHMAN")
+    g.team = "neutral"
+    g.attitude = attitude
+    return g
+
+
+def test_a_friendly_creature_off_both_sides_is_an_ally_of_the_party_and_back(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    g = guard(game, "friendly")
+    assert g in game.allies_of(lidda)
+    assert lidda in game.allies_of(g)
+
+
+def test_an_indifferent_or_hostile_creature_off_both_sides_is_no_ally(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    g = guard(game, "indifferent")
+    assert g not in game.allies_of(lidda)
+    g.attitude = "hostile"
+    assert g not in game.allies_of(lidda)
+
+
+def test_a_friendly_creature_is_no_ally_of_the_enemy_side(game):
+    gob = mon(game, "goblin warrior", (30, 0))
+    g = guard(game, "friendly")
+    assert g not in game.allies_of(gob)
+
+
+def test_a_creature_is_never_its_own_ally(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    assert not game.is_ally(lidda, lidda)
+    assert lidda not in game.allies_of(lidda)
+
+
+def test_creatures_on_the_same_side_are_allies_and_the_other_side_is_not(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    assert game.is_ally(lidda, brom)
+    assert brom in game.allies_of(lidda)
+    assert gob not in game.allies_of(lidda)

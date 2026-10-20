@@ -1,0 +1,38 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Fixed T-87. The engine decided who counts as an ally only by team, so a Friendly NPC never counted. I added `Game.is_ally(a, b)` in `dungdra/game.py` and made `allies_of` use it. A creature is never its own ally (R-36). Creatures on the same team are allies (GLOSS.ally#1/#3). A creature whose attitude is Friendly toward the party is a party member's ally, and the party member is its ally too (GLOSS.ally#2, R-37). Every caller that uses `allies_of` now picks this up (Sneak Attack, Protection, Pack Tactics, the GM's flanking logic, turn help).\n\nResults: the target test passes with `--runxfail`, and the unit tests pass (539, plus 5 new tests in `test_game`). `ruff check` and `ruff format --check` are clean, and dev-gate passes. In the full suite, the only failure is the T-87 test, which now passes unexpectedly while its strict xfail marker is still on. Running the other ally tests with `--runxfail`, T-88 (GM designation) and T-89 (Help on an enemy's ability check) still fail; they are separate tickets.\n\nI left the separate team-equality check in `HelpAttack` (`dungdra/effects.py:350`) alone. No test or ticket here covers it.",
+  "files": [
+   "dungdra/game.py",
+   "tests/unit/test_game.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_game.py::test_a_friendly_creature_off_both_sides_is_an_ally_of_the_party_and_back",
+   "tests/unit/test_game.py::test_an_indifferent_or_hostile_creature_off_both_sides_is_no_ally",
+   "tests/unit/test_game.py::test_a_friendly_creature_is_no_ally_of_the_enemy_side",
+   "tests/unit/test_game.py::test_a_creature_is_never_its_own_ally",
+   "tests/unit/test_game.py::test_creatures_on_the_same_side_are_allies_and_the_other_side_is_not"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ally#1]",
+   "SRD[GLOSS.ally#2]",
+   "SRD[GLOSS.ally#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "The ally rule is still decided by team equality outside Game.is_ally: HelpAttack.as_target (effects.py:350, `ctx.actor.team == helper.team`) and the Alert initiative swap (combat.py:252) ignore R-37, so a Friendly NPC gets no Advantage from a PC's Help and can't be swapped with. Route them through Game.is_ally",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "I'm approving this fix. Ally membership now lives in one place, `Game.is_ally`, and `allies_of` uses it. A creature is never its own ally (R-36). Creatures on the same team are allies (#1/#3). Under R-37, a creature whose `attitude` is \"friendly\" is an ally of the party, and the party is its ally (#2). That reuses the attitude field the Influence action already uses (actions.py:254), and Monster defaults it to \"hostile\", so this adds no new mechanism.\n\nThe ticket is solved: the strict xfail on the acceptance test (a Friendly NPC next to the target counts for Sneak Attack) has come off, and the gates pass. The unit tests use the real engine and check behaviour: friendly versus indifferent/hostile, both directions, a Friendly NPC isn't an ally of the enemy side, never your own ally, and same-team allies. Nothing in them is hard-coded and nothing is out of scope.\n\nOutside the diff, two places still decide \"ally\" by comparing teams instead of calling `Game.is_ally`: the Help (attack) effect at `dungdra/effects.py:350` and the Alert initiative swap at `dungdra/combat.py:252`. This change didn't make them any worse, so I filed them as one refactor follow-up. T-89 doesn't cover them."
+ },
+ "problems": [],
+ "cost_usd": 0.4558,
+ "stash": ""
+}

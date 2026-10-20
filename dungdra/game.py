@@ -148,7 +148,20 @@ class Game:
         return [x for x in self.creatures.values() if x.team not in (c.team, "neutral") and not x.dead]
 
     def allies_of(self, c):
-        return [x for x in self.creatures.values() if x.team == c.team and x is not c and not x.dead]
+        return [x for x in self.creatures.values() if x is not c and not x.dead and self.is_ally(c, x)]
+
+    @staticmethod
+    def is_ally(a, b) -> bool:
+        """Whether ``b`` is ``a``'s ally (p.176). Never yourself (R-36)."""
+        if a is b:
+            return False
+        # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side
+        if a.team == b.team:
+            return True
+        # SRD[GLOSS.ally#2] R-37: a creature Friendly toward the party is the party's friend
+        return (a.team == "party" and getattr(b, "attitude", None) == "friendly") or (
+            b.team == "party" and getattr(a, "attitude", None) == "friendly"
+        )
 
     # -- perception -------------------------------------------------------
     def line_of_sight(self, a, b) -> bool:

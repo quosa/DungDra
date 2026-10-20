@@ -2108,11 +2108,6 @@ def test_ally_helping_yourself_as_your_own_ally_is_refused(game):
 
 # ---------------- #2 · your friend ----------------
 @pytest.mark.srd(ALLY, clause=f"{ALLY}#2", kind="positive", ruling="R-37")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-87: a creature Friendly to the party is its friend and so its ally; "
-    "engine: allies are only creatures on the same team, so a Friendly NPC never counts",
-)
 def test_ally_a_friendly_npc_next_to_the_target_is_an_ally(game):
     lidda, gob = sneak_setup(game)
     bystander(game, attitude="friendly")
