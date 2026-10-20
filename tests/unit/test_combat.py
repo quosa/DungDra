@@ -341,6 +341,24 @@ def test_stand_up_refused_off_turn_in_combat(game):
     assert game.combat.turn.movement_left == gob.speed()
 
 
+def test_alert_swap_offers_a_friendly_npc_but_not_an_enemy(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.feats.append({"name": "alert"})
+    guard = mon(game, "guard", (10, 0))
+    guard.attitude = "friendly"
+    gob = mon(game, "goblin warrior", (30, 0))
+    offered = {}
+
+    def decider(g, who, key, options, default, prompt):
+        offered[key] = list(options)
+        return default
+
+    game.decider = decider
+    game.dice.force_str("d20=[5,15,10]")
+    roll_initiative(game, [brom, guard, gob])
+    assert offered["alert_swap"] == [None, guard.id]
+
+
 def test_stand_up_on_own_turn_spends_half_speed(game):
     gob = mon(game, "goblin warrior", (0, 0))
     brom = pc(game, "BROM", (40, 0))

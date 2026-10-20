@@ -346,8 +346,8 @@ class HelpAttack(Effect):
             ctx.kind == "attack"
             and ctx.actor is not None
             and helper is not None
-            and ctx.actor.id != helper.id
-            and ctx.actor.team == helper.team
+            # SRD[GLOSS.ally#2] SRD[GLOSS.ally#3] one of the helper's allies, Friendly NPCs included (R-37)
+            and self.owner.game.is_ally(helper, ctx.actor)
         ):
             acc.advantage(self.source)
             acc.consumed.append(self)

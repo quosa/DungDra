@@ -249,7 +249,8 @@ def roll_initiative(game, participants, surprised=(), groups=None):
     for cid, _ in list(cb.order):
         c = game.creatures[cid]
         if getattr(c, "has_feat", None) and c.has_feat("alert"):
-            allies = [x for x, _ in cb.order if x != cid and game.creatures[x].team == c.team]
+            # SRD[GLOSS.ally#2] SRD[GLOSS.ally#3] any ally, Friendly NPCs included (R-37)
+            allies = [x for x, _ in cb.order if game.is_ally(c, game.creatures[x])]
             pick = game.decide(
                 c,
                 "alert_swap",

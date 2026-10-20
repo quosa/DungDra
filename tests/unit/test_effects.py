@@ -9,6 +9,7 @@ from dungdra.effects import (
     Ctx,
     Dodge,
     Effect,
+    HelpAttack,
     SaveBonus,
     condition_rule,
     grapplers_of,
@@ -25,6 +26,31 @@ def test_is_save_covers_saving_throws_and_death_saves_only():
     assert Ctx("save").is_save
     assert Ctx("death save").is_save
     assert not any(Ctx(k).is_save for k in ("attack", "check", "initiative"))
+
+
+def _helped_attack_by(game, attacker):
+    lidda = pc(game, "LIDDA")
+    gob = mon(game, "goblin warrior")
+    eff = HelpAttack(f"Help from {lidda.name}", caster=lidda)
+    gob.add_effect(eff)
+    acc = Acc()
+    eff.as_target(Ctx("attack", actor=attacker), acc)
+    return eff, acc
+
+
+def test_help_attack_gives_a_friendly_npc_advantage(game):
+    guard = mon(game, "guard", (10, 0))
+    guard.attitude = "friendly"
+    eff, acc = _helped_attack_by(game, guard)
+    assert acc.adv == ["Help from LIDDA"]
+    assert acc.consumed == [eff]
+
+
+def test_help_attack_gives_the_helpers_enemy_no_advantage(game):
+    other = mon(game, "goblin minion", (10, 0))
+    _, acc = _helped_attack_by(game, other)
+    assert not acc.adv
+    assert not acc.consumed
 
 
 def test_save_bonus_applies_to_a_death_saving_throw_but_not_a_check(game):
