@@ -187,45 +187,50 @@ Example, T-16 in the trial:
 - The guard hook (`hooks/guard_writes.py`) enforces write zones only when `SRDLOOP_ROLE` is set,
   so interactive sessions aren't affected.
 
-## State as of 2026-10-02
+## State as of 2026-10-20 (`loop-v1`)
 
-**Trial run** (8 units, before tagging `loop-v1`):
-- **Done:**
-  - `GLOSS.grappled`: green, after T-1…T-4. Refactors T-5, T-7, T-31…T-33 are fixed. T-36
-    (where unit-test helpers live) is void: `tests/unit/helpers.py` holds unit-only helpers,
-    `tests/support/helpers.py` the ones shared across suites.
-  - `GLOSS.tremorsense`: red; infra T-12…T-14 are open.
-  - `PLAY.combat.cover`: red; bugs T-15 and T-16 are fixed, infra T-17/T-19 are open.
-  - `SPELL.bless`: bugs T-20…T-23 are fixed. Its state still says red, because the dev loop
-    doesn't update a unit's status.
-- **Rulings:** R-05…R-14 accepted; none pending. Nothing is waiting for review.
-- **Tickets:** 6 open, all infra (T-8, T-12…T-14, T-17, T-19); no bugs or refactors.
-- **Still to run:**
-  - `GLOSS.ready`: a canary; the engine is known to lack this capability, and the loop should
-    find that by itself.
-  - `SPELL.casting-spells.effects.targets`.
-  - `MONSTER.goblins.goblin-warrior`.
-  - `GLOSS.prone`.
-  - The `GLOSS.grappled` revisit.
+**The trial is over.** Every path has run for real: audit stages A–D, the dev loop, rulings,
+reviews, disputes, parked follow-ups, pauses on budget and usage limits, resumes of failed units,
+and revisits after an infra fix. The last five units (Cylinder, Emanation, Line, Ally, Creature
+Type) ran with no harness change, at ≈ $1.23 a unit.
 
-The suite: 601 passed.
+- **Audited:** 17 units. Green or red only on fixed bugs: Grappled, Tremorsense, Cover, Bless,
+  Ready, Targets, the Goblin Warrior, Prone, Cone, Cube, Sphere, Area of Effect, Ally, Creature
+  Type. Out of scope (no in-scope content uses them): Cylinder, Emanation, Line. `status` still
+  calls some units red after their last bug is fixed: the dev loop doesn't update a unit's status.
+- **Rulings:** R-05…R-39 in the README register (R-35 decided by hand for T-79).
+- **Tickets:** 0 open, 15 parked. The suite: 1093 passed. The last dev round (6 bugs from Ally and
+  Creature Type, $2.64) filed one parked follow-up, T-93: the ally rule is still decided by team
+  equality in a few places beside `Game.is_ally`.
+- **Features built along the way:** the Ready action (T-41), area targeting from positions with
+  `point=` (T-56, T-59, T-19, T-57, T-58), cover from a point of origin.
+- **Parked (the feature menu):** T-93 (the ally rule in one place) is small and worth building
+  soon; obstacle geometry (T-17, T-84), area choices (T-67, T-78), senses and surfaces
+  (T-12–T-14), in the air (T-8), creature spaces (T-46), GM tools (T-76, T-90), and odds and
+  ends (T-42, T-47, T-63). `/srd-triage` groups and ranks them.
 
-**Next:** run the remaining units:
+**How a session goes now:**
+1. `srdloop run --budget <n> --units …` (or without `--units` for the queue's order).
+2. `/srd-triage`: one sheet in `loop/triage/` with every decision, a recommendation and the
+   command for it.
+3. Decide the rulings and reviews, then `srdloop dev --budget <n> --tickets <the ready bugs>`.
+   Always name the tickets: open infra tickets would otherwise be built too.
 
-```
-python -m scripts.srdloop run --budget 20 --units GLOSS.ready SPELL.casting-spells.effects.targets MONSTER.goblins.goblin-warrior GLOSS.prone GLOSS.grappled
-```
-
-Then run the dev loop on the bugs it opens. Always name the tickets with `--tickets` so the
-infra tickets stay parked until the infra-approval question is settled.
+**Harness changes since the trial** (each with tests in `tests/unit/test_srdloop_*.py`):
+- Scenario evidence may quote the shared fixtures; assertion helpers must be named `assert_*`.
+- Follow-ups are parked, at most one per bug or infra fix, none for refactor or coverage fixes; the
+  reviewer rejects problems in the diff and unsolved tickets instead of filing them.
+- The breaker counts open bugs only.
+- A stat value's negative or boundary test may be waived with a reason (`kind_waivers`).
+- A person's reopen reasons reach the fixer and the reviewer; the fixer disputes a fix that needs an
+  unruled reading.
+- A budget pause says how to resume; a failed call never counts as a result; a call that didn't
+  run (cost 0, or a usage/session limit) pauses; one call may run 60 minutes.
+- A failed unit resumes at its failed stage; a revisit counts the unit's committed tests.
 
 **Open questions for the person:**
-- **Infra approval (partly settled 2026-10-05):** the breaker counts only open bugs, and
-  follow-ups are parked. Infra tickets from the audit loop still start open, so a `dev` run
-  without `--tickets` would build them; park the ones you won't build soon.
-- **Edits during a run:** a person's edit made during a run is still treated as the agent's.
-  The plan is to snapshot the dirty files at start and leave later non-agent edits alone, or
-  just keep the rule "don't edit during a run".
-
-**Tagging `loop-v1`:** every path has run for real, the last 4–5 units ran without harness
-changes, and cost stays within the estimate. Then merge the branch into `main`.
+- **Infra from the audit loop** still starts open. Park what you won't build soon.
+- **Edits during a run** are still treated as the agent's: don't edit while a run is going.
+- **Stale unit status** (above): a small harness fix, not done yet.
+- **`ticket reopen` on a fixed ticket** is allowed (T-79 was reopened twice by accident); a guard is
+  proposed, not done yet.
