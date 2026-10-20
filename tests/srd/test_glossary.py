@@ -2313,7 +2313,7 @@ def test_creature_type_study_knows_each_of_the_fourteen_types(game):
             assert skill.title() in last_study_check(game, start), t
 
 
-@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="P-34")
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="R-39")
 @pytest.mark.xfail(
     strict=True,
     reason="T-91: the 14 listed types are the game's creature types; "
@@ -2324,7 +2324,7 @@ def test_creature_type_study_of_a_type_not_on_the_list_is_refused(game):
     assert_refused_cleanly(game, actions.study, game, mialee, creature_type="goblinoid")
 
 
-@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="P-34")
+@pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="R-39")
 @pytest.mark.xfail(
     strict=True,
     reason="T-92: the 14 listed types are the game's creature types; "

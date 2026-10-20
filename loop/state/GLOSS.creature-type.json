@@ -59,7 +59,7 @@
       "summary": "Of the 16 tests, I'd keep 9 and remove 7. One of the 7 has confidence below 0.5, so it goes to a person rather than being removed. Every oracle matched the SRD text, including the Areas of Knowledge table in GLOSS.study. All tests I mutated failed when their rule was broken, with one exception: hold"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_creature_type_every_monster_and_pc_has_one_listed_type",
     "tests/srd/test_glossary.py::test_creature_type_the_sample_party_is_humanoid_whatever_the_species",

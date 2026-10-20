@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused",
     "tests/srd/test_glossary.py::test_creature_type_study_command_naming_a_species_as_a_type_is_refused"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-39",
+  "note": "The 14 listed types are the only values; anything else is refused at the command.",
   "reason": ""
 }
