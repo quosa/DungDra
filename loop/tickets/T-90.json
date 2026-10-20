@@ -4,7 +4,12 @@
   "unit": "GLOSS.ally",
   "title": "A GM command to designate an existing creature as the party's ally (or to remove that status) mid-encounter, logged with page=176 and rule='GLOSS.ally#4'",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "GM tools, with T-76"
+    }
+  ]
 }
