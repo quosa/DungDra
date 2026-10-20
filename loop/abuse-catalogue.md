@@ -130,6 +130,12 @@ this list and adds new cheats as it finds them. A cheat is tested with
   Disadvantage cancelled, or dropping it when the GM uses static damage numbers.
 - A monster using an action its stat block doesn't list (a weapon from its Gear line it has no
   attack for, a trait like Nimble Escape that another monster has).
+- Ending a curse with magic that doesn't explicitly end curses (Lesser Restoration, a Short or
+  Long Rest, a Potion of Healing), or getting more from Remove Curse or Greater Restoration than
+  their own text gives (keeping a cursed item while its curse goes, every curse from one
+  Greater Restoration).
+- Shedding a curse by shape-shifting or by changing the cursed item's owner, when the curse's
+  own effect doesn't say it ends that way.
 
 ## Equipment
 - Two shields; armor you lack training in with no penalty; wielding more weapons than hands.

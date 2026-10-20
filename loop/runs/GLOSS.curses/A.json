@@ -1,0 +1,45 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.curses#1",
+   "text": "Some game effects curse a creature or an object.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.curses#2",
+   "text": "The effect that confers a curse defines what the curse does.",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.curses#3",
+   "text": "Curses can be removed by the Remove Curse and Greater Restoration spells or other magic that explicitly ends curses.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "or other magic that explicitly ends curses",
+   "reading_a": "Only magic whose text explicitly says it ends curses (plus Remove Curse and Greater Restoration) can end a curse early. Generic effect-enders such as Dispel Magic used on a spell-conferred curse do nothing to the curse.",
+   "reading_b": "The list covers ending the curse as a curse. A curse conferred by a spell is still a spell effect, so anything that ends that spell (Dispel Magic, losing Concentration, the duration expiring) also ends the curse.",
+   "proposed_ruling": "Reading B for the conferring effect's own ending conditions: a curse lasts as long as the effect that confers it says (clause #2), so it ends when that effect ends, including by Dispel Magic where that spell can end the effect. Apart from that, only Remove Curse, Greater Restoration, or magic that explicitly ends curses removes a curse.",
+   "confidence": 0.6
+  },
+  {
+   "quote": "Curses can be removed by the Remove Curse and Greater Restoration spells",
+   "reading_a": "Any casting of either spell removes every curse on the target, whatever the spells' own descriptions say.",
+   "reading_b": "The spells remove curses only as their own descriptions allow (for example, how many curses Greater Restoration ends, or a cursed magic item keeping its curse while only the attunement breaks). The glossary just points to them.",
+   "proposed_ruling": "Reading B: the spell's own description decides how much it removes, because specific text beats the general glossary entry.",
+   "confidence": 0.8
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "Some game effects curse a creature or an object.",
+   "explanation": "No rule says how to tell whether an effect is a curse. The engine needs a test. The natural one is that the conferring effect calls itself a curse or says it curses its target, but the SRD never states this. Without it, 'magic that explicitly ends curses' has no defined set of effects to act on."
+  }
+ ],
+ "traps": [],
+ "summary": "This is a definitional entry. Effects can curse a creature or an object, and the effect that confers the curse defines what it does. Curses are removed by Remove Curse, Greater Restoration, or other magic that explicitly ends curses. There are no numeric thresholds. The open questions are whether ending the conferring effect (for example with Dispel Magic) also ends the curse, and whether the removal spells' own limits still apply. Proposed answers: yes to both; the spells' own text decides how much they remove."
+}

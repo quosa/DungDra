@@ -1,0 +1,4 @@
+{
+ "verdicts": [],
+ "summary": "No tests were submitted for GLOSS.curses (the list is empty), so I had nothing to check or try to refute, and I ran no mutations. That seems plausible for this unit. Most of its text is definitional: a curse does whatever the effect that confers it says. The only mechanical clause is that curses can be removed by Remove Curse, Greater Restoration, or other magic that explicitly ends curses. A test for that only makes sense if the engine implements one of those spells or a curse-conferring effect; if it doesn't, CLAUDE.md says not to write tests for it. I didn't check the engine's scope for these spells, so whether zero tests is truly complete is unconfirmed."
+}

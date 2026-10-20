@@ -276,3 +276,7 @@
 {"at": 1792531501, "about": "GLOSS.creature", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0299, "seconds": 16.3, "session_id": "549f307d-0bf7-4e07-a961-fdd14f5ebad9", "exit": 0}
 {"at": 1792531517, "about": "GLOSS.creature", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.5633, "seconds": 84.2, "session_id": "6856e583-80ea-4ef6-a50b-530b5269081e", "exit": 0}
 {"at": 1792531603, "about": "GLOSS.creature", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.3129, "seconds": 75.0, "session_id": "b8e02de6-9127-4923-9401-e1414ab2317e", "exit": 0}
+{"at": 1792531678, "about": "GLOSS.curses", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.113, "seconds": 21.6, "session_id": "8deec662-e3e9-4e5f-872a-6941fccbb9d4", "exit": 0}
+{"at": 1792531700, "about": "GLOSS.curses", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0305, "seconds": 8.2, "session_id": "e1443e2a-1f8c-422a-bc25-4d0e23526305", "exit": 0}
+{"at": 1792531708, "about": "GLOSS.curses", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.3261, "seconds": 54.5, "session_id": "47ad5291-e161-48ca-962f-488aba6312ea", "exit": 0}
+{"at": 1792531763, "about": "GLOSS.curses", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.0579, "seconds": 5.9, "session_id": "412f7ff4-2b9f-41ca-944b-6f2b36cd59d9", "exit": 0}
