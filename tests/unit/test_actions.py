@@ -3,7 +3,7 @@ import pytest
 from dungdra import actions
 from dungdra.effects import AdvNext
 from dungdra.rules import Refusal
-from tests.support.helpers import pc
+from tests.support.helpers import mon, pc
 
 
 def test_help_check_refuses_the_helper_as_their_own_ally(game):
@@ -24,3 +24,22 @@ def test_help_check_gives_another_creature_advantage_on_the_check(game):
     assert eff in brom.effects
     assert eff.caster_id == lidda.id
     assert "LIDDA Helps BROM" in game.log.last("help").text
+
+
+def test_help_check_refuses_an_enemy_as_the_ally(game):
+    lidda = pc(game, "LIDDA")
+    gob = mon(game, "goblin warrior")
+    with pytest.raises(Refusal) as e:
+        actions.help_check(game, lidda, gob, skill="perception")
+    assert e.value.rule == "GLOSS.ally#3"
+    assert e.value.page == 176
+    assert not gob.find_effects(cls=AdvNext)
+    assert game.log.last("help") is None
+
+
+def test_help_check_assists_a_friendly_creature_off_the_party(game):
+    lidda = pc(game, "LIDDA")
+    gob = mon(game, "goblin warrior")
+    gob.attitude = "friendly"
+    eff = actions.help_check(game, lidda, gob, skill="perception")
+    assert eff in gob.effects

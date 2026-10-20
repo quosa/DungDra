@@ -2187,11 +2187,6 @@ def test_ally_an_independent_mount_is_not_designated_an_ally(game):
 
 
 @pytest.mark.srd(ALLY, clause=f"{ALLY}#4", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-89: Help assists the ability check of 'one ally'; "
-    "engine: help_check gives Advantage to any creature named, including an enemy",
-)
 def test_ally_helping_an_enemy_s_ability_check_is_refused(game):
     lidda, gob = sneak_setup(game)
     assert_refused_cleanly(game, actions.help_check, game, lidda, gob, skill="perception")

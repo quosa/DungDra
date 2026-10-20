@@ -33,6 +33,14 @@ def help_check(game, helper, ally, skill=None, tool=None):
             rule="GLOSS.ally#1",
             ruling="R-36",
         )
+    # SRD[GLOSS.ally#3] Help assists one ally's check; a creature that is none of party member,
+    # friend, on your side or designated ally (is_ally) isn't one.
+    if not game.is_ally(helper, ally):
+        raise Refusal(
+            f"{helper.name} can't Help {ally.name}; Help assists an ally, and {ally.name} isn't one",
+            page=176,
+            rule="GLOSS.ally#3",
+        )
     if tool:
         tool = canonical(tool)
         if not helper.has_tool_prof(tool):
