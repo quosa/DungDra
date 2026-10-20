@@ -43,3 +43,23 @@ def test_help_check_assists_a_friendly_creature_off_the_party(game):
     gob.attitude = "friendly"
     eff = actions.help_check(game, lidda, gob, skill="perception")
     assert eff in gob.effects
+
+
+def test_study_refuses_a_creature_type_not_on_the_list(game):
+    mialee = pc(game, "MIALEE")
+    game.dice.force_str("d20=[12]")
+    with pytest.raises(Refusal) as e:
+        actions.study(game, mialee, creature_type="goblinoid")
+    assert e.value.rule == "GLOSS.creature-type#3"
+    assert e.value.ruling == "R-39"
+    assert e.value.page == 179
+    assert "Goblinoid isn't a creature type" in str(e.value)
+    assert game.dice.pending(20) == 1  # no check was rolled
+    game.dice.clear()
+
+
+def test_study_of_a_listed_type_uses_that_types_skill(game):
+    mialee = pc(game, "MIALEE")
+    game.dice.force_str("d20=[12]")
+    r = actions.study(game, mialee, creature_type="Undead")
+    assert "Religion" in r.label

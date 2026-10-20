@@ -2293,22 +2293,12 @@ def test_creature_type_study_knows_each_of_the_fourteen_types(game):
 
 
 @pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="R-39")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-91: the 14 listed types are the game's creature types; "
-    "engine: Study naming 'goblinoid' as a creature type crashes with a KeyError instead of a clean refusal",
-)
 def test_creature_type_study_of_a_type_not_on_the_list_is_refused(game):
     mialee = pc(game, "MIALEE", (0, 0))
     assert_refused_cleanly(game, actions.study, game, mialee, creature_type="goblinoid")
 
 
 @pytest.mark.srd(CTYPE, clause=f"{CTYPE}#3", kind="negative", ruling="R-39")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-92: the 14 listed types are the game's creature types; "
-    "engine: a study command naming 'dwarf' as a creature type raises KeyError out of Session.execute",
-)
 def test_creature_type_study_command_naming_a_species_as_a_type_is_refused(game):
     mialee = pc(game, "MIALEE", (0, 0))
     s = Session(game)

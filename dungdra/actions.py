@@ -351,6 +351,15 @@ def search(game, actor, skill="perception", dc=None, target=None, what="", **kw)
 
 def study(game, actor, skill=None, dc=None, topic="", creature_type=None, **kw):
     if creature_type:
+        # SRD[GLOSS.creature-type#3]: the 14 listed types are the only creature types (R-39)
+        if norm(creature_type) not in CREATURE_TYPE_SKILL:
+            raise Refusal(
+                f"{creature_type.title()} isn't a creature type; the types are "
+                + ", ".join(t.title() for t in sorted(CREATURE_TYPE_SKILL)),
+                page=179,
+                rule="GLOSS.creature-type#3",
+                ruling="R-39",
+            )
         want = CREATURE_TYPE_SKILL[norm(creature_type)]
         if skill and norm(skill) != want:
             raise Refusal(

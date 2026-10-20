@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_creature_type_study_of_a_type_not_on_the_list_is_refused"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "actions.study now checks that a named creature_type is one of the 14 SRD types before looking up its skill. Any other name (such as 'goblinoid') now gets a clean Refusal citing page=179, rule=GLOSS.creature-type#3 and ruling R-39, and no action is spent or check rolled. Before, it raised a KeyError. The fix also makes T-92's test pass (a session `study` command naming 'dwarf' as a type), because it goes through the same function. Unit tests, the ticket's tests with --runxfail, ruff and dev-gate all pass."
+    }
+  ]
 }
