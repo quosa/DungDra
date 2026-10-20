@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-36",
+  "note": "The rules that use 'ally' mean someone else ('you or an ally'; Help assists 'one ally').",
   "reason": ""
 }
