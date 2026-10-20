@@ -2344,3 +2344,82 @@ def test_creature_type_studying_fey_lore_with_history_is_refused(game):
         {"cmd": "study", "actor": mialee.id, "creature_type": "fey", "skill": "history"},
         match="Arcana",
     )
+
+
+# ==================================================================================================
+# GLOSS.creature (p.179): Creature
+# ==================================================================================================
+CREATURE = "GLOSS.creature"
+
+
+def jozan_and_brom(game):
+    """JOZAN (Cure Wounds and Bless prepared) with a wounded BROM in reach of his touch."""
+    j = pc(game, "JOZAN", (0, 0))
+    for spell in ("cure wounds", "bless"):
+        if spell not in j.prepared:
+            j.prepared.append(spell)
+    brom = pc(game, "BROM", (5, 0))
+    brom.hp = 1
+    return j, brom
+
+
+def wave_over_brom(game, name_brom):
+    """MIALEE casts Thunderwave east with BROM (a PC) and a goblin side by side in the Cube.
+    Both fail their saves (d20=1 each) and take 2d8=[2,2] = 4 thunder damage. The goblin is
+    always named; BROM only when `name_brom`."""
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    brom = pc(game, "BROM", (5, 0))
+    gob = mon(game, "goblin warrior", (5, 5), name="GOB")
+    gob.hp = 30
+    before = brom.hp
+    game.dice.force_str("d8=[2,2]; d20=[1,1]")
+    S.cast(game, m, "thunderwave", [brom, gob] if name_brom else [gob], point=(15, 0))
+    return brom, before, gob
+
+
+# ---------------------------------------------------------------- #1 every being, PCs included
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_pc_is_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, brom = jozan_and_brom(game)
+    game.dice.force_str("d8=[4,5]")
+    out = Session(game).execute({"cmd": "cast", "spell": "cure wounds", "actor": j.id, "targets": [brom.id]})
+    assert out.get("ok") is not False, out
+    assert brom.hp == min(brom.max_hp, 1 + 9 + j.mod("wis"))
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit(game):
+    brom, before, gob = wave_over_brom(game, name_brom=True)
+    assert brom.hp == before - 4
+    assert gob.hp == 26
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_monster_is_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, _ = jozan_and_brom(game)
+    gob = mon(game, "goblin warrior", (0, 5))
+    gob.hp = 1
+    game.dice.force_str("d8=[4,5]")
+    S.cast(game, j, "cure wounds", [gob])
+    assert gob.hp == min(gob.max_hp, 1 + 9 + j.mod("wis"))
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="negative")
+def test_creature_an_object_isnt_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, _ = jozan_and_brom(game)
+    game.scene.objects["door"] = {"position": (0, 5)}
+    assert_refused_cleanly(
+        game,
+        Session(game).execute,
+        {"cmd": "cast", "spell": "cure wounds", "actor": j.id, "targets": ["door"]},
+    )
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="abuse")
+def test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature(game):
+    # Thunderwave hits each creature in the Cube; a PC is a creature, so leaving BROM unnamed
+    # doesn't keep him out of it
+    brom, before, gob = wave_over_brom(game, name_brom=False)
+    assert brom.hp == before - 4
+    assert gob.hp == 26

@@ -1,0 +1,47 @@
+{
+ "summary": "All 6 tests pass. The oracles match the unit text: any being, PCs included, is a creature, and objects are not. They also match R-16, which says an 'each creature' area takes its creatures from the scene. Each test failed under a mutation that broke the rule it covers. One is refuted as a near-exact duplicate: test_creature_an_object_cant_fill_a_creature_slot_of_a_multi_target_spell repeats tests/srd/test_spells.py::test_bless_cant_target_an_object, with Bless, a creature plus an object, and assert_refused_cleanly in both. One side note: excluding unnamed PCs from the scene candidates (line 1129) does not break test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit. That is expected, because BROM is named there; the unnamed path is covered by the 'leaving a PC off the list' test, which did fail under that mutation.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_a_pc_is_a_creature_for_a_spell_that_targets_a_creature",
+   "verdict": "keep",
+   "reason": "Follows directly from 'including a player's character, is a creature'. Cure Wounds (targets='creature') heals the PC by 2d8 plus WIS, which is correct for SRD 5.2.1. Goes through Session as a real command.",
+   "mutation": "spells.py:523 `if not is_creature(t):` → `if not is_creature(t) or t.is_pc():` (PCs refused as creatures): the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit",
+   "verdict": "keep",
+   "reason": "Thunderwave hits each creature in the Cube, and a PC is a creature. The existing Cube tests use only goblins, so this is the only one that checks a PC is included.",
+   "mutation": "spells.py:1132 added `or t.is_pc()` to the skip condition in the _area_targets loop: the test failed. Dropping only the named PC (line 1124) passed, as it should, because the scene still adds BROM back.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_a_monster_is_a_creature_for_a_spell_that_targets_a_creature",
+   "verdict": "keep",
+   "reason": "'Any being' covers monsters. Cure Wounds on a goblin is valid, and the 2024 spell has no creature-type exclusion. No other test heals a monster with Cure Wounds.",
+   "mutation": "spells.py:523 → `if not is_creature(t) or not t.is_pc():` (only PCs count as creatures): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_an_object_isnt_a_creature_for_a_spell_that_targets_a_creature",
+   "verdict": "keep",
+   "reason": "The negative reading of the definition: an object is not a being. This covers Cure Wounds through the Session path, which the existing Bless test (direct S.cast) does not.",
+   "mutation": "spells.py:523 `if not is_creature(t):` → `if False:` (creature-kind check removed): the test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature",
+   "verdict": "keep",
+   "reason": "Matches R-16: the scene, not the caller's list, decides who is in an 'each creature' area. test_leaving_a_creature_in_the_cube_off_the_list_doesnt_spare_it (glossary:1591) uses goblins only. This test adds the PC case, which is the point of this unit.",
+   "mutation": "spells.py:1129 limited scene candidates to non-PCs (`and not x.is_pc()`): the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_creature_an_object_cant_fill_a_creature_slot_of_a_multi_target_spell",
+   "verdict": "refute",
+   "reason": "Duplicate. tests/srd/test_spells.py::test_bless_cant_target_an_object already runs assert_refused_cleanly(game, S.cast, game, j, 'bless', [b, 'door']). That is the same spell, the same mix of one creature and one object, the same entry point and the same assertion. Only the object's name ('chest' vs 'door') and its position differ.",
+   "mutation": "spells.py:523 → `if False:`: the test failed, and so would the existing Bless test. It catches the bug, but adds nothing new.",
+   "confidence": 0.75
+  }
+ ]
+}

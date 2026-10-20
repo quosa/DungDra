@@ -1,0 +1,21 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.creature#1",
+   "text": "Any being in the game, including a player’s character, is a creature.",
+   "threshold": false
+  }
+ ],
+ "relations": [
+  {
+   "type": "interacts_with",
+   "target": "GLOSS.creature-type",
+   "evidence": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is."
+  }
+ ],
+ "ambiguities": [],
+ "conflicts": [],
+ "gaps": [],
+ "traps": [],
+ "summary": "GLOSS.creature is a single definition: every being in the game, player characters included, is a creature. It has one testable clause: a PC counts as a creature for any rule that targets or refers to creatures. It points to GLOSS.creature-type, which gives every creature (PCs included) exactly one type tag (R-38, R-39). I found no ambiguities, conflicts, gaps or 2014 traps worth recording. \"Being\" isn't defined further, but the creature types (Construct, Undead, Ooze, Plant) already settle the borderline cases."
+}

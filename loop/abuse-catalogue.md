@@ -93,6 +93,8 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Naming creatures for an area spell that the area can't hold: far from the point of origin,
   or on both sides of the caster for one Cone or Cube. Leaving creatures that are in the area
   off the list to spare them from a spell that hits every creature in it.
+- Treating a player character as something other than a creature: sparing a party member from
+  an "each creature" area, or refusing a creature-targeting benefit to them (a PC is a creature).
 - Stretching an area by aiming it at a far point, or by upcasting a spell whose higher levels
   add only damage (a 15-foot Cone stays 15 feet long).
 - Widening a Cone into a quarter-circle (width measured from the axis out to each side) by

@@ -1,0 +1,106 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.creature#1",
+   "with": "Thunderwave (each creature in a 15-ft Cube, R-16)",
+   "risk": "high",
+   "note": "An area that hits each creature must take in a PC in the area, even a party member the caller left off the list."
+  },
+  {
+   "clause": "GLOSS.creature#1",
+   "with": "Cure Wounds / Healing Word (a creature you touch / can see)",
+   "risk": "medium",
+   "note": "A PC other than the caster must be a valid creature target."
+  },
+  {
+   "clause": "GLOSS.creature#1",
+   "with": "Bless (up to three creatures) and other multi-target creature spells",
+   "risk": "medium",
+   "note": "An object can't fill one of the creature slots."
+  },
+  {
+   "clause": "GLOSS.creature#1",
+   "with": "GLOSS.creature-type (R-38, R-39)",
+   "risk": "low",
+   "note": "Every creature, PCs included, has one type. That is already covered by the GLOSS.creature-type tests."
+  },
+  {
+   "clause": "GLOSS.creature#1",
+   "with": "Hold Person on a Humanoid PC",
+   "risk": "low",
+   "note": "Already covered by test_creature_type_hold_person_can_paralyze_a_humanoid_pc."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Leaving creatures that are in the area off the list to spare them from a spell that hits every creature in it (applied to a PC)",
+   "test": "tests/srd/test_glossary.py::test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature",
+   "reason": "A PC is a creature, so Thunderwave hits an unnamed party member who is in the Cube."
+  },
+  {
+   "case": "Pointing a creature-targeting spell at an object or a name that isn't a creature",
+   "test": "tests/srd/test_glossary.py::test_creature_an_object_cant_fill_a_creature_slot_of_a_multi_target_spell",
+   "reason": "Bless with one real creature and one object is refused cleanly."
+  },
+  {
+   "case": "NEW: Treating a player character as something other than a creature (sparing a party member from an each-creature area)",
+   "test": "tests/srd/test_glossary.py::test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature",
+   "reason": "Added to the catalogue under Spells and effects."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_a_pc_is_a_creature_for_a_spell_that_targets_a_creature",
+   "clause": "GLOSS.creature#1",
+   "kind": "positive",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit",
+   "clause": "GLOSS.creature#1",
+   "kind": "positive",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_a_monster_is_a_creature_for_a_spell_that_targets_a_creature",
+   "clause": "GLOSS.creature#1",
+   "kind": "positive",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_an_object_isnt_a_creature_for_a_spell_that_targets_a_creature",
+   "clause": "GLOSS.creature#1",
+   "kind": "negative",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature",
+   "clause": "GLOSS.creature#1",
+   "kind": "abuse",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_creature_an_object_cant_fill_a_creature_slot_of_a_multi_target_spell",
+   "clause": "GLOSS.creature#1",
+   "kind": "abuse",
+   "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [],
+ "kind_waivers": [],
+ "scenario_changes": [],
+ "rulings_proposed": [],
+ "summary": "I wrote six tests for GLOSS.creature#1 at the end of tests/srd/test_glossary.py, and all six pass (green). The clause has no threshold, so there is no boundary test and no waiver.\n\n- **Positive (3):** Cure Wounds heals another PC through Session.execute. Thunderwave hits a PC standing in its Cube. A monster is a creature target for Cure Wounds.\n- **Negative (1):** an object (a door) isn't a creature, so Cure Wounds on it through the Session is refused cleanly.\n- **Abuse (2):** leaving a PC off Thunderwave's list doesn't keep them out of an 'each creature' area. An object can't fill one of Bless's creature slots.\n\nI added one new cheat to loop/abuse-catalogue.md: treating a PC as something other than a creature to spare a party member from an area effect. Stage B found nothing related to this unit, so no scenarios changed, and I proposed no rulings. ruff check and ruff format are clean."
+}
