@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_ally_a_friendly_npc_next_to_the_target_is_an_ally"
   ],
-  "status": "proposed",
-  "register_id": null,
-  "note": "",
+  "status": "accepted",
+  "register_id": "R-37",
+  "note": "'Your friend' is a Friendly attitude toward that PC; the GM can designate otherwise (T-90).",
   "reason": ""
 }

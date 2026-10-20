@@ -54,7 +54,7 @@
       "summary": "I keep 9 of the 16 tests and refute 7. Four refutations are duplicates (above 0.5, so they are removed); three get confidence 0.5 or less and go to a person.\n\nI broke the ally logic in a scratch copy once for each of the 12 green tests, and every test failed. The four red tests fail for the reasons "
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally",
     "tests/srd/test_glossary.py::test_ally_helping_yourself_as_your_own_ally_is_refused",

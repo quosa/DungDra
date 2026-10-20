@@ -2112,7 +2112,7 @@ def test_ally_helping_yourself_as_your_own_ally_is_refused(game):
 
 
 # ---------------- #2 · your friend ----------------
-@pytest.mark.srd(ALLY, clause=f"{ALLY}#2", kind="positive", ruling="P-32")
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#2", kind="positive", ruling="R-37")
 @pytest.mark.xfail(
     strict=True,
     reason="T-87: a creature Friendly to the party is its friend and so its ally; "
