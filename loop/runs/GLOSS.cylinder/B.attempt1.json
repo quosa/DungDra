@@ -1,0 +1,51 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/actions.py:162",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# -- Dash / Disengage / Dodge (p.180-181) -----------------------------------------",
+    "rule_quote": "A Cylinder is an area of effect that extends in straight lines from a point of origin",
+    "explanation": "Section header for Dash/Disengage/Dodge actions. It shares page 180 with the Cylinder entry but has nothing to do with areas of effect."
+   },
+   {
+    "item": "dungdra/actions.py:171",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=180,",
+    "rule_quote": "A Cylinder is an area of effect that extends in straight lines from a point of origin",
+    "explanation": "A page reference in the Dash/Disengage/Dodge actions code. It matched on page number only and is not about Cylinders."
+   },
+   {
+    "item": "dungdra/creature.py:715",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"heal\", f\"{self.name} is dead and can't regain Hit Points\", page=180, rule=\"GLOSS.dead\"",
+    "rule_quote": "A Cylinder is an area of effect that extends in straight lines from a point of origin",
+    "explanation": "Implements GLOSS.dead (a dead creature can't regain Hit Points), not Cylinder geometry."
+   },
+   {
+    "item": "dungdra/game.py:184",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"Light level as the viewer perceives it at the target (Darkvision p.180).\"\"\"",
+    "rule_quote": "A Cylinder is an area of effect that extends in straight lines from a point of origin",
+    "explanation": "Concerns Darkvision and light level, not areas of effect."
+   },
+   {
+    "item": "dungdra/world.py:18",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "acc.fail(\"Darkness: effectively Blinded (p.180, p.182)\")",
+    "rule_quote": "A Cylinder is an area of effect that extends in straight lines from a point of origin",
+    "explanation": "Concerns the Darkness condition (effectively Blinded), not Cylinders."
+   }
+  ],
+  "summary": "There are no scenarios or SRD tests for GLOSS.cylinder, and no code line cites it. All five candidate code lines matched only on page 180 (Dash/Disengage/Dodge, GLOSS.dead, Darkvision, Darkness) and are not about Cylinders. I read only the snippets given and didn't open the files. Cylinder coverage is therefore missing for all three clauses (origin at the centre of the top or bottom, base radius and height as a threshold, origin included). The gap on how height is compared with elevation is also untested. Stage C may need a ruling for the ambiguities and the gap, then tests and an implementation."
+ },
+ "problems": [],
+ "cost_usd": 0.033886,
+ "session": "7786f113-5b03-4cb7-8258-913893274ea8",
+ "error": null
+}

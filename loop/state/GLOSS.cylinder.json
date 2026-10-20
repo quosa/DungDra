@@ -1,0 +1,43 @@
+{
+  "fingerprint": "357020350983c4ea",
+  "for_review": [],
+  "id": "GLOSS.cylinder",
+  "kind_waivers": [],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.cylinder#1",
+      "reason": "Nothing in the implemented subset creates a Cylinder. None of the 32 in-scope spells has one, and no engine monster has one. The engine has no Cylinder geometry, and a test would have to invent the API for it (geometry.in_area takes one size, so it can't take a radius and a height). Per CLAUDE.md, content the engine doesn't implement gets no tests."
+    },
+    {
+      "clause": "GLOSS.cylinder#2",
+      "reason": "The radius and height come from the creating effect, and no in-scope effect gives one. The threshold (radius boundary, height versus elevation) can't be exercised without a Cylinder creator. Stage A's height and elevation gap needs a ruling before such content is added."
+    },
+    {
+      "clause": "GLOSS.cylinder#3",
+      "reason": "The origin being included can be observed only through an effect that places a Cylinder, and none is in scope."
+    }
+  ],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792523588,
+      "summary": "GLOSS.cylinder defines the Cylinder area: its origin is at the centre of the circular top or bottom, the creating effect gives the base radius and the height, and the origin is included (unlike Cones and Cubes). Three ambiguities: how the radius is measured on a grid (propose R-32's grid metric), to"
+    },
+    "B": {
+      "at": 1792523601,
+      "summary": "There are no scenarios or SRD tests for GLOSS.cylinder, and no code line cites it. All five candidate code lines matched only on page 180 (Dash/Disengage/Dodge, GLOSS.dead, Darkvision, Darkness) and are not about Cylinders. I read only the snippets given and didn't open the files. Cylinder coverage "
+    },
+    "C": {
+      "at": 1792523650,
+      "summary": "GLOSS.cylinder can't be tested inside the implemented subset. The Rules Glossary is in scope, but none of the 32 in-scope spells and no engine monster creates a Cylinder. There is no 'cylinder' anywhere in dungdra/, and geometry.in_area has no Cylinder shape (its single size parameter couldn't hold "
+    },
+    "D": {
+      "at": 1792523655,
+      "summary": "The test list for GLOSS.cylinder is empty, so there was nothing to refute and I ran no mutations. Someone should check whether the stage that writes tests left this unit untested on purpose (for example, because the engine has no Cylinder content and it was treated as out of scope) or by mistake. Th"
+    }
+  },
+  "status": "out-of-scope",
+  "tests": [],
+  "tickets": []
+}

@@ -103,6 +103,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Reading a Sphere's radius as its diameter or stretching it with a higher slot (Sleep's 5-foot
   radius reaching 10 feet), or using its "origin is included" rule to put the caster in a
   Sphere placed elsewhere, as if it were an Emanation from them.
+- Hanging a Cylinder's origin in the air (its top face) so it stops short of creatures on the
+  ground, or measuring its height from the wrong face, to make a column that falls from above
+  miss the creatures under it; leaving the creature on a Cylinder's origin out of it.
 - Naming a creature that is walled off (Total Cover) from an area's point of origin, so that the
   caller's list puts it in the area anyway.
 - Judging an area's blocked lines from the wrong place: cover from the caster used against a
