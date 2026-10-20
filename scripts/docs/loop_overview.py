@@ -415,7 +415,7 @@ def draw(out: Path, root: Path = Path(".")) -> None:
         HW,
         FOUND,
         "Open tickets",
-        "bug and infra tickets from the audit loop · follow-ups from the reviewer",
+        "bug and infra tickets from the audit loop · park what you won't build soon",
     )
     dtrig = pg.box(YX, 1332, YW, YOU, "dev --budget USD", "--tickets T-n … (optional)")
     dev = pg.box(
@@ -424,8 +424,8 @@ def draw(out: Path, root: Path = Path(".")) -> None:
         HW,
         SCRIPT,
         "dev",
-        "preflight · next open ticket: bug → infra → refactor → coverage · skips tickets waiting for a "
-        "ruling",
+        "preflight · next open ticket (or a named parked one): bug → infra → refactor → coverage · "
+        "skips tickets waiting for a ruling",
     )
     pg.arrow([backlog.bottom, dev.top])
     pg.arrow([dtrig.right, (dev.x, dtrig.right[1])])
@@ -505,8 +505,8 @@ def draw(out: Path, root: Path = Path(".")) -> None:
         dy,
         HW,
         FOUND,
-        "Follow-up tickets",
-        "refactor, infra, coverage, filed by the reviewer · one per problem",
+        "Parked follow-ups",
+        "at most one per bug or infra fix, none for refactors · built only when named",
         h=48,
     )
     pg.arrow([fixer.at(0, 0.8), (AX - 6, fixer.at(0, 0.8)[1]), (AX - 6, dy + 20), disp.at(0, 0.3)])
@@ -566,11 +566,10 @@ def draw(out: Path, root: Path = Path(".")) -> None:
     pg.para(
         52,
         y + 38,
-        "Exit 3, a circuit breaker: the suite was red before starting · more than 15 open tickets (run the "
-        "dev loop "
-        "first) · 3 units in a row failed their gates.   Exit 4, paused: budget, usage limit or a "
-        "transient error; the "
-        "same command resumes, a half-done retry included.   `status` lists everything waiting for you.",
+        "Exit 3, a circuit breaker: the suite was red before starting · more than 15 open bugs (run the "
+        "dev loop first) · 3 units in a row failed their gates.   Exit 4, paused: budget, a usage or "
+        "session limit, or a call that didn't run; the same command resumes, a failed unit at its failed "
+        "stage.   `status` lists everything waiting for you; /srd-triage turns it into one sheet.",
         W - 110,
         size=8.2,
     )
