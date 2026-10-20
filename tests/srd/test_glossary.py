@@ -2101,11 +2101,6 @@ def test_ally_a_creature_outside_the_party_and_off_both_sides_is_no_ally(game):
 
 
 @pytest.mark.srd(ALLY, clause=f"{ALLY}#1", kind="abuse", ruling="R-36")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-86: you aren't your own ally, so Help can't assist your own ability check; "
-    "engine: help_check accepts the helper as the ally and gives them Advantage",
-)
 def test_ally_helping_yourself_as_your_own_ally_is_refused(game):
     lidda = pc(game, "LIDDA", (0, 0))
     assert_refused_cleanly(game, actions.help_check, game, lidda, lidda, skill="perception")

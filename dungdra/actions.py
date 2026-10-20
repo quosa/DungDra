@@ -24,6 +24,15 @@ def spend(game, actor, what="action", label=""):
 def help_check(game, helper, ally, skill=None, tool=None):
     if not helper.can_act():
         raise Refusal(f"{helper.name} can't take actions right now")
+    # SRD[GLOSS.ally#1] R-36: a creature is never its own ally, so Help can't assist the
+    # helper's own check.
+    if ally is helper:
+        raise Refusal(
+            f"{helper.name} can't Help themself; Help assists an ally, and you aren't your own ally",
+            page=176,
+            rule="GLOSS.ally#1",
+            ruling="R-36",
+        )
     if tool:
         tool = canonical(tool)
         if not helper.has_tool_prof(tool):

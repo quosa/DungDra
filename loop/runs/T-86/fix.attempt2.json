@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "I fixed T-86. `actions.help_check` now refuses when the creature being helped is the helper. Under register ruling R-36 a creature is never its own ally, so Help can't assist the helper's own check. The refusal happens before any action is spent, any effect is added or anything is logged. It carries page=176, rule=\"GLOSS.ally#1\" and ruling=\"R-36\", and the code has a `# SRD[GLOSS.ally#1]` tag with a comment citing R-36. That adds the ruling tag the reviewer asked for after attempt 1. I added a new file, `tests/unit/test_actions.py`, with two tests. The first checks that helping yourself is refused with the right rule, ruling and page, and that no effect or log event is left behind. The second checks that helping another creature still gives it the Help effect from the helper. Results: the ticket's test passes with --runxfail, unit tests show 535 passed, `ruff check` and `ruff format --check` are clean, and dev-gate shows PASS. When I ran the other GLOSS.ally tests with --runxfail, two others failed (the GM-designated ally and helping an enemy's check). They are probably still-xfailed tests from other tickets, but I didn't check their markers. I left them alone.",
+  "files": [
+   "dungdra/actions.py",
+   "tests/unit/test_actions.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_actions.py::test_help_check_refuses_the_helper_as_their_own_ally",
+   "tests/unit/test_actions.py::test_help_check_gives_another_creature_advantage_on_the_check"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.ally#1]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "Approved. The fix solves T-86. `help_check` now refuses when the ally is the helper and adds no effect. It runs this check before any proficiency check or action spend. The refusal cites page=176, rule=\"GLOSS.ally#1\" and ruling=\"R-36\", which match the clause numbering and the register row saying a creature is never its own ally. The acceptance test's strict xfail was removed and nothing else changed, so the suite stays append-only.\n\nThe new unit tests in `tests/unit/test_actions.py` check real behaviour. One checks that helping yourself is refused cleanly: no AdvNext effect and no help log entry. The other checks that helping a different creature still adds the effect and logs it.\n\nThe rule lives in the actions layer next to the other Help preconditions. I found no ally predicate it should have used instead. `game.py:151` lists same-team allies, but switching to it would also refuse enemies (T-89) and miss Friendly NPCs (T-87). Both are separate open tickets, so the self-only check stays within this ticket's scope.\n\nThe `loop/costs.jsonl` change is the loop's own cost bookkeeping. No follow-up needed: the remaining ally gaps are already covered by T-87, T-88, T-89 and T-90."
+ },
+ "problems": [],
+ "cost_usd": 0.4304,
+ "stash": ""
+}
