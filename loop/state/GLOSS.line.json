@@ -1,0 +1,43 @@
+{
+  "fingerprint": "90436d8e3d40afa2",
+  "for_review": [],
+  "id": "GLOSS.line",
+  "kind_waivers": [],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.line#1",
+      "reason": "Nothing in the implemented subset creates a Line. None of the 32 in-scope spells has one, and neither do the 14 monsters or the 4 species. The Line content (Lightning Bolt, Dragonborn Breath Weapon, dragon breath) is all outside §1.1. The engine has no Line geometry (geometry.in_area covers cone, cube and sphere), so a test would have to invent an API. Per CLAUDE.md, content the engine doesn't implement gets no tests."
+    },
+    {
+      "clause": "GLOSS.line#2",
+      "reason": "No in-scope effect specifies a Line length and width, so the clause can't be reached through the engine."
+    },
+    {
+      "clause": "GLOSS.line#3",
+      "reason": "No in-scope Line exists, so whether its point of origin is excluded can't be observed. The matching rule for Cones and Cubes is already tested under R-29 and R-31."
+    }
+  ],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792523784,
+      "summary": "GLOSS.line defines the Line area of effect. It runs straight from a point of origin for a length and width that the creating effect sets, and the origin is left out unless the creator includes it. The open questions are: how width is centred, how length is measured on a grid (geometrically or with t"
+    },
+    "B": {
+      "at": 1792523797,
+      "summary": "No scenarios or SRD tests relate to GLOSS.line. All 13 candidate code lines were matched by page number only. They cover Incapacitated, Influence and Lightly Obscured/Dim Light, so each is not-related. I did not open the files, because the snippets show what each line is about. The engine has no Lin"
+    },
+    "C": {
+      "at": 1792523835,
+      "summary": "GLOSS.line is out of scope: none of the in-scope spells, monsters or species creates a Line, and the engine has no Line geometry. This follows the precedent of GLOSS.cylinder and GLOSS.emanation. No tests and no tickets. One new cheat was added to loop/abuse-catalogue.md: off-centre or widened Line "
+    },
+    "D": {
+      "at": 1792523841,
+      "summary": "There were no tests to review for GLOSS.line, so I returned no verdicts and ran no mutations. Because the list is empty, nothing currently checks the rules in this unit: a Line's length and width come from the effect that creates it, and its point of origin is outside the area unless its creator cho"
+    }
+  },
+  "status": "out-of-scope",
+  "tests": [],
+  "tickets": []
+}

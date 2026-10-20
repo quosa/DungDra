@@ -106,6 +106,9 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Hanging a Cylinder's origin in the air (its top face) so it stops short of creatures on the
   ground, or measuring its height from the wrong face, to make a column that falls from above
   miss the creatures under it; leaving the creature on a Cylinder's origin out of it.
+- Bending a Line's width to one side of its path, or widening it by measuring from the axis out
+  to each side, to catch a creature beside it; cutting a Line short (the 2014 "up to its length")
+  to stop before an ally; measuring a diagonal Line with the grid metric so it reaches farther.
 - Walking out of your own moving Emanation (an aura fixed where it was cast) to leave enemies
   behind in it, or carrying a stationary or instantaneous one along; switching the origin's
   inclusion on and off mid-duration to pick up a benefit or skip a harm; measuring a Large

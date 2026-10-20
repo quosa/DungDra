@@ -1,0 +1,109 @@
+{
+ "verdicts": [
+  {
+   "item": "dungdra/actions.py:17",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184, rule=\"GLOSS.incapacitated\"",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Matched by page number only. It is the Incapacitated refusal, not the Line area of effect."
+  },
+  {
+   "item": "dungdra/actions.py:195",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# -- Influence (p.184)",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Section header for the Influence action. Matched by page number only."
+  },
+  {
+   "item": "dungdra/actions.py:223",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184,",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Influence logging. Matched by page number only."
+  },
+  {
+   "item": "dungdra/actions.py:231",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184,",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Influence logging. Matched by page number only."
+  },
+  {
+   "item": "dungdra/actions.py:239",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184,",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Influence logging. Matched by page number only."
+  },
+  {
+   "item": "dungdra/actions.py:254",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184,",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Influence logging. Matched by page number only."
+  },
+  {
+   "item": "dungdra/actions.py:268",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "rule=\"GLOSS.influence\"",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "The line cites GLOSS.influence, not the Line rule."
+  },
+  {
+   "item": "dungdra/actions.py:274",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=184,",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Influence logging. Matched by page number only."
+  },
+  {
+   "item": "dungdra/combat.py:139",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "rule=\"GLOSS.incapacitated\"",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Incapacitated action refusal. It has nothing to do with the Line area of effect."
+  },
+  {
+   "item": "dungdra/combat.py:169",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "rule=\"GLOSS.incapacitated\"",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Incapacitated Reaction refusal. It has nothing to do with the Line area of effect."
+  },
+  {
+   "item": "dungdra/gm.py:21",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "rule=\"GLOSS.incapacitated\"",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Monster turn skipped because it is Incapacitated. Matched by page number only."
+  },
+  {
+   "item": "dungdra/world.py:13",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "Lightly Obscured / Dim Light (p.184)",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Lightly Obscured and Dim Light handling. Matched by page number only."
+  },
+  {
+   "item": "dungdra/world.py:20",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "Dim Light: Lightly Obscured (p.184)",
+   "rule_quote": "A Line is an area of effect that extends from a point of origin in a straight path along its length",
+   "explanation": "Lightly Obscured and Dim Light handling. Matched by page number only."
+  }
+ ],
+ "summary": "No scenarios or SRD tests relate to GLOSS.line. All 13 candidate code lines were matched by page number only. They cover Incapacitated, Influence and Lightly Obscured/Dim Light, so each is not-related. I did not open the files, because the snippets show what each line is about. The engine has no Line area-of-effect geometry that cites this unit. Stage C may want a Line test and implementation if any in-scope content needs a Line. The ambiguities from stage A (width centring, length metric, shorter Line, origin inclusion) are still open."
+}

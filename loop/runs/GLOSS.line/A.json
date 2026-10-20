@@ -1,0 +1,64 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.line#1",
+   "text": "A Line is an area of effect that extends from a point of origin in a straight path along its length and covers an area defined by its width.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.line#2",
+   "text": "The effect that creates a Line specifies its length and width.",
+   "threshold": true
+  },
+  {
+   "id": "GLOSS.line#3",
+   "text": "A Line’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "covers an area defined by its width",
+   "reading_a": "The width is the full width across the Line, centred on its straight path (a 5-ft-wide Line reaches 2.5 ft to each side of the axis).",
+   "reading_b": "The width runs out from the path to one side, or out to each side, so the Line is wider than its stated width or off-centre.",
+   "proposed_ruling": "Full width, centred on the path from the point of origin, matching R-26 for Cones. A creature is in the Line when the centre of its space lies within half the width of the axis and between the origin and the far end. A centre exactly on the edge counts as inside, as in R-27.",
+   "confidence": 0.8
+  },
+  {
+   "quote": "extends from a point of origin in a straight path along its length",
+   "reading_a": "The length and width are measured in true (Euclidean) geometry along the chosen direction, so a diagonal 100-ft Line reaches about 14 diagonal squares.",
+   "reading_b": "The length is measured with the grid metric used for range and for Spheres (R-32), so a diagonal 100-ft Line reaches 20 diagonal squares.",
+   "proposed_ruling": "Measure the Line geometrically: length is the projection along the axis and width is the perpendicular distance from it, with the creature's space centre as its position (R-27). Under the grid metric a diagonal Line's length would depend on its direction. A person should confirm this against R-32.",
+   "confidence": 0.5
+  },
+  {
+   "quote": "The effect that creates a Line specifies its length and width.",
+   "reading_a": "The Line always has exactly the length the effect specifies. The creator chooses only the direction.",
+   "reading_b": "The specified length is a maximum, and the creator may make a shorter Line, for example to stop short of an ally.",
+   "proposed_ruling": "The Line always has the full specified length unless the effect offers a shorter one, as R-28 rules for Cones. The 2024 text drops the 2014 wording 'up to its length'.",
+   "confidence": 0.75
+  },
+  {
+   "quote": "A Line’s point of origin isn’t included in the area of effect unless its creator decides otherwise.",
+   "reading_a": "A creature whose space holds the point of origin (normally the caster of a Line that comes from them) isn't affected unless the creator chooses to include it, even if they name themself.",
+   "reading_b": "Only the geometric point is left out. A creature whose space holds that point is still in the Line if any other part of the Line covers its space.",
+   "proposed_ruling": "Reading A, as R-29 for Cones and R-31 for Cubes. The creator's choice to include the origin's space isn't offered yet (T-78).",
+   "confidence": 0.8
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "extends from a point of origin in a straight path",
+   "explanation": "The unit doesn't say where in the origin creature's space the point sits (centre or edge of the square), or what directions are allowed (any angle, or vertical and upward too). On a grid this changes which squares the far end and the edges of the Line cover. For example, if a 100-ft Line is measured from the centre of the caster's square, its last square is only half covered."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "extends from a point of origin in a straight path along its length",
+   "note": "The 2014 text said a line extends 'in a straight path up to its length', which suggested the caster could make it shorter. The 2024 wording drops 'up to', so code written from memory that lets the caster pick a shorter Line goes against the current text (see R-28 for the same point about Cones)."
+  }
+ ],
+ "summary": "GLOSS.line defines the Line area of effect. It runs straight from a point of origin for a length and width that the creating effect sets, and the origin is left out unless the creator includes it. The open questions are: how width is centred, how length is measured on a grid (geometrically or with the grid metric of R-32), whether a shorter Line may be chosen, and whether the caster at the origin is left out. Rulings R-26 to R-31 for Cones and Cubes suggest answers to all four. No units were referenced, so there are no relations."
+}

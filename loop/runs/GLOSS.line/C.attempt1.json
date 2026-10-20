@@ -1,0 +1,88 @@
+{
+ "output": {
+  "interactions": [
+   {
+    "clause": "GLOSS.line#1",
+    "with": "GLOSS.area-of-effect (lines from the origin; Total Cover blocks, R-34)",
+    "risk": "medium",
+    "note": "A Line would reuse the area-of-effect cover rule from its origin. Nothing in scope creates a Line, so this can't be reached."
+   },
+   {
+    "clause": "GLOSS.line#1",
+    "with": "R-26/R-27 (Cone width centred on the axis; centre of the creature's space decides)",
+    "risk": "medium",
+    "note": "Stage A proposes the same centring and the same centre-of-space test for Lines. This only matters once something creates a Line."
+   },
+   {
+    "clause": "GLOSS.line#1",
+    "with": "R-32 (grid metric for Sphere radius)",
+    "risk": "medium",
+    "note": "Measuring a diagonal Line's length with the grid metric versus Euclidean geometry is an open question (stage A ambiguity 2)."
+   },
+   {
+    "clause": "GLOSS.line#2",
+    "with": "R-28 (full length unless the effect offers a shorter one)",
+    "risk": "low",
+    "note": "This is the same 2014 'up to its length' trap as for Cones."
+   },
+   {
+    "clause": "GLOSS.line#3",
+    "with": "R-29 / R-31 (creature at the origin left out); T-78 (the creator's choice to include it)",
+    "risk": "low",
+    "note": "Handled the same way as Cones and Cubes."
+   },
+   {
+    "clause": "GLOSS.line#1-3",
+    "with": "in-scope content (32 spells, 14 monsters, 4 species)",
+    "risk": "low",
+    "note": "No in-scope spell, monster or species has a Line area. Burning Hands is a Cone, Thunderwave and Web are Cubes, and Sleep is a Sphere. Lightning Bolt (level 3), Dragonborn breath and dragons are outside §1.1. geometry.in_area supports only cone, cube and sphere, and raises 'no geometry' for anything else."
+   }
+  ],
+  "abuse": [
+   {
+    "case": "Bending a Line's width to one side, widening it from the axis to each side, cutting it short, or measuring a diagonal Line with the grid metric (new, added to the catalogue)",
+    "test": null,
+    "reason": "No in-scope effect creates a Line, so there is no command to abuse."
+   },
+   {
+    "case": "Naming creatures for an area spell that the area can't hold, or leaving out creatures that are in an 'each creature' area",
+    "test": null,
+    "reason": "Would apply to a Line, but no in-scope effect creates one. The Cone, Cube and Sphere tests already cover this."
+   },
+   {
+    "case": "Naming yourself for an area that starts from you",
+    "test": null,
+    "reason": "No in-scope Line effect starts from its creator."
+   }
+  ],
+  "tests": [],
+  "not_testable": [
+   {
+    "clause": "GLOSS.line#1",
+    "kind": "out-of-scope",
+    "reason": "Nothing in the implemented subset creates a Line. None of the 32 in-scope spells has one, and neither do the 14 monsters or the 4 species. The Line content (Lightning Bolt, Dragonborn Breath Weapon, dragon breath) is all outside §1.1. The engine has no Line geometry (geometry.in_area covers cone, cube and sphere), so a test would have to invent an API. Per CLAUDE.md, content the engine doesn't implement gets no tests.",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "GLOSS.line#2",
+    "kind": "out-of-scope",
+    "reason": "No in-scope effect specifies a Line length and width, so the clause can't be reached through the engine.",
+    "infra_ticket": ""
+   },
+   {
+    "clause": "GLOSS.line#3",
+    "kind": "out-of-scope",
+    "reason": "No in-scope Line exists, so whether its point of origin is excluded can't be observed. The matching rule for Cones and Cubes is already tested under R-29 and R-31.",
+    "infra_ticket": ""
+   }
+  ],
+  "kind_waivers": [],
+  "scenario_changes": [],
+  "rulings_proposed": [],
+  "summary": "GLOSS.line is out of scope: none of the in-scope spells, monsters or species creates a Line, and the engine has no Line geometry. This follows the precedent of GLOSS.cylinder and GLOSS.emanation. No tests and no tickets. One new cheat was added to loop/abuse-catalogue.md: off-centre or widened Line width, a shortened Line, and a diagonal Line measured with the grid metric. Stage A's proposed rulings (centred width, Euclidean length, full length, origin excluded) can wait until a Line effect comes into scope."
+ },
+ "problems": [],
+ "cost_usd": 0.3123214,
+ "session": "66b0e04f-04b8-4fe6-8db5-a8347ddf150e",
+ "error": null
+}

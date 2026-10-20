@@ -1,0 +1,4 @@
+{
+ "verdicts": [],
+ "summary": "There were no tests to review for GLOSS.line, so I returned no verdicts and ran no mutations. Because the list is empty, nothing currently checks the rules in this unit: a Line's length and width come from the effect that creates it, and its point of origin is outside the area unless its creator chooses otherwise. If the engine handles Line areas, the stage-A analysis should have produced tests for those rules. If it doesn't, the unit should be refused as out of scope, like GLOSS.emanation and GLOSS.cylinder. Someone should check that the empty list is intended and not something the generation stage dropped."
+}
