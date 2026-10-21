@@ -54,6 +54,8 @@ class Acc:
         self.bonus_dice: list[tuple[str, str]] = []
         self.auto: str | None = None
         self.auto_reason: str = ""
+        self.auto_rule: str | None = None  # the rule (and page) that decided the automatic result
+        self.auto_page = None
         self.ac: list[tuple[int, str]] = []  # AC adjustments (attack vs owner)
         self.auto_crit: list[str] = []
         self.consumed: list = []  # effects to remove if the roll happens
@@ -73,9 +75,10 @@ class Acc:
     def dice(self, expr, src):
         self.bonus_dice.append((expr, src))
 
-    def fail(self, reason):
+    def fail(self, reason, rule=None, page=None):
         if self.auto != "fail":
             self.auto, self.auto_reason = "fail", reason
+            self.auto_rule, self.auto_page = rule, page
 
     def succeed(self, reason):
         if self.auto is None:
@@ -203,8 +206,9 @@ class Condition(Effect):
             if ctx.kind == "check" and "sight" in ctx.tags:
                 acc.fail("Blinded: can't see")
         elif n == "deafened":
+            # SRD[GLOSS.deafened#2] automatically fail any ability check that requires hearing
             if ctx.kind == "check" and "hearing" in ctx.tags:
-                acc.fail("Deafened: can't hear")
+                acc.fail("Deafened: can't hear", rule="GLOSS.deafened#2", page=181)
         elif n == "frightened":
             if ctx.kind in ("check", "attack") and _source_in_sight(o, self):
                 acc.disadvantage("Frightened")

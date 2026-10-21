@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_deafened_automatic_failure_cites_the_rule"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Deafened's automatic failure on a hearing check is now logged as GLOSS.deafened#2 on p.181. Before, it was logged under the generic ability-check rule.\n\nHow it works: `Acc.fail()` now takes an optional `rule=` and `page=` and stores them as `auto_rule`/`auto_page`, kept from the first failure, the same way `auto_reason` is. When a roll fails automatically, `Creature._finish` logs it under that rule and page if the effect gave one; otherwise the caller's rule is used as before. The Deafened branch in `Condition.d20` passes rule=\"GLOSS.deafened#2\", page=181 and carries an SRD tag.\n\nOnly Deafened passes a rule for now. Blinded and the Paralyzed/Stunned save failures can use the same `fail(rule=, page=)` parameters, but I didn't change them so their logged rules stay as they are.\n\nResults:\n- Unit tests: 552 passed.\n- The ticket test passes with --runxfail.\n- tests/srd and tests/scenarios: 618 passed, 18 xfailed. The one reported failure is the ticket test itself: it now passes but still has its strict xfail marker, which the harness removes.\n- `ruff check` and `ruff format --check` are clean.\n- `dev-gate` passes."
+    }
+  ]
 }

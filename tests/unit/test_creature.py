@@ -97,3 +97,20 @@ def test_exhaustion_cites_its_cause_when_given(game):
     assert game.log.last("exhaustion").rule == "GLOSS.suffocation"
     brom.lose_exhaustion(1)
     assert game.log.last("exhaustion").rule == "GLOSS.exhaustion"
+
+
+def test_an_automatic_failure_logs_the_rule_of_the_effect_that_decided_it(game):
+    brom = pc(game, "BROM")
+    brom.add_condition("deafened", "test")
+    r = brom.check("perception", dc=1, tags={"hearing"}, rule="PLAY.d20-tests.ability-checks")
+    ev = game.log.last("check")
+    assert r.success is False
+    assert (ev.rule, str(ev.page)) == ("GLOSS.deafened#2", "181")
+
+
+def test_an_automatic_failure_without_a_rule_keeps_the_callers_rule(game):
+    brom = pc(game, "BROM")
+    brom.add_condition("paralyzed", "test")
+    r = brom.save("dex", 10, rule="GLOSS.saving-throw")
+    assert r.success is False
+    assert game.log.last("save").rule == "GLOSS.saving-throw"

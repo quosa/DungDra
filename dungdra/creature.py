@@ -461,6 +461,9 @@ class Creature:
     def _finish(self, roll, acc, visibility, page, bonus_dice=(), auto_only=False, rule=None):
         acc.remove_consumed()
         if auto_only:
+            if acc.auto_rule:
+                # the effect that decided the automatic result names its own rule and page
+                rule, page = acc.auto_rule, acc.auto_page
             return roll_d20_test(
                 self.game, self, roll, page=page, visibility=visibility, rule=rule, rulings=acc.rulings
             )

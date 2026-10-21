@@ -2524,11 +2524,6 @@ def test_deafened_automatic_failure_is_logged(game):
     assert any("automatic failure" in t and "Deafened" in t for t in texts)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-94: Deafened's automatic failure is logged under the generic d20 rule, "
-    "not GLOSS.deafened#2 on p.181",
-)
 @pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
 def test_deafened_automatic_failure_cites_the_rule(game):
     brom = deafened_brom(game)
