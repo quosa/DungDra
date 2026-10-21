@@ -1,0 +1,82 @@
+{
+  "fingerprint": "686620a0caece8ab",
+  "for_review": [
+    "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+    "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
+    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
+  ],
+  "id": "GLOSS.enemy",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.enemy#1",
+      "kind": "boundary",
+      "reason": "The clause has no threshold. The 5-ft distance belongs to the ranged-attack rule, not to the enemy definition."
+    },
+    {
+      "clause": "GLOSS.enemy#2",
+      "kind": "boundary",
+      "reason": "No threshold: harming is either happening or not."
+    },
+    {
+      "clause": "GLOSS.enemy#3",
+      "kind": "boundary",
+      "reason": "No threshold: a creature is either designated or not."
+    }
+  ],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.enemy#3",
+      "reason": "Designation 'by the rules' (Berserker Axe, Oathbow sworn enemy, Mysterious Deck) comes only from magic items the engine doesn't have."
+    }
+  ],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_enemy_help_distracts_a_foe_within_5_feet"
+  ],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792554572,
+      "summary": "GLOSS.enemy has three ways a creature can become your enemy: it fights against you in combat, it actively works to harm you, or a rule or the GM designates it as one. No numeric thresholds. Three ambiguities are open: whether 'fights against you' covers the whole opposing side, whether a Hostile att"
+    },
+    "B": {
+      "at": 1792554584,
+      "summary": "GLOSS.enemy has no scenarios, SRD tests or SRD-tagged code. All nine candidate code lines matched only on page 181 (Dodge, Disengage, exhaustion, food and water) and are not-related. The enemy definition has no implementation or acceptance coverage. Stage C may want clause-level tests once the ambig"
+    },
+    "C": {
+      "at": 1792554827,
+      "summary": "GLOSS.enemy: 17 tests added to tests/srd/test_glossary.py. 12 pass (green) and 5 are strict xfails (red). The tests check who counts as an enemy through three engine rules that ask for one: Disadvantage on a ranged attack with an enemy within 5 ft (p.15), Help ('distract an enemy', p.183) and Hide ("
+    },
+    "D": {
+      "at": 1792554984,
+      "summary": "I ran 13 mutations through `srdloop mutate`, all on the engine's two enemy checks: the ranged check at `dungdra/combat.py:1019` and `enemies_of` at `dungdra/game.py:150`. Every green test I kept failed under the mutation aimed at it. A control mutation passed, so the harness reports real results. Al"
+    }
+  },
+  "status": "blocked",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+    "tests/srd/test_glossary.py::test_enemy_a_foe_who_sees_you_stops_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_a_companion_next_to_you_imposes_no_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_bystander_out_of_the_fight",
+    "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally",
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy",
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_puts_on_the_enemy_side_is_an_enemy",
+    "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy"
+  ],
+  "tickets": [
+    "T-111",
+    "T-112",
+    "T-113",
+    "T-114",
+    "T-115",
+    "T-116",
+    "T-117"
+  ]
+}

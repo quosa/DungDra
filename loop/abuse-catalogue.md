@@ -52,6 +52,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Counting a creature on the other side, or one that is merely nearby, as an ally to switch on
   an ally-based benefit (Sneak Attack, Pack Tactics, Help on an attack roll).
 - Targeting yourself, or an ally, where the rule says a creature you can see or an enemy.
+- Claiming a foe isn't "your" enemy because it has only attacked your companions (to Hide in
+  its sight or shoot next to it without Disadvantage), or that a bystander who just attacked you
+  isn't an enemy because the GM never put it on a side. Keeping a Friendly NPC who turned on you
+  as "an ally" for Sneak Attack.
 - More targets than a spell or feature allows.
 - Using a non-sight sense (Tremorsense, a sense that only pinpoints a location) as "a creature
   you can see": to cast a sight-targeted spell, to cancel the unseen-target Disadvantage, or to

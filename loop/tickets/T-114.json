@@ -1,0 +1,12 @@
+{
+  "id": "T-114",
+  "kind": "bug",
+  "unit": "GLOSS.enemy",
+  "title": "SRD: a creature that actively works to harm you is your enemy; engine: you can Hide in plain sight of a neutral creature that just attacked you",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

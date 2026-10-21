@@ -1,0 +1,12 @@
+{
+  "id": "T-115",
+  "kind": "bug",
+  "unit": "GLOSS.enemy",
+  "title": "SRD: a creature that attacks you is your enemy; engine: a Friendly NPC that attacks you still counts as your ally and enables Sneak Attack",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -1,0 +1,67 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.enemy#1",
+    "text": "A creature is your enemy if it fights against you in combat",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.enemy#2",
+    "text": "actively works to harm you",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.enemy#3",
+    "text": "is designated as your enemy by the rules or GM",
+    "threshold": false
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "fights against you in combat",
+    "reading_a": "Any creature on the opposing side of a combat you are in is your enemy, even if it never attacks or targets you yourself (for example, it only attacks your companions).",
+    "reading_b": "Only a creature that personally fights you (attacks you, targets you, or engages you) is your enemy. A combatant who only attacks others isn't your enemy yet.",
+    "proposed_ruling": "Reading A. In combat, every creature fighting on the side opposed to you is your enemy, whoever it is currently attacking. 'You' here means your side in the fight, not only your own body.",
+    "confidence": 0.65
+   },
+   {
+    "quote": "actively works to harm you",
+    "reading_a": "Only a creature that is actually acting to harm you counts (setting a trap for you, plotting an ambush, attacking). A Hostile attitude alone (GLOSS.influence) doesn't make a creature an enemy.",
+    "reading_b": "Any creature with a Hostile attitude toward you is your enemy, because hostility is the attitude of a creature that wants to harm you.",
+    "proposed_ruling": "Reading A. Outside combat, a creature is an enemy only while it is actively working to harm you or when the GM or a rule designates it as one. A Hostile attitude alone is not enough, so the GM has to designate it.",
+    "confidence": 0.55
+   },
+   {
+    "quote": "A creature is your enemy if",
+    "reading_a": "The tests are independent of GLOSS.ally, so one creature can be both your ally and your enemy (for example, a Friendly creature that is charmed into attacking you).",
+    "reading_b": "Enemy and ally are mutually exclusive. If a creature meets any enemy test, it stops being an ally while that test applies.",
+    "proposed_ruling": "Reading B. While any enemy test applies, the creature is your enemy and not your ally. Rules that ask for 'an ally' or 'an enemy' then always get one answer.",
+    "confidence": 0.5
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "is designated as your enemy by the rules or GM",
+    "explanation": "No rule describes how the GM designates an enemy, how long the designation lasts, or how it is undone. The engine needs explicit, logged state for GM-designated enemies (and an explicit override for the other two tests)."
+   },
+   {
+    "quote": "fights against you in combat",
+    "explanation": "The unit doesn't say when enemy status ends: when combat ends, when the creature surrenders, flees or is charmed, or when it falls to 0 Hit Points. Rules that check 'an enemy' (for example, a creature within 5 feet) need an answer."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "A creature is your enemy if it fights against you in combat, actively works to harm you, or is designated as your enemy by the rules or GM.",
+    "note": "The 2014 PHB had no glossary definition of 'enemy' and often used 'hostile creature' for the same idea. An implementation built from memory may treat 'enemy' as 'Hostile' (the 2024 GLOSS.influence attitude) or as 'any non-party creature'. The 2024 definition depends on behaviour (fighting you, working to harm you) or explicit designation, not on attitude or faction."
+   }
+  ],
+  "summary": "GLOSS.enemy has three ways a creature can become your enemy: it fights against you in combat, it actively works to harm you, or a rule or the GM designates it as one. No numeric thresholds. Three ambiguities are open: whether 'fights against you' covers the whole opposing side, whether a Hostile attitude is enough, and whether a creature can be both ally and enemy. The gaps are the missing state for GM designation and when enemy status ends."
+ },
+ "problems": [],
+ "cost_usd": 0.158944,
+ "session": "e885d4bc-55e6-4798-80a5-f8a420cd802c",
+ "error": null
+}

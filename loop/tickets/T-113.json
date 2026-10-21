@@ -1,0 +1,12 @@
+{
+  "id": "T-113",
+  "kind": "bug",
+  "unit": "GLOSS.enemy",
+  "title": "SRD: a creature that actively works to harm you is your enemy; engine: only creatures on the enemy team count, so a neutral creature that attacks you gives no ranged-attack Disadvantage",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

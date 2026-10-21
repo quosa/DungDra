@@ -2929,3 +2929,214 @@ def test_untriggered_roof_leaves_no_rubble(game):
     TR.place(game, "collapsing roof")
     in_combat(game, brom)
     assert C.move(game, brom, to=(15, 0)) == 15
+
+
+# ==================================================================================================
+# GLOSS.enemy (p.181): Enemy
+# ==================================================================================================
+ENEMY = "GLOSS.enemy"
+
+
+def archer_scene(game):
+    """LIDDA with her Shortbow and a goblin target 30 ft off with nobody next to it. A ranged
+    attack has Disadvantage while an enemy who can see her stands within 5 ft (p.15), so the
+    shot is a probe for who counts as her enemy."""
+    lidda = pc(game, "LIDDA", (0, 0))
+    target = mon(game, "goblin warrior", (30, 0), name="TARGET")
+    return lidda, target
+
+
+def shoot(game, lidda, target, disadvantage):
+    """One Shortbow shot that misses (d20=2, rolled twice under Disadvantage); returns the mode."""
+    game.dice.force_str("d20=[2,2]" if disadvantage else "d20=[2]")
+    return C.attack(game, lidda, target, weapon="shortbow").roll.mode
+
+
+def d20s_rolled(game):
+    return sum(1 for h in game.dice.history if h[0] == 20)
+
+
+def neutral(game, pos=(5, 0), attitude="indifferent", name="WATCHMAN"):
+    """A guard who isn't in the party and hasn't been put on either side."""
+    g = mon(game, "guard", pos, name=name)
+    g.team = "neutral"
+    g.attitude = attitude
+    return g
+
+
+def spear_at(game, attacker, victim):
+    """`attacker` thrusts its Spear at `victim` and misses (d20=2): an attempt to harm it."""
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, attacker, victim, attack_name="spear").hit
+
+
+# ---------------- #1 · fights against you in combat ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive")
+def test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    gob = mon(game, "goblin warrior", (5, 0), name="BRAWLER")
+    in_combat(game, lidda, gob)
+    game.dice.force_str("d20=[2,2]")
+    r = C.attack(game, lidda, target, weapon="shortbow")
+    assert r.roll.mode == "disadvantage"
+    assert any("BRAWLER" in s for s in r.roll.dis)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="P-39")
+def test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy(game):
+    # The goblin fights the party but has only gone for BROM: it is still LIDDA's enemy.
+    lidda, target = archer_scene(game)
+    brom = pc(game, "BROM", (10, 0))
+    gob = mon(game, "goblin warrior", (5, 0), name="BRAWLER")
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, gob, brom, attack_name="scimitar").hit
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive")
+def test_enemy_a_foe_who_sees_you_stops_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    assert_refused_cleanly(
+        game, actions.hide, game, lidda, cover="three-quarters", seen_by=[gob.id], match="enemy"
+    )
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_companion_next_to_you_imposes_no_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    pc(game, "BROM", (5, 0))
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (30, 0))
+    game.dice.force_str("d20=[15]")
+    r = actions.hide(game, lidda, cover="three-quarters", seen_by=[brom.id])
+    assert r.success and lidda.has("invisible")
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-111: Help distracts any creature within 5 feet, even the helper's own companion",
+)
+def test_enemy_help_cant_distract_a_companion(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    assert_refused_cleanly(game, actions.help_attack, game, lidda, brom)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage(game):
+    # The 2014-style "every non-party creature is an enemy" is wrong: the watchman isn't fighting.
+    lidda, target = archer_scene(game)
+    neutral(game)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-112: Help distracts any creature within 5 feet, even a bystander who isn't an enemy",
+)
+def test_enemy_help_cant_distract_a_bystander_out_of_the_fight(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    assert_refused_cleanly(game, actions.help_attack, game, lidda, w)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="abuse", ruling="P-39")
+def test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused(game):
+    # "It's fighting BROM, not me": the goblin is still LIDDA's enemy, and it sees her.
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (30, 5))
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, gob, brom, attack_name="scimitar").hit
+    assert_refused_cleanly(game, actions.hide, game, lidda, cover="three-quarters", seen_by=[gob.id])
+
+
+# ---------------- #2 · actively works to harm you ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-40")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-113: a creature not put on the enemy side never counts as an enemy, even after it "
+    "attacks you, so a ranged attack next to it has no Disadvantage",
+)
+def test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-40")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-114: a creature not put on the enemy side never counts as an enemy, even after it "
+    "attacks you, so you can Hide in its plain sight",
+)
+def test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    assert_refused_cleanly(game, actions.hide, game, lidda, cover="three-quarters", seen_by=[w.id])
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-41")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-115: a Friendly creature that attacks you still counts as your ally and enables Sneak Attack",
+)
+def test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally(game):
+    lidda, gob = sneak_setup(game)
+    turncoat = bystander(game, pos=(5, 5), attitude="friendly")
+    spear_at(game, turncoat, lidda)
+    assert_stab_without_sneak_attack(game, lidda, gob)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="P-40")
+def test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy(game):
+    # The watchman dislikes the party but does nothing to harm LIDDA.
+    lidda, target = archer_scene(game)
+    neutral(game, attitude="hostile")
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="P-40")
+def test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game, pos=(30, 0), attitude="hostile")
+    game.dice.force_str("d20=[15]")
+    r = actions.hide(game, lidda, cover="three-quarters", seen_by=[w.id])
+    assert r.success and lidda.has("invisible")
+
+
+# ---------------- #3 · designated as your enemy by the rules or GM ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#3", kind="positive")
+def test_enemy_a_creature_the_gm_puts_on_the_enemy_side_is_an_enemy(game):
+    lidda, target = archer_scene(game)
+    s = Session(game)
+    out = s.execute({"cmd": "spawn", "monsters": ["guard"], "positions": [[5, 0]], "team": "enemy"})
+    assert out["ok"], out
+    before = d20s_rolled(game)
+    game.dice.force_str("d20=[2,2]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": target.id, "weapon": "shortbow"})
+    assert out["ok"], out
+    assert d20s_rolled(game) - before == 2, "the shot wasn't rolled with Disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#3", kind="negative")
+def test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy(game):
+    lidda, target = archer_scene(game)
+    s = Session(game)
+    out = s.execute({"cmd": "spawn", "monsters": ["guard"], "positions": [[5, 0]], "team": "neutral"})
+    assert out["ok"], out
+    before = d20s_rolled(game)
+    game.dice.force_str("d20=[2]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": target.id, "weapon": "shortbow"})
+    assert out["ok"], out
+    assert d20s_rolled(game) - before == 1, "the shot was rolled with Disadvantage"

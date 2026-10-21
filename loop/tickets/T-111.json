@@ -1,0 +1,12 @@
+{
+  "id": "T-111",
+  "kind": "bug",
+  "unit": "GLOSS.enemy",
+  "title": "SRD: Help distracts only an enemy within 5 feet; engine: Help distracts any creature within 5 feet, even the helper's own companion",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

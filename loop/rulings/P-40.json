@@ -1,0 +1,16 @@
+{
+  "id": "P-40",
+  "unit": "GLOSS.enemy",
+  "ambiguity": "GLOSS.enemy ambiguity 2: 'actively works to harm you': does a Hostile attitude alone make a creature an enemy?",
+  "ruling": "Reading A. Only acting to harm you (for example, attacking you) or a GM or rule designation makes a creature an enemy. A Hostile attitude alone doesn't.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy",
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

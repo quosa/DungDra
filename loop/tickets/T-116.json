@@ -1,0 +1,10 @@
+{
+  "id": "T-116",
+  "kind": "infra",
+  "unit": "GLOSS.enemy",
+  "title": "Add a GM command that designates an existing creature as an enemy of the party (or revokes that), logged with page=181 rule=GLOSS.enemy#3",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

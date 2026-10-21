@@ -1,0 +1,124 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage",
+   "verdict": "keep",
+   "reason": "Follows from #1 together with the p.15 rule on ranged attacks with an enemy nearby. The goblin is in combat on the opposing side, within 5 ft, and can see LIDDA.",
+   "mutation": "combat.py:1019 ranged-nearby check changed to also skip team 'enemy' → test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+   "verdict": "refute",
+   "reason": "The test silently takes Reading A of stage-A ambiguity 1 ('fights against you' covers the whole opposing side). No register row covers this, and the marker has no ruling=. The engine also ignores the goblin's attack on BROM. The test passes only because the goblin's team is 'enemy', so in effect it repeats test_enemy_a_foe_in_the_fight_next_to_you without combat. No mutation of the 'attacks only your companion' behaviour is possible, because no code path depends on it. A person should decide on the ruling.",
+   "mutation": "combat.py:1019 skip team 'enemy' → failed. Removing the goblin's attack on BROM changes nothing in the engine (the attack isn't consulted), so that part of the test is untested.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_help_distracts_a_foe_within_5_feet",
+   "verdict": "refute",
+   "reason": "Duplicate. tests/scenarios/test_creation.py::test_core06_help_attack_range and test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side already have Help succeed against a team-enemy goblin within 5 ft. help_attack has no enemy check at all, so this test cannot detect any break in the enemy rule.",
+   "mutation": "actions.py:89 range check 'if d > 5:' → 'if False:' → still passed. No enemy-related line exists in help_attack to mutate.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_foe_who_sees_you_stops_you_hiding",
+   "verdict": "keep",
+   "reason": "Hide requires being out of every enemy's line of sight (p.183). No other test covers the seen_by refusal. The clause label is loose: there is no combat, so the goblin is an enemy by side designation (#3), not by #1. The outcome is still right.",
+   "mutation": "game.py:150 enemies_of changed to exclude team 'enemy' → test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_companion_next_to_you_imposes_no_ranged_disadvantage",
+   "verdict": "keep",
+   "reason": "A party member isn't fighting against LIDDA, so no ranged Disadvantage applies.",
+   "mutation": "combat.py:1019 changed to 'e.team != \"neutral\"' (own side counts) → test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding",
+   "verdict": "keep",
+   "reason": "A companion isn't an enemy, so being seen by them doesn't block Hide.",
+   "mutation": "game.py:150 enemies_of changed to 'x.team != \"neutral\"' → failed. Control mutation (adding a 'zzz' team) → passed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion",
+   "verdict": "keep",
+   "reason": "Help's text is 'distract an enemy within 5 feet of you', and a party member isn't an enemy. It fails for the stated reason: 'expected a refusal, got <HelpAttack Help from LIDDA>'.",
+   "mutation": "Red test. Run with --runxfail: Help succeeds on BROM, matching the T-new reason.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage",
+   "verdict": "keep",
+   "reason": "A neutral, Indifferent guard doing nothing meets none of the three tests. The test also catches the 2014-style 'every non-party creature is an enemy' trap.",
+   "mutation": "combat.py:1019 changed to 'e.team != attacker.team' (neutral counts as enemy) → test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_bystander_out_of_the_fight",
+   "verdict": "keep",
+   "reason": "Help distracts 'an enemy', and the neutral guard isn't one. It fails for the stated reason (Help succeeds).",
+   "mutation": "Red test. --runxfail: 'expected a refusal, got <HelpAttack …>', matching the reason.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
+   "verdict": "refute",
+   "reason": "Same problem as the 'attacking only your companion' test. It adopts the unruled Reading A of ambiguity 1, with no register row and no ruling=. In the engine it is the same as test_enemy_a_foe_who_sees_you_stops_you_hiding plus an attack on BROM that nothing consults. A person should rule on ambiguity 1 before this abuse case is pinned.",
+   "mutation": "game.py:150 enemies_of excluding 'enemy' → failed (the same signal as the plain foe-hide test). The goblin-attacks-BROM step is not exercised by any engine logic.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
+   "verdict": "keep",
+   "reason": "A spear thrust at LIDDA is plainly 'actively works to harm you' (and arguably 'fights against you'). It fails for the stated reason: mode is 'normal', expected 'disadvantage'.",
+   "mutation": "Red test. --runxfail: assert 'normal' == 'disadvantage', matching the T-new reason.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding",
+   "verdict": "keep",
+   "reason": "Same oracle as above, applied to Hide. It fails for the stated reason: Hide went ahead and rolled Stealth instead of refusing.",
+   "mutation": "Red test. --runxfail: 'expected a refusal, got D20Roll(... Stealth check to Hide ...)', matching the reason.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally",
+   "verdict": "refute",
+   "reason": "The test picks Reading B of stage-A ambiguity 3 (enemy and ally are mutually exclusive). Stage A gave that reading confidence 0.5 and no register row covers it. The SRD defines ally (p.176) and enemy (p.181) independently and never says they exclude each other. Under R-37 a Friendly creature is still a 'friend', so it stays an ally on the words as written. The expected 'no Sneak Attack' result comes from an invented reading, not from the text. A person must rule on it first.",
+   "mutation": "Red test. --runxfail: damage 11 instead of 7 (Sneak Attack applied). It fails as described, but the expectation itself is unruled.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy",
+   "verdict": "keep",
+   "reason": "Reading A of ambiguity 2 has no ruling, but the text supports it. The definition lists behaviour and designation, not attitude, and PLAY.social-interaction (p.10) says Hostile NPCs are only 'inclined to hinder'. The test is distinct from the Indifferent bystander test because a mutation keyed on attitude would be caught here only.",
+   "mutation": "combat.py:1019 changed to 'e.team != attacker.team' → test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding",
+   "verdict": "keep",
+   "reason": "Same textual support as the hostile-attitude ranged test. It is the only negative Hide test for a non-party creature.",
+   "mutation": "game.py:150 enemies_of changed to 'x.team != c.team' (neutral counts) → test failed.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_puts_on_the_enemy_side_is_an_enemy",
+   "verdict": "keep",
+   "reason": "Directly checks #3 through the GM-facing spawn command with team 'enemy'. This is the only test that goes through the Session path.",
+   "mutation": "combat.py:1019 skip team 'enemy' → test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy",
+   "verdict": "keep",
+   "reason": "Negative counterpart through the Session spawn path. It is close to the bystander test, but it covers GM designation through the command interface rather than by setting the team field directly.",
+   "mutation": "combat.py:1019 changed to 'e.team != attacker.team' → test failed.",
+   "confidence": 0.65
+  }
+ ],
+ "summary": "I ran 13 mutations through `srdloop mutate`, all on the engine's two enemy checks: the ranged check at `dungdra/combat.py:1019` and `enemies_of` at `dungdra/game.py:150`. Every green test I kept failed under the mutation aimed at it. A control mutation passed, so the harness reports real results. All 5 red tests fail for the reason written in their xfail marker.\n\nI'm refuting 4 tests:\n\n- **`test_enemy_help_distracts_a_foe_within_5_feet`** (confidence 0.6): it duplicates `test_core06_help_attack_range` and `test_ally_help_gives_advantage_to_a_creature_on_the_helper_s_side`. Help never checks whether the target is an enemy, so this test can't catch a broken enemy rule.\n- **Three tests that need a person's ruling first** (confidence 0.45, so they go to review rather than being removed). Each one quietly picks a reading of an ambiguity from the stage-A analysis that has no row in the README register:\n  - `test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy` and the abuse test `test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused` take Reading A of ambiguity 1 (the whole opposing side counts as your enemy). The engine never looks at the goblin's attack on BROM, so in practice both just repeat the plain foe tests.\n  - `test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally` takes Reading B of ambiguity 3 (ally and enemy exclude each other). Stage A rated that reading 0.5, and the SRD never says the two exclude each other.\n\nI'm keeping the two Hostile-attitude tests even though ambiguity 2 also has no ruling. The text supports them: the definition only lists behaviour and designation, and p.10 says Hostile NPCs are merely \"inclined to hinder\".\n\n`test_enemy_a_foe_who_sees_you_stops_you_hiding` is labelled clause #1 (\"fights against you in combat\"), but no combat is started. The goblin counts as an enemy only because it is on the enemy side, which is #3. The expected result is still correct, so I'm keeping it."
+}
