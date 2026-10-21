@@ -2742,7 +2742,7 @@ def test_space_with_no_source_isnt_difficult(game):
     assert C.move(game, brom, to=(5, 0)) == 5
 
 
-@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="P-37")
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="R-42")
 def test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone(game):
     # Reading A: only Difficult Terrain sources don't stack; crawling's own extra foot adds on top
     brom = rubble_scene(game)
@@ -2751,7 +2751,7 @@ def test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone(game):
     assert C.move(game, brom, to=(5, 0)) == 15
 
 
-@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="P-37")
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="R-42")
 @pytest.mark.xfail(
     strict=True,
     reason="T-97: crawling (mode='crawl') through a Difficult Terrain scene costs 2 ft per foot; "
@@ -2764,7 +2764,7 @@ def test_not_cumulative_doesnt_cancel_the_crawl_cost(game):
     assert C.move(game, brom, to=(5, 0), mode="crawl") == 15
 
 
-@pytest.mark.srd(DT, clause=f"{DT}#3", kind="abuse", ruling="P-37")
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="abuse", ruling="R-42")
 @pytest.mark.xfail(
     strict=True,
     reason="T-98: choosing mode='crawl' through a Difficult Terrain scene skips the "
