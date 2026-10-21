@@ -3273,7 +3273,7 @@ def test_heroic_inspiration_declined_is_kept(game):
     assert jozan.heroic_inspiration is True
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="P-44")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="R-49")
 def test_heroic_inspiration_cant_reroll_a_monsters_attack_roll(game):
     # "after rolling it": only the dice you roll yourself; a foe's attack roll isn't yours.
     jozan = inspired(game, pos=(5, 0))
