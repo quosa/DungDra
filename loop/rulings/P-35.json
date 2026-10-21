@@ -8,8 +8,8 @@
     "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check",
     "tests/srd/test_glossary.py::test_deafened_searching_by_sight_still_finds_a_hidden_creature"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-40",
   "note": "",
   "reason": ""
 }

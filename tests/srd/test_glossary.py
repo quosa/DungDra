@@ -2451,7 +2451,7 @@ def test_deafened_listening_search_doesnt_find_a_hidden_creature(game):
     assert gob.hidden_total == 12
 
 
-@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-35")
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-40")
 def test_deafened_searching_by_sight_still_finds_a_hidden_creature(game):
     # Not hearing doesn't stop a creature from seeing: a Perception Search by sight is rolled
     brom = deafened_brom(game)
@@ -2558,7 +2558,7 @@ def test_deafened_check_not_requiring_hearing_is_rolled(game):
     assert r.success is True
 
 
-@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="P-35")
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="R-40")
 def test_deafened_perception_by_sight_is_rolled(game):
     # Reading A: a Perception check that can succeed by sight doesn't require hearing
     brom = deafened_brom(game)
@@ -2568,7 +2568,7 @@ def test_deafened_perception_by_sight_is_rolled(game):
     assert r.success is True
 
 
-@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="P-35")
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="R-40")
 def test_deafened_check_command_rolls_an_ordinary_perception_check(game):
     s = Session(game)
     brom = deafened_brom(game)
