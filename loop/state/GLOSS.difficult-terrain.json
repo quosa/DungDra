@@ -48,7 +48,7 @@
       "summary": "I kept 27 of the 30 tests. I refuted two as duplicates and sent one to a person.\n\n**Rule text.** I checked the disputed readings against the rules text and they hold up. GLOSS.crawling says \"1 extra foot (2 extra feet in Difficult Terrain)\", so the 15 ft expected for 5 ft of crawling through rubble "
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_difficult_terrain_doubles_the_cost_of_a_move",
     "tests/srd/test_glossary.py::test_rubble_scene_costs_extra_through_move_command",

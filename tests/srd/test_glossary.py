@@ -2827,7 +2827,7 @@ def test_move_command_through_a_hostile_creature_costs_extra(game):
     assert game.combat.turn.movement_left == 15
 
 
-@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive", ruling="P-38")
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive", ruling="R-43")
 @pytest.mark.xfail(
     strict=True,
     reason="T-102: a neutral creature that isn't an ally doesn't make its space Difficult Terrain",
