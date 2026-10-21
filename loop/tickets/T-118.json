@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Heroic Inspiration can now reroll a Hit Die spent on a Short Rest. Before, a reroll was offered only for d20 Tests and damage dice.\n\n- The damage-die reroll was a private helper in `combat.py`. I moved it to `inspiration_reroll` in `dungdra/d20.py` and generalised it to take the decision key and the kind of die. `d20` sits in a lower layer, so both `combat.py` and `rest.py` can use it, and there is still one reroll mechanism rather than two.\n- `short_rest_benefits` in `rest.py` now offers the reroll right after each Hit Die is rolled, using the `inspiration` key, and heals with the new roll.\n- The log event now cites the rule as `GLOSS.heroic-inspiration#1` on page 183 (the glossary page). Before, it cited the bare `GLOSS.heroic-inspiration` on p.8.\n- The code carries tags for clause #1 (reroll any die) and clause #2 (must use the new roll).\n\nTest results:\n- `tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die` passes with `--runxfail`. In the normal run it is the suite's only failure, because it passes while still marked strict xfail; the harness removes that marker.\n- The unit tests pass (569), and `ruff check` and `ruff format --check` are clean.\n- `dev-gate` passes, with the import contract intact.\n- The other Heroic Inspiration tests that still fail under `--runxfail` belong to other tickets (T-119 and the ones about monsters and giving inspiration away). My change doesn't touch them."
+    }
+  ]
 }

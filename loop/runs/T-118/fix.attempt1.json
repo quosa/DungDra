@@ -1,0 +1,39 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Heroic Inspiration can now reroll a Hit Die spent on a Short Rest. Before, a reroll was offered only for d20 Tests and damage dice.\n\n- The damage-die reroll was a private helper in `combat.py`. I moved it to `inspiration_reroll` in `dungdra/d20.py` and generalised it to take the decision key and the kind of die. `d20` sits in a lower layer, so both `combat.py` and `rest.py` can use it, and there is still one reroll mechanism rather than two.\n- `short_rest_benefits` in `rest.py` now offers the reroll right after each Hit Die is rolled, using the `inspiration` key, and heals with the new roll.\n- The log event now cites the rule as `GLOSS.heroic-inspiration#1` on page 183 (the glossary page). Before, it cited the bare `GLOSS.heroic-inspiration` on p.8.\n- The code carries tags for clause #1 (reroll any die) and clause #2 (must use the new roll).\n\nTest results:\n- `tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die` passes with `--runxfail`. In the normal run it is the suite's only failure, because it passes while still marked strict xfail; the harness removes that marker.\n- The unit tests pass (569), and `ruff check` and `ruff format --check` are clean.\n- `dev-gate` passes, with the import contract intact.\n- The other Heroic Inspiration tests that still fail under `--runxfail` belong to other tickets (T-119 and the ones about monsters and giving inspiration away). My change doesn't touch them.",
+  "files": [
+   "dungdra/d20.py",
+   "dungdra/combat.py",
+   "dungdra/rest.py",
+   "tests/unit/test_d20.py",
+   "tests/unit/test_rest.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_d20.py::test_inspiration_reroll_replaces_the_picked_die_and_spends_inspiration",
+   "tests/unit/test_d20.py::test_inspiration_reroll_declined_or_unavailable_keeps_the_rolls",
+   "tests/unit/test_rest.py::test_a_hit_die_can_be_rerolled_with_heroic_inspiration",
+   "tests/unit/test_rest.py::test_without_heroic_inspiration_the_hit_die_stands"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.heroic-inspiration#1]",
+   "SRD[GLOSS.heroic-inspiration#2]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [
+   {
+    "title": "Heroic Inspiration's reroll is still decided in two places: roll_d20_test has its own inline block (dungdra/d20.py ~l.217, logged as page=8 rule=PLAY.d20-tests.advantage-disadvantage), next to the shared inspiration_reroll helper (page=183 rule=GLOSS.heroic-inspiration#1). Make the d20 path use the helper or share its spend-and-log step, so both paths follow the same rule and citation.",
+    "kind": "refactor"
+   }
+  ],
+  "summary": "The ticket is fixed. short_rest_benefits now offers Heroic Inspiration on each Hit Die it rolls, and the T-118 xfail is removed from test_heroic_inspiration_rerolls_a_hit_die, which now passes against the real engine. The fix doesn't add a second mechanism: it moves the existing damage-die reroll (combat._inspiration_reroll_damage) into a shared d20.inspiration_reroll and uses it from both combat and rest. The rule isn't hard-coded and is unchanged for damage. The shared helper also fixes the citation to page=183 and rule=GLOSS.heroic-inspiration#1, with SRD clause comments. That correction is small and belongs with this change. The unit tests check real behaviour: the chosen die is replaced, Inspiration is spent, and the rolls are kept when the offer is declined or Inspiration is missing. Hit Die healing is checked with forced dice. No out-of-scope changes beyond the loop's cost log. One problem outside the diff remains: roll_d20_test still has its own inline Inspiration reroll with a different citation. I filed it as a refactor follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.6284,
+ "stash": ""
+}

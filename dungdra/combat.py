@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from .d20 import D20Roll, roll_d20_test
+from .d20 import D20Roll, inspiration_reroll, roll_d20_test
 from .data.equipment import WEAPONS
 from .dice import parse_expr
 from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
@@ -1536,34 +1536,8 @@ def roll_damage_dice(
                 rule="FEAT.feat-descriptions.fighting-style-feats.great-weapon-fighting",
             )
         rolls = new
-    rolls = _inspiration_reroll_damage(game, attacker, rolls, s)
+    rolls = inspiration_reroll(game, attacker, rolls, s)
     return sum(rolls) + m, rolls
-
-
-def _inspiration_reroll_damage(game, actor, rolls, sides):
-    if actor is None or not getattr(actor, "heroic_inspiration", False) or not rolls:
-        return rolls
-    pick = game.decide(
-        actor,
-        "inspiration_damage",
-        [None] + list(range(len(rolls))),
-        default=None,
-        prompt=f"{actor.name} rolled damage {rolls}: spend Heroic Inspiration to reroll a die?",
-    )
-    if pick is None or pick is False:
-        return rolls
-    rolls = list(rolls)
-    old = rolls[pick]
-    rolls[pick] = game.dice.roll(sides)
-    actor.heroic_inspiration = False
-    game.log.player(
-        "inspiration",
-        f"{actor.name} spends Heroic Inspiration to reroll a damage die: {old} → "
-        f"{rolls[pick]} (must use the new roll)",
-        page=8,
-        rule="GLOSS.heroic-inspiration",
-    )
-    return rolls
 
 
 def deal_attack_damage(

@@ -3170,7 +3170,6 @@ def test_heroic_inspiration_rerolls_a_cantrip_damage_die(game):
 
 
 @pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
-@pytest.mark.xfail(strict=True, reason="T-118: Heroic Inspiration isn't offered for a Short Rest Hit Die")
 def test_heroic_inspiration_rerolls_a_hit_die(game):
     from dungdra import rest as R
 

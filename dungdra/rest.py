@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .d20 import inspiration_reroll
 from .rules import HOUR, Refusal
 
 
@@ -137,6 +138,8 @@ def short_rest_benefits(game, pc, max_dice=None, focus=None):
         if not want:
             break
         roll = game.dice.roll(pc.hit_die)
+        # SRD[GLOSS.heroic-inspiration#1]: any die, a Hit Die included, can be rerolled.
+        (roll,) = inspiration_reroll(game, pc, [roll], pc.hit_die, "inspiration", "Hit Die")
         pc.hit_dice_spent += 1
         spent += 1
         pc.heal(
