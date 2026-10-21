@@ -1,0 +1,10 @@
+{
+  "id": "T-107",
+  "kind": "infra",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "Scene or space terrain types (heavy snow, ice, undergrowth) that make those spaces Difficult Terrain",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

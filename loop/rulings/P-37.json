@@ -1,0 +1,15 @@
+{
+  "id": "P-37",
+  "unit": "GLOSS.difficult-terrain",
+  "ambiguity": "GLOSS.difficult-terrain ambiguity 2: 'Difficult Terrain isn't cumulative': does it also stop crawling, climbing or swimming costs from adding on top?",
+  "ruling": "Reading A. Only several Difficult Terrain sources in one space don't stack. Crawling, climbing or swimming without the Speed adds its own extra foot, so crawling through Difficult Terrain costs 3 ft per foot.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone",
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost",
+    "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

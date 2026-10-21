@@ -1,0 +1,12 @@
+{
+  "id": "T-100",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: a space holding a creature that isn't Tiny or your ally is Difficult Terrain; engine: moving through a hostile creature's space costs 1 ft per foot",
+  "tests": [
+    "tests/srd/test_glossary.py::test_moving_through_a_hostile_creatures_space_costs_extra"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

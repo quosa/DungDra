@@ -1,0 +1,215 @@
+{
+ "summary": "I kept 27 of the 30 tests. I refuted two as duplicates and sent one to a person.\n\n**Rule text.** I checked the disputed readings against the rules text and they hold up. GLOSS.crawling says \"1 extra foot (2 extra feet in Difficult Terrain)\", so the 15 ft expected for 5 ft of crawling through rubble comes straight from the rules. It is not a guess between two readings. For the indifferent creature, the literal text plus GLOSS.ally and register ruling R-37 make an Indifferent guard a non-ally, so its space counts as Difficult Terrain.\n\n**Red tests.** I ran all 8 with xfail switched off, and each fails for the reason its marker gives:\n- Crawl mode costs 10 ft instead of 15. The engine applies the scene's Difficult Terrain only when the mode is \"walk\".\n- Moving inside the web costs 5 ft instead of 10.\n- A hostile, Small or indifferent creature's space costs 10 ft instead of 15.\n- The two moves that should be refused aren't (they cost 20 and 30 ft and go through).\n\n**Mutations on the green tests:**\n- Removing the extra cost (`combat.py:555`) fails every positive and boundary test.\n- Ignoring the scene's Difficult Terrain (line 554 becomes `if difficult:`) fails the rubble tests.\n- Charging the extra foot twice when two sources overlap fails `test_two_difficult_terrain_sources_cost_one_extra_foot`.\n- Skipping Difficult Terrain for a prone creature fails the prone-crawl test.\n- Making every space Difficult Terrain fails all the tested negative tests.\n- Having `place()` set the roof's rubble before it collapses fails `test_untriggered_roof_leaves_no_rubble`.\n\n**One test that doesn't currently test its rule.** `test_hostile_creature_in_rubble_isnt_doubly_difficult` still passed when I made two sources stack. The engine doesn't treat creatures as Difficult Terrain yet, so nothing can stack today. It only starts checking anything once that's implemented, so I've sent it to a person (confidence 0.45).\n\n**Refuted (two duplicates):**\n- `test_five_feet_of_clear_ground_costs_five` is the same as `test_space_with_no_source_isnt_difficult`: same setup, same 5-ft move, same result.\n- In `test_difficult_terrain_leftover_movement_cant_cover_another_step`, the final refusal happens with 0 ft of movement left, so it would be refused with or without Difficult Terrain. The steps before it repeat the doubling test and the exact-speed test.\n\nI couldn't run the always-Difficult mutation on `test_clear_ground_costs_one_foot_per_foot` and `test_five_feet_of_clear_ground_costs_five`. The batched command was refused under the permission mode, so their verdicts rest on reading the code.",
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_doubles_the_cost_of_a_move",
+   "verdict": "keep",
+   "reason": "Follows directly from #1; checks both the cost and the movement left.",
+   "mutation": "combat.py:555 'cost += dist' -> 'cost += 0': test failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_rubble_scene_costs_extra_through_move_command",
+   "verdict": "keep",
+   "reason": "The move command has no difficult flag, so this is the only check that the scene's Difficult Terrain applies through the player command.",
+   "mutation": "line 554 scene term removed ('if difficult:'): test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_clear_ground_costs_one_foot_per_foot",
+   "verdict": "keep",
+   "reason": "Baseline negative test that guards against Difficult Terrain applying everywhere. Unlike the other negatives, its 10-ft move is also checked against the movement left.",
+   "mutation": "Not run: the batched always-Difficult mutation (line 554 -> 'if True:') was refused by the permission mode. Reading the code, that mutation makes the 10-ft move cost 20, so the test would fail.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_move_that_uses_exactly_all_speed_is_allowed",
+   "verdict": "keep",
+   "reason": "Correct boundary: 15 ft of Difficult Terrain costs exactly Speed 30.",
+   "mutation": "Not run on its own. The same no-extra-cost mutation failed the doubling test; here the cost would be 15, not 30, so this test would fail too.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_one_step_past_speed_is_refused",
+   "verdict": "keep",
+   "reason": "20 ft of Difficult Terrain costs 40, more than Speed 30, so the move is refused.",
+   "mutation": "No extra cost: the move went through and the test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_isnt_free_through_move_command",
+   "verdict": "keep",
+   "reason": "Abuse check through the command path using the scene's rubble.",
+   "mutation": "No extra cost: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_leftover_movement_cant_cover_another_step",
+   "verdict": "refute",
+   "reason": "The final refusal happens with 0 ft of movement left (20 + 10 already spent), so it would be refused even on clear ground and doesn't test the claimed abuse. The asserts that do test Difficult Terrain repeat the doubling test and the exact-speed test. The real 'leftover can't cover another step' case is test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused.",
+   "mutation": "No extra cost: test failed, but on the first assert. The final refusal doesn't depend on Difficult Terrain.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_costs_ten",
+   "verdict": "keep",
+   "reason": "Matches the #2 example word for word, using the scene's rubble.",
+   "mutation": "Scene term removed from line 554: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_five_feet_of_clear_ground_costs_five",
+   "verdict": "refute",
+   "reason": "Same as test_space_with_no_source_isnt_difficult: same setup, same 5-ft move, same 5-ft cost. That test also checks scene.difficult is False. It's also nearly the same as test_clear_ground_costs_one_foot_per_foot.",
+   "mutation": "Not run: the batched always-Difficult mutation was refused by the permission mode. It would fail, the same as its duplicate did.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_ten_feet_left_fits_exactly",
+   "verdict": "keep",
+   "reason": "Exact boundary when movement is partly used.",
+   "mutation": "Not run on its own. With no extra cost it would return 5, not 10, so the test would fail.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused",
+   "verdict": "keep",
+   "reason": "Real off-by-one boundary: a 5-ft step costs 10 and only 5 is left.",
+   "mutation": "No extra cost: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_two_difficult_terrain_sources_cost_one_extra_foot",
+   "verdict": "keep",
+   "reason": "Matches #3 and the 'even if multiple things in a space count' wording in the Difficult Terrain section of the movement rules.",
+   "mutation": "Line 555 made to charge double when both sources apply: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_hostile_creature_in_rubble_isnt_doubly_difficult",
+   "verdict": "keep",
+   "reason": "The expected result is right, but the test can't detect stacking today because the engine doesn't treat creatures as Difficult Terrain. It only starts checking anything once the creature rule is implemented. Sent to a person.",
+   "mutation": "Stacking mutation on line 555: the test STILL PASSED (it doesn't detect stacking). Removing the scene term failed it.",
+   "confidence": 0.45
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_space_with_no_source_isnt_difficult",
+   "verdict": "keep",
+   "reason": "Negative test for #3.",
+   "mutation": "Line 554 -> 'if True:': test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone",
+   "verdict": "keep",
+   "reason": "The 15 ft comes from the text: GLOSS.crawling says '2 extra feet in Difficult Terrain'. This covers a prone creature walking through a rubble scene, which is a different path from the existing prone test (it passes difficult=True with mode crawl).",
+   "mutation": "Prone creature skips Difficult Terrain on line 554: test failed. No extra cost on line 555: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost",
+   "verdict": "keep",
+   "reason": "The oracle comes from GLOSS.crawling's text. The test fails for the stated reason: Difficult Terrain only applies when mode == 'walk'.",
+   "mutation": "Red test. Run with --runxfail it fails with 10 != 15.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost",
+   "verdict": "keep",
+   "reason": "Real exploit: choosing mode='crawl' skips the scene's Difficult Terrain.",
+   "mutation": "Red test. With --runxfail: 'expected a refusal, got 20'.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra",
+   "verdict": "keep",
+   "reason": "Web's area is Difficult Terrain. The goblin is already inside, so the move doesn't enter the webs and needs no save dice.",
+   "mutation": "Red test. With --runxfail: 5 != 10, as the marker says.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_outside_the_web_costs_normally",
+   "verdict": "keep",
+   "reason": "Guards against a fix that makes the web's Difficult Terrain cover the whole scene.",
+   "mutation": "Line 554 -> 'if True:': test failed.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_through_a_hostile_creatures_space_costs_extra",
+   "verdict": "keep",
+   "reason": "Follows from #5. Halfling Nimbleness makes passing through the Medium bandit legal.",
+   "mutation": "Red test. With --runxfail: 10 != 15.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_move_command_through_a_hostile_creature_costs_extra",
+   "verdict": "keep",
+   "reason": "Same rule checked through the player command, which is the abuse surface.",
+   "mutation": "Red test. With --runxfail: movement_left 20 != 15.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra",
+   "verdict": "keep",
+   "reason": "Uses Reading A, but the literal text ('isn't your ally'), GLOSS.ally and R-37 (Indifferent isn't a friend) all lead to the same result.",
+   "mutation": "Red test. With --runxfail: 10 != 15.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_through_an_allys_space_costs_normally",
+   "verdict": "keep",
+   "reason": "Guards against the 2014 rule, where any creature's space was Difficult Terrain.",
+   "mutation": "Line 554 -> 'if True:': test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_move_command_through_an_allys_space_costs_normally",
+   "verdict": "keep",
+   "reason": "Nearly a duplicate: cmd_move just calls C.move. Kept to pair with the command-path hostile test.",
+   "mutation": "Not run on its own. The same direct-call ally test failed under the always-Difficult mutation.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_moving_through_a_friendly_creatures_space_costs_normally",
+   "verdict": "keep",
+   "reason": "Applies R-37 correctly: a Friendly creature is an ally.",
+   "mutation": "Not run on its own. The always-Difficult mutation would fail it.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_hostile_creature_off_the_path_adds_nothing",
+   "verdict": "keep",
+   "reason": "Guards against a fix that charges extra for any hostile creature nearby rather than only one in the path.",
+   "mutation": "Not run on its own. It passes today only because creatures aren't Difficult Terrain yet.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_small_hostile_creatures_space_is_difficult",
+   "verdict": "keep",
+   "reason": "Small is the smallest size that still counts. Making the goblin Incapacitated legally lets BROM through its space.",
+   "mutation": "Red test. With --runxfail: 10 != 15.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free",
+   "verdict": "keep",
+   "reason": "35 ft is more than Speed 30, so the move should be refused.",
+   "mutation": "Red test. With --runxfail: 'expected a refusal, got 30'.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_rubble_from_a_collapsed_roof_is_difficult_terrain",
+   "verdict": "keep",
+   "reason": "Collapsing Roof (p.199): 'Rubble ... turns the trapped area into Difficult Terrain'. The engine treats the whole scene as the trapped area.",
+   "mutation": "Scene term removed from line 554: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_untriggered_roof_leaves_no_rubble",
+   "verdict": "keep",
+   "reason": "Before the roof collapses, there's no rubble.",
+   "mutation": "traps.py:41 place() made to set scene.difficult = True: test failed.",
+   "confidence": 0.8
+  }
+ ]
+}

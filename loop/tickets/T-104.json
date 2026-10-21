@@ -1,0 +1,12 @@
+{
+  "id": "T-104",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: an enemy's space costs 1 extra foot per foot; engine: a move through an enemy that exceeds Speed once that cost is counted is allowed",
+  "tests": [
+    "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

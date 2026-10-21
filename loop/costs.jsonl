@@ -284,3 +284,8 @@
 {"at": 1792531789, "about": "GLOSS.deafened", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0823, "seconds": 18.4, "session_id": "9aff64f7-8202-4eae-a269-202666a082ed", "exit": 0}
 {"at": 1792531808, "about": "GLOSS.deafened", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 0.9561, "seconds": 174.7, "session_id": "47b687d6-d157-4295-87bf-1933bc49c7c4", "exit": 0}
 {"at": 1792531984, "about": "GLOSS.deafened", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.6368, "seconds": 114.2, "session_id": "1f2c956c-d573-4397-a654-207529f4cadf", "exit": 0}
+{"at": 1792532099, "about": "GLOSS.difficult-terrain", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.2705, "seconds": 62.0, "session_id": "fc3a77f1-f827-49e3-8bbf-909e7bda82c7", "exit": 0}
+{"at": 1792532161, "about": "GLOSS.difficult-terrain", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0955, "seconds": 22.3, "session_id": "dcb38c12-48f7-45ea-b0a5-8b108975efe6", "exit": 0}
+{"at": 1792532183, "about": "GLOSS.difficult-terrain", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.0575, "seconds": 199.4, "session_id": "a8ab335c-7489-45c2-8d0f-66720a75649f", "exit": 1}
+{"at": 1792554063, "about": "GLOSS.difficult-terrain", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.5924, "seconds": 312.3, "session_id": "faa9682c-76fc-462c-99a9-ecf176c8e068", "exit": 0}
+{"at": 1792554378, "about": "GLOSS.difficult-terrain", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.8702, "seconds": 167.1, "session_id": "3c13ab6f-78e0-4f2c-9b6b-e397efa94580", "exit": 0}

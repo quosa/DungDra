@@ -1,0 +1,10 @@
+{
+  "id": "T-106",
+  "kind": "infra",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "Terrain features in spaces with a mover-relative test: furniture sized for a creature size, which is Difficult Terrain for creatures of that size or smaller",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

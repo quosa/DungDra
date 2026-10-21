@@ -1,0 +1,12 @@
+{
+  "id": "T-99",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: the spaces in Web's Cube are Difficult Terrain; engine: the web's 'difficult' flag has no area and movement never checks it",
+  "tests": [
+    "tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

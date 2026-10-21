@@ -1,0 +1,12 @@
+{
+  "id": "T-101",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: a hostile creature's space is Difficult Terrain; engine: the move command charges nothing extra for it",
+  "tests": [
+    "tests/srd/test_glossary.py::test_move_command_through_a_hostile_creature_costs_extra"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

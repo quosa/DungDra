@@ -406,6 +406,10 @@ def test_spells06(game):
     game.dice.force_str("d20=[5]")
     S.cast(game, m, "web", [gob])
     assert gob.has("restrained") and m.concentrating == "Web"
+    # [H] the web is Difficult Terrain and Lightly Obscured (GLOSS.difficult-terrain#1)
+    web = game.scene.objects["web (MIALEE)"]
+    assert web["difficult"] is True and web["lightly_obscured"] is True
+    assert any("Difficult Terrain" in e.text for e in game.log.of_kind("spell"))
     set_turn(game, gob)
     game.dice.force_str("d20=[20]")
     r = S.break_web(game, gob)

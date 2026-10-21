@@ -1,0 +1,12 @@
+{
+  "id": "T-102",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: any creature that isn't Tiny or your ally makes its space Difficult Terrain; engine: a neutral non-ally's space costs nothing extra",
+  "tests": [
+    "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

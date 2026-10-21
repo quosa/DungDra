@@ -1,0 +1,136 @@
+{
+ "output": {
+  "clauses": [
+   {
+    "id": "GLOSS.difficult-terrain#1",
+    "text": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#2",
+    "text": "For example, moving 5 feet through Difficult Terrain costs 10 feet of movement.",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#3",
+    "text": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.difficult-terrain#4",
+    "text": "A space is Difficult Terrain if the space contains any of the following or something similar:",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.difficult-terrain#5",
+    "text": "A creature that isn’t Tiny or your ally",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#6",
+    "text": "Furniture that is sized for creatures of your size or larger",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#7",
+    "text": "Heavy snow, ice, rubble, or undergrowth",
+    "threshold": false
+   },
+   {
+    "id": "GLOSS.difficult-terrain#8",
+    "text": "Liquid that’s between shin- and waist-deep",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#9",
+    "text": "A narrow opening sized for a creature one size smaller than you",
+    "threshold": true
+   },
+   {
+    "id": "GLOSS.difficult-terrain#10",
+    "text": "A slope of 20 degrees or more",
+    "threshold": true
+   }
+  ],
+  "relations": [],
+  "ambiguities": [
+   {
+    "quote": "every foot of movement in that space costs 1 extra foot",
+    "reading_a": "On a grid, a 5-ft step costs 10 ft when the square being entered is Difficult Terrain. Leaving a Difficult Terrain square for a normal one costs 5 ft.",
+    "reading_b": "Any movement that touches a Difficult Terrain space costs extra, whether you leave it or enter it, so leaving a Difficult Terrain square also costs 10 ft.",
+    "proposed_ruling": "Reading A: the extra cost depends on the square entered. A creature starting in Difficult Terrain and stepping onto clear ground pays the normal 5 ft.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "Difficult Terrain isn’t cumulative",
+    "reading_a": "This only means that several sources of Difficult Terrain in one space don't stack. Other extra movement costs (crawling while Prone, climbing, swimming) still add on top, e.g. crawling through Difficult Terrain costs 3 ft per foot.",
+    "reading_b": "No extra movement costs stack with Difficult Terrain at all, so crawling, climbing or swimming in Difficult Terrain costs only 2 ft per foot.",
+    "proposed_ruling": "Reading A. The sentence goes on to say 'either a space is Difficult Terrain or it isn't', which limits it to whether a space counts as Difficult Terrain. Other costs come from their own rules and add on top.",
+    "confidence": 0.65
+   },
+   {
+    "quote": "A creature that isn’t Tiny or your ally",
+    "reading_a": "Any creature that is neither Tiny nor your ally makes its space Difficult Terrain for you. That includes neutral non-hostile creatures that aren't allies (see R-36 and R-37 for what counts as an ally).",
+    "reading_b": "Only hostile creatures make their space Difficult Terrain. Non-allied neutral creatures are treated like allies.",
+    "proposed_ruling": "Reading A, using the literal text and the register's definition of ally (R-36, R-37). A creature that isn't an ally makes its space Difficult Terrain unless it is Tiny.",
+    "confidence": 0.75
+   },
+   {
+    "quote": "Liquid that’s between shin- and waist-deep",
+    "reading_a": "The depth is measured against the creature that is moving, so the same water can be Difficult Terrain for a Small creature and not for a Large one.",
+    "reading_b": "The depth is fixed against a Medium humanoid and is the same for every creature.",
+    "proposed_ruling": "Reading A. Every other bullet in the list is relative to the moving creature ('your size', 'smaller than you'), so liquid depth is too.",
+    "confidence": 0.6
+   },
+   {
+    "quote": "A narrow opening sized for a creature one size smaller than you",
+    "reading_a": "Only an opening exactly one size smaller is Difficult Terrain. An opening two or more sizes smaller can't be passed at all.",
+    "reading_b": "Any opening smaller than your size is Difficult Terrain and can be passed.",
+    "proposed_ruling": "Reading A. The rule names exactly one size smaller, so the engine refuses movement through an opening two or more sizes smaller until a person rules otherwise.",
+    "confidence": 0.55
+   }
+  ],
+  "conflicts": [],
+  "gaps": [
+   {
+    "quote": "or something similar",
+    "explanation": "The list is open-ended. The engine needs a fixed set of Difficult Terrain sources, and anything else is the GM's call. No rule says who decides what is 'something similar'."
+   },
+   {
+    "quote": "A creature that isn’t Tiny or your ally",
+    "explanation": "This unit makes a creature's space Difficult Terrain but doesn't say whether you may move through a hostile creature's space or end your move there. That comes from movement rules this unit doesn't reference."
+   },
+   {
+    "quote": "Liquid that’s between shin- and waist-deep",
+    "explanation": "No rule here covers liquid deeper than waist-deep (presumably swimming) or shallower than shin-deep (presumably normal terrain)."
+   },
+   {
+    "quote": "Furniture that is sized for creatures of your size or larger",
+    "explanation": "Whether a space is Difficult Terrain depends on who is moving ('your ally', 'your size', 'smaller than you'). So Difficult Terrain is a property of a space and a mover together, not of the space alone, and no rule says so explicitly."
+   }
+  ],
+  "traps": [
+   {
+    "quote": "A creature that isn’t Tiny or your ally",
+    "note": "In 2014, any other creature's space, friend or foe, was Difficult Terrain. In 2024, the spaces of allies and Tiny creatures are not."
+   },
+   {
+    "quote": "A narrow opening sized for a creature one size smaller than you",
+    "note": "In 2014, squeezing through a space one size smaller cost 1 extra foot and also gave Disadvantage on attack rolls and Dexterity saves, and attacks against the squeezing creature had Advantage. In 2024 it is simply Difficult Terrain, with no attack or save penalties."
+   },
+   {
+    "quote": "A slope of 20 degrees or more",
+    "note": "2014 had no numeric slope threshold, and its examples were only illustrative. In 2024, 20 degrees is a concrete boundary to test: 19° is not Difficult Terrain, 20° is."
+   },
+   {
+    "quote": "Furniture that is sized for creatures of your size or larger",
+    "note": "2014 had no rule for furniture relative to your size. In 2024, a Small creature passing furniture sized for Medium creatures is in Difficult Terrain, while a Large creature passing the same furniture is not."
+   }
+  ],
+  "summary": "Difficult Terrain adds 1 extra foot of cost per foot moved in the space, and several sources don't stack. Six kinds of source are listed, all judged against the creature that is moving: a creature that is neither Tiny nor your ally, furniture sized for your size or larger, heavy snow, ice, rubble or undergrowth, liquid between shin- and waist-deep, an opening one size smaller than you, and a slope of 20° or more. The open questions are: which square's terrain sets the cost on a grid, whether 'not cumulative' also stops crawling, climbing or swimming costs from stacking, whether neutral creatures that aren't allies count, whether liquid depth is relative to the mover, and what happens with an opening two or more sizes smaller. Compared with 2014, allies' and Tiny creatures' spaces no longer count, and squeezing loses its attack and save penalties."
+ },
+ "problems": [],
+ "cost_usd": 0.27054219999999995,
+ "session": "fc3a77f1-f827-49e3-8bbf-909e7bda82c7",
+ "error": null
+}

@@ -1,0 +1,12 @@
+{
+  "id": "T-97",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: crawling through Difficult Terrain pays the crawl foot and the Difficult Terrain foot (3 ft per foot); engine: a scene's Difficult Terrain applies only to mode 'walk', so crawling costs 2",
+  "tests": [
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

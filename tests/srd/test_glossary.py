@@ -6,6 +6,7 @@ from dungdra import actions
 from dungdra import class_actions as CA
 from dungdra import combat as C
 from dungdra import spells as S
+from dungdra import traps as TR
 from dungdra.api import Session
 from dungdra.effects import SpeedPenalty
 from dungdra.mounted import mount
@@ -2603,3 +2604,328 @@ def test_deafened_hearing_check_with_a_bonus_still_fails(game):
     r = brom.check("perception", dc=1, tags={"hearing"}, bonus=[(20, "test bonus")])
     assert r.success is False
     assert r.dice == []
+
+
+# ================ GLOSS.difficult-terrain (p.181) ================
+DT = "GLOSS.difficult-terrain"
+
+
+def rubble_scene(game, name="BROM"):
+    """The collapsing roof (p.199) leaves its area full of rubble; save and damage dice are forced."""
+    c = pc(game, name, (0, 0))
+    roof = TR.place(game, "collapsing roof")
+    game.dice.force_str("d20=[20]; d10=[1,1]")
+    TR.trigger(game, c, roof)
+    assert game.scene.difficult is True
+    return c
+
+
+def webbed_goblin(game):
+    """Mialee webs a goblin that makes its save; the 20-ft Cube covers x 25..40, y 0..15 (R-35)."""
+    m = pc(game, "MIALEE", (-30, 5))
+    m.award_xp(900)
+    m.prepared.append("web")
+    gob = mon(game, "goblin warrior", (30, 5))
+    game.dice.force_str("d20=[20]")
+    S.cast(game, m, "web", [gob])
+    assert not gob.has("restrained")
+    in_combat(game, gob, m)
+    return gob
+
+
+# ---------------- #1 · every foot in the space costs 1 extra foot ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="positive")
+def test_difficult_terrain_doubles_the_cost_of_a_move(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(10, 0), difficult=True) == 20
+    assert game.combat.turn.movement_left == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="positive")
+def test_rubble_scene_costs_extra_through_move_command(game):
+    s = Session(game)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    out = s.execute({"cmd": "move", "actor": brom.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 10
+    assert brom.position == (10, 0)
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="negative")
+def test_clear_ground_costs_one_foot_per_foot(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(10, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="boundary")
+def test_difficult_terrain_move_that_uses_exactly_all_speed_is_allowed(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert brom.speed() == 30
+    assert C.move(game, brom, to=(15, 0), difficult=True) == 30
+    assert game.combat.turn.movement_left == 0
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="boundary")
+def test_difficult_terrain_one_step_past_speed_is_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert_refused_cleanly(game, C.move, game, brom, to=(20, 0), difficult=True)
+    assert brom.position == (0, 0)
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="abuse")
+def test_difficult_terrain_isnt_free_through_move_command(game):
+    # 20 ft of rubble costs 40 ft: more than BROM's Speed 30
+    s = Session(game)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert_refused_cleanly(game, s.execute, {"cmd": "move", "actor": brom.id, "to": [20, 0]})
+    assert brom.position == (0, 0)
+
+
+# ---------------- #2 · 5 feet costs 10 feet ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="positive")
+def test_five_feet_of_difficult_terrain_costs_ten(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="boundary")
+def test_five_feet_of_difficult_terrain_with_ten_feet_left_fits_exactly(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    C.move(game, brom, to=(20, 0))
+    assert game.combat.turn.movement_left == 10
+    assert C.move(game, brom, to=(25, 0), difficult=True) == 10
+    assert game.combat.turn.movement_left == 0
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="boundary")
+def test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    C.move(game, brom, to=(25, 0))
+    assert game.combat.turn.movement_left == 5
+    assert_refused_cleanly(game, C.move, game, brom, to=(30, 0), difficult=True)
+
+
+# ---------------- #3 · not cumulative ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="positive")
+def test_two_difficult_terrain_sources_cost_one_extra_foot(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    # rubble everywhere and a second Difficult source on the move: still 2 ft per foot, not 3
+    assert C.move(game, brom, to=(5, 0), difficult=True) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="positive")
+def test_hostile_creature_in_rubble_isnt_doubly_difficult(game):
+    # every square is rubble and the bandit's square also holds a hostile creature: 10 ft costs 20
+    lidda = rubble_scene(game, "LIDDA")
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative")
+def test_space_with_no_source_isnt_difficult(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert game.scene.difficult is False
+    assert C.move(game, brom, to=(5, 0)) == 5
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="P-37")
+def test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone(game):
+    # Reading A: only Difficult Terrain sources don't stack; crawling's own extra foot adds on top
+    brom = rubble_scene(game)
+    brom.add_condition("prone", "test")
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="P-37")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-97: crawling (mode='crawl') through a Difficult Terrain scene costs 2 ft per foot; "
+    "the scene's Difficult Terrain is only applied to mode 'walk'",
+)
+def test_not_cumulative_doesnt_cancel_the_crawl_cost(game):
+    # Reading A: crawling 5 ft through rubble costs 5 + 5 (crawl) + 5 (Difficult Terrain)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0), mode="crawl") == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="abuse", ruling="P-37")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-98: choosing mode='crawl' through a Difficult Terrain scene skips the "
+    "Difficult Terrain cost, so 10 ft of crawling through rubble fits in 20 ft",
+)
+def test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost(game):
+    # after 5 ft of rubble (10 ft) 20 ft is left; crawling 10 more ft through rubble costs 30
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 10
+    assert_refused_cleanly(game, C.move, game, brom, to=(15, 0), mode="crawl")
+
+
+# ---------------- #4 · a space with a listed source "or something similar" ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#4", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-99: Web's 20-ft Cube is Difficult Terrain, but moving inside it costs 1 ft per foot; "
+    "the web object's 'difficult' flag has no area and movement never checks it",
+)
+def test_moving_inside_a_web_costs_extra(game):
+    gob = webbed_goblin(game)
+    assert C.move(game, gob, to=(35, 5)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#4", kind="negative")
+def test_moving_outside_the_web_costs_normally(game):
+    gob = webbed_goblin(game)
+    gob.position = (45, 5)
+    assert C.move(game, gob, to=(50, 5)) == 5
+
+
+# ---------------- #5 · a creature that isn't Tiny or your ally ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-100: a hostile creature's space isn't Difficult Terrain; moving through it costs 1 ft per foot",
+)
+def test_moving_through_a_hostile_creatures_space_costs_extra(game):
+    # LIDDA (Small) can pass a Medium bandit (Halfling Nimbleness); its square costs 10 ft
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 15
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-101: a hostile creature's space isn't Difficult Terrain through the move command either",
+)
+def test_move_command_through_a_hostile_creature_costs_extra(game):
+    s = Session(game)
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    out = s.execute({"cmd": "move", "actor": lidda.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive", ruling="P-38")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-102: a neutral creature that isn't an ally doesn't make its space Difficult Terrain",
+)
+def test_moving_through_an_indifferent_creatures_space_costs_extra(game):
+    # Reading A: a creature that isn't your ally counts even when it isn't hostile
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team = "neutral"
+    guard.attitude = "indifferent"
+    in_combat(game, lidda, guard)
+    assert not game.is_ally(lidda, guard)
+    assert C.move(game, lidda, to=(10, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_moving_through_an_allys_space_costs_normally(game):
+    # 2014 made every creature's space Difficult Terrain; in 2024 an ally's space isn't
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    in_combat(game, lidda, brom)
+    assert game.is_ally(lidda, brom)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_move_command_through_an_allys_space_costs_normally(game):
+    s = Session(game)
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    in_combat(game, lidda, brom)
+    out = s.execute({"cmd": "move", "actor": lidda.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative", ruling="R-37")
+def test_moving_through_a_friendly_creatures_space_costs_normally(game):
+    # R-37: a creature Friendly toward the party is its ally, so its space isn't Difficult Terrain
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team = "neutral"
+    guard.attitude = "friendly"
+    in_combat(game, lidda, guard)
+    assert game.is_ally(lidda, guard)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_hostile_creature_off_the_path_adds_nothing(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 10))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="boundary")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-103: a Small (not Tiny) hostile creature's space isn't Difficult Terrain",
+)
+def test_small_hostile_creatures_space_is_difficult(game):
+    # Small is the smallest size that still counts, one size above Tiny. The goblin is
+    # Incapacitated, so BROM may pass through its space.
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("incapacitated", "test")
+    in_combat(game, brom, gob)
+    assert C.move(game, brom, to=(10, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="abuse")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-104: walking through a hostile creature's space is free, so a move that "
+    "costs more than Speed is allowed",
+)
+def test_cant_walk_through_an_enemy_for_free(game):
+    # 30 ft past a bandit costs 35 ft: more than LIDDA's Speed 30
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert_refused_cleanly(game, C.move, game, lidda, to=(30, 0))
+    assert lidda.position == (0, 0)
+
+
+# ---------------- #7 · heavy snow, ice, rubble, or undergrowth ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#7", kind="positive")
+def test_rubble_from_a_collapsed_roof_is_difficult_terrain(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(15, 0)) == 30
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#7", kind="negative")
+def test_untriggered_roof_leaves_no_rubble(game):
+    brom = pc(game, "BROM", (0, 0))
+    TR.place(game, "collapsing roof")
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(15, 0)) == 15

@@ -19,6 +19,12 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Dragging a grappled creature past what your Speed covers once the extra drag cost is counted.
 - Escaping a Speed-0 condition with a special Speed (climbing, swimming or flying away while
   Grappled), using movement left over from before the condition started.
+- Choosing a movement mode (crawl, climb, swim) to drop the Difficult Terrain cost, or claiming
+  "not cumulative" means crawling or climbing through Difficult Terrain costs only 2 ft per foot.
+- Walking through a hostile or neutral non-ally's space (Halfling Nimbleness, an Incapacitated
+  foe) at 1 ft per foot, or calling an indifferent bystander an "ally" to clear its space.
+- Splitting a Difficult Terrain move into short steps, hoping the extra cost is rounded away or
+  that a step starting in Difficult Terrain and ending on clear ground costs nothing extra.
 
 ## Action economy
 - Taking two actions, two Bonus Actions or two Reactions in one turn or round.

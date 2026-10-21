@@ -1,0 +1,45 @@
+{
+ "verdicts": [
+  {
+   "item": "EXPL-04",
+   "kind": "scenario",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "- [H] Climbing costs 1 extra foot per foot (2 in Difficult Terrain).",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "explanation": "The scenario adds climbing's extra foot and Difficult Terrain's extra foot (3 ft per foot). That is Reading A of 'not cumulative' (only Difficult Terrain sources don't stack). Reading B would give 2 ft per foot."
+  },
+  {
+   "item": "tests/scenarios/test_world.py::test_expl04_jump_climb_search",
+   "kind": "test",
+   "verdict": "affected-by-ambiguity",
+   "evidence": "assert C.move(game, m, to=(0, 15), mode=\"climb\", difficult=True) == 15",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "explanation": "5 ft of climbing in Difficult Terrain costs 15 ft, so the climb extra and the Difficult Terrain extra stack. That assumes Reading A. Under Reading B it would cost 10. The test does check that Difficult Terrain adds exactly 1 extra foot per foot on top of the climb cost."
+  },
+  {
+   "item": "SPELLS-06",
+   "kind": "scenario",
+   "verdict": "consistent",
+   "evidence": "- [H] The web is Difficult Terrain and Lightly Obscured, and the goblin is Restrained. Breaking free is an Athletics check against DC 13.",
+   "rule_quote": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+   "explanation": "The scenario only says the web space counts as Difficult Terrain, which agrees with the rule. The Web spell itself defines that."
+  },
+  {
+   "item": "tests/scenarios/test_spells.py::test_spells06",
+   "kind": "test",
+   "verdict": "under-asserts",
+   "evidence": "assert gob.has(\"restrained\") and m.concentrating == \"Web\"",
+   "rule_quote": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+   "explanation": "The scenario says the web is Difficult Terrain, but the test never checks the web's space is Difficult Terrain or that moving through it costs 1 extra foot per foot (clause #1). It only checks Restrained and Concentration."
+  },
+  {
+   "item": "dungdra/combat.py:554",
+   "kind": "code",
+   "verdict": "consistent",
+   "evidence": "if difficult or (game.scene.difficult and mode == \"walk\"):",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "explanation": "A single OR condition adds dist once, so Difficult Terrain costs 1 extra foot per foot and sources don't stack. The line has no SRD[...] tag. It only models a per-move or per-scene flag, not the individual sources."
+  }
+ ],
+ "summary": "The engine only has a coarse Difficult Terrain flag: a per-move `difficult` argument and a scene-wide `scene.difficult`. Together they add 1 extra foot per foot once. Clauses #5–#10 (creature, furniture, liquid, narrow opening, slope) have no implementation or SRD tests. Neither scenario test checks the 1-extra-foot rule directly. The EXPL-04 test is the only one that checks the cost, and it relies on one reading of 'not cumulative'. The nine page-181 code candidates (Dodge, exhaustion, dehydration and similar) are about other rules, so I gave them no verdict."
+}
