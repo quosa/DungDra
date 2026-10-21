@@ -2463,7 +2463,7 @@ def test_deafened_searching_by_sight_still_finds_a_hidden_creature(game):
     assert gob.hidden_total is None
 
 
-@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-36")
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-41")
 def test_deafened_gives_no_advantage_on_attacks_against_it(game):
     # Unlike Blinded, not hearing gives attackers nothing: a goblin's attack is a normal roll
     brom = deafened_brom(game)
@@ -2474,7 +2474,7 @@ def test_deafened_gives_no_advantage_on_attacks_against_it(game):
     assert r.roll.dice == [5]
 
 
-@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="P-36")
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-41")
 def test_deafened_attack_rolls_are_normal(game):
     brom = deafened_brom(game)
     gob = mon(game, "goblin warrior", (5, 0))

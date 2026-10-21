@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
     "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-41",
   "note": "",
   "reason": ""
 }
