@@ -9,8 +9,8 @@
     "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
     "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-47",
   "note": "",
   "reason": ""
 }

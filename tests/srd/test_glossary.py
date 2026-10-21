@@ -3227,7 +3227,7 @@ def test_heroic_inspiration_rerolls_a_hit_die(game):
     assert jozan.heroic_inspiration is False
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive", ruling="P-42")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive", ruling="R-47")
 @pytest.mark.xfail(strict=True, reason="T-119: Heroic Inspiration isn't offered for Magic Missile's d4s")
 def test_heroic_inspiration_rerolls_a_magic_missile_die(game):
     mialee = inspired(game, "MIALEE")
@@ -3330,7 +3330,7 @@ def test_heroic_inspiration_window_closes_once_the_next_roll_comes(game):
     assert second.dice == [19] and jozan.heroic_inspiration is False
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="P-42")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="R-47")
 def test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll(game):
     jozan = inspired(game)
     game.answer("inspiration", 0)
@@ -3341,7 +3341,7 @@ def test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll(game):
     assert jozan.heroic_inspiration is False
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="P-42")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="R-47")
 def test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll(game):
     jozan = inspired(game)
     ogre = mon(game, "ogre", (5, 0))
@@ -3386,7 +3386,7 @@ def test_heroic_inspiration_a_worse_damage_reroll_stands(game):
     assert r.damage == 1 + 2
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#2", kind="negative", ruling="P-42")
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="negative", ruling="R-47")
 def test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair(game):
     # The new die replaces only the rerolled one; Disadvantage still takes the lower of the pair.
     jozan = inspired(game)
