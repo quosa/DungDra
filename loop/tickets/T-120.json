@@ -1,0 +1,12 @@
+{
+  "id": "T-120",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: only a player character has Heroic Inspiration; engine: a monster can be granted it and is then offered rerolls",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

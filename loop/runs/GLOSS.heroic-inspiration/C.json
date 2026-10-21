@@ -1,0 +1,373 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "Advantage/Disadvantage (PLAY.d20-tests.advantage-disadvantage)",
+   "risk": "high",
+   "note": "One die of the pair is rerolled and the pair is re-chosen. A second reroll of the other d20 from the same Inspiration must not happen. Covered by the abuse and #2 Disadvantage tests."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "damage dice: weapon attacks, Critical Hit doubled dice, cantrip damage (Sacred Flame), Magic Missile",
+   "risk": "high",
+   "note": "'Any die' includes damage. Weapon damage and spell damage through roll_damage_dice are offered. Magic Missile's d4s are rolled directly and are never offered (red)."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "Hit Point Dice on a Short Rest (GLOSS.hit-point-dice)",
+   "risk": "medium",
+   "note": "A Hit Die is a die you roll. The engine doesn't offer Inspiration for it (red)."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "saving throws, Death Saving Throws, Bless d4 bonus die",
+   "risk": "medium",
+   "note": "Saves go through roll_d20_test and are offered. Bonus dice such as the Bless d4 are rolled through roll_expr with no offer. Not tested here because the decision interface for a bonus die is undefined."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "Halfling Luck (SPECIES.halfling)",
+   "risk": "low",
+   "note": "Luck rerolls first and Inspiration is offered afterwards. Whether a die already rerolled can be rerolled again is a stage-A gap and is untested."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "monster attacks against an inspired PC",
+   "risk": "medium",
+   "note": "Only your own dice (ambiguity 3). The engine ties the offer to the roller, which is correct."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "non-player creatures (gap: '(a player character)')",
+   "risk": "medium",
+   "note": "grant_heroic_inspiration accepts a monster, and the monster is then offered rerolls (red)."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#3",
+   "with": "Human Resourceful trait (Long Rest grant), party roster (game.pcs)",
+   "risk": "medium",
+   "note": "A duplicate grant offers the surplus to PCs who lack it. game.decide doesn't validate an answer against the options, so a monster or a PC who already has it can be named (red)."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#1",
+   "with": "traceability (log rule)",
+   "risk": "low",
+   "note": "The d20 spend is logged with rule=PLAY.d20-tests.advantage-disadvantage, not GLOSS.heroic-inspiration. This is noted for the dev loop and not asserted."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Rerolling both d20s of an Advantage roll with one Inspiration",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+   "reason": "'any die', singular, and it's expended"
+  },
+  {
+   "case": "Rerolling several dice of a multi-die (crit) damage roll",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+   "reason": "one die per Inspiration (ambiguity 1, Reading A)"
+  },
+  {
+   "case": "Spending a spent Inspiration again",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_spent_cant_be_spent_again",
+   "reason": "expend means it is gone"
+  },
+  {
+   "case": "Keeping the better roll, as with 2014 Advantage",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_is_not_2014_advantage",
+   "reason": "you must use the new roll"
+  },
+  {
+   "case": "Banking a second Inspiration",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_banked_as_two",
+   "reason": "a duplicate is lost"
+  },
+  {
+   "case": "Giving a surplus Inspiration to a monster",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster",
+   "reason": "only a player character who lacks it can receive it"
+  },
+  {
+   "case": "Giving a surplus to a PC who already has it",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it",
+   "reason": "the recipient must lack it"
+  },
+  {
+   "case": "Rerolling a foe's attack roll against you",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll",
+   "reason": "'after rolling it': your own dice only"
+  },
+  {
+   "case": "Waiting to learn the outcome before rerolling",
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+   "reason": "'immediately after rolling it'"
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_check",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "If you (a player character) have Heroic Inspiration, you can expend it to reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_weapon_damage_die",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_cantrip_damage_die",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "red",
+   "ticket_title": "SRD: Heroic Inspiration rerolls any die, a Hit Die spent on a Short Rest included; engine: no reroll is offered for Hit Dice"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "red",
+   "ticket_title": "SRD: Heroic Inspiration rerolls any die, Magic Missile's d4s included; engine: dart dice are rolled without the reroll offer"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_reroll_through_the_session",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "positive",
+   "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_without_it_no_reroll",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "negative",
+   "rule_quote": "If you (a player character) have Heroic Inspiration, you can expend it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_declined_is_kept",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "negative",
+   "rule_quote": "you can expend it to reroll any die",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "negative",
+   "rule_quote": "reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "negative",
+   "rule_quote": "If you (a player character) have Heroic Inspiration",
+   "claim": "red",
+   "ticket_title": "SRD: only a player character has Heroic Inspiration; engine: a monster can be granted it and is then offered rerolls"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "boundary",
+   "rule_quote": "reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "boundary",
+   "rule_quote": "reroll any die immediately after rolling it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "abuse",
+   "rule_quote": "you can expend it to reroll any die",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "abuse",
+   "rule_quote": "you can expend it to reroll any die",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_spent_cant_be_spent_again",
+   "clause": "GLOSS.heroic-inspiration#1",
+   "kind": "abuse",
+   "rule_quote": "you can expend it to reroll any die",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_reroll_stands",
+   "clause": "GLOSS.heroic-inspiration#2",
+   "kind": "positive",
+   "rule_quote": "and you must use the new roll",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_damage_reroll_stands",
+   "clause": "GLOSS.heroic-inspiration#2",
+   "kind": "positive",
+   "rule_quote": "and you must use the new roll",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_is_not_2014_advantage",
+   "clause": "GLOSS.heroic-inspiration#2",
+   "kind": "negative",
+   "rule_quote": "and you must use the new roll",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
+   "clause": "GLOSS.heroic-inspiration#2",
+   "kind": "negative",
+   "rule_quote": "and you must use the new roll",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_given_to_a_pc_who_lacks_it",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "positive",
+   "rule_quote": "If you gain Heroic Inspiration but already have it, it’s lost unless you give it to a player character who lacks it.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_lost_when_every_pc_has_it",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "positive",
+   "rule_quote": "If you gain Heroic Inspiration but already have it, it’s lost",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_not_given_is_lost",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "negative",
+   "rule_quote": "it’s lost unless you give it to a player character who lacks it",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_banked_as_two",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "negative",
+   "rule_quote": "If you gain Heroic Inspiration but already have it, it’s lost",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "abuse",
+   "rule_quote": "unless you give it to a player character who lacks it",
+   "claim": "red",
+   "ticket_title": "SRD: a surplus Heroic Inspiration goes only to a player character who lacks it; engine: an answer naming a monster gives it to the monster"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it",
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "abuse",
+   "rule_quote": "unless you give it to a player character who lacks it",
+   "claim": "red",
+   "ticket_title": "SRD: a surplus Heroic Inspiration can be given only to a PC who lacks it; engine: it accepts and logs a gift to a PC who already has one"
+  }
+ ],
+ "not_testable": [],
+ "kind_waivers": [
+  {
+   "clause": "GLOSS.heroic-inspiration#2",
+   "kind": "boundary",
+   "reason": "'Must use the new roll' has no threshold. The only edge, a worse reroll that turns a success into a failure, is already the positive test."
+  },
+  {
+   "clause": "GLOSS.heroic-inspiration#3",
+   "kind": "boundary",
+   "reason": "No threshold. Holding at most one is covered by the negative 'can't be banked' test, and there is no count to step across."
+  }
+ ],
+ "scenario_changes": [],
+ "rulings_proposed": [
+  {
+   "ambiguity": "GLOSS.heroic-inspiration ambiguity 1: 'reroll any die': one die, or the whole roll it was part of?",
+   "ruling": "Reading A. Spending Heroic Inspiration rerolls exactly one die the player chooses. The other dice of the roll (the second d20 of Advantage, the other damage dice) stand.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.heroic-inspiration ambiguity 2: 'immediately after rolling it': before or after the outcome is known?",
+   "ruling": "Reading A. The choice is offered once the die's face is known and before the result is applied (before success or failure is reported). Once the roll resolves or another roll is made, that die can no longer be rerolled.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.heroic-inspiration ambiguity 3: 'any die': only your own dice, or any die in the game?",
+   "ruling": "Reading A. Only dice the inspired PC rolls. A foe's attack or damage roll against the PC can't be rerolled with the PC's Heroic Inspiration.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.heroic-inspiration gap: '(a player character)': can a non-player creature have Heroic Inspiration?",
+   "ruling": "No. Only player characters have Heroic Inspiration. Granting it to a monster or NPC either has no effect or is refused cleanly (citing p.183), and a surplus can't be passed to one.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.heroic-inspiration ambiguity 4: when, and to whom, the surplus can be given",
+   "ruling": "Reading A. The recipient is chosen when the duplicate is gained, and any living PC who lacks Heroic Inspiration may receive it. Naming a creature that isn't such a PC doesn't give it to them. If it isn't given at that moment, it's lost.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_not_given_is_lost",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it"
+   ]
+  }
+ ],
+ "summary": "I added 26 tests for GLOSS.heroic-inspiration to tests/srd/test_glossary.py. 21 pass and 5 fail as expected (strict xfail). I checked each xfail with --runxfail and each one fails for the reason stated. ruff check and ruff format are clean.\n\nWhat passes: the engine rerolls one chosen die of a check, a save, weapon damage and cantrip damage, and the new roll stands even when it is worse. The choice is offered before the result is known, a spent Inspiration can't be used again, and a surplus is given to a PC who lacks it or else lost.\n\nThe 5 failures are engine findings:\n- No reroll is offered for a Hit Die spent on a Short Rest.\n- No reroll is offered for Magic Missile's d4s.\n- A monster can be granted Heroic Inspiration and is then offered rerolls.\n- A surplus can be given to a monster.\n- A surplus can be 'given' to a PC who already has one, and the log records the gift. The cause is that game.decide doesn't check an answer against the allowed options.\n\nI proposed 5 rulings: one die per Inspiration; the choice comes before the outcome; only your own dice; only PCs can have it; and the surplus recipient is chosen at once and must be a PC who lacks it. I left Bless/bonus-dice rerolls untested because the engine has no way to ask about a bonus die yet. Separately, the d20 spend is logged under the wrong rule ID (PLAY.d20-tests.advantage-disadvantage instead of GLOSS.heroic-inspiration); I noted that but didn't assert it. I also added a Heroic Inspiration entry to the abuse catalogue. No scenario changes were needed."
+}

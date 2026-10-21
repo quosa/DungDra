@@ -1,0 +1,13 @@
+{
+  "id": "P-44",
+  "unit": "GLOSS.heroic-inspiration",
+  "ambiguity": "GLOSS.heroic-inspiration ambiguity 3: 'any die': only your own dice, or any die in the game?",
+  "ruling": "Reading A. Only dice the inspired PC rolls. A foe's attack or damage roll against the PC can't be rerolled with the PC's Heroic Inspiration.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

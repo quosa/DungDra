@@ -1,0 +1,14 @@
+{
+  "id": "P-45",
+  "unit": "GLOSS.heroic-inspiration",
+  "ambiguity": "GLOSS.heroic-inspiration gap: '(a player character)': can a non-player creature have Heroic Inspiration?",
+  "ruling": "No. Only player characters have Heroic Inspiration. Granting it to a monster or NPC either has no effect or is refused cleanly (citing p.183), and a surplus can't be passed to one.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

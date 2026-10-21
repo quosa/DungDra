@@ -1,0 +1,12 @@
+{
+  "id": "T-122",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: a surplus Heroic Inspiration can be given only to a PC who lacks it; engine: it accepts and logs a gift to a PC who already has one",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

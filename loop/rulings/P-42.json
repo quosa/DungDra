@@ -1,0 +1,16 @@
+{
+  "id": "P-42",
+  "unit": "GLOSS.heroic-inspiration",
+  "ambiguity": "GLOSS.heroic-inspiration ambiguity 1: 'reroll any die': one die, or the whole roll it was part of?",
+  "ruling": "Reading A. Spending Heroic Inspiration rerolls exactly one die the player chooses. The other dice of the roll (the second d20 of Advantage, the other damage dice) stand.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die"
+  ],
+  "status": "proposed",
+  "register_id": null,
+  "note": "",
+  "reason": ""
+}

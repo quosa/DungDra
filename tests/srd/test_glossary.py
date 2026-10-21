@@ -3140,3 +3140,316 @@ def test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy(game):
     out = s.execute({"cmd": "attack", "actor": lidda.id, "target": target.id, "weapon": "shortbow"})
     assert out["ok"], out
     assert d20s_rolled(game) - before == 1, "the shot was rolled with Disadvantage"
+
+
+# =============================== GLOSS.heroic-inspiration (p.183) ===============================
+HI = "GLOSS.heroic-inspiration"
+
+
+def inspired(game, name="JOZAN", pos=(0, 0)):
+    c = pc(game, name, pos)
+    c.heroic_inspiration = True
+    return c
+
+
+def grant(game, who):
+    """Grant Heroic Inspiration; a clean refusal (citing a page) is an acceptable outcome."""
+    from dungdra import rest as R
+    from dungdra.rules import Refusal
+
+    try:
+        return R.grant_heroic_inspiration(game, who)
+    except Refusal as e:
+        assert e.page is not None or e.ruling is not None, e.reason
+        return e
+
+
+def inspiration_offers(game, start=0):
+    return [e for e in game.log.events[start:] if e.kind == "offer" and "Heroic Inspiration" in e.text]
+
+
+# ---------------- #1 · expend it to reroll any die immediately after rolling it ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_the_d20_of_a_check(game):
+    jozan = inspired(game)
+    game.dice.force_str("d20=[4,17]")
+    game.answer("inspiration", 0)
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [17] and r.chosen == 17 and r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw(game):
+    jozan = inspired(game)
+    game.dice.force_str("d20=[2,16]")
+    game.answer("inspiration", 0)
+    r = jozan.save("dex", 15)
+    assert r.dice == [16] and r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_a_weapon_damage_die(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)  # keeps the attack roll
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[15]; d6=[1,5]")
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 5 + 2
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_a_cantrip_damage_die(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (10, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[2]; d8=[1,8]")  # the ogre fails its save; the d8 is rerolled
+    S.cast(game, jozan, "sacred flame", targets=[ogre.id])
+    assert hp - ogre.hp == 8
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+@pytest.mark.xfail(strict=True, reason="T-118: Heroic Inspiration isn't offered for a Short Rest Hit Die")
+def test_heroic_inspiration_rerolls_a_hit_die(game):
+    from dungdra import rest as R
+
+    jozan = inspired(game)
+    jozan.hp = 1
+    game.answer("inspiration", 0)
+    game.dice.force_str("d8=[1,7]")
+    R.short_rest(game, [jozan], hit_dice={jozan.id: 1})
+    assert jozan.hp == 1 + 7 + jozan.mod("con")
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive", ruling="P-42")
+@pytest.mark.xfail(strict=True, reason="T-119: Heroic Inspiration isn't offered for Magic Missile's d4s")
+def test_heroic_inspiration_rerolls_a_magic_missile_die(game):
+    mialee = inspired(game, "MIALEE")
+    ogre = mon(game, "ogre", (20, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d4=[1,1,1,4]")
+    S.cast(game, mialee, "magic missile", targets=[ogre.id], slot=1)
+    assert hp - ogre.hp == (4 + 1) + (1 + 1) + (1 + 1)
+    assert mialee.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_reroll_through_the_session(game):
+    jozan = inspired(game)
+    s = Session(game)
+    out = s.execute({"cmd": "answer", "key": "inspiration", "value": 0, "actor": jozan.id})
+    assert out["ok"], out
+    game.dice.force_str("d20=[3,18]")
+    out = s.execute({"cmd": "check", "ability": "wis", "dc": 15, "actor": jozan.id})
+    assert out["ok"], out
+    assert out["result"] == {"total": 18 + jozan.mod("wis"), "success": True}
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative")
+def test_heroic_inspiration_without_it_no_reroll(game):
+    jozan = pc(game, "JOZAN")
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[4]")
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [4] and not r.rerolls and not r.success
+    assert not inspiration_offers(game)
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative")
+def test_heroic_inspiration_declined_is_kept(game):
+    jozan = inspired(game)
+    game.answer("inspiration", None)
+    game.dice.force_str("d20=[4]")
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [4] and not r.success
+    assert jozan.heroic_inspiration is True
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="P-44")
+def test_heroic_inspiration_cant_reroll_a_monsters_attack_roll(game):
+    # "after rolling it": only the dice you roll yourself; a foe's attack roll isn't yours.
+    jozan = inspired(game, pos=(5, 0))
+    ogre = mon(game, "ogre", (0, 0))
+    game.answer("inspiration", 0, who=jozan)
+    game.answer("inspiration_damage", 0, who=jozan)
+    game.dice.force_str("d20=[18]; d8=[6,6]")
+    r = C.attack(game, ogre, jozan, attack_name="greatclub")
+    assert r.hit and r.damage == 6 + 6 + 4
+    assert jozan.heroic_inspiration is True
+    assert not inspiration_offers(game)
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="P-45")
+@pytest.mark.xfail(
+    strict=True, reason="T-120: a monster granted Heroic Inspiration has it; only a PC can have it"
+)
+def test_heroic_inspiration_a_monster_cant_gain_it(game):
+    jozan = pc(game, "JOZAN")
+    ogre = mon(game, "ogre", (5, 0))
+    grant(game, ogre)
+    assert ogre.heroic_inspiration is False
+    game.answer("inspiration", 0, who=ogre)
+    game.dice.force_str("d20=[3]")
+    r = C.attack(game, ogre, jozan, attack_name="greatclub")
+    assert r.dice == [3] and not r.hit
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="P-43")
+def test_heroic_inspiration_is_offered_before_the_roll_resolves(game):
+    # "immediately after rolling it": the choice comes once the die is known, before the result.
+    jozan = inspired(game)
+    start = len(game.log.events)
+    game.answer("inspiration", None)
+    game.dice.force_str("d20=[9]")
+    jozan.check(ability="wis", dc=12)
+    events = game.log.events[start:]
+    offer = events.index(inspiration_offers(game, start)[0])
+    result = next(i for i, e in enumerate(events) if e.kind == "check")
+    assert offer < result, [e.kind for e in events]
+    assert "9" in events[offer].text
+    assert not any(w in events[offer].text.lower() for w in ("success", "fail"))
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="P-43")
+def test_heroic_inspiration_window_closes_once_the_next_roll_comes(game):
+    jozan = inspired(game)
+    game.answer("inspiration", None)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[3,10,19]")
+    first = jozan.check(ability="wis", dc=15)
+    second = jozan.check(ability="wis", dc=15)
+    assert first.dice == [3] and not first.success  # the earlier die is past rerolling
+    assert second.dice == [19] and jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="P-42")
+def test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.answer("inspiration", 1)  # tries to spend the same Inspiration on the second d20
+    game.dice.force_str("d20=[2,3,6]")
+    r = jozan.check(ability="wis", adv=["Help"], dc=15)
+    assert r.dice == [6, 3] and r.chosen == 6 and not r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="P-42")
+def test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)
+    game.answer("inspiration_damage", 0)
+    game.answer("inspiration_damage", 1)  # a second reroll from the same Inspiration
+    game.dice.force_str("d20=[20]; d6=[1,1,6]")  # a Critical Hit: 2d6, the first one rerolled
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 6 + 1 + 2
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse")
+def test_heroic_inspiration_spent_cant_be_spent_again(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[2,15,1]")
+    assert jozan.check(ability="wis", dc=15).dice == [15]
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [1] and not r.rerolls
+
+
+# ---------------- #2 · you must use the new roll ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="positive")
+def test_heroic_inspiration_a_worse_reroll_stands(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[15,2]")
+    r = jozan.check(ability="wis", dc=12)
+    assert r.chosen == 2 and r.total == 2 + jozan.mod("wis") and not r.success
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="positive")
+def test_heroic_inspiration_a_worse_damage_reroll_stands(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[15]; d6=[5,1]")
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 1 + 2
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="negative", ruling="P-42")
+def test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair(game):
+    # The new die replaces only the rerolled one; Disadvantage still takes the lower of the pair.
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[3,8,19]")
+    r = jozan.check(ability="wis", dis=["Poisoned"], dc=10)
+    assert r.dice == [19, 8] and r.chosen == 8 and r.success
+
+
+# ---------------- #3 · a second one is lost unless given to a PC who lacks it ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="positive")
+def test_heroic_inspiration_duplicate_given_to_a_pc_who_lacks_it(game):
+    jozan, lidda = inspired(game), pc(game, "LIDDA", (5, 0))
+    game.answer("give_inspiration", lidda.id)
+    grant(game, jozan)
+    assert jozan.heroic_inspiration and lidda.heroic_inspiration
+    # one each: Jozan spends his and has none left
+    game.answer("inspiration", 0, who=jozan)
+    game.answer("inspiration", 0, who=jozan)
+    game.dice.force_str("d20=[2,14,5]")
+    assert jozan.check(ability="wis").dice == [14]
+    assert jozan.check(ability="wis").dice == [5]
+    assert lidda.heroic_inspiration is True
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="positive")
+def test_heroic_inspiration_duplicate_lost_when_every_pc_has_it(game):
+    jozan, lidda = inspired(game), inspired(game, "LIDDA", (5, 0))
+    grant(game, jozan)
+    assert "lost" in game.log.last("inspiration").text
+    assert jozan.heroic_inspiration and lidda.heroic_inspiration
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="negative", ruling="P-46")
+def test_heroic_inspiration_duplicate_not_given_is_lost(game):
+    jozan, lidda = inspired(game), pc(game, "LIDDA", (5, 0))
+    game.answer("give_inspiration", None)
+    grant(game, jozan)
+    assert "lost" in game.log.last("inspiration").text
+    assert lidda.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="P-45")
+@pytest.mark.xfail(
+    strict=True, reason="T-121: a surplus Heroic Inspiration can be given to a monster, which then has it"
+)
+def test_heroic_inspiration_cant_be_given_to_a_monster(game):
+    jozan = inspired(game)
+    pc(game, "LIDDA", (5, 0))
+    ogre = mon(game, "ogre", (10, 0))
+    game.answer("give_inspiration", ogre.id)
+    grant(game, jozan)
+    assert ogre.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="P-46")
+@pytest.mark.xfail(
+    strict=True, reason="T-122: a surplus Heroic Inspiration is recorded as given to a PC who already has it"
+)
+def test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it(game):
+    jozan, lidda = inspired(game), inspired(game, "LIDDA", (5, 0))
+    pc(game, "BROM", (10, 0))
+    game.answer("give_inspiration", lidda.id)
+    grant(game, jozan)
+    given = [e.text for e in game.log.of_kind("inspiration") if "gives" in e.text]
+    assert not any(lidda.name in t for t in given), given

@@ -1,0 +1,12 @@
+{
+  "id": "T-118",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: Heroic Inspiration rerolls any die, a Hit Die spent on a Short Rest included; engine: no reroll is offered for Hit Dice",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

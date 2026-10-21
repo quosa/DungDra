@@ -1,0 +1,12 @@
+{
+  "id": "T-119",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: Heroic Inspiration rerolls any die, Magic Missile's d4s included; engine: dart dice are rolled without the reroll offer",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

@@ -293,3 +293,7 @@
 {"at": 1792554572, "about": "GLOSS.enemy", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0644, "seconds": 11.9, "session_id": "049e9b16-7c84-4c7d-8518-82bb28f7d148", "exit": 0}
 {"at": 1792554584, "about": "GLOSS.enemy", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.3076, "seconds": 240.9, "session_id": "d37cac00-e972-46e2-9ddd-6f154ad6709f", "exit": 0}
 {"at": 1792554827, "about": "GLOSS.enemy", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.7992, "seconds": 157.5, "session_id": "1b909de1-337c-480e-a0d8-7151197bfa25", "exit": 0}
+{"at": 1792554985, "about": "GLOSS.heroic-inspiration", "stage": "A", "role": "rule-analyst", "model": "opus", "cost_usd": 0.1314, "seconds": 31.8, "session_id": "892bbab6-4c75-41e1-99a9-57313b91b244", "exit": 0}
+{"at": 1792555017, "about": "GLOSS.heroic-inspiration", "stage": "B", "role": "scenario-auditor", "model": "sonnet", "cost_usd": 0.0937, "seconds": 24.8, "session_id": "5d102320-5627-4664-ac63-ca4edf498be5", "exit": 0}
+{"at": 1792555042, "about": "GLOSS.heroic-inspiration", "stage": "C", "role": "test-designer", "model": "opus", "cost_usd": 1.3522, "seconds": 269.2, "session_id": "0dfde3c1-57a6-4f77-8ba0-20813e5d1889", "exit": 0}
+{"at": 1792555314, "about": "GLOSS.heroic-inspiration", "stage": "D", "role": "test-verifier", "model": "opus", "cost_usd": 0.76, "seconds": 166.4, "session_id": "df930026-7e44-4a59-b31e-1e643705c7f7", "exit": 0}

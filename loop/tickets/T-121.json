@@ -1,0 +1,12 @@
+{
+  "id": "T-121",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: a surplus Heroic Inspiration goes only to a player character who lacks it; engine: an answer naming a monster gives it to the monster",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

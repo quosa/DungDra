@@ -44,6 +44,11 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Spending spell slots, Hit Dice, class-feature uses or ammunition that don't exist.
 - Recovering resources without the rest that restores them; two Long Rests back to back.
 - Negative, zero or huge quantities (buy −5 rations, move 1,000 feet, heal −3).
+- Stretching one Heroic Inspiration over several dice (both d20s of an Advantage roll, every die
+  of a damage roll), spending it twice, or keeping the better of the old and new roll (2014
+  Advantage). Banking a second one, or passing a surplus to a monster, an NPC or a PC who already
+  has it. Rerolling a die someone else rolled (a foe's attack roll against you), or waiting to see
+  whether the roll succeeds before deciding.
 
 ## Targets
 - Targeting a hidden, invisible, unseen, dead or out-of-range creature.
