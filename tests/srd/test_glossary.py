@@ -3086,7 +3086,7 @@ def test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding(game):
     assert_refused_cleanly(game, actions.hide, game, lidda, cover="three-quarters", seen_by=[w.id])
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-41")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-46")
 @pytest.mark.xfail(
     strict=True,
     reason="T-115: a Friendly creature that attacks you still counts as your ally and enables Sneak Attack",

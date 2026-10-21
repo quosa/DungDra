@@ -51,7 +51,7 @@
       "summary": "I ran 13 mutations through `srdloop mutate`, all on the engine's two enemy checks: the ranged check at `dungdra/combat.py:1019` and `enemies_of` at `dungdra/game.py:150`. Every green test I kept failed under the mutation aimed at it. A control mutation passed, so the harness reports real results. Al"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage",
     "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",

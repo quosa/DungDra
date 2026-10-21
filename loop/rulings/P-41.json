@@ -6,8 +6,8 @@
   "tests": [
     "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-46",
   "note": "",
   "reason": ""
 }
