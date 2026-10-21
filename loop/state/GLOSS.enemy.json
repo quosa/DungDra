@@ -1,10 +1,6 @@
 {
   "fingerprint": "686620a0caece8ab",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
-    "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
-    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
-  ],
+  "for_review": [],
   "id": "GLOSS.enemy",
   "kind_waivers": [
     {
@@ -33,6 +29,23 @@
     "tests/srd/test_glossary.py::test_enemy_help_distracts_a_foe_within_5_feet"
   ],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "will be refactored based on rulings",
+      "test": "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy"
+    },
+    {
+      "decision": "kept",
+      "reason": "will be refactored based on rulings",
+      "test": "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused"
+    },
+    {
+      "decision": "kept",
+      "reason": "will be refactored based on rulings",
+      "test": "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1792554572,

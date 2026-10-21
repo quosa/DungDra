@@ -1,9 +1,6 @@
 {
   "fingerprint": "85ac42df33280878",
-  "for_review": [
-    "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
-    "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check"
-  ],
+  "for_review": [],
   "id": "GLOSS.deafened",
   "kind_waivers": [
     {
@@ -20,6 +17,18 @@
   "out_of_scope": [],
   "refuted": [],
   "relations": [],
+  "reviewed": [
+    {
+      "decision": "kept",
+      "reason": "will be refactored based on rulings",
+      "test": "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled"
+    },
+    {
+      "decision": "kept",
+      "reason": "will be refactored based on rulings",
+      "test": "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check"
+    }
+  ],
   "stages": {
     "A": {
       "at": 1792531789,
