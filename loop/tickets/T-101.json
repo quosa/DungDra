@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_move_command_through_a_hostile_creature_costs_extra"
   ],
-  "status": "open",
+  "status": "fixed",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-100"
+    }
+  ]
 }

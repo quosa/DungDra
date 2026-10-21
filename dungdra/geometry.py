@@ -32,6 +32,23 @@ def step_toward(p, q, feet) -> tuple[int, int]:
     return (x, y)
 
 
+def steps_between(p, q) -> list[tuple[int, int]]:
+    """The squares (by corner) a mover enters walking from p toward q in 5-ft steps, in order;
+    p's own square isn't one of them."""
+    out = []
+    here = tuple(p[:2])
+    for _ in range(dist_points(p[:2], q[:2]) // 5):
+        here = step_toward(here, q[:2], 5)
+        out.append(here)
+    return out
+
+
+def squares_overlap(a, a_side, b, b_side) -> bool:
+    """Do the squares at corners a and b (lowest x, y) with edges a_side and b_side share any
+    interior? Touching an edge or a corner doesn't count."""
+    return all(a[i] < b[i] + b_side and b[i] < a[i] + a_side for i in (0, 1))
+
+
 def step_away(p, q, feet) -> tuple[int, int]:
     """Move from p directly away from q by `feet`."""
     x, y = p

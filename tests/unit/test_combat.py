@@ -821,3 +821,58 @@ def test_static_damage_with_advantage_cancelled_by_disadvantage_omits_the_rider(
     game.dice.force_str("d20=[19]")
     r = attack(game, gob, brom, attack_name="scimitar", adv=["test"], dis=["test"])
     assert r.roll.mode == "normal" and r.damage == 5
+
+
+def test_entering_a_non_allys_space_costs_one_extra_foot_per_foot_and_logs_it(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    assert move(game, lidda, to=(15, 0)) == 20
+    ev = game.log.last("difficult-terrain")
+    assert (ev.rule, ev.page, ev.ruling) == ("GLOSS.difficult-terrain#5", "181", None)
+
+
+def test_a_large_creatures_space_charges_every_square_of_it_entered(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    big = mon(game, "bandit", (5, 0))
+    big.size = "large"
+    assert move(game, lidda, to=(20, 0)) == 30
+
+
+def test_a_tiny_an_allied_a_dead_or_a_dragged_creatures_space_isnt_difficult(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    rat = mon(game, "giant rat", (5, 0))
+    rat.size = "tiny"
+    pc(game, "BROM", (10, 0))
+    corpse = mon(game, "bandit", (15, 0))
+    corpse.hp = 0
+    corpse.dead = True
+    assert move(game, lidda, to=(20, 0)) == 20
+    assert not game.log.of_kind("difficult-terrain")
+
+
+def test_a_creature_at_another_elevation_doesnt_crowd_the_space(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    bandit.elevation = 20
+    assert move(game, lidda, to=(10, 0)) == 10
+
+
+def test_a_crowded_space_inside_scene_difficult_terrain_isnt_charged_twice(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    game.scene.difficult = True
+    assert move(game, lidda, to=(10, 0)) == 20
+
+
+def test_swimming_without_a_swim_speed_through_difficult_water_isnt_charged_again(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    assert move(game, lidda, to=(10, 0), mode="swim", difficult=True) == 30
+
+
+def test_an_indifferent_bystanders_space_is_difficult_under_ruling_r43(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team, guard.attitude = "neutral", "indifferent"
+    assert move(game, lidda, to=(10, 0)) == 15
+    assert game.log.last("difficult-terrain").ruling == "R-43"

@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free"
   ],
-  "status": "open",
+  "status": "fixed",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-100"
+    }
+  ]
 }

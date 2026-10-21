@@ -10,9 +10,9 @@ from .d20 import D20Roll, roll_d20_test
 from .data.equipment import WEAPONS
 from .dice import parse_expr
 from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
-from .geometry import dist_points, step_away, step_toward
+from .geometry import dist_points, squares_overlap, step_away, step_toward, steps_between
 from .mounted import moves_on_riders_turn
-from .rules import ROUND, Refusal, fmt_mod, size_index
+from .rules import ROUND, SPACE, Refusal, fmt_mod, size_index
 
 
 # ---------------------------------------------------------------------------
@@ -532,6 +532,8 @@ def move(
     spec = spec or MOVE_MODES["walk"]
     cost = dist
     notes = []
+    terrain_charged = False
+    crowded, occupants = 0, []
     if spec.crawling or (c.has("prone") and spec.speed == "walk" and dist > 0):
         cost += dist
         notes.append("crawling")
@@ -550,13 +552,20 @@ def move(
             # without the Speed, each foot costs 1 extra foot (2 extra in Difficult Terrain)
             cost += dist * (2 if difficult else 1)
             notes.append(spec.extra_note)
+            terrain_charged = difficult
             difficult = False
     # SRD[GLOSS.difficult-terrain#1] a scene's Difficult Terrain charges every foot moved over
     # its ground, walking or crawling. SRD[GLOSS.difficult-terrain#3] R-42: not cumulative only
     # among terrain sources, so crawling's own extra foot adds on top (3 ft per foot)
-    if difficult or (game.scene.difficult and spec.speed == "walk"):
+    if not terrain_charged and (difficult or (game.scene.difficult and spec.speed == "walk")):
         cost += dist
         notes.append("Difficult Terrain")
+    elif not terrain_charged:
+        # SRD[GLOSS.difficult-terrain#3] only the feet not already charged as Difficult Terrain
+        crowded, occupants = _feet_in_crowded_spaces(game, c, start, dest, drag)
+        if crowded:
+            cost += crowded
+            notes.append(f"Difficult Terrain for {crowded} ft")
     # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
     two_smaller = drag is not None and size_index(c.size) - size_index(drag.size) >= 2
     if drag is not None and not (drag.size == "tiny" or two_smaller):
@@ -591,6 +600,15 @@ def move(
     )
     if budgeted:
         cb.turn.moved += dist
+    if crowded:
+        game.log.player(
+            "difficult-terrain",
+            f"{c.name} moves {crowded} ft through a creature's space: Difficult Terrain",
+            page=181,
+            rule="GLOSS.difficult-terrain#5",
+            # R-43: the space of a creature that isn't hostile but isn't your ally counts too
+            ruling="R-43" if any(getattr(o, "attitude", None) != "hostile" for o in occupants) else None,
+        )
     if provoke:
         _check_leave_reach(game, c, start, dest, provoke=True)
         if c.dead or c.has("incapacitated") and c.hp == 0:
@@ -611,6 +629,30 @@ def move(
     )
     _readied_triggers(game, c, start)
     return cost
+
+
+def _feet_in_crowded_spaces(game, c, start, dest, drag=None) -> tuple[int, list]:
+    """Feet of a move from start to dest that enter a space Difficult Terrain because another
+    creature occupies it, and the creatures whose spaces they are."""
+    side = SPACE.get(c.size, 5)
+    # SRD[GLOSS.difficult-terrain#5] a creature that isn't Tiny or your ally (R-43: an
+    # Indifferent bystander counts too); a creature dragged along moves with the mover
+    others = [
+        o
+        for o in game.creatures.values()
+        if o is not c
+        and o is not drag
+        and not o.dead
+        and o.size != "tiny"
+        and o.elevation == c.elevation
+        and not game.is_ally(c, o)
+    ]
+    feet, occupants = 0, []
+    for sq in steps_between(start, dest):
+        here = [o for o in others if squares_overlap(sq, side, o.position, SPACE.get(o.size, 5))]
+        feet += 5 if here else 0
+        occupants += [o for o in here if o not in occupants]
+    return feet, occupants
 
 
 def _after_move(game, c, start):

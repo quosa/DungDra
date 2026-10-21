@@ -10,6 +10,8 @@ from dungdra.geometry import (
     in_cube_at_point,
     in_cube_direction,
     segment_crosses_square,
+    squares_overlap,
+    steps_between,
 )
 
 
@@ -134,3 +136,21 @@ def test_in_area_refuses_a_shape_without_a_direction_or_geometry():
         in_area("cone", 15, (0, 0), (5, 0))
     with pytest.raises(ValueError, match="geometry"):
         in_area("line", 30, (0, 0), (5, 0), toward=(5, 0))
+
+
+def test_steps_between_lists_each_square_entered_but_not_the_start():
+    assert steps_between((0, 0), (15, 0)) == [(5, 0), (10, 0), (15, 0)]
+    assert steps_between((0, 0), (10, 5)) == [(5, 5), (10, 5)]
+    assert steps_between((0, 0), (0, 0)) == []
+
+
+def test_steps_between_ignores_elevation_and_never_overshoots_an_off_grid_end():
+    assert steps_between((0, 0, 10), (10, 0, 10)) == [(5, 0), (10, 0)]
+    assert steps_between((0, 0), (7, 0)) == [(5, 0)]
+
+
+def test_squares_overlap_only_when_their_interiors_meet():
+    assert squares_overlap((5, 0), 5, (0, 0), 10)
+    assert squares_overlap((5, 0), 5, (5, 0), 5)
+    assert not squares_overlap((5, 0), 5, (10, 0), 5)  # shares an edge
+    assert not squares_overlap((5, 5), 5, (0, 0), 5)  # shares a corner

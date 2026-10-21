@@ -2784,10 +2784,6 @@ def test_moving_outside_the_web_costs_normally(game):
 
 # ---------------- #5 · a creature that isn't Tiny or your ally ----------------
 @pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-100: a hostile creature's space isn't Difficult Terrain; moving through it costs 1 ft per foot",
-)
 def test_moving_through_a_hostile_creatures_space_costs_extra(game):
     # LIDDA (Small) can pass a Medium bandit (Halfling Nimbleness); its square costs 10 ft
     lidda = pc(game, "LIDDA", (0, 0))
@@ -2798,10 +2794,6 @@ def test_moving_through_a_hostile_creatures_space_costs_extra(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-101: a hostile creature's space isn't Difficult Terrain through the move command either",
-)
 def test_move_command_through_a_hostile_creature_costs_extra(game):
     s = Session(game)
     lidda = pc(game, "LIDDA", (0, 0))
@@ -2813,10 +2805,6 @@ def test_move_command_through_a_hostile_creature_costs_extra(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive", ruling="R-43")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-102: a neutral creature that isn't an ally doesn't make its space Difficult Terrain",
-)
 def test_moving_through_an_indifferent_creatures_space_costs_extra(game):
     # Reading A: a creature that isn't your ally counts even when it isn't hostile
     lidda = pc(game, "LIDDA", (0, 0))
@@ -2871,10 +2859,6 @@ def test_hostile_creature_off_the_path_adds_nothing(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#5", kind="boundary")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-103: a Small (not Tiny) hostile creature's space isn't Difficult Terrain",
-)
 def test_small_hostile_creatures_space_is_difficult(game):
     # Small is the smallest size that still counts, one size above Tiny. The goblin is
     # Incapacitated, so BROM may pass through its space.
@@ -2886,11 +2870,6 @@ def test_small_hostile_creatures_space_is_difficult(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#5", kind="abuse")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-104: walking through a hostile creature's space is free, so a move that "
-    "costs more than Speed is allowed",
-)
 def test_cant_walk_through_an_enemy_for_free(game):
     # 30 ft past a bandit costs 35 ft: more than LIDDA's Speed 30
     lidda = pc(game, "LIDDA", (0, 0))
