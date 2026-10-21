@@ -1,0 +1,15 @@
+{
+  "id": "T-124",
+  "kind": "refactor",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "Game.decide returns a pre-set or decider answer without checking it against the offered options (dungdra/game.py:82), so any caller that resolves the answer with game.get(pick) can act on a creature the rule never offered. Validate answers against `options` in decide (refuse or fall back to default) so each rule doesn't need its own guard like grant_heroic_inspiration now has.",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-121"
+    }
+  ]
+}

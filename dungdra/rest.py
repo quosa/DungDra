@@ -27,21 +27,34 @@ def grant_heroic_inspiration(game, pc, source="GM"):
             prompt=f"{pc.name} already has Heroic Inspiration; give the new one to "
             f"({', '.join(c.name for c in lacking)})?",
         )
-        if pick:
-            other = game.get(pick)
+        # SRD[GLOSS.heroic-inspiration#3]: only a player character who lacks it can receive the
+        # surplus; naming anyone else (a monster, say) gives it to no one and it's lost.
+        other = next((c for c in lacking if c.id == pick), None)
+        if other is not None:
             other.heroic_inspiration = True
             game.log.player(
                 "inspiration",
                 f"{pc.name} already has Heroic Inspiration and gives the new instance to {other.name}",
-                page=8,
-                rule="GLOSS.heroic-inspiration",
+                page=183,
+                rule="GLOSS.heroic-inspiration#3",
+                ruling="R-51",
             )
             return other
+        if pick:
+            game.log.player(
+                "inspiration",
+                f"{pc.name} can't give Heroic Inspiration to {pick}: only a player character who "
+                "lacks it can receive it",
+                page=183,
+                rule="GLOSS.heroic-inspiration#3",
+                ruling="R-50",
+            )
     game.log.player(
         "inspiration",
         f"{pc.name} already has Heroic Inspiration; the new instance is lost",
-        page=8,
-        rule="GLOSS.heroic-inspiration",
+        page=183,
+        rule="GLOSS.heroic-inspiration#3",
+        ruling="R-51",
     )
     return None
 

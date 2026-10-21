@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "T-121 is fixed. A surplus Heroic Inspiration now goes only to a living player character who lacks it. Before, `grant_heroic_inspiration` (dungdra/rest.py) gave it to whatever creature the `give_inspiration` answer named, monsters included. Now the answer has to match one of the PCs who lack it. Any other name, like a monster or a PC who already has it, gives it to no one: the engine logs that it can't give it there (R-50), and then that the new instance is lost (R-51). The give/lost log events now cite page 183 and `GLOSS.heroic-inspiration#3`; before, they cited page 8 and had no clause. The same check also makes T-122's test (`test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it`) pass. With --runxfail, the T-121 and T-122 tests pass, the unit suite passes (575 tests), ruff check and ruff format are clean, and dev-gate passes. One related test still fails with --runxfail: `test_heroic_inspiration_a_monster_cant_gain_it`. It belongs to T-120 (granting Heroic Inspiration directly to a monster), which is disputed and wasn't part of this ticket."
+    }
+  ]
 }
