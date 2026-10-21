@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "Magic Missile rolled each dart's d4 inline without going through the shared Heroic Inspiration reroll (d20.inspiration_reroll, which T-118 introduced). Now `_magic_missile` in dungdra/spells.py rolls one target's dart d4s as a group and passes them to inspiration_reroll(game, c.caster, rolls, 4). That offers the 'inspiration_damage' choice, rerolls the chosen die, spends the inspiration and logs it with rule GLOSS.heroic-inspiration#1 on page 183. Damage is then the sum of (d4+1) per dart. The code is tagged SRD[GLOSS.heroic-inspiration#1]. I added three unit tests: a reroll that spends inspiration, no reroll without inspiration, and a Shield-warded target that takes no damage, rolls no dice and keeps the caster's inspiration. The third test covers the Shield branch so the dev-gate coverage ratchet doesn't fall. Checks: tests/unit has 572 passing. The ticket test passes with --runxfail. Without --runxfail it shows as a strict XPASS failure, which goes away when the harness removes the marker. The rest of tests/srd and tests/scenarios pass. ruff check and ruff format --check are clean, and the dev-gate passes with coverage at 50.67%, up from 50.66%."
+    }
+  ]
 }

@@ -3183,7 +3183,6 @@ def test_heroic_inspiration_rerolls_a_hit_die(game):
 
 
 @pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive", ruling="R-47")
-@pytest.mark.xfail(strict=True, reason="T-119: Heroic Inspiration isn't offered for Magic Missile's d4s")
 def test_heroic_inspiration_rerolls_a_magic_missile_die(game):
     mialee = inspired(game, "MIALEE")
     ogre = mon(game, "ogre", (20, 0))

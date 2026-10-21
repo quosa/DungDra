@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .d20 import D20Roll, roll_d20_test
+from .d20 import D20Roll, inspiration_reroll, roll_d20_test
 from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
@@ -1348,11 +1348,10 @@ def _magic_missile(game, c, targets, option=None, **kw):
                 rule="SPELL.shield",
             )
             continue
-        total = 0
-        for _ in range(n):
-            r = game.dice.roll(4)
-            total += r + 1
-        deal(game, c, t, total, "force")
+        rolls = [game.dice.roll(4) for _ in range(n)]
+        # SRD[GLOSS.heroic-inspiration#1]: any die, a dart's d4 included, can be rerolled.
+        rolls = inspiration_reroll(game, c.caster, rolls, 4)
+        deal(game, c, t, sum(r + 1 for r in rolls), "force")
 
 
 def _sanctuary(game, c, targets, **kw):

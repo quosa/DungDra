@@ -11,6 +11,7 @@ from dungdra.data.spells import SPELLS, Restriction, spell_rule
 from dungdra.rules import Refusal
 from dungdra.spells import (
     Casting,
+    ShieldSpell,
     _affected_targets,
     _area_objects,
     _material,
@@ -831,3 +832,39 @@ def test_releasing_a_concentration_spell_concentrates_on_the_spell_itself(game):
     assert "readied" in jozan.concentrating
     c.release(game)
     assert jozan.concentrating == "Bless"
+
+
+def test_a_magic_missile_dart_die_can_be_rerolled_with_heroic_inspiration(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    mialee.heroic_inspiration = True
+    ogre = mon(game, "ogre", (20, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 1)
+    game.dice.force_str("d4=[2,1,3,4]")
+    cast(game, mialee, "magic missile", targets=[ogre], slot=1)
+    assert hp - ogre.hp == (2 + 1) + (4 + 1) + (3 + 1)
+    assert mialee.heroic_inspiration is False
+    assert game.log.last("inspiration").rule == "GLOSS.heroic-inspiration#1"
+
+
+def test_without_heroic_inspiration_the_dart_dice_stand(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    ogre = mon(game, "ogre", (20, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d4=[1,1,1]")
+    cast(game, mialee, "magic missile", targets=[ogre], slot=1)
+    assert hp - ogre.hp == 3 * (1 + 1)
+    assert game.log.last("inspiration") is None
+
+
+def test_a_target_under_shield_takes_no_dart_damage_and_no_dice_are_rolled(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    mialee.heroic_inspiration = True
+    ogre = mon(game, "ogre", (20, 0))
+    ogre.add_effect(ShieldSpell("Shield", 5, ends=[("start", ogre.id)]))
+    hp = ogre.hp
+    cast(game, mialee, "magic missile", targets=[ogre], slot=1)
+    assert ogre.hp == hp
+    assert game.log.last("spell").rule == "SPELL.shield"
+    assert mialee.heroic_inspiration is True
