@@ -3287,7 +3287,7 @@ def test_heroic_inspiration_cant_reroll_a_monsters_attack_roll(game):
     assert not inspiration_offers(game)
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="P-45")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="R-50")
 @pytest.mark.xfail(
     strict=True, reason="T-120: a monster granted Heroic Inspiration has it; only a PC can have it"
 )
@@ -3429,7 +3429,7 @@ def test_heroic_inspiration_duplicate_not_given_is_lost(game):
     assert lidda.heroic_inspiration is False
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="P-45")
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="R-50")
 @pytest.mark.xfail(
     strict=True, reason="T-121: a surplus Heroic Inspiration can be given to a monster, which then has it"
 )

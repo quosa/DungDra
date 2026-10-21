@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
     "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-50",
   "note": "",
   "reason": ""
 }
