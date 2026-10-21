@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "`help_attack` (dungdra/actions.py) now refuses a target that isn't the helper's enemy. It doesn't add a new check: it reuses the team-based `game.enemies_of` that Hide and the other actions already use, so the whole opposing side counts as enemies (R-44). Someone on the helper's own side or a neutral creature can't be distracted. The refusal carries page=181, rule=\"GLOSS.enemy#1\", ruling=\"R-44\", and the code is tagged SRD[GLOSS.enemy#1]. The T-111 test passes with --runxfail. This also fixes T-112 (Help distracting a bystander who isn't fighting); its test now passes as a strict xpass too. There are two new unit tests: Help refuses to distract a companion and leaves no effect or log entry, and Help still distracts an adjacent enemy. The unit suite passes (565), ruff is clean and the dev-gate passes. In the srd and scenario suites the only failures are the T-111 and T-112 tests, which fail as strict xpasses because their xfail markers are still on; the harness removes those markers.",
+  "files": [
+   "dungdra/actions.py",
+   "tests/unit/test_actions.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_actions.py::test_help_attack_refuses_to_distract_the_helpers_companion",
+   "tests/unit/test_actions.py::test_help_attack_distracts_an_adjacent_enemy"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.enemy#1]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "help_attack now refuses a target that isn't among game.enemies_of(helper). It reuses the existing side-based enemy query instead of adding a second test, which matches R-44 (an enemy is anyone on the opposing side). The check sits in the engine's action layer, not in api.py. The Refusal cites page=181, rule=GLOSS.enemy#1 and ruling=R-44. This fixes T-111 (a companion can no longer be distracted). It also fixes T-112 (a neutral bystander is excluded by enemies_of), so removing both strict xfails is a needed consequence, not scope creep. The new unit tests check behaviour: the refusal and its citation, that no HelpAttack effect is applied and nothing is logged, plus a positive case against an adjacent goblin. Nothing is hard-coded. Neutrals who actively harm you are still not enemies, but T-113, T-114 and T-117 already cover that."
+ },
+ "problems": [],
+ "cost_usd": 0.4026,
+ "stash": ""
+}

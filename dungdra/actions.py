@@ -85,6 +85,15 @@ def help_check(game, helper, ally, skill=None, tool=None):
 def help_attack(game, helper, enemy):
     if not helper.can_act():
         raise Refusal(f"{helper.name} can't take actions right now")
+    # SRD[GLOSS.enemy#1] Help distracts an enemy: a creature fighting on the side opposed to the
+    # helper (enemies_of, R-44), never a companion on the helper's own side.
+    if enemy not in game.enemies_of(helper):
+        raise Refusal(
+            f"{helper.name} can't distract {enemy.name}; Help distracts an enemy, and {enemy.name} isn't one",
+            page=181,
+            rule="GLOSS.enemy#1",
+            ruling="R-44",
+        )
     d = helper.distance_to(enemy)
     if d > 5:
         raise Refusal(

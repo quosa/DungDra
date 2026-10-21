@@ -2983,10 +2983,6 @@ def test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding(game):
 
 
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-111: Help distracts any creature within 5 feet, even the helper's own companion",
-)
 def test_enemy_help_cant_distract_a_companion(game):
     lidda = pc(game, "LIDDA", (0, 0))
     brom = pc(game, "BROM", (5, 0))
@@ -3002,10 +2998,6 @@ def test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage(game)
 
 
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-112: Help distracts any creature within 5 feet, even a bystander who isn't an enemy",
-)
 def test_enemy_help_cant_distract_a_bystander_out_of_the_fight(game):
     lidda = pc(game, "LIDDA", (0, 0))
     w = neutral(game)

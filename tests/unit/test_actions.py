@@ -1,7 +1,7 @@
 import pytest
 
 from dungdra import actions
-from dungdra.effects import AdvNext
+from dungdra.effects import AdvNext, HelpAttack
 from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
 
@@ -43,6 +43,26 @@ def test_help_check_assists_a_friendly_creature_off_the_party(game):
     gob.attitude = "friendly"
     eff = actions.help_check(game, lidda, gob, skill="perception")
     assert eff in gob.effects
+
+
+def test_help_attack_refuses_to_distract_the_helpers_companion(game):
+    lidda = pc(game, "LIDDA")
+    brom = pc(game, "BROM", (5, 0))
+    with pytest.raises(Refusal) as e:
+        actions.help_attack(game, lidda, brom)
+    assert e.value.rule == "GLOSS.enemy#1"
+    assert e.value.ruling == "R-44"
+    assert e.value.page == 181
+    assert not brom.find_effects(cls=HelpAttack)
+    assert game.log.last("help") is None
+
+
+def test_help_attack_distracts_an_adjacent_enemy(game):
+    lidda = pc(game, "LIDDA")
+    gob = mon(game, "goblin warrior")
+    eff = actions.help_attack(game, lidda, gob)
+    assert eff in gob.effects
+    assert "LIDDA distracts" in game.log.last("help").text
 
 
 def test_study_refuses_a_creature_type_not_on_the_list(game):

@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion"
   ],
-  "status": "open",
-  "attempts": 0,
-  "history": []
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "`help_attack` (dungdra/actions.py) now refuses a target that isn't the helper's enemy. It doesn't add a new check: it reuses the team-based `game.enemies_of` that Hide and the other actions already use, so the whole opposing side counts as enemies (R-44). Someone on the helper's own side or a neutral creature can't be distracted. The refusal carries page=181, rule=\"GLOSS.enemy#1\", ruling=\"R-44\", and the code is tagged SRD[GLOSS.enemy#1]. The T-111 test passes with --runxfail. This also fixes T-112 (Help distracting a bystander who isn't fighting); its test now passes as a strict xpass too. There are two new unit tests: Help refuses to distract a companion and leaves no effect or log entry, and Help still distracts an adjacent enemy. The unit suite passes (565), ruff is clean and the dev-gate passes. In the srd and scenario suites the only failures are the T-111 and T-112 tests, which fail as strict xpasses because their xfail markers are still on; the harness removes those markers."
+    }
+  ]
 }
