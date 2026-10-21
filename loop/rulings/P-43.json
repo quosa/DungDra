@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
     "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-48",
   "note": "",
   "reason": ""
 }

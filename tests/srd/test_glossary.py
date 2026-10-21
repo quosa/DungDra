@@ -3302,7 +3302,7 @@ def test_heroic_inspiration_a_monster_cant_gain_it(game):
     assert r.dice == [3] and not r.hit
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="P-43")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="R-48")
 def test_heroic_inspiration_is_offered_before_the_roll_resolves(game):
     # "immediately after rolling it": the choice comes once the die is known, before the result.
     jozan = inspired(game)
@@ -3318,7 +3318,7 @@ def test_heroic_inspiration_is_offered_before_the_roll_resolves(game):
     assert not any(w in events[offer].text.lower() for w in ("success", "fail"))
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="P-43")
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="R-48")
 def test_heroic_inspiration_window_closes_once_the_next_roll_comes(game):
     jozan = inspired(game)
     game.answer("inspiration", None)
