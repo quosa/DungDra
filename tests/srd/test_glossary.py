@@ -3060,7 +3060,7 @@ def test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused(game)
 
 
 # ---------------- #2 · actively works to harm you ----------------
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-40")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
 @pytest.mark.xfail(
     strict=True,
     reason="T-113: a creature not put on the enemy side never counts as an enemy, even after it "
@@ -3073,7 +3073,7 @@ def test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage(game):
     assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="P-40")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
 @pytest.mark.xfail(
     strict=True,
     reason="T-114: a creature not put on the enemy side never counts as an enemy, even after it "
@@ -3098,7 +3098,7 @@ def test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally(game):
     assert_stab_without_sneak_attack(game, lidda, gob)
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="P-40")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-45")
 def test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy(game):
     # The watchman dislikes the party but does nothing to harm LIDDA.
     lidda, target = archer_scene(game)
@@ -3106,7 +3106,7 @@ def test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy(game):
     assert shoot(game, lidda, target, disadvantage=False) == "normal"
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="P-40")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-45")
 def test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding(game):
     lidda = pc(game, "LIDDA", (0, 0))
     w = neutral(game, pos=(30, 0), attitude="hostile")

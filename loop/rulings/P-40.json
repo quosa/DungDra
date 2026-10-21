@@ -9,8 +9,8 @@
     "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
     "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-45",
   "note": "",
   "reason": ""
 }
