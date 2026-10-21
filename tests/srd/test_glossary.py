@@ -2747,11 +2747,6 @@ def test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="R-42")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-97: crawling (mode='crawl') through a Difficult Terrain scene costs 2 ft per foot; "
-    "the scene's Difficult Terrain is only applied to mode 'walk'",
-)
 def test_not_cumulative_doesnt_cancel_the_crawl_cost(game):
     # Reading A: crawling 5 ft through rubble costs 5 + 5 (crawl) + 5 (Difficult Terrain)
     brom = rubble_scene(game)
@@ -2760,11 +2755,6 @@ def test_not_cumulative_doesnt_cancel_the_crawl_cost(game):
 
 
 @pytest.mark.srd(DT, clause=f"{DT}#3", kind="abuse", ruling="R-42")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-98: choosing mode='crawl' through a Difficult Terrain scene skips the "
-    "Difficult Terrain cost, so 10 ft of crawling through rubble fits in 20 ft",
-)
 def test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost(game):
     # after 5 ft of rubble (10 ft) 20 ft is left; crawling 10 more ft through rubble costs 30
     brom = rubble_scene(game)

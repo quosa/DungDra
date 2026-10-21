@@ -286,6 +286,14 @@ def test_only_the_crawl_entry_of_the_move_modes_table_is_crawling():
     assert [name for name, spec in MOVE_MODES.items() if spec.crawling] == ["crawl"]
 
 
+def test_crawling_through_a_difficult_terrain_scene_pays_both_extra_feet(game):
+    game.scene.difficult = True
+    brom = pc(game, "BROM", (0, 0))
+    assert move(game, brom, to=(5, 0), mode="crawl") == 15
+    assert move(game, brom, to=(10, 0), mode="walk") == 10
+    assert brom.position == (10, 0)
+
+
 def test_crawling_costs_double_without_being_prone_and_walking_does_not(game):
     brom = pc(game, "BROM", (0, 0))
     assert move(game, brom, to=(10, 0), mode="crawl") == 20

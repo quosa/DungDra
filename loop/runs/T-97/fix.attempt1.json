@@ -1,0 +1,28 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "A scene's Difficult Terrain (game.scene.difficult) now applies to every mode that spends walking Speed (walk and crawl), not just mode 'walk'. Crawling through rubble therefore costs 3 ft per foot (R-42 Reading A). Climb, swim and fly are unchanged. The fix also makes T-98's red test pass (strict xpass).",
+  "files": [
+   "dungdra/combat.py",
+   "tests/unit/test_combat.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_combat.py::test_crawling_through_a_difficult_terrain_scene_pays_both_extra_feet"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.difficult-terrain#1]",
+   "SRD[GLOSS.difficult-terrain#3]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves the ticket. The scene's Difficult Terrain check now asks whether the move spends walking Speed (`spec.speed == \"walk\"`) instead of checking for the literal mode name `\"walk\"`. Crawl is a walking-Speed mode in `MOVE_MODES`, so crawling through a Difficult Terrain scene now pays 5 + 5 for crawling + 5 for Difficult Terrain, which is 3 ft per foot as R-42 Reading A rules. Asking the existing `MoveMode` data replaces a check on a mode string, so the rule lives in the data and no second mechanism is added. Other modes behave as before. T-98 has the same cause, so its strict xfail had to come off with this fix; removing only the xfail markers is fine and is not scope creep. The new unit test checks real behaviour: a crawl through the scene costs 15, a walk after it costs 10, and the creature ends where it should. The `SRD[...]` comment cites the right clauses and R-42. No hard-coding, layering problems or meaningless tests."
+ },
+ "problems": [],
+ "cost_usd": 0.3928,
+ "stash": ""
+}

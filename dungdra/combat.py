@@ -551,7 +551,10 @@ def move(
             cost += dist * (2 if difficult else 1)
             notes.append(spec.extra_note)
             difficult = False
-    if difficult or (game.scene.difficult and mode == "walk"):
+    # SRD[GLOSS.difficult-terrain#1] a scene's Difficult Terrain charges every foot moved over
+    # its ground, walking or crawling. SRD[GLOSS.difficult-terrain#3] R-42: not cumulative only
+    # among terrain sources, so crawling's own extra foot adds on top (3 ft per foot)
+    if difficult or (game.scene.difficult and spec.speed == "walk"):
         cost += dist
         notes.append("Difficult Terrain")
     # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
