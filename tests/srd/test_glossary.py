@@ -2982,7 +2982,7 @@ def test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage(game):
     assert any("BRAWLER" in s for s in r.roll.dis)
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="P-39")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="R-44")
 def test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy(game):
     # The goblin fights the party but has only gone for BROM: it is still LIDDA's enemy.
     lidda, target = archer_scene(game)
@@ -3048,7 +3048,7 @@ def test_enemy_help_cant_distract_a_bystander_out_of_the_fight(game):
     assert_refused_cleanly(game, actions.help_attack, game, lidda, w)
 
 
-@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="abuse", ruling="P-39")
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="abuse", ruling="R-44")
 def test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused(game):
     # "It's fighting BROM, not me": the goblin is still LIDDA's enemy, and it sees her.
     lidda = pc(game, "LIDDA", (0, 0))

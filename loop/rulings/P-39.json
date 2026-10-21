@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
     "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-44",
   "note": "",
   "reason": ""
 }
