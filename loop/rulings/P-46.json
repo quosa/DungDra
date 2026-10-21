@@ -7,8 +7,8 @@
     "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_not_given_is_lost",
     "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it"
   ],
-  "status": "proposed",
-  "register_id": null,
+  "status": "accepted",
+  "register_id": "R-51",
   "note": "",
   "reason": ""
 }

@@ -3420,7 +3420,7 @@ def test_heroic_inspiration_duplicate_lost_when_every_pc_has_it(game):
     assert jozan.heroic_inspiration and lidda.heroic_inspiration
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#3", kind="negative", ruling="P-46")
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="negative", ruling="R-51")
 def test_heroic_inspiration_duplicate_not_given_is_lost(game):
     jozan, lidda = inspired(game), pc(game, "LIDDA", (5, 0))
     game.answer("give_inspiration", None)
@@ -3442,7 +3442,7 @@ def test_heroic_inspiration_cant_be_given_to_a_monster(game):
     assert ogre.heroic_inspiration is False
 
 
-@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="P-46")
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="R-51")
 @pytest.mark.xfail(
     strict=True, reason="T-122: a surplus Heroic Inspiration is recorded as given to a PC who already has it"
 )

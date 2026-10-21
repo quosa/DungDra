@@ -38,7 +38,7 @@
       "summary": "I'm keeping 24 of the 26 tests and refuting 2, both as duplicates with low confidence (0.55 and 0.6).\n\n**Wrong oracle:** none found. Every expected outcome follows from the p.183 text, and none of the tests quietly picks a side on a disputed reading. Magic Missile is the closest case, but the engine"
     }
   },
-  "status": "blocked",
+  "status": "red",
   "tests": [
     "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_check",
     "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw",
