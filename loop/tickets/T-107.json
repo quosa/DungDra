@@ -4,8 +4,8 @@
   "unit": "GLOSS.difficult-terrain",
   "title": "Scene or space terrain types (heavy snow, ice, undergrowth) that make those spaces Difficult Terrain",
   "tests": [],
-  "status": "open",
-  "attempts": 1,
+  "status": "fixed",
+  "attempts": 2,
   "history": [
     {
       "event": "failed",
@@ -15,6 +15,10 @@
         "review: orthogonality dungdra/game.py:91 For a patch, `add_ground` writes the kind to `objects[name][\"ground\"]`, a top-level key on the object, while `mark_difficult` already puts a `ground` flag inside `area` that movement reads. Nothing in the engine reads the new top-level key, so a second 'ground' field sits next to the existing one with a different meaning. Either use the area's own field for the kind or leave it out.",
         "review: test-meaningfulness tests/unit/test_combat.py:931 `assert game.scene.objects[\"heavy snow\"][\"ground\"] == \"heavy snow\"` reads back the write-only key the implementation just stored, which is not behaviour. The movement-cost assertion on the next line is the meaningful one. Drop the read-back, or replace it with a check on a behaviour (for example, that a flying mover crosses the patch at normal cost)."
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }

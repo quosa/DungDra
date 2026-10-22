@@ -13,9 +13,21 @@ from collections import defaultdict, deque
 from .dice import Dice
 from .effects import Acc, Ctx, grapples_on
 from .events import EventLog
-from .rules import DAY, HOUR, MINUTE, ROUND, SPACE, Refusal, norm
+from .rules import DAY, DIFFICULT_GROUND, HOUR, MINUTE, ROUND, SPACE, OutOfScope, Refusal, norm
 
 _NOT_OFFERED = object()
+
+
+def _ground_kind(ground: str) -> str:
+    kind = norm(ground)
+    # SRD[GLOSS.difficult-terrain#7] heavy snow, ice, rubble or undergrowth
+    if kind not in DIFFICULT_GROUND:
+        raise OutOfScope(
+            f"There are no rules for {ground} ground here; the kinds are {', '.join(DIFFICULT_GROUND)}",
+            page=181,
+            rule="GLOSS.difficult-terrain#7",
+        )
+    return kind
 
 
 def _same(option, answer) -> bool:
@@ -66,6 +78,16 @@ class Scene:
         # SRD[GLOSS.difficult-terrain#4] a space is Difficult Terrain if it contains a listed source
         area = {"shape": shape, "size": size, "origin": tuple(origin), "toward": toward, "ground": ground}
         self.objects[name] = {"difficult": True, "area": area}
+
+    def add_ground(self, ground, shape=None, size=None, origin=None, name=None):
+        """Cover the whole scene, or an area of it, with a kind of ground (heavy snow, ice, rubble,
+        undergrowth): its spaces are Difficult Terrain for walking movers. The whole scene sets the
+        `difficult` switch (as a collapsing roof's rubble does); an area is a ground-cover patch."""
+        kind = _ground_kind(ground)
+        if shape is None:
+            self.difficult = True
+        else:
+            self.mark_difficult(name or kind, shape, size, origin)
 
     def to_dict(self):
         return {

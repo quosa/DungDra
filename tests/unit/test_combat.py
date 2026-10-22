@@ -19,7 +19,7 @@ from dungdra.combat import (
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.mounted import mount
-from dungdra.rules import Refusal
+from dungdra.rules import OutOfScope, Refusal
 from dungdra.spells import cast
 from tests.support.helpers import mon, pc
 from tests.unit.helpers import grappled_by
@@ -914,3 +914,29 @@ def test_a_space_that_is_difficult_twice_over_costs_one_extra_foot(game):
     mon(game, "bandit", (5, 0))
     game.scene.mark_difficult("rubble", "cube", 10, (5, 0))  # under the bandit too
     assert move(game, lidda, to=(10, 0)) == 10 + 10
+
+
+@pytest.mark.parametrize("ground", ["heavy snow", "ice", "rubble", "undergrowth"])
+def test_a_scene_covered_in_listed_ground_is_difficult_terrain_for_walkers(game, ground):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.add_ground(ground)
+    assert move(game, gob, to=(10, 0)) == 20
+    assert move(game, gob, to=(0, 0), mode="fly") == 10
+
+
+def test_a_patch_of_ground_makes_only_its_spaces_difficult(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (0, 30))
+    gob.speeds["fly"] = 30
+    game.scene.add_ground("Heavy-Snow", "cube", 10, (15, 0))
+    game.scene.add_ground("ice", "cube", 10, (15, 30), name="frozen pond")
+    assert move(game, brom, to=(30, 0)) == 30 + 10
+    assert move(game, gob, to=(30, 30), mode="fly") == 30
+
+
+def test_ground_without_rules_is_out_of_scope(game):
+    with pytest.raises(OutOfScope) as e:
+        game.scene.add_ground("lava")
+    assert e.value.rule == "GLOSS.difficult-terrain#7"
+    assert game.scene.difficult is False and game.scene.objects == {}
