@@ -5,6 +5,15 @@
   "title": "Track 'actively works to harm' as creature state (set by an attack or a harmful effect on a PC, or by the GM), and use it when deciding who is an enemy",
   "tests": [],
   "status": "open",
-  "attempts": 0,
-  "history": []
+  "attempts": 1,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (Most of the change is sound. `is_enemy`/`works_to_harm` is a single state-based mechanism that `enemies_of`, `is_ally` (R-46), and the ranged Disadvantage check (now used by both attack and spell attack) all share. The three xfails are correctly lifted, and the unit test edits match R-46. The problem is the spell-save hook: it skips every area spell, which is an invented ruling with no register entry. Because of it, a neutral creature that harms a PC with an area spell never becomes their enemy, so the ticket's 'harmful effect on a PC' isn't fully solved. Reject so that this case is either modelled from the data or sent to a person as a proposed ruling.)",
+        "review: other dungdra/spells.py:640 `if not c.data.get(\"area\")` makes every area spell exempt from 'actively works to harm'. Neither the SRD nor the register (R-45 only says 'acting to harm you (for example, attacking you)') gives that reading, so the fix invents a ruling inside the rule layer. It also gets the ticket's central case wrong: a neutral creature that drops a Fireball or Thunderwave on a PC is clearly working to harm them, yet it never becomes their enemy, so T-113, T-114 and T-115 still happen whenever the harm comes from an area. The fixer needs a principle based on the data, such as whom the caster chose to include or whether the creature is on the caster's own side, or should propose a ruling for a person to decide, and should not hard-wire 'area means never'. The unit test `test_catching_a_companion_in_an_area_spell_doesnt_make_you_its_enemy` locks in this invented reading. It only checks the case of a companion and never the case of a bystander or foe.",
+        "review: test-meaningfulness tests/unit/test_game.py:281 Nothing tests a harmful area effect aimed at a PC by a creature on no side, so the gap above goes unnoticed. Add a test where a neutral caster catches a PC in an area spell, and assert the enemy status your chosen rule produces."
+      ]
+    }
+  ]
 }
