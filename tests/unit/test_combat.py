@@ -876,3 +876,41 @@ def test_an_indifferent_bystanders_space_is_difficult_under_ruling_r43(game):
     guard.team, guard.attitude = "neutral", "indifferent"
     assert move(game, lidda, to=(10, 0)) == 15
     assert game.log.last("difficult-terrain").ruling == "R-43"
+
+
+# ---------------- Difficult Terrain in part of a scene ----------------
+def test_only_the_feet_inside_a_difficult_area_cost_extra(game):
+    brom = pc(game, "BROM", (0, 0))
+    game.scene.mark_difficult("rubble", "cube", 10, (15, 0))  # a 10-ft Cube: x 15..20
+    assert move(game, brom, to=(30, 0)) == 30 + 10
+    assert "Difficult Terrain for 10 ft" in game.log.last("move").text
+
+
+def test_a_move_that_misses_the_area_costs_normally(game):
+    brom = pc(game, "BROM", (0, 30))
+    game.scene.mark_difficult("rubble", "cube", 10, (15, 0))
+    assert move(game, brom, to=(30, 30)) == 30
+
+
+def test_ground_cover_doesnt_slow_a_flyer(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.mark_difficult("undergrowth", "cube", 10, (5, 0))
+    walker = mon(game, "goblin warrior", (0, 15))
+    game.scene.mark_difficult("more undergrowth", "cube", 10, (5, 15))
+    assert move(game, gob, to=(10, 0), mode="fly") == 10
+    assert move(game, walker, to=(10, 15)) == 20
+
+
+def test_an_area_not_marked_as_ground_slows_every_mover(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.mark_difficult("brambles", "cube", 10, (5, 0), ground=False)
+    assert move(game, gob, to=(10, 0), mode="fly") == 20
+
+
+def test_a_space_that_is_difficult_twice_over_costs_one_extra_foot(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    game.scene.mark_difficult("rubble", "cube", 10, (5, 0))  # under the bandit too
+    assert move(game, lidda, to=(10, 0)) == 10 + 10

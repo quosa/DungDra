@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this change; I found no problems in it. It solves T-105: a scene can now mark an area as Difficult Terrain (`Scene.mark_difficult`), and movement charges the extra foot only for the squares of the path that fall inside that area.\n\n- **Uses the existing mechanism.** The old `_feet_in_crowded_spaces` walked the path square by square for creatures' spaces. It is now `_feet_in_difficult_spaces` and also checks marked areas, using the same `in_area` geometry the spells already use. No second movement path was added.\n- **Not cumulative (#3).** Each square costs at most one extra 5 ft, however many sources make it difficult, and a unit test checks this. The creature-only feet are still counted separately, so the existing #5 / R-43 log event keeps reporting just those.\n- **Web (also fixes T-99).** Web now stores its Cube's area on the web object, which fixes T-99 as well. Removing T-99's strict xfail marker was required, because the test now passes and a strict xfail would otherwise fail. The ticket names a spell's area explicitly, so this is in scope.\n- **The `ground` flag.** Rubble or undergrowth slows only movers using their walking Speed; an area not marked as ground, like the web, slows every mover. This follows the existing rule that scene-wide `scene.difficult` applies only to walking, so it isn't a new reading.\n- **Tests.** The new unit tests check real costs from real geometry: part of a path inside the area, a path that misses it, a flyer over ground cover, an area that isn't ground cover, and a square that is difficult for two reasons. None of them repeat the code's own constants back.\n\nTwo minor gaps I'm not counting against the change: a square counts as inside an area by its position point rather than the mover's whole footprint (T-46 already covers footprints), and a charge from a marked area appears only in the move's notes, with no separate `rule=` log event."
+ },
+ "problems": [],
+ "cost_usd": 0.2159,
+ "stash": ""
+}

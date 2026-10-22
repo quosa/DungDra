@@ -30,6 +30,7 @@
     "tests/srd/test_glossary.py::test_five_feet_of_clear_ground_costs_five"
   ],
   "relations": [],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1792532161,

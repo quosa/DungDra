@@ -2765,11 +2765,6 @@ def test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost(game):
 
 # ---------------- #4 · a space with a listed source "or something similar" ----------------
 @pytest.mark.srd(DT, clause=f"{DT}#4", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-99: Web's 20-ft Cube is Difficult Terrain, but moving inside it costs 1 ft per foot; "
-    "the web object's 'difficult' flag has no area and movement never checks it",
-)
 def test_moving_inside_a_web_costs_extra(game):
     gob = webbed_goblin(game)
     assert C.move(game, gob, to=(35, 5)) == 10

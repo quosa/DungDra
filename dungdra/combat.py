@@ -10,7 +10,7 @@ from .d20 import D20Roll, inspiration_reroll, roll_d20_test
 from .data.equipment import WEAPONS
 from .dice import parse_expr
 from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
-from .geometry import dist_points, squares_overlap, step_away, step_toward, steps_between
+from .geometry import dist_points, in_area, squares_overlap, step_away, step_toward, steps_between
 from .mounted import moves_on_riders_turn
 from .rules import ROUND, SPACE, Refusal, fmt_mod, size_index
 
@@ -561,11 +561,14 @@ def move(
         cost += dist
         notes.append("Difficult Terrain")
     elif not terrain_charged:
-        # SRD[GLOSS.difficult-terrain#3] only the feet not already charged as Difficult Terrain
-        crowded, occupants = _feet_in_crowded_spaces(game, c, start, dest, drag)
-        if crowded:
-            cost += crowded
-            notes.append(f"Difficult Terrain for {crowded} ft")
+        # SRD[GLOSS.difficult-terrain#3] only the feet not already charged as Difficult Terrain,
+        # each foot once however many sources make its space Difficult Terrain
+        rough, crowded, occupants = _feet_in_difficult_spaces(
+            game, c, start, dest, drag, walking=spec.speed == "walk"
+        )
+        if rough:
+            cost += rough
+            notes.append(f"Difficult Terrain for {rough} ft")
     # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
     two_smaller = drag is not None and size_index(c.size) - size_index(drag.size) >= 2
     if drag is not None and not (drag.size == "tiny" or two_smaller):
@@ -631,10 +634,18 @@ def move(
     return cost
 
 
-def _feet_in_crowded_spaces(game, c, start, dest, drag=None) -> tuple[int, list]:
-    """Feet of a move from start to dest that enter a space Difficult Terrain because another
-    creature occupies it, and the creatures whose spaces they are."""
+def _feet_in_difficult_spaces(game, c, start, dest, drag=None, walking=True) -> tuple[int, int, list]:
+    """Feet of a move from start to dest that enter spaces of Difficult Terrain; of those, the feet
+    in another creature's space; and the creatures whose spaces they are. A space is Difficult
+    Terrain inside the area of a scene object marked difficult (a web, a patch of rubble), or where
+    another creature is. Ground cover (an area marked `ground`) slows only walking-Speed moves."""
     side = SPACE.get(c.size, 5)
+    # SRD[GLOSS.difficult-terrain#4] a space with a source of Difficult Terrain in it
+    areas = [
+        o["area"]
+        for o in game.scene.objects.values()
+        if o.get("difficult") and o.get("area") and (walking or not o["area"].get("ground"))
+    ]
     # SRD[GLOSS.difficult-terrain#5] a creature that isn't Tiny or your ally (R-43: an
     # Indifferent bystander counts too); a creature dragged along moves with the mover
     others = [
@@ -647,12 +658,17 @@ def _feet_in_crowded_spaces(game, c, start, dest, drag=None) -> tuple[int, list]
         and o.elevation == c.elevation
         and not game.is_ally(c, o)
     ]
-    feet, occupants = 0, []
+    feet, crowded, occupants = 0, 0, []
     for sq in steps_between(start, dest):
         here = [o for o in others if squares_overlap(sq, side, o.position, SPACE.get(o.size, 5))]
-        feet += 5 if here else 0
+        rough = any(
+            in_area(a["shape"], a["size"], a["origin"], (*sq, c.elevation), toward=a.get("toward"))
+            for a in areas
+        )
+        feet += 5 if here or rough else 0
+        crowded += 5 if here else 0
         occupants += [o for o in here if o not in occupants]
-    return feet, occupants
+    return feet, crowded, occupants
 
 
 def _after_move(game, c, start):

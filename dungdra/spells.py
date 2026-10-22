@@ -1555,6 +1555,7 @@ def spiritual_weapon_attack(game, caster, target, first=False):
 
 def _web(game, c, targets, point=None, option=None, **kw):
     # SRD[GLOSS.cube#1] the webs fill a 20-foot Cube at the point: the area decides who saves (R-35)
+    shape, size, origin, toward = _area_placement(c, targets, point)
     targets = _area_targets(game, c, targets, point=point)
     anchored = option != "unanchored"
     name = f"web ({c.caster.name})"
@@ -1564,7 +1565,9 @@ def _web(game, c, targets, point=None, option=None, **kw):
         "concentration": c.caster.id,
         "flammable": True,
         "anchored": anchored,
+        # SRD[GLOSS.difficult-terrain#4] the Cube's spaces are Difficult Terrain, for any mover
         "difficult": True,
+        "area": {"shape": shape, "size": size, "origin": origin, "toward": toward},
         "lightly_obscured": True,
         "caught": [t.id for t in targets if is_creature(t)],
     }

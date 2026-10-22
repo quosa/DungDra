@@ -60,6 +60,13 @@ class Scene:
         self.objects: dict[str, dict] = {}  # named objects (crate, web, door ...)
         self.hidden: dict[str, dict] = {}  # hidden things (secret door, trap)
 
+    def mark_difficult(self, name, shape, size, origin, toward=None, ground=True):
+        """Make the spaces of an area Difficult Terrain: a scene object movement charges extra for.
+        `ground` cover (rubble, undergrowth) slows only movers using their walking Speed."""
+        # SRD[GLOSS.difficult-terrain#4] a space is Difficult Terrain if it contains a listed source
+        area = {"shape": shape, "size": size, "origin": tuple(origin), "toward": toward, "ground": ground}
+        self.objects[name] = {"difficult": True, "area": area}
+
     def to_dict(self):
         return {
             k: (

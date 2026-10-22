@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra"
   ],
-  "status": "open",
+  "status": "fixed",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-105"
+    }
+  ]
 }
