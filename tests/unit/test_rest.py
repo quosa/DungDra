@@ -1,7 +1,25 @@
 """Unit tests for dungdra.rest: Heroic Inspiration and spending Hit Dice on a Short Rest."""
 
+import pytest
+
 from dungdra.rest import grant_heroic_inspiration, short_rest_benefits
+from dungdra.rules import Refusal
 from tests.support.helpers import mon, pc
+
+
+def test_a_monster_is_refused_heroic_inspiration(game):
+    ogre = mon(game, "ogre", (5, 0))
+    with pytest.raises(Refusal) as e:
+        grant_heroic_inspiration(game, ogre)
+    assert e.value.page == 183 and e.value.ruling == "R-50"
+    assert e.value.rule == "GLOSS.heroic-inspiration#1"
+    assert ogre.heroic_inspiration is False
+
+
+def test_a_player_character_gains_heroic_inspiration(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    assert grant_heroic_inspiration(game, jozan) is jozan
+    assert jozan.heroic_inspiration is True
 
 
 def test_a_surplus_inspiration_goes_to_the_named_pc_who_lacks_it(game):

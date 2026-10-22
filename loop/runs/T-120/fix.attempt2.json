@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves T-120 and I found nothing to reject.\n\n- **Where the check lives:** `grant_heroic_inspiration` in `dungdra/rest.py` now refuses any creature that isn't one of the party's player characters (`game.pcs()`). The refusal cites p.183, rule `GLOSS.heroic-inspiration#1` and ruling R-50, which is what R-50 says to do. This is the only function that grants Heroic Inspiration. The other places that set the flag are the surplus hand-off, which only passes it to player characters, and the code in `d20.py` that clears it when it's spent. So a monster can no longer get it, and so is never offered a reroll.\n- **No special cases:** the check uses party membership in general, not anything about the ogre fixture, and it doesn't add a second mechanism.\n- **Acceptance test:** the T-120 xfail is removed from `test_heroic_inspiration_a_monster_cant_gain_it` and nothing else in it changed. Its `grant` helper already counts a clean refusal as a pass, and the test still checks that the ogre's forced d20 is not rerolled.\n- **Unit tests:** they check real behaviour. A monster is refused and its flag stays unset; a player character gains it.\n- **Scope and follow-ups:** nothing outside the ticket is touched. T-124 already covers the separate problem that `game.decide` doesn't check answers against its options, so I filed no follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.2138,
+ "stash": ""
+}

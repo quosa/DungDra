@@ -3242,9 +3242,6 @@ def test_heroic_inspiration_cant_reroll_a_monsters_attack_roll(game):
 
 
 @pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="R-50")
-@pytest.mark.xfail(
-    strict=True, reason="T-120: a monster granted Heroic Inspiration has it; only a PC can have it"
-)
 def test_heroic_inspiration_a_monster_cant_gain_it(game):
     jozan = pc(game, "JOZAN")
     ogre = mon(game, "ogre", (5, 0))

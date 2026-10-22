@@ -8,6 +8,15 @@ from .rules import HOUR, Refusal
 
 def grant_heroic_inspiration(game, pc, source="GM"):
     """p.8: only one at a time; a surplus may be given to a PC who lacks it, else lost."""
+    # SRD[GLOSS.heroic-inspiration#1]: only "you (a player character)" can have it (R-50);
+    # the party is the engine's player characters.
+    if pc not in game.pcs():
+        raise Refusal(
+            f"{pc.name} isn't a player character and can't have Heroic Inspiration",
+            page=183,
+            ruling="R-50",
+            rule="GLOSS.heroic-inspiration#1",
+        )
     if not pc.heroic_inspiration:
         pc.heroic_inspiration = True
         game.log.player(
