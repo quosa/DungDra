@@ -15,6 +15,28 @@ from .effects import Acc, Ctx, grapples_on
 from .events import EventLog
 from .rules import DAY, HOUR, MINUTE, ROUND, SPACE, Refusal, norm
 
+_NOT_OFFERED = object()
+
+
+def _same(option, answer) -> bool:
+    """Does the answer name this option? Names match whatever their case or spelling of spaces;
+    otherwise the value and its type must match (1 doesn't answer True)."""
+    if isinstance(option, str) and isinstance(answer, str):
+        return norm(option) == norm(answer)
+    return type(option) is type(answer) and option == answer
+
+
+def _picks(options, answer):
+    """The options a multi-pick answer names, each used no more often than it is offered."""
+    left = list(options)
+    picks = []
+    for a in answer if isinstance(answer, (list, tuple)) else [answer]:
+        i = next((i for i, o in enumerate(left) if _same(o, a)), None)
+        if i is None:
+            return _NOT_OFFERED
+        picks.append(left.pop(i))
+    return picks
+
 
 class Scene:
     """The environment around the party."""
@@ -80,21 +102,40 @@ class Game:
         k = (getattr(who, "id", who), key) if who is not None else key
         self.answers[k].append(value)
 
-    def decide(self, who, key: str, options, default=None, prompt: str = ""):
+    def decide(self, who, key: str, options, default=None, prompt: str = "", many: bool = False):
+        """A choice the rules offer. The answer comes from the queue (tests, API), else from the
+        decider (the player). It is one of `options`, or with `many` a list of picks from them
+        (each option as often as it is offered; a lone option counts as a list of one). An answer
+        that doesn't fit is never acted on: it declines where declining (None) is offered, and
+        otherwise takes the default. `options=None` leaves checking the answer to the caller."""
         wid = getattr(who, "id", who)
         for k in ((wid, key), key):
             if self.answers.get(k):
                 v = self.answers[k].popleft()
-                self._log_offer(who, key, prompt, v)
-                return v
+                return self._offered(who, key, options, default, prompt, v, many)
         if self.decider is not None and (
             who is None or getattr(who, "team", "party") == "party" or self.gm_mode
         ):
             v = self.decider(self, who, key, options, default, prompt)
-            self._log_offer(who, key, prompt, v)
-            return v
+            return self._offered(who, key, options, default, prompt, v, many)
         self._log_offer(who, key, prompt, default, defaulted=True)
         return default
+
+    def _offered(self, who, key, options, default, prompt, v, many):
+        if options is None:
+            picked = v
+        elif many:
+            picked = _picks(options, v)
+        else:
+            picked = next((o for o in options if _same(o, v)), _NOT_OFFERED)
+        if picked is _NOT_OFFERED:
+            fallback = None if not many and None in options else default
+            offered = list(options)
+            self.log.gm("decide", f"{v!r} doesn't fit the options for {key} {offered}; took {fallback!r}")
+            self._log_offer(who, key, prompt, fallback, defaulted=True)
+            return fallback
+        self._log_offer(who, key, prompt, picked)
+        return picked
 
     def _log_offer(self, who, key, prompt, value, defaulted=False):
         if prompt:

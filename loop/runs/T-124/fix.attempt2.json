@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves the ticket in the right place. `Game.decide` now checks every queued or decider answer against `options` through one path (`_offered`). An answer that isn't offered is never acted on: it declines where None is offered and otherwise takes the default. That fallback is logged as a GM-only 'decide' event. Multi-pick choices use `many=True`, and each option can be picked only as often as it is offered. As a result, the per-rule guards could go: the Wizard spellbook, Scholar and Evocation Savant Refusals in features.py, and the monster-naming branch in grant_heroic_inspiration. `prepare_more` no longer needs its own filter. Two loose interpretations of answers were also dropped, and both are consistent with \"an answer must be an offered option\": Savage Attacker no longer accepts an index or a sum, and the d20 Heroic Inspiration reroll no longer reads True as \"reroll the lowest die\". I checked every decide caller in combat, creature, spells, rest, d20, features and spellcasting. Their options are in the same form as their answers (ids, bools, die indices, roll lists), so valid answers still match. The CLI decider returns option values, so nothing breaks there. Arcane Recovery used to offer `[default, []]`, which never matched a real custom pick. It now offers the pool of expended slots, and arcane_recovery() still enforces the budget. One small loss: a Heroic Inspiration offered to a monster is no longer explained to the player with the R-50 note; the player still sees the \"lost\" message, and the GM log records why the answer was rejected. The unit tests check real behaviour through the queue and decider seams: matching ignores case and spacing; 1 doesn't count as True; declining vs default fallback; a multi-pick takes each option only as often as it is offered; a non-default spellbook pick and a pick that isn't on the list; Arcane Recovery taking two level-1 slots, and declining with no picks. Gates pass."
+ },
+ "problems": [],
+ "cost_usd": 0.4468,
+ "stash": ""
+}

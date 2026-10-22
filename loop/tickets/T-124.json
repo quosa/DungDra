@@ -4,8 +4,8 @@
   "unit": "GLOSS.heroic-inspiration",
   "title": "Game.decide returns a pre-set or decider answer without checking it against the offered options (dungdra/game.py:82), so any caller that resolves the answer with game.get(pick) can act on a creature the rule never offered. Validate answers against `options` in decide (refuse or fall back to default) so each rule doesn't need its own guard like grant_heroic_inspiration now has.",
   "tests": [],
-  "status": "open",
-  "attempts": 1,
+  "status": "fixed",
+  "attempts": 2,
   "history": [
     {
       "event": "followup",
@@ -19,6 +19,10 @@
         "review: orthogonality dungdra/game.py:99 Some rules already check their answers themselves: Scholar raises a Refusal for an answer outside `opts` (features.py:~121), and spellbook_add / evocation_savant refuse an invalid spell. The new mechanism now runs before those checks and silently replaces a bad answer with the default, so those refusals can no longer fire and the two mechanisms disagree: one refuses, the other quietly defaults. Pick one policy for bad answers (the ticket allows either refusing or falling back) and move the existing per-rule guards onto it instead of leaving dead guards behind.",
         "review: test-meaningfulness tests/unit/test_game.py:166 The new tests only cover scalar options. None checks that a legitimate answer of the kinds existing callers use (a list of picks from a pool, an Arcane Recovery subset) is still accepted, which is how the regression above got through. There is also no test that the grant_heroic_inspiration path (the case behind the ticket) still loses the surplus when a monster is named, now that rest.py's own guard and its player-visible log line are gone."
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }

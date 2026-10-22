@@ -1515,10 +1515,6 @@ def roll_damage_dice(
             default=again if sum(again) > sum(rolls) else rolls,
             prompt=f"Savage Attacker: use {rolls} or {again}?",
         )
-        if isinstance(choice, int):
-            choice = (
-                [rolls, again][choice] if choice in (0, 1) else (again if sum(again) == choice else rolls)
-            )
         game.log.player(
             "feat",
             f"Savage Attacker: rolled {rolls} and {again}; uses {choice}",

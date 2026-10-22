@@ -26,7 +26,7 @@ def inspiration_reroll(game, actor, rolls, sides, key="inspiration_damage", what
         default=None,
         prompt=f"{actor.name} rolled {what} {rolls}: spend Heroic Inspiration to reroll a die?",
     )
-    if pick is None or pick is False:
+    if pick is None:
         return rolls
     # SRD[GLOSS.heroic-inspiration#2]: the new roll must be used.
     rolls = list(rolls)
@@ -226,9 +226,7 @@ def roll_d20_test(
                 prompt=f"{actor.name} rolled {roll.dice} ({roll.label}). "
                 f"Spend Heroic Inspiration to reroll a die? (index or no)",
             )
-            if pick is not None and pick is not False:
-                if pick is True:
-                    pick = roll.dice.index(min(roll.dice))
+            if pick is not None:
                 old = roll.dice[pick]
                 roll.dice[pick] = game.dice.d20()
                 actor.heroic_inspiration = False

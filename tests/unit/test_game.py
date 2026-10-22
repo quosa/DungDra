@@ -1,4 +1,4 @@
-"""Unit tests for dungdra.game: cover between an attacker and a target, and its bonus."""
+"""Unit tests for dungdra.game: cover between an attacker and a target, its bonus, and choices."""
 
 from tests.support.helpers import mon, pc
 
@@ -161,3 +161,66 @@ def test_a_monster_added_to_the_party_side_is_an_ally_but_not_on_the_pc_roster(g
     assert g in game.allies_of(lidda)
     assert lidda in game.allies_of(g)
     assert game.pcs() == [lidda]
+
+
+def test_a_queued_answer_among_the_options_is_taken(game):
+    game.answer("pick", "b")
+    assert game.decide(None, "pick", ["a", "b", None], default="a") == "b"
+
+
+def test_a_named_option_matches_whatever_its_case_and_the_option_itself_is_returned(game):
+    game.answer("subclass", "Life-Domain")
+    assert game.decide(None, "subclass", ["life domain"], default="life domain") == "life domain"
+
+
+def test_an_answer_outside_the_options_declines_where_declining_is_offered(game):
+    game.answer("pick", "ogre")
+    assert game.decide(None, "pick", ["a", "b", None], default="a") is None
+    assert "'ogre' doesn't fit the options for pick" in game.log.last("decide").text
+    assert game.log.last("decide").visibility != "player"
+
+
+def test_an_answer_outside_the_options_takes_the_default_where_declining_isnt_offered(game):
+    game.answer("swap", "maybe")
+    assert game.decide(None, "swap", [True, False], default=False) is False
+
+
+def test_a_number_doesnt_answer_a_yes_or_no_choice_nor_a_yes_pick_a_die(game):
+    game.answer("swap", 1)
+    assert game.decide(None, "swap", [True, False], default=False) is False
+    game.answer("reroll", True)
+    assert game.decide(None, "reroll", [None, 0, 1], default=None) is None
+
+
+def test_the_players_answer_is_checked_like_a_queued_one(game):
+    game.decider = lambda g, who, key, options, default, prompt: "nobody"
+    lidda = pc(game, "LIDDA", (0, 0))
+    assert game.decide(lidda, "give", ["x", None], default="x", prompt="Give?") is None
+
+
+def test_a_multi_pick_answer_takes_any_picks_from_the_pool(game):
+    game.answer("learn", ["Sleep", "shield"])
+    pool = ["magic missile", "shield", "sleep"]
+    assert game.decide(None, "learn", pool, default=pool[:2], many=True) == ["sleep", "shield"]
+
+
+def test_a_lone_option_answers_a_multi_pick_as_a_list_of_one(game):
+    game.answer("learn", "sleep")
+    assert game.decide(None, "learn", ["shield", "sleep"], default=["shield"], many=True) == ["sleep"]
+
+
+def test_a_multi_pick_uses_each_option_only_as_often_as_it_is_offered(game):
+    game.answer("recover", [1])
+    assert game.decide(None, "recover", [1, 1, 2], default=[2], many=True) == [1]
+    game.answer("recover", [2, 2])
+    assert game.decide(None, "recover", [1, 1, 2], default=[2], many=True) == [2]
+
+
+def test_a_multi_pick_naming_anything_outside_the_pool_takes_the_default(game):
+    game.answer("learn", ["shield", "wish"])
+    assert game.decide(None, "learn", ["shield", "sleep"], default=["shield"], many=True) == ["shield"]
+
+
+def test_without_options_the_answer_is_left_to_the_caller(game):
+    game.answer("free", 42)
+    assert game.decide(None, "free", None, default=0) == 42

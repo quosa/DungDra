@@ -37,7 +37,7 @@ def grant_heroic_inspiration(game, pc, source="GM"):
             f"({', '.join(c.name for c in lacking)})?",
         )
         # SRD[GLOSS.heroic-inspiration#3]: only a player character who lacks it can receive the
-        # surplus; naming anyone else (a monster, say) gives it to no one and it's lost.
+        # surplus. decide() never returns anyone else: naming a monster declines, and it's lost.
         other = next((c for c in lacking if c.id == pick), None)
         if other is not None:
             other.heroic_inspiration = True
@@ -49,15 +49,6 @@ def grant_heroic_inspiration(game, pc, source="GM"):
                 ruling="R-51",
             )
             return other
-        if pick:
-            game.log.player(
-                "inspiration",
-                f"{pc.name} can't give Heroic Inspiration to {pick}: only a player character who "
-                "lacks it can receive it",
-                page=183,
-                rule="GLOSS.heroic-inspiration#3",
-                ruling="R-50",
-            )
     game.log.player(
         "inspiration",
         f"{pc.name} already has Heroic Inspiration; the new instance is lost",
