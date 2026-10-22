@@ -3253,7 +3253,7 @@ def test_heroic_inspiration_a_monster_cant_gain_it(game):
     game.answer("inspiration", 0, who=ogre)
     game.dice.force_str("d20=[3]")
     r = C.attack(game, ogre, jozan, attack_name="greatclub")
-    assert r.dice == [3] and not r.hit
+    assert r.roll.dice == [3] and not r.hit
 
 
 @pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="R-48")
