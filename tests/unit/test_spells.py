@@ -868,3 +868,19 @@ def test_a_target_under_shield_takes_no_dart_damage_and_no_dice_are_rolled(game)
     assert ogre.hp == hp
     assert game.log.last("spell").rule == "SPELL.shield"
     assert mialee.heroic_inspiration is True
+
+
+def test_a_creature_spell_with_no_target_is_refused_before_the_slot_is_spent(game):
+    jozan = pc(game, "JOZAN", (0, 0))
+    with pytest.raises(Refusal) as exc:
+        cast(game, jozan, "healing word", targets=[])
+    assert exc.value.rule == "SPELL.casting-spells.effects.targets#1"
+    assert jozan.slots_used.get(1, 0) == 0
+
+
+def test_fire_bolt_with_no_target_is_refused(game):
+    mialee = pc(game, "MIALEE", (0, 0))
+    with pytest.raises(Refusal) as exc:
+        cast(game, mialee, "fire bolt", targets=[])
+    assert exc.value.page == 132
+    assert game.log.last("cast") is None

@@ -4,8 +4,18 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from .play import Play
+
+
+def _ask(text):
+    """input() that treats end of input or Ctrl-C at a choice as 'take the default'."""
+    try:
+        return input(text).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
 
 
 def interactive_decider(game, who, key, options, default, prompt):
@@ -14,20 +24,27 @@ def interactive_decider(game, who, key, options, default, prompt):
         return default
     print(f"\n  ? {prompt}")
     if options and all(isinstance(o, bool) for o in options):
-        ans = input(f"    [y/n, default {'y' if default else 'n'}] > ").strip().lower()
+        ans = _ask(f"    [y/n, default {'y' if default else 'n'}] > ").lower()
         if not ans:
             return default
         return ans.startswith("y")
     shown = [o for o in (options or [])]
     for i, o in enumerate(shown):
         print(f"    {i}: {o}")
-    ans = input(f"    choose a number (Enter for default {default!r}) > ").strip()
+    ans = _ask(f"    choose a number (Enter for default {default!r}) > ")
     if not ans:
         return default
     try:
         return shown[int(ans)]
     except (ValueError, IndexError):
         return default
+
+
+def save_errors(path, errors) -> str:
+    """Append the tracebacks of commands that hit a bug to the error log; say where they are."""
+    with Path(path).open("a", encoding="utf-8") as f:
+        f.write("\n".join(errors) + "\n")
+    return f"(The details are in {path}.)"
 
 
 def main(argv=None):
@@ -42,6 +59,11 @@ def main(argv=None):
         help="don't end a combat turn automatically when the character has nothing left to do",
     )
     ap.add_argument("--gm-log", action="store_true", help="also print GM-only log entries")
+    ap.add_argument(
+        "--error-log",
+        default="dungdra-errors.log",
+        help="where to write the details when a command runs into a bug (default: %(default)s)",
+    )
     args = ap.parse_args(argv)
     llm = None
     if args.llm:
@@ -64,7 +86,10 @@ def main(argv=None):
         if line.strip().lower() == "help":
             print(HELP)
             continue
+        seen = len(p.errors)
         print(p.say(line))
+        if len(p.errors) > seen:
+            print(save_errors(args.error_log, p.errors[seen:]))
     print("Farewell, adventurer.")
 
 

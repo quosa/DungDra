@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import traceback
+
 from . import nl
 from .api import Session
 from .events import PLAYER
@@ -10,6 +12,7 @@ from .events import PLAYER
 class Play:
     def __init__(self, seed: int | None = 1, decider=None, adventure=True, llm=None, auto_end_turn=False):
         self.auto_end_turn = auto_end_turn
+        self.errors: list[str] = []  # tracebacks of commands that hit a bug; the game goes on
         self.session = Session(seed=seed)
         self.game = self.session.game
         self.game.decider = decider
@@ -28,6 +31,20 @@ class Play:
         )
 
     def say(self, text: str) -> str:
+        """One line of player input in, narration out. A bug in the engine never ends the game:
+        the command stops, the traceback goes to `errors`, and the player is told."""
+        start = len(self.game.log)
+        try:
+            return self._say(text)
+        except Exception:
+            self.errors.append(f"> {text}\n{traceback.format_exc()}")
+            done = self._events(start)
+            return (done + "\n" if done else "") + (
+                "(That command ran into a bug in the game and was stopped. The game goes on; "
+                "what happened above still counts.)"
+            )
+
+    def _say(self, text: str) -> str:
         t = text.strip()
         low = t.lower()
         if low in ("use the sample party", "sample party", "quick start"):

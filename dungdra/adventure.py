@@ -147,6 +147,8 @@ class Adventure:
             self.session.execute({"cmd": "travel", **tv})
         for kind, where in s.get("traps", []):
             T.place(g, kind, location=where)
+        if self._fallen():  # the last dying character may die on the way (p.17)
+            return self.describe()
         if s.get("ambush"):
             self._ambush(s["ambush"])
         elif s.get("encounter"):
@@ -155,6 +157,8 @@ class Adventure:
 
     def go(self, where=None):
         g = self.game
+        if all(p.dead for p in g.pcs()):
+            raise Refusal("The party has fallen and the adventure is over. Type 'quit' to start a new game.")
         target = None
         if where:
             target = self.resolve(where)
@@ -179,6 +183,8 @@ class Adventure:
         if g.combat is not None:
             raise Refusal("You can't leave in the middle of a fight")
         g.resolve_dying()
+        if self._fallen():
+            return "The End"
         s = self.scenes[self.current]
         pending = [
             o["trap"]
@@ -209,6 +215,16 @@ class Adventure:
             g.log.player("scene", s.get("ending", "The adventure is over."))
             return "The End"
         return self.enter(nxt)
+
+    def _fallen(self):
+        """True once every PC is dead; says so the first time."""
+        g = self.game
+        if not all(p.dead for p in g.pcs()):
+            return False
+        if not g.defeated:
+            g.defeated = True
+            g.log.player("defeat", "The party has fallen. The adventure ends here.")
+        return True
 
     def take_loot(self):
         g = self.game

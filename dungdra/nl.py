@@ -321,6 +321,14 @@ def find_actor(session, t: str, default=True):
         return None
 
 
+def _on_creature(session, t: str, actor, verb: str, **cmd) -> list[dict] | dict:
+    """A command aimed at the creature the text names, or a question back when it names none."""
+    tg = find_creatures(session, t, exclude=actor)
+    if not tg:
+        return {"say": f"Whom do you want to {verb}? Name the creature, e.g. 'goblin warrior 1'."}
+    return [{**cmd, "actor": getattr(actor, "id", None), "target": tg[0].id}]
+
+
 def find_creatures(session, t: str, exclude=None, enemies_first=True):
     g = session.game
     found = []
@@ -505,35 +513,24 @@ def parse(session, text: str) -> list[dict] | dict:
         tg = find_creatures(session, t, exclude=actor)
         return [{"cmd": "drink", "actor": aid, "target": tg[0].id if tg else None}]
     if re.search(r"\b(healer'?s kit)\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "stabilize", "actor": aid, "target": tg[0].id, "kit": True}]
+        return _on_creature(session, t, actor, "use the Healer's Kit on", cmd="stabilize", kit=True)
     if re.search(r"\bstabili[sz]es?\b|\bfirst aid\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "stabilize", "actor": aid, "target": tg[0].id}]
+        return _on_creature(session, t, actor, "stabilize", cmd="stabilize")
     if re.search(r"\bhides?\b", t):
         cover = "total" if "total cover" in t else "three-quarters"
         return [{"cmd": "hide", "actor": aid, "cover": cover}]
     if re.search(r"\bgrapples?\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "grapple", "actor": aid, "target": tg[0].id}]
+        return _on_creature(session, t, actor, "grapple", cmd="grapple")
     if re.search(r"\bshoves?\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [
-            {
-                "cmd": "shove",
-                "actor": aid,
-                "target": tg[0].id,
-                "effect": "push" if "push" in t or "away" in t else "prone",
-            }
-        ]
+        effect = "push" if "push" in t or "away" in t else "prone"
+        return _on_creature(session, t, actor, "shove", cmd="shove", effect=effect)
     if re.search(r"\b(stands? up|gets? up)\b", t):
         return [{"cmd": "stand", "actor": aid}]
     if re.search(r"\bturn undead\b", t):
         return [{"cmd": "turn_undead", "actor": aid}]
     if re.search(r"\bdivine spark\b", t):
-        tg = find_creatures(session, t, exclude=actor)
         mode = "harm" if re.search(r"\b(harm|damage|smite|blast)\b", t) else "heal"
-        return [{"cmd": "divine_spark", "actor": aid, "target": tg[0].id, "mode": mode}]
+        return _on_creature(session, t, actor, "target with Divine Spark", cmd="divine_spark", mode=mode)
     if re.search(r"\b(pick|picks|open|opens) the lock\b|\blockpick", t):
         return [{"cmd": "use_tool", "actor": aid, "task": "pick a lock"}]
     if re.search(r"\bdisarms?\b", t):

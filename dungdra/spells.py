@@ -505,6 +505,15 @@ def _target_kind(spell, sd, targets):
     """Refuses a target of the wrong kind before anything is paid: a spell whose data says
     targets="creature" can't be aimed at an object (or anything else that isn't a creature), and
     one whose data says targets="object" can't be aimed at a creature."""
+    # SRD[SPELL.casting-spells.effects.targets#1] a spell that targets creatures or objects needs
+    # one named; without it there's nothing to cast it on
+    if not targets and not sd.get("area") and sd["targets"] in ("creature", "object"):
+        raise Refusal(
+            f"{spell.title()} targets {'an object' if sd['targets'] == 'object' else 'a creature'}: "
+            f"name the target",
+            page=106,
+            rule="SPELL.casting-spells.effects.targets#1",
+        )
     if sd["targets"] == "object":
         # SRD[SPELL.casting-spells.effects.targets#1] the description says the spell targets objects
         for t in targets:
@@ -1614,6 +1623,10 @@ def burn_web(game, web_name, creatures_in_fire=()):
 # checks: what a spell's own text refuses, run by `_check` before anything is paid or let go
 # ---------------------------------------------------------------------------
 def _fire_bolt_check(game, caster, level, targets, point, option):
+    if not targets:
+        raise Refusal(
+            "Fire Bolt needs a target: name a creature or an object", page=132, rule="SPELL.fire-bolt"
+        )
     for t in targets:
         if isinstance(t, str) and t not in game.scene.objects:
             raise Refusal(f"No target {t!r}")

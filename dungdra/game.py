@@ -70,6 +70,7 @@ class Game:
         self.influence_cooldowns: dict = {}
         self.xp_log: list = []
         self.gm_mode = False
+        self.defeated = False  # every PC has fallen; the adventure is over
         self.fixed_monster_damage = False  # p.189: static damage numbers instead of dice
         self.content = None
 
