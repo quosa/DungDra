@@ -651,6 +651,11 @@ class Session:
             return self.game.scene.name
         return self.adventure.describe()
 
+    def cmd_map(self):
+        if self.adventure is None:
+            raise Refusal("There's no adventure loaded, so there's no map")
+        return self.adventure.map_text()
+
     def cmd_loot(self):
         if self.adventure is None:
             raise Refusal("There's nothing to loot here")

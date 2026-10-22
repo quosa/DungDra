@@ -940,3 +940,11 @@ def test_ground_without_rules_is_out_of_scope(game):
         game.scene.add_ground("lava")
     assert e.value.rule == "GLOSS.difficult-terrain#7"
     assert game.scene.difficult is False and game.scene.objects == {}
+
+
+def test_a_paved_road_through_a_snowfield_costs_normally_and_the_snow_beside_it_double(game):
+    brom = pc(game, "BROM", (-30, 0))
+    game.scene.add_ground("heavy snow", "rect", None, (-200, 10, 200, 200), name="north field")
+    game.scene.add_ground("heavy snow", "rect", None, (-200, -200, 200, -5), name="south field")
+    assert move(game, brom, to=(30, 5)) == 60  # along the road, y 0..5
+    assert move(game, brom, to=(30, 15)) == 20  # two squares off it into the snow

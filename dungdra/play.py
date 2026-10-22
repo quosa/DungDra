@@ -10,7 +10,10 @@ from .events import PLAYER
 
 
 class Play:
-    def __init__(self, seed: int | None = 1, decider=None, adventure=True, llm=None, auto_end_turn=False):
+    def __init__(
+        self, seed: int | None = 1, decider=None, adventure: bool | str = True, llm=None, auto_end_turn=False
+    ):
+        """`adventure`: True for the default adventure, an adventure's name or file path, or False."""
         self.auto_end_turn = auto_end_turn
         self.errors: list[str] = []  # tracebacks of commands that hit a bug; the game goes on
         self.session = Session(seed=seed)
@@ -18,9 +21,11 @@ class Play:
         self.game.decider = decider
         self.llm = llm
         if adventure:
+            from . import scenario
             from .adventure import Adventure
 
-            self.session.adventure = Adventure(self.session)
+            data = scenario.load(adventure if isinstance(adventure, str) else scenario.DEFAULT)
+            self.session.adventure = Adventure(self.session, data)
 
     def begin(self) -> str:
         return (
@@ -70,7 +75,7 @@ class Play:
                 out.append(f"(Refused) {res['error']}")
                 break
             r = res.get("result")
-            if isinstance(r, str) and cmd["cmd"] in ("status", "sheet", "look", "inventory"):
+            if isinstance(r, str) and cmd["cmd"] in ("status", "sheet", "look", "map", "inventory"):
                 out.append(r)
         out += self._turn_flow(cmds)
         return "\n".join(x for x in out if x)

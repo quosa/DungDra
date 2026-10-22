@@ -420,15 +420,21 @@ def parse(session, text: str) -> list[dict] | dict:
         return [{"cmd": "status"}]
     if re.search(r"\b(sheet|character sheet)\b", t):
         return [{"cmd": "sheet", "actor": aid}]
-    if re.fullmatch(r"(look|look around|where are we|describe)", t):
-        return [{"cmd": "look"}]
+    m = re.fullmatch(
+        r"look|look around|where are we|where am i|describe|exits|where can we go"
+        r"|(?:show (?:me )?)?(?:the )?(map)",
+        t,
+    )
+    if m:
+        return [{"cmd": m.group(1) or "look"}]
     m = re.search(
         r"\b(?:go|goes|head|heads|travel|travels|walk|walks|set off|proceed|return)\s+"
-        r"(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$",
+        r"(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$"
+        r"|^(?:(?:go|head|turn|walk) )?back$|^(?:return|retreat)$",
         t,
     )
     if m and g.combat is None and session.adventure is not None:
-        return [{"cmd": "go", "where": m.group(1)}]
+        return [{"cmd": "go", "where": m.group(1) or "back"}]
     if (
         m or re.search(r"\b(continue|go on|press on|move on|onward|leave|travel)\b", t)
     ) and g.combat is not None:

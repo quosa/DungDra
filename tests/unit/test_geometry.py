@@ -154,3 +154,10 @@ def test_squares_overlap_only_when_their_interiors_meet():
     assert squares_overlap((5, 0), 5, (5, 0), 5)
     assert not squares_overlap((5, 0), 5, (10, 0), 5)  # shares an edge
     assert not squares_overlap((5, 5), 5, (0, 0), 5)  # shares a corner
+
+
+def test_a_rect_holds_the_squares_between_its_corners_edges_included():
+    road_side = (-20, 10, 20, 30)
+    assert in_area("rect", None, road_side, (20, 10)) and in_area("rect", None, road_side, (-20, 30, 15))
+    assert not in_area("rect", None, road_side, (0, 5)) and not in_area("rect", None, road_side, (25, 20))
+    assert in_area("rect", None, (20, 30, -20, 10), (0, 20))  # the corners in either order

@@ -28,6 +28,9 @@ dungdra = "dungdra.cli:main"
 [tool.setuptools.packages.find]
 include = ["dungdra*"]
 
+[tool.setuptools.package-data]
+dungdra = ["data/adventures/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
@@ -68,7 +71,7 @@ layers = [
   "play",
   "api : audit",
   "adventure",
-  "gm : nl : fixtures : inventory_view",
+  "gm : nl : fixtures : inventory_view : scenario",
   "turnhelp : creation : encounters : class_actions",
   "spells",
   "combat",

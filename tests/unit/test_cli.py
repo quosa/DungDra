@@ -2,6 +2,8 @@
 
 import builtins
 
+import pytest
+
 from dungdra import cli
 
 
@@ -30,3 +32,16 @@ def test_bug_details_are_appended_to_the_error_log(tmp_path):
     assert cli.save_errors(log, ["> first\nTraceback"]) == f"(The details are in {log}.)"
     cli.save_errors(log, ["> second\nTraceback"])
     assert log.read_text().splitlines() == ["> first", "Traceback", "> second", "Traceback"]
+
+
+def test_an_adventure_is_chosen_by_name_or_path(monkeypatch, tmp_path, capsys):
+    lines = iter(["use the sample party", "begin the adventure", "map", "quit"])
+    monkeypatch.setattr(builtins, "input", lambda prompt="": next(lines))
+    cli.main(["--seed", "3", "--adventure", "goblin-trail", "--error-log", str(tmp_path / "e.log")])
+    assert "Map of The Goblin Trail:\n  Millbrook (you are here)" in capsys.readouterr().out
+
+
+def test_an_adventure_that_isnt_there_stops_before_the_game_starts(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["--adventure", "no-such-adventure"])
+    assert "no adventure called 'no-such-adventure'" in capsys.readouterr().err

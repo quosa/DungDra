@@ -6,6 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import scenario
 from .play import Play
 
 
@@ -51,6 +52,12 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="DungDra: a fifth-edition-compatible solo adventure")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument(
+        "--adventure",
+        default=scenario.DEFAULT,
+        help=f"an adventure by name ({', '.join(scenario.available())}) or the path of an adventure file "
+        "(default: %(default)s)",
+    )
+    ap.add_argument(
         "--llm", action="store_true", help="use Claude to interpret free-form input (needs ANTHROPIC_API_KEY)"
     )
     ap.add_argument(
@@ -70,7 +77,16 @@ def main(argv=None):
         from .llm import ClaudeInterpreter
 
         llm = ClaudeInterpreter()
-    p = Play(seed=args.seed, decider=interactive_decider, llm=llm, auto_end_turn=not args.manual_turns)
+    try:
+        p = Play(
+            seed=args.seed,
+            decider=interactive_decider,
+            llm=llm,
+            auto_end_turn=not args.manual_turns,
+            adventure=args.adventure,
+        )
+    except scenario.AdventureError as e:
+        ap.error(str(e))
     if args.gm_log:
         p.game.log.listeners.append(lambda e: print("   [GM] " + str(e)) if e.visibility == "gm" else None)
     print(p.begin())
@@ -100,6 +116,7 @@ HELP = """Examples:
   MIALEE casts magic missile at goblin 3            JOZAN casts healing word on MIALEE
   LIDDA uses cunning action to hide                 BROM uses second wind
   end turn      continue      short rest      long rest
+  go to the watchtower      go back      exits      map
   travel 6 miles at normal pace through forest on the road
   LIDDA picks the lock      MIALEE examines the floor      BROM wedges a spike into the pit lid
 """
