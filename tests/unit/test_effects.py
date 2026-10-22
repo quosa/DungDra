@@ -40,7 +40,7 @@ def _helped_attack_by(game, attacker):
 
 def test_help_attack_gives_a_friendly_npc_advantage(game):
     guard = mon(game, "guard", (10, 0))
-    guard.attitude = "friendly"
+    guard.team, guard.attitude = "neutral", "friendly"  # not fighting against the party (R-46)
     eff, acc = _helped_attack_by(game, guard)
     assert acc.adv == ["Help from LIDDA"]
     assert acc.consumed == [eff]

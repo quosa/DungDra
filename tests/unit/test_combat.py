@@ -353,7 +353,7 @@ def test_alert_swap_offers_a_friendly_npc_but_not_an_enemy(game):
     brom = pc(game, "BROM", (0, 0))
     brom.feats.append({"name": "alert"})
     guard = mon(game, "guard", (10, 0))
-    guard.attitude = "friendly"
+    guard.team, guard.attitude = "neutral", "friendly"  # not fighting for the goblins (R-46)
     gob = mon(game, "goblin warrior", (30, 0))
     offered = {}
 

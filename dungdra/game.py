@@ -218,15 +218,41 @@ class Game:
         return [self.creatures[i] for i in self.party if i in self.creatures]
 
     def enemies_of(self, c):
-        return [x for x in self.creatures.values() if x.team not in (c.team, "neutral") and not x.dead]
+        return [x for x in self.creatures.values() if not x.dead and self.is_enemy(c, x)]
+
+    def is_enemy(self, a, b) -> bool:
+        """Whether ``b`` is ``a``'s enemy (p.181)."""
+        if a is b:
+            return False
+        # SRD[GLOSS.enemy#1] it fights against you: you're both on sides, and not the same one
+        if "neutral" not in (a.team, b.team) and a.team != b.team:
+            return True
+        # SRD[GLOSS.enemy#2] R-45: it actively works to harm you (a Hostile attitude alone doesn't)
+        return a.id in b.harming
+
+    def works_to_harm(self, actor, victim, what: str, ruling: str = "R-45"):
+        """Record that ``actor`` actively works to harm ``victim`` with ``what`` (an attack, a save it
+        forces, damage it deals): from now on it is ``victim``'s enemy (p.181, R-45)."""
+        if actor is victim or victim.id in actor.harming:
+            return
+        was = self.is_enemy(victim, actor)
+        actor.harming.add(victim.id)
+        if not was:
+            self.log.player(
+                "enemy",
+                f"{actor.name} works to harm {victim.name} with {what} and is now {victim.name}'s enemy",
+                page=181,
+                rule="GLOSS.enemy#2",
+                ruling=ruling,
+            )
 
     def allies_of(self, c):
         return [x for x in self.creatures.values() if x is not c and not x.dead and self.is_ally(c, x)]
 
-    @staticmethod
-    def is_ally(a, b) -> bool:
+    def is_ally(self, a, b) -> bool:
         """Whether ``b`` is ``a``'s ally (p.176). Never yourself (R-36)."""
-        if a is b:
+        # R-46: while it is your enemy, it isn't your ally
+        if a is b or self.is_enemy(a, b):
             return False
         # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side
         if a.team == b.team:

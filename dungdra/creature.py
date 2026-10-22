@@ -79,6 +79,7 @@ class Creature:
         self.gear_ac: int | None = None  # monsters: fixed AC
         self.held: list = []  # held objects (dropped when Unconscious)
         self.notes: dict = {}
+        self.harming: set[str] = set()  # ids of creatures it actively works to harm (p.181)
 
     # -- basic stats -------------------------------------------------------
     def mod(self, ability: str) -> int:
@@ -505,8 +506,14 @@ class Creature:
         visibility=PLAYER,
         page="7",
         rule=None,
+        harm=True,
     ) -> D20Roll:
+        """A saving throw. A creature `source` that forces it works to harm this one (p.181),
+        unless the caller says the save isn't harm (`harm=False`: an ally caught in an area, R-52)."""
         name = label or f"{ABILITY_NAMES[ability]} saving throw"
+        if harm:
+            m = re.search(r"\bvs\.? (.+?)(?: \(DC \d+\))?$", name)
+            self._harmed_by(source, m.group(1) if m else name)
         roll = D20Roll("save", name, self.name, target=dc)
         if choose_to_fail:
             roll.auto, roll.auto_reason = "fail", "chose to fail without rolling"
@@ -588,6 +595,11 @@ class Creature:
             notes.append(f"Vulnerability to {dtype.title()}")
         return max(0, amount), notes
 
+    def _harmed_by(self, actor, what: str):
+        """`actor`, when it's another creature, actively works to harm this one."""
+        if self.game is not None and getattr(actor, "harming", None) is not None and actor is not self:
+            self.game.works_to_harm(actor, self, what)
+
     def take_damage(
         self,
         amount: int,
@@ -601,10 +613,14 @@ class Creature:
         within5=False,
         page="16-17",
         rule="PLAY.damage-and-healing",
+        harm=True,
     ) -> int:
-        """Apply one instance of damage. Returns HP actually lost (incl. temp HP)."""
+        """Apply one instance of damage. Returns HP actually lost (incl. temp HP). A creature
+        `attacker` that deals it works to harm this one (p.181) unless `harm=False` (R-52)."""
         if self.dead:
             return 0
+        if harm:
+            self._harmed_by(attacker, source or "damage")
         if adjusted:
             dealt, notes = amount, []
         else:

@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding"
   ],
-  "status": "open",
+  "status": "fixed",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-117"
+    }
+  ]
 }

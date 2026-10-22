@@ -40,7 +40,7 @@ def test_help_check_refuses_an_enemy_as_the_ally(game):
 def test_help_check_assists_a_friendly_creature_off_the_party(game):
     lidda = pc(game, "LIDDA")
     gob = mon(game, "goblin warrior")
-    gob.attitude = "friendly"
+    gob.team, gob.attitude = "neutral", "friendly"  # on neither side; on the other it is an enemy (R-46)
     eff = actions.help_check(game, lidda, gob, skill="perception")
     assert eff in gob.effects
 

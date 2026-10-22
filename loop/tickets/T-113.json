@@ -6,7 +6,12 @@
   "tests": [
     "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage"
   ],
-  "status": "open",
+  "status": "fixed",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-117"
+    }
+  ]
 }

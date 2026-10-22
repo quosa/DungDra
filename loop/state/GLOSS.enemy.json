@@ -46,6 +46,7 @@
       "test": "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
     }
   ],
+  "revisit": true,
   "stages": {
     "A": {
       "at": 1792554572,

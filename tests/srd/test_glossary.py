@@ -3012,11 +3012,6 @@ def test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused(game)
 
 # ---------------- #2 · actively works to harm you ----------------
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-113: a creature not put on the enemy side never counts as an enemy, even after it "
-    "attacks you, so a ranged attack next to it has no Disadvantage",
-)
 def test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage(game):
     lidda, target = archer_scene(game)
     w = neutral(game)
@@ -3025,11 +3020,6 @@ def test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage(game):
 
 
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-114: a creature not put on the enemy side never counts as an enemy, even after it "
-    "attacks you, so you can Hide in its plain sight",
-)
 def test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding(game):
     lidda = pc(game, "LIDDA", (0, 0))
     w = neutral(game)
@@ -3038,10 +3028,6 @@ def test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding(game):
 
 
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-46")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-115: a Friendly creature that attacks you still counts as your ally and enables Sneak Attack",
-)
 def test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally(game):
     lidda, gob = sneak_setup(game)
     turncoat = bystander(game, pos=(5, 5), attitude="friendly")

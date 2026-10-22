@@ -4,8 +4,8 @@
   "unit": "GLOSS.enemy",
   "title": "Track 'actively works to harm' as creature state (set by an attack or a harmful effect on a PC, or by the GM), and use it when deciding who is an enemy",
   "tests": [],
-  "status": "open",
-  "attempts": 2,
+  "status": "fixed",
+  "attempts": 3,
   "history": [
     {
       "event": "failed",
@@ -22,6 +22,10 @@
         "review: other dungdra/spells.py:666 For a spell aimed at a creature, `how` is f\"casts {spell} on\" with no target name, and works_to_harm puts it into f\"{actor.name} {how} and is now {victim.name}'s enemy\". The player sees \"JOZAN casts Sacred Flame on and is now WATCHMAN's enemy\". The area version includes the target, but no unit test checks the text of the targeted version, so the garbled line got through.",
         "review: layering dungdra/spells.py:659 'Actively works to harm' is only recorded in the spell helpers (spell_attack, spell_save, deal) and in combat.attack, not where harm lands. Other harmful actions on a PC skip it: grapple and shove (combat.py:1857 and :1895, both Unarmed Strike options and so attacks, which don't go through combat.attack) and Divine Spark's damage mode (class_actions.py:256, a save plus take_damage). A neutral creature that grapples or shoves a PC never becomes that PC's enemy, so the ticket's 'attack or harmful effect' is only partly done. Record harm at a shared point (for example where take_damage receives attacker=, and in the grapple/shove saves) instead of in each spell helper."
       ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }

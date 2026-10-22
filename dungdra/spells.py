@@ -583,14 +583,17 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
     caster = c.caster
     dist = dist if dist is not None else caster.distance_to(target)
     ctx = Ctx("attack", caster, target=target, melee=melee, ranged=not melee, spell=c.spell, distance=dist)
+    # SRD[GLOSS.enemy#2] R-45: a spell attack works to harm its target, hit or miss
+    game.works_to_harm(caster, target, c.spell.title())
     acc = caster.gather(ctx)
     roll = D20Roll("attack", f"spell attack ({c.spell.title()}) on {target.name}", caster.name)
     roll.mods = [(c.attack, "spell attack bonus")] + acc.mods
     roll.adv, roll.dis = list(acc.adv), list(acc.dis)
     if not melee:
         for e in game.creatures.values():
+            # SRD[GLOSS.enemy#2] close combat counts an enemy by any test, a bystander who attacked included
             if (
-                e.team not in (caster.team, "neutral")
+                game.is_enemy(caster, e)
                 and not e.dead
                 and dist_points(e.position, caster.position) <= 5
                 and not e.has("incapacitated")
@@ -641,6 +644,7 @@ def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), 
         bonus=bonus,
         avoid=avoid,
         source=c.caster,
+        harm=_harms(game, c, target),
         label=label or f"{ability.title()} save vs {c.spell.title()} (DC {c.dc})",
         page=c.data["page"],
         rule=c.rule,
@@ -653,11 +657,24 @@ def roll_dice(game, expr, crit=False, actor=None):
     return roll_damage_dice(game, actor, expr, crit)
 
 
+def _harms(game, c: Casting, target) -> bool:
+    """Does the spell's save or damage on `target` work to harm it? Records it with the ruling
+    that applies; the save or damage then knows not to record it again."""
+    # SRD[GLOSS.enemy#2] R-45: aimed at you, it's working to harm you. R-52: an area works to harm
+    # everyone it catches except the creatures that were the caster's allies when it was cast
+    area = bool(c.data.get("area"))
+    if not is_creature(target) or (area and game.is_ally(c.caster, target)):
+        return False
+    game.works_to_harm(c.caster, target, c.spell.title(), ruling="R-52" if area else "R-45")
+    return True
+
+
 def deal(game, c, target, amount, dtype, crit=False):
+    harm = _harms(game, c, target)
     if amount <= 0:
         return 0
     dealt = target.take_damage(
-        amount, dtype, attacker=c.caster, crit=crit, source=c.spell.title(), rule=c.rule
+        amount, dtype, attacker=c.caster, crit=crit, source=c.spell.title(), rule=c.rule, harm=harm
     )
     from .combat import _post_damage_hooks
 

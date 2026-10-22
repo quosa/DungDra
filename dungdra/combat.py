@@ -1076,10 +1076,10 @@ def attack(
         elif game.scene.underwater:
             dis.append("ranged attack underwater (p.16)")
         for e in game.creatures.values():
+            # SRD[GLOSS.enemy#2] close combat counts an enemy by any test, a bystander who attacked included
             if (
-                e.team not in (attacker.team, "neutral")
+                game.is_enemy(attacker, e)
                 and not e.dead
-                and e is not attacker
                 and dist_points(e.position, attacker.position) <= 5
                 and not e.has("incapacitated")
                 and can_see(e, attacker)
@@ -1131,6 +1131,8 @@ def attack(
     target = _sanctuary(game, attacker, target)
     if target is None:
         return AttackResult(None, False, False)
+    # SRD[GLOSS.enemy#2] R-45: an attack works to harm its target, hit or miss
+    game.works_to_harm(attacker, target, "an attack")
     acc = attacker.gather(ctx)
     # --- build the roll ---
     roll = D20Roll(
@@ -1872,6 +1874,7 @@ def grapple(game, attacker, target):
         ab,
         dc,
         label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs grapple (DC {dc})",
+        source=attacker,
         avoid={"grappled"},
         page=190,
         rule="GLOSS.unarmed-strike",
@@ -1908,6 +1911,7 @@ def shove(game, attacker, target, effect="prone"):
         ab,
         dc,
         label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs shove (DC {dc})",
+        source=attacker,
         page=190,
         rule="GLOSS.unarmed-strike",
     )
