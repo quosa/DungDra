@@ -5,6 +5,16 @@
   "title": "Scene or space terrain types (heavy snow, ice, undergrowth) that make those spaces Difficult Terrain",
   "tests": [],
   "status": "open",
-  "attempts": 0,
-  "history": []
+  "attempts": 1,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The rule is correct: heavy snow, ice, rubble and undergrowth make the whole scene or an area Difficult Terrain for walking movers, and any other ground kind is refused as out of scope. But the diff stores the same fact twice instead of extending the existing mechanism. A new `Scene.ground` sits beside `Scene.difficult`, which the rubble trap still sets. Patches get a write-only top-level `ground` key beside the area's existing `ground` flag. One unit test only reads that stored key back. Settle each on a single representation.)",
+        "review: orthogonality dungdra/game.py:62 The diff adds a second whole-scene flag, `Scene.ground`, next to the existing `Scene.difficult`. Both mean 'the whole scene's ground is Difficult Terrain'. `ground_is_difficult()` now ORs the two, and traps.py:156 still sets `scene.difficult = True` for falling rubble, which is one of the listed ground kinds. Keep one mechanism: either `difficult` stays the single switch and `add_ground` sets it, or `ground` replaces `difficult`, with the rubble trap setting `ground = \"rubble\"` and `difficult` removed or derived. Also, `self.ground in DIFFICULT_GROUND` repeats a check `_ground_kind` already made, so the test only stands in for 'is ground set'.",
+        "review: orthogonality dungdra/game.py:91 For a patch, `add_ground` writes the kind to `objects[name][\"ground\"]`, a top-level key on the object, while `mark_difficult` already puts a `ground` flag inside `area` that movement reads. Nothing in the engine reads the new top-level key, so a second 'ground' field sits next to the existing one with a different meaning. Either use the area's own field for the kind or leave it out.",
+        "review: test-meaningfulness tests/unit/test_combat.py:931 `assert game.scene.objects[\"heavy snow\"][\"ground\"] == \"heavy snow\"` reads back the write-only key the implementation just stored, which is not behaviour. The movement-cost assertion on the next line is the meaningful one. Drop the read-back, or replace it with a check on a behaviour (for example, that a flying mover crosses the patch at normal cost)."
+      ]
+    }
+  ]
 }
