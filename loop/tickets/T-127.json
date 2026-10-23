@@ -1,0 +1,17 @@
+{
+  "id": "T-127",
+  "kind": "bug",
+  "unit": "GLOSS.opportunity-attacks",
+  "title": "SRD: a creature that can see you may make an Opportunity Attack when you leave its reach; engine: a creature on no side never may",
+  "tests": [
+    "tests/srd/test_glossary.py::test_opportunity_attack_a_bystander_can_strike_a_creature_leaving_its_reach"
+  ],
+  "status": "open",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "created",
+      "by": "person"
+    }
+  ]
+}
