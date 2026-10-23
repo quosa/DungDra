@@ -3379,3 +3379,105 @@ def test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it(game):
     grant(game, jozan)
     given = [e.text for e in game.log.of_kind("inspiration") if "gives" in e.text]
     assert not any(lidda.name in t for t in given), given
+
+
+# ---------------- GLOSS.ally #3 · a creature on no side has no side (T-125) ----------------
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-125: two creatures on no side count as each other's allies, so a wolf on no side "
+    "gets Pack Tactics from another wolf on no side",
+)
+def test_ally_two_bystanders_on_no_side_arent_each_others_allies(game):
+    # Two wolves that belong to no side: neither is on the other's side, so no Pack Tactics.
+    brom = pc(game, "BROM", (0, 0))
+    wolf = mon(game, "wolf", (5, 0))
+    other = mon(game, "wolf", (0, 5), name="SECOND WOLF")
+    wolf.team = other.team = "neutral"
+    game.dice.force_str("d20=[18]; d6=[3]")
+    r = C.attack(game, wolf, brom)
+    assert r.roll.mode != "advantage"
+
+
+# ---------------- GLOSS.enemy · how long harm lasts, and who it brings in (T-126) ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-53")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-126: harm by deed never wears off, so a bystander who attacked LIDDA is still her "
+    "enemy after the combat has ended",
+)
+def test_enemy_harm_wears_off_when_the_combat_ends(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    in_combat(game, lidda, w)
+    assert w in game.enemies_of(lidda)
+    C.end_combat(game)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-53")
+def test_enemy_harm_outside_a_combat_doesnt_wear_off_with_time(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    game.advance(3600)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="R-54")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-126: only the creature that attacked counts, so a bystander BROM attacks in a combat "
+    "isn't LIDDA's enemy and her shot next to it has no Disadvantage",
+)
+def test_enemy_a_bystander_attacked_by_one_of_you_in_a_combat_fights_your_whole_side(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)  # next to LIDDA
+    brom = pc(game, "BROM", (10, 0))  # next to the watchman, not to LIDDA
+    in_combat(game, brom, w, lidda)
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, brom, w, weapon="longsword").hit
+    set_turn(game, lidda)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative", ruling="R-54")
+def test_enemy_outside_a_combat_a_bystander_a_companion_attacked_isnt_your_enemy(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    brom = pc(game, "BROM", (10, 0))
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, brom, w, weapon="longsword").hit
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative", ruling="R-54")
+def test_enemy_a_bystander_who_attacks_you_brings_no_other_bystander_into_the_fight(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game, pos=(0, 5))
+    porter = mon(game, "bandit", (5, 0), name="PORTER")  # next to LIDDA, on no side
+    porter.team = "neutral"
+    in_combat(game, w, lidda, porter)
+    spear_at(game, w, lidda)
+    w.position = (0, 30)  # the watchman steps back out of reach
+    set_turn(game, lidda)
+    assert w in game.enemies_of(lidda) and porter not in game.enemies_of(lidda)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+# ---------------- GLOSS.opportunity-attacks · any creature that can see you (T-127) ----------------
+@pytest.mark.srd("GLOSS.opportunity-attacks", kind="positive")
+@pytest.mark.xfail(
+    strict=True,
+    reason="T-127: a creature on no side never gets an Opportunity Attack, so LIDDA leaves the "
+    "watchman's reach unchallenged",
+)
+def test_opportunity_attack_a_bystander_can_strike_a_creature_leaving_its_reach(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    in_combat(game, lidda, w)
+    game.answer("opportunity_attack", True, who=w)
+    game.dice.force_str("d20=[2]")
+    C.move(game, lidda, to=(-20, 0))
+    assert any("WATCHMAN makes an Opportunity Attack against LIDDA" in e.text for e in game.log.of_kind("oa"))
