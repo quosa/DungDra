@@ -169,7 +169,7 @@ class Session:
         foes = g.enemies_of(a)
         out = []
         for c in hit:
-            if c is not a and c not in foes and c not in out and g.can_see(a, c):
+            if c is not a and not c.dead and c not in foes and c not in out and g.can_see(a, c):
                 out.append(c)
         return out
 
@@ -212,7 +212,10 @@ class Session:
         if g.combat:
             cb = g.combat
             lines.append(f"Round {cb.round}; turn: {cb.current.name if cb.current else '-'}")
-            lines += [f"  {g.creatures[i].name}: {v}" for i, v in cb.order]
+            lines += [
+                f"  {g.creatures[i].name}: {v}" + (" (dead)" if g.creatures[i].dead else "")
+                for i, v in cb.order
+            ]
             lines += [
                 "Enemies: "
                 + ", ".join(

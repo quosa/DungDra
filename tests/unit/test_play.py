@@ -284,3 +284,33 @@ def test_an_unnamed_creature_is_one_the_actor_can_see():
     assert unseen  # the ambushers still hidden at this seed
     cmds = nl.parse(p.session, "move toward goblin warrior")
     assert g.can_see(actor, g.get(cmds[0]["toward"]))
+
+
+# ---------------- naming a creature that has died ----------------
+def _two_rats():
+    p = Play(seed=1, adventure=False, decider=lambda g, who, key, options, default, prompt: default)
+    p.say("use the sample party")
+    return p, spawn(p.game, ["giant rat", "giant rat"], [(5, 0), (5, 5)])
+
+
+def test_attacking_a_dead_creature_by_name_is_refused_not_turned_on_another():
+    p, (rat1, rat2) = _two_rats()
+    rat1.dead = True
+    assert p.say("BROM attacks giant rat 1") == "(Refused) Giant Rat 1 is already dead"
+    assert rat2.hp == rat2.max_hp
+
+
+def test_a_name_a_later_fight_reused_finds_the_living_creature():
+    p, (rat1, _) = _two_rats()
+    rat1.dead = True
+    again = spawn(p.game, ["giant rat"], [(5, 10)])[0]
+    again.name = "Giant Rat 1"
+    assert nl.parse(p.session, "BROM attacks giant rat 1")[0]["target"] == again.id
+
+
+def test_status_marks_the_dead_in_the_initiative_order():
+    p = _at_the_ambush()
+    gob = p.game.get("goblin_warrior_1")
+    gob.dead = True
+    line = next(x for x in p.say("status").splitlines() if x.startswith("  Goblin Warrior 1: "))
+    assert line.endswith(" (dead)")

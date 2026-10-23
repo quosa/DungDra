@@ -45,3 +45,9 @@ def test_an_adventure_that_isnt_there_stops_before_the_game_starts(capsys):
     with pytest.raises(SystemExit):
         cli.main(["--adventure", "no-such-adventure"])
     assert "no adventure called 'no-such-adventure'" in capsys.readouterr().err
+
+
+def test_the_llm_option_says_it_isnt_built_yet(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["--llm"])
+    assert "--llm isn't built yet" in capsys.readouterr().err

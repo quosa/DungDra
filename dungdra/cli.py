@@ -58,7 +58,7 @@ def main(argv=None):
         "(default: %(default)s)",
     )
     ap.add_argument(
-        "--llm", action="store_true", help="use Claude to interpret free-form input (needs ANTHROPIC_API_KEY)"
+        "--llm", action="store_true", help="interpret free-form input with an LLM (not built yet)"
     )
     ap.add_argument(
         "--manual-turns",
@@ -74,9 +74,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     llm = None
     if args.llm:
-        from .llm import ClaudeInterpreter
-
-        llm = ClaudeInterpreter()
+        ap.error("--llm isn't built yet: this version has no LLM interpreter, only the text parser")
     try:
         p = Play(
             seed=args.seed,

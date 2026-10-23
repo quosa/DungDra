@@ -332,10 +332,12 @@ def _on_creature(session, t: str, actor, verb: str, **cmd) -> list[dict] | dict:
 def find_creatures(session, t: str, exclude=None, enemies_first=True):
     g = session.game
     found = []
-    cands = sorted(g.creatures.values(), key=lambda c: -len(c.name))
+    # longest names first; the living before the dead, so a name a later fight reused finds the
+    # living creature, and a name only the dead carry still finds them (and is refused as dead)
+    cands = sorted(g.creatures.values(), key=lambda c: (-len(c.name), c.dead))
     taken = t
     for c in cands:
-        if c is exclude or c.dead:
+        if c is exclude:
             continue
         n = norm(c.name)
         if re.search(rf"\b{re.escape(n)}\b", taken):
