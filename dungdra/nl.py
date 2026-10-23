@@ -342,9 +342,14 @@ def find_creatures(session, t: str, exclude=None, enemies_first=True):
             found.append(c)
             taken = taken.replace(n, " ")
     if not found:
-        # generic words: "the goblin", "the ogre" -> first living enemy whose name contains it
-        for c in cands:
-            if c is exclude or c.dead or c.team != "enemy":
+        # generic words: "the goblin", "the guard" -> the first creature whose name contains it:
+        # those fighting the party first, then anyone else outside it; for each, the ones the actor
+        # can see before the ones it can't (an unseen one's place isn't given away)
+        foes = g.party_foes()
+        for c in sorted(
+            cands, key=lambda c: (c not in foes, exclude is not None and not g.can_see(exclude, c))
+        ):
+            if c is exclude or c.dead or c.team == "party":
                 continue
             key = getattr(c, "key", "")
             words = set(norm(c.name).split()) | set(key.split())
@@ -585,7 +590,7 @@ def parse(session, text: str) -> list[dict] | dict:
         return [cmd]
     if re.search(r"\bhelps?\b", t):
         tg = find_creatures(session, t, exclude=actor)
-        if tg and tg[0].team == "enemy":
+        if tg and tg[0] in g.party_foes():
             return [{"cmd": "help", "actor": aid, "enemy": tg[0].id}]
         skill = next((s for s in SKILLS if s in t), None)
         tool = next((x for x in TOOLS if x in t), None)
@@ -647,23 +652,9 @@ def parse(session, text: str) -> list[dict] | dict:
                 "approach": approach,
             }
         ]
-    m = re.search(r"\bmoves?\s+(\d+)\s*(?:ft|feet)?\s*(toward|towards|to|away from)?\s*", t)
-    if m or re.search(r"\b(approach(es)?|charges?|closes? in on|runs? (to|toward))\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        cmd = {"cmd": "move", "actor": aid}
-        if m:
-            cmd["feet"] = int(m.group(1))
-        if tg:
-            key = "away_from" if m and m.group(2) == "away from" else "toward"
-            cmd[key] = tg[0].id
-        if "climb" in t:
-            cmd["mode"] = "climb"
-        cmds = [cmd]
-        if re.search(VERB_ATTACK, t):
-            att = _attack_cmd(session, actor, t)
-            if att:
-                cmds.append(att)
-        return cmds
+    move = _move_cmds(session, actor, t)
+    if move is not None:
+        return move
     if re.search(VERB_ATTACK, t) or re.search(r"\battack", t):
         att = _attack_cmd(session, actor, t)
         if att:
@@ -720,12 +711,35 @@ def parse(session, text: str) -> list[dict] | dict:
     }
 
 
+def _move_cmds(session, actor, t: str) -> list[dict] | dict | None:
+    """A move ("moves 30 feet toward X", "move toward X", "walks to X", "runs away from X",
+    "charges X"), with an attack after it when the line has one; None when the line isn't a move."""
+    m = re.search(
+        r"\b(?:moves?|walks?|runs?|steps?)\s+(?:(\d+)\s*(?:ft|feet)?\s*)?(towards?|to|away from)?\b", t
+    )
+    charge = re.search(r"\b(approach(es)?|charges?|closes? in on)\b", t)
+    if not ((m and (m.group(1) or m.group(2))) or charge):
+        return None
+    tg = find_creatures(session, t, exclude=actor)
+    cmd = {"cmd": "move", "actor": getattr(actor, "id", None)}
+    if m and m.group(1):
+        cmd["feet"] = int(m.group(1))
+    if tg:
+        cmd["away_from" if m and m.group(2) == "away from" else "toward"] = tg[0].id
+    elif "feet" not in cmd:
+        return {"say": "Move toward whom? Name the creature, e.g. 'move toward goblin warrior 1'."}
+    if "climb" in t:
+        cmd["mode"] = "climb"
+    att = _attack_cmd(session, actor, t) if re.search(VERB_ATTACK, t) else None
+    return [cmd, att] if att else [cmd]
+
+
 def _combat_help(session, lead: str) -> str:
     """A combat-aware hint: whose turn it is, what they can do, and which enemies are about."""
     g = session.game
     cb = g.combat
     cur = cb.current
-    foes = [e for e in g.creatures.values() if e.team == "enemy" and not e.dead and not e.notes.get("fled")]
+    foes = [e for e in g.party_foes() if not e.notes.get("fled")]
     seen = [e for e in foes if cur is not None and g.can_see(cur, e)]
     hidden = [e for e in foes if e not in seen]
     lines = [lead]

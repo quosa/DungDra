@@ -993,3 +993,36 @@ def test_the_movers_allies_arent_asked(game):
     roll_initiative(game, [lidda, brom])
     move(game, lidda, to=(-20, 0))
     assert "opportunity_attack" not in asked
+
+
+# ---------------- Sneak Attack and masteries on a hit ----------------
+def test_sneak_attack_counts_an_ally_next_to_the_target(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    pc(game, "BROM", (10, 0))
+    game.dice.force_str("d20=[15]; d6=[4,5]")
+    r = attack(game, lidda, gob, weapon="shortsword")
+    assert r.damage == 4 + 3 + 5
+    assert game.log.last("sneak").text == "Sneak Attack (BROM is within 5 ft of Goblin Warrior): 1d6 = [5]"
+
+
+def test_no_sneak_attack_without_advantage_or_an_ally_next_to_the_target(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    game.dice.force_str("d20=[15]; d6=[4]")
+    assert attack(game, lidda, gob, weapon="shortsword").damage == 7
+    assert game.log.last("sneak").text.startswith("No Sneak Attack")
+
+
+def test_sap_gives_the_target_disadvantage_on_its_next_attack(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[15]; d8=[3]")
+    assert attack(game, brom, gob, weapon="longsword").hit
+    assert game.log.last("mastery").text.startswith("Sap: Goblin Warrior has Disadvantage")
+    game.dice.force_str("d20=[18,2]")
+    assert attack(game, gob, brom, attack_name="scimitar").roll.mode == "disadvantage"

@@ -128,8 +128,9 @@ class Adventure:
         fight = pid not in self.fought and (p.get("ambush") or p.get("encounter"))
         if self.ways[pid] and not fight:
             g.log.player("scene", self.exits_text())
-        # lay out the party in marching order
-        for i, pc in enumerate(g.pcs()):
+        # lay out the party in marching order; those who can't walk are carried at the back
+        carried = [pc for pc in g.pcs() if not pc.conscious]
+        for i, pc in enumerate(self._walking() + carried):
             pc.position = (0, 5 * i)
         if way and way.get("travel"):
             self.session.execute({"cmd": "travel", **way["travel"]})
@@ -180,6 +181,12 @@ class Adventure:
         g.resolve_dying()
         if self._fallen():
             return "The End"
+        if not self._walking():
+            raise Refusal("Nobody in the party is awake to lead the way. Heal someone, or wait.")
+        for pc in self._walking():  # out of combat, getting up costs nothing that matters
+            if pc.has("prone") and pc.speed() > 0:
+                C.stand_up(g, pc)
+                g.log.player("scene", f"{pc.name} gets back on their feet.", page=186, rule="GLOSS.prone#2")
         if not path or path[0] != self.came_from:
             stop = self._before_moving_on(here)
             if stop:
@@ -204,10 +211,24 @@ class Adventure:
             return self.came_from
         target = self.resolve(where)
         if target is None:
-            raise Refusal(f"I don't know a place called '{where}'. {self.exits_text()}")
+            raise Refusal(self._not_a_place(where))
         if target == self.current:
             raise Refusal(f"You're already at {self.name(target)}.")
         return target
+
+    def _not_a_place(self, where: str) -> str:
+        """Why the party can't go to `where`: it's part of this place (the store the description
+        mentions), or there's no such place."""
+        here = self.places[self.current]
+        thing = re.sub(r"^(the|a|an)\s+", "", where.lower().strip(" .!?"))
+        if thing and re.search(rf"\b{re.escape(thing)}\b", here["text"].lower()):
+            how = (
+                " To buy something, say who buys what, e.g. 'BROM buys iron spikes'."
+                if re.search(r"\b(store|shop|market|merchant|trader)\b", thing)
+                else ""
+            )
+            return f"The {thing} is part of {here['name']}, where you are now.{how}"
+        return f"I don't know a place called '{where}'. {self.exits_text()}"
 
     def _before_moving_on(self, here):
         """A pit in the floor ahead and a locked chest hold the party up when it presses on (not
@@ -220,8 +241,8 @@ class Adventure:
         ]
         pit = next((t for t in pending if t.kind in ("hidden pit", "spiked pit")), None)
         if pit is not None:
-            lead = g.pcs()[0]
-            T.passive_detection(g, g.pcs(), pit)
+            lead = self._walking()[0]
+            T.passive_detection(g, self._walking(), pit)
             if not pit.detected:
                 T.trigger(g, lead, pit)
                 lead.notes.pop("in_pit", None)
@@ -239,6 +260,10 @@ class Adventure:
             self.take_loot()
         return None
 
+    def _walking(self):
+        """The party members on their own feet (alive and conscious), in marching order."""
+        return [p for p in self.game.pcs() if p.conscious]
+
     def _fallen(self):
         """True once every PC is dead; says so the first time."""
         g = self.game
@@ -255,7 +280,7 @@ class Adventure:
         if not loot or self.current in self.loot_taken:
             return
         self.loot_taken.add(self.current)
-        carrier = g.pcs()[0]
+        carrier = (self._walking() or [p for p in g.pcs() if not p.dead])[0]
         for it in loot.get("items", []):
             carrier.inventory.add(MI.make(it, identified=True))
         if loot.get("gp"):

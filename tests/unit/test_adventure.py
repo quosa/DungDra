@@ -146,3 +146,80 @@ def test_asking_the_way_describes_the_place(line):
 def test_the_map_needs_an_adventure():
     p = Play(seed=1, adventure=False)
     assert "no adventure loaded" in p.say("map")
+
+
+# ---------------- the fallen and the fallen-over on the move ----------------
+HALL = {
+    "title": "Test Hall",
+    "start": "hall",
+    "places": {
+        "hall": {
+            "name": "Dusty Hall",
+            "text": "Flagstones.",
+            "traps": [{"kind": "hidden pit", "location": "the floor"}],
+            "loot": {"gp": 7},
+            "exits": [{"to": "yard"}],
+        },
+        "yard": {"name": "Back Yard", "text": "Weeds."},
+    },
+}
+
+
+def in_the_hall():
+    check(HALL)
+    p = Play(seed=1, adventure=False, decider=lambda g, who, key, options, default, prompt: default)
+    p.say("use the sample party")
+    p.session.adventure = Adventure(p.session, HALL)
+    p.say("begin the adventure")
+    return p
+
+
+def test_a_dead_character_doesnt_lead_the_way_into_a_pit():
+    p = in_the_hall()
+    brom, lidda = p.game.get("brom"), p.game.get("lidda")
+    brom.dead = True
+    p.say("continue")
+    said = [e.text for e in p.game.log.of_kind("trap")]
+    assert "LIDDA triggers the hidden pit!" in said and not any("BROM" in t for t in said)
+    assert brom.hp == brom.max_hp and lidda.hp < lidda.max_hp
+
+
+def test_the_treasure_goes_to_the_first_character_on_their_feet():
+    p = in_the_hall()
+    brom, lidda = p.game.get("brom"), p.game.get("lidda")
+    brom.dead = True
+    gp = lidda.purse.gp
+    p.say("continue")  # the pit, then the treasure on the way out
+    p.say("continue")
+    assert lidda.purse.gp == gp + 7
+
+
+def test_the_fallen_are_carried_at_the_back_of_the_line():
+    p = in_the_hall()
+    brom = p.game.get("brom")
+    brom.hp = 0
+    brom.add_condition("unconscious", "test")
+    brom.stable = True
+    p.session.adventure.enter("yard")
+    assert [c.name for c in sorted(p.game.pcs(), key=lambda c: c.position[1])] == [
+        "LIDDA",
+        "MIALEE",
+        "JOZAN",
+        "BROM",
+    ]
+
+
+def test_nobody_on_their_feet_means_nobody_leads_the_way():
+    p = in_the_hall()
+    for c in p.game.pcs():
+        c.hp, c.stable = 0, True
+        c.add_condition("unconscious", "test")
+    assert "Nobody in the party is awake to lead the way" in p.say("continue")
+
+
+def test_a_prone_character_gets_up_before_the_party_moves_on():
+    p = play()
+    mialee = p.game.get("mialee")
+    mialee.add_condition("prone", "knocked down")
+    out = p.say("continue")
+    assert "MIALEE gets back on their feet." in out and not mialee.has("prone")

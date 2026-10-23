@@ -382,3 +382,12 @@ def test_harming_a_creature_on_your_own_side_doesnt_turn_the_rest_of_it(game):
     game.works_to_harm(mialee, lidda, "an attack")
     assert game.is_enemy(lidda, mialee)  # the one who harmed her
     assert not game.is_enemy(lidda, brom) and game.is_ally(lidda, brom)
+
+
+def test_the_partys_foes_are_the_monsters_side_and_anyone_now_fighting_it(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    w, porter = bystander(game), bystander(game, pos=(10, 0))
+    assert game.party_foes() == [gob]
+    game.works_to_harm(w, lidda, "an attack")
+    assert game.party_foes() == [gob, w] and porter not in game.party_foes()

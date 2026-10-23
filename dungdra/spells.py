@@ -1095,6 +1095,30 @@ def _area_point(spell, caster, targets, point):
     return None
 
 
+def is_harmful(spell: str) -> bool:
+    """Does the spell deal damage, force a save or make an attack (rather than heal or help)?"""
+    sd = SPELLS[spell]
+    return not sd.get("healing") and bool(sd.get("dtype") or sd.get("save") or sd.get("attack"))
+
+
+def area_catches(game, caster, spell, targets, point=None) -> list:
+    """The living creatures the spell's area would catch if `caster` cast it now at `targets` or
+    `point`: the same placement and geometry as casting it, cover aside. [] without an area."""
+    sd = SPELLS[spell]
+    if not sd.get("area") or _area_point(spell, caster, targets, point) is None:
+        return []
+    as_if = Casting(spell, caster, sd["level"], None, 0, 0)
+    shape, size, origin, toward = _area_placement(as_if, targets, point)
+    pool = [t for t in targets if is_creature(t)] if sd.get("area_choice") else list(game.creatures.values())
+    return [
+        t
+        for t in pool
+        if not t.dead
+        and not (sd["range"] == "self" and t is caster)
+        and in_area(shape, size, origin, (*t.position, t.elevation), toward=toward)
+    ]
+
+
 def _area_placement(c, targets, point=None):
     """The spell's area as (shape, size, origin, toward): shape and size from its `area` data, the
     origin at the caster for a spell with a range of Self (else at the placement point), and the

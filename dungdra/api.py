@@ -146,6 +146,32 @@ class Session:
             raise Refusal("Who is acting? Name the character.")
         return g.get(ref)
 
+    def would_harm(self, cmd: dict) -> list:
+        """The creatures a command would harm that its actor can see and doesn't count as an
+        enemy: an attack's target, and a harmful spell's targets and whoever its area catches."""
+        g = self.game
+        if cmd.get("cmd") not in ("attack", "cast"):
+            return []
+        try:
+            a = self._c(cmd.get("actor"))
+            if cmd["cmd"] == "attack":
+                hit = [g.get(cmd["target"])]
+            elif cmd.get("spell") in S.SPELLS and S.is_harmful(cmd["spell"]):
+                ids = cmd.get("targets") or []
+                ids = ids if isinstance(ids, list) else [ids]
+                named = [g.creatures[x] for x in ids if x in g.creatures]
+                hit = named + S.area_catches(g, a, cmd["spell"], named, cmd.get("point"))
+            else:
+                return []
+        except Refusal:
+            return []  # the command itself will say what's wrong with it
+        foes = g.enemies_of(a)
+        out = []
+        for c in hit:
+            if c is not a and c not in foes and c not in out and g.can_see(a, c):
+                out.append(c)
+        return out
+
     def _after_pc_action(self):
         g = self.game
         if g.combat is not None and gm.combat_over(g):
@@ -189,8 +215,7 @@ class Session:
             lines += [
                 "Enemies: "
                 + ", ".join(
-                    f"{e.name} ({_enemy_state(e)})"
-                    for e in (g.creatures[i] for i in cb.participants if g.creatures[i].team == "enemy")
+                    f"{e.name} ({_enemy_state(e)})" for e in g.party_foes() if e.id in cb.participants
                 )
             ]
         return "\n".join(lines)

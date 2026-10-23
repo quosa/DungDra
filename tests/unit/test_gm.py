@@ -29,3 +29,24 @@ def test_a_creature_without_nimble_escape_does_not_hide(game):
     gm.monster_turn(game, gob)
     assert game.combat.turn.bonus_used is False
     assert gob.hidden_total is None
+
+
+def test_a_fight_goes_on_while_a_bystander_is_still_fighting_the_party(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = mon(game, "guard", (5, 0), name="WATCHMAN")
+    w.team = "neutral"
+    roll_initiative(game, [lidda, w])
+    assert gm.combat_over(game)  # nobody is fighting anybody
+    game.works_to_harm(w, lidda, "an attack")
+    assert not gm.combat_over(game)
+
+
+def test_beating_a_bystander_earns_no_xp(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = mon(game, "guard", (5, 0), name="WATCHMAN")
+    w.team = "neutral"
+    roll_initiative(game, [lidda, w])
+    game.works_to_harm(lidda, w, "an attack")
+    w.dead = True
+    gm.finish_combat(game)
+    assert lidda.xp == 0

@@ -225,3 +225,11 @@ def test_ready_command_puts_other_actions_and_triggers_out_of_scope(game):
     out = _ready(s, brom, gob, {"cmd": "attack", "target": gob.id}, trigger={"event": "opens_door"})
     assert out["error"].startswith("Out of scope")
     assert game.combat.turn.actions_used == 0
+
+
+def test_would_harm_leaves_a_command_it_cant_place_to_the_command_itself():
+    s = Session(seed=1)
+    for n in ("BROM", "LIDDA"):
+        s.execute({"cmd": "fixture", "name": n})
+    assert s.would_harm({"cmd": "attack", "target": "nobody"}) == []  # who's acting? not said
+    assert s.would_harm({"cmd": "cast", "actor": "lidda", "spell": "healing word", "targets": ["brom"]}) == []

@@ -220,6 +220,18 @@ class Game:
     def enemies_of(self, c):
         return [x for x in self.creatures.values() if not x.dead and self.is_enemy(c, x)]
 
+    def party_foes(self):
+        """Living creatures fighting the party: those on the monsters' side, and anyone who is
+        currently an enemy of a living party member (a bystander drawn into the fight)."""
+        pcs = [p for p in self.pcs() if not p.dead]
+        return [
+            c
+            for c in self.creatures.values()
+            if not c.dead
+            and c.team != "party"
+            and (c.team == "enemy" or any(self.is_enemy(p, c) for p in pcs))
+        ]
+
     def is_enemy(self, a, b) -> bool:
         """Whether ``b`` is ``a``'s enemy (p.181)."""
         if a is b:

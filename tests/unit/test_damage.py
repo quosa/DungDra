@@ -81,3 +81,21 @@ def test_an_automatic_failure_counts_as_one_failure_whatever_bless_adds(game):
     r = death_save(game, brom)
     assert r.chosen is None and r.success is False
     assert brom.death_saves == {"success": 0, "failure": 1}
+
+
+def test_damage_at_0_hp_equal_to_the_hp_maximum_kills(game):
+    _, brom = _dying(game)
+    brom.hp = 0
+    brom.add_condition("unconscious", "0 Hit Points")
+    brom.take_damage(brom.max_hp, "slashing")
+    assert brom.dead
+
+
+def test_damage_at_0_hp_ends_stability_and_is_a_failed_death_save(game):
+    _, brom = _dying(game)
+    brom.hp = 0
+    brom.add_condition("unconscious", "0 Hit Points")
+    brom.stable = True
+    brom.take_damage(1, "slashing")
+    assert not brom.stable and brom.death_saves["failure"] == 1
+    assert any(e.text == "BROM is no longer Stable" for e in game.log.of_kind("death_save"))

@@ -2,11 +2,35 @@
 
 from __future__ import annotations
 
+import difflib
+import re
 import traceback
 
 from . import nl
 from .api import Session
 from .events import PLAYER
+
+SAMPLE_PARTY = re.compile(
+    r"(?:use |take |pick |play with )?(?:the |a )?(?:sample|default|ready-made|premade) "
+    r"(?:party|characters|heroes|team)|quick ?start"
+)
+BEGIN = re.compile(r"(?:let'?s )?(?:begin|start|play)(?: (?:the |an |our )?(?:adventure|game|quest))?")
+# whole commands a player types as they are: the candidates for "Did you mean ...?"
+KNOWN = (
+    "use the sample party",
+    "begin the adventure",
+    "continue",
+    "go back",
+    "map",
+    "exits",
+    "look",
+    "status",
+    "inventory",
+    "short rest",
+    "long rest",
+    "end turn",
+)
+YES = ("yes", "y", "yes please", "sure", "ok", "okay", "do that")
 
 
 class Play:
@@ -16,6 +40,9 @@ class Play:
         """`adventure`: True for the default adventure, an adventure's name or file path, or False."""
         self.auto_end_turn = auto_end_turn
         self.errors: list[str] = []  # tracebacks of commands that hit a bug; the game goes on
+        # what a 'yes' does next: a line offered by "Did you mean ...?", or commands waiting for
+        # "Are you sure?"
+        self.pending: str | list[dict] | None = None
         self.session = Session(seed=seed)
         self.game = self.session.game
         self.game.decider = decider
@@ -51,12 +78,19 @@ class Play:
 
     def _say(self, text: str) -> str:
         t = text.strip()
-        low = t.lower()
-        if low in ("use the sample party", "sample party", "quick start"):
+        low = re.sub(r"\s+", " ", t.lower()).strip(" .!?")
+        offered, self.pending = self.pending, None
+        if offered and low in YES:
+            if isinstance(offered, list):
+                return self._run(offered)
+            t = low = offered
+        elif offered and low in ("no", "n", "nope", "no thanks"):
+            return "OK."
+        if SAMPLE_PARTY.fullmatch(low):
             for n in ("BROM", "LIDDA", "MIALEE", "JOZAN"):
                 self.session.execute({"cmd": "fixture", "name": n})
             return "The sample party joins you: " + ", ".join(p.name for p in self.game.pcs()) + "."
-        if low in ("begin the adventure", "start the adventure", "begin", "start"):
+        if BEGIN.fullmatch(low):
             if not self.game.pcs():
                 return "Create at least one character first."
             start = len(self.game.log)
@@ -66,7 +100,23 @@ class Play:
         if isinstance(cmds, dict) and "create" in cmds:
             return self._create(cmds["create"])
         if isinstance(cmds, dict):
-            return cmds.get("say", "")
+            said = cmds.get("say", "")
+            guess = self._guess(low) if said.startswith("I didn't catch that") else None
+            if guess:
+                self.pending = guess
+                return f"I didn't catch that. Did you mean '{guess}'? Say 'yes' to do that."
+            return said
+        caught = [c for cmd in cmds for c in self.session.would_harm(cmd)]
+        if caught:
+            self.pending = cmds
+            names = list(dict.fromkeys(c.name for c in caught))
+            who = names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
+            not_foes = "who isn't your enemy" if len(names) == 1 else "who aren't your enemies"
+            return f"That would harm {who}, {not_foes}. Do it anyway? Say 'yes' or 'no'."
+        return self._run(cmds)
+
+    def _run(self, cmds: list[dict]) -> str:
+        """Carry out the commands in order, stopping at the first one the rules refuse."""
         out = []
         for cmd in cmds:
             res = self.session.execute(cmd)
@@ -79,6 +129,13 @@ class Play:
                 out.append(r)
         out += self._turn_flow(cmds)
         return "\n".join(x for x in out if x)
+
+    def _guess(self, low: str) -> str | None:
+        """The known command the line most likely misspells, if one is close enough."""
+        adv = self.session.adventure
+        places = [f"go to {p['name'].lower()}" for p in adv.places.values()] if adv is not None else []
+        close = difflib.get_close_matches(low, [*KNOWN, *places], n=1, cutoff=0.8)
+        return close[0] if close else None
 
     def _turn_flow(self, cmds):
         """After a command in combat: say what the active PC can still do, and end the turn
