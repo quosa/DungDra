@@ -4,7 +4,12 @@
   "unit": "GLOSS.enemy",
   "title": "Add a GM command that designates an existing creature as an enemy of the party (or revokes that), logged with page=181 rule=GLOSS.enemy#3",
   "tests": [],
-  "status": "open",
+  "status": "parked",
   "attempts": 0,
-  "history": []
+  "history": [
+    {
+      "event": "parked",
+      "reason": "decided by a person: no GM in play; harm wears off at the end of the combat (R-53), and the adventure file's side/attitude set things up"
+    }
+  ]
 }
