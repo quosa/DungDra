@@ -1,0 +1,17 @@
+{
+  "id": "T-112",
+  "kind": "bug",
+  "unit": "GLOSS.enemy",
+  "title": "SRD: Help distracts only an enemy; engine: Help distracts a bystander who isn't fighting or harming you",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_bystander_out_of_the_fight"
+  ],
+  "status": "fixed",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-111"
+    }
+  ]
+}

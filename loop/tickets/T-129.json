@@ -1,0 +1,15 @@
+{
+  "id": "T-129",
+  "kind": "bug",
+  "unit": "GLOSS.invisible",
+  "title": "SRD: an Invisible (hidden) creature's location is unknown to those who can't see it; engine: 'move toward <a hidden creature named exactly>' walks the mover to the square next to it, revealing where it is",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "created",
+      "by": "person"
+    }
+  ]
+}

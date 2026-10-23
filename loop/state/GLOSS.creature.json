@@ -1,0 +1,44 @@
+{
+  "fingerprint": "fc37f3ebbac87f02",
+  "for_review": [],
+  "id": "GLOSS.creature",
+  "kind_waivers": [],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_creature_an_object_cant_fill_a_creature_slot_of_a_multi_target_spell"
+  ],
+  "relations": [
+    {
+      "evidence": "Every creature, including every player character, has a tag in the rules that identifies the type of creature it is.",
+      "target": "GLOSS.creature-type",
+      "type": "interacts_with"
+    }
+  ],
+  "stages": {
+    "A": {
+      "at": 1792531501,
+      "summary": "GLOSS.creature is a single definition: every being in the game, player characters included, is a creature. It has one testable clause: a PC counts as a creature for any rule that targets or refers to creatures. It points to GLOSS.creature-type, which gives every creature (PCs included) exactly one t"
+    },
+    "B": {
+      "at": 1792531517,
+      "summary": "GLOSS.creature has no related scenarios or SRD tests. The four candidate code lines were found only by page number (p.179) and belong to other units: GLOSS.creature-type and GLOSS.concentration. I gave all four a not-related verdict. Nothing in the existing items checks clause #1, that a player char"
+    },
+    "C": {
+      "at": 1792531603,
+      "summary": "I wrote six tests for GLOSS.creature#1 at the end of tests/srd/test_glossary.py, and all six pass (green). The clause has no threshold, so there is no boundary test and no waiver.\n\n- **Positive (3):** Cure Wounds heals another PC through Session.execute. Thunderwave hits a PC standing in its Cube. A"
+    },
+    "D": {
+      "at": 1792531678,
+      "summary": "All 6 tests pass. The oracles match the unit text: any being, PCs included, is a creature, and objects are not. They also match R-16, which says an 'each creature' area takes its creatures from the scene. Each test failed under a mutation that broke the rule it covers. One is refuted as a near-exact"
+    }
+  },
+  "status": "green",
+  "tests": [
+    "tests/srd/test_glossary.py::test_creature_a_pc_is_a_creature_for_a_spell_that_targets_a_creature",
+    "tests/srd/test_glossary.py::test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit",
+    "tests/srd/test_glossary.py::test_creature_a_monster_is_a_creature_for_a_spell_that_targets_a_creature",
+    "tests/srd/test_glossary.py::test_creature_an_object_isnt_a_creature_for_a_spell_that_targets_a_creature",
+    "tests/srd/test_glossary.py::test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature"
+  ],
+  "tickets": []
+}

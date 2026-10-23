@@ -1,0 +1,37 @@
+{
+ "result": "failed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "reject",
+  "findings": [
+   {
+    "kind": "other",
+    "file": "dungdra/spells.py",
+    "line": 666,
+    "explanation": "For a spell aimed at a creature, `how` is f\"casts {spell} on\" with no target name, and works_to_harm puts it into f\"{actor.name} {how} and is now {victim.name}'s enemy\". The player sees \"JOZAN casts Sacred Flame on and is now WATCHMAN's enemy\". The area version includes the target, but no unit test checks the text of the targeted version, so the garbled line got through."
+   },
+   {
+    "kind": "layering",
+    "file": "dungdra/spells.py",
+    "line": 659,
+    "explanation": "'Actively works to harm' is only recorded in the spell helpers (spell_attack, spell_save, deal) and in combat.attack, not where harm lands. Other harmful actions on a PC skip it: grapple and shove (combat.py:1857 and :1895, both Unarmed Strike options and so attacks, which don't go through combat.attack) and Divine Spark's damage mode (class_actions.py:256, a save plus take_damage). A neutral creature that grapples or shoves a PC never becomes that PC's enemy, so the ticket's 'attack or harmful effect' is only partly done. Record harm at a shared point (for example where take_damage receives attacker=, and in the grapple/shove saves) instead of in each spell helper."
+   }
+  ],
+  "followups": [
+   {
+    "kind": "refactor",
+    "title": "Opportunity Attacks decide who is an enemy with their own team test (combat.py _check_leave_reach: enemy.team == mover.team or 'neutral') instead of game.is_enemy, so a bystander who attacked you (GLOSS.enemy#2, R-45) can't make an Opportunity Attack when you leave its reach. Use the shared enemy rule there."
+   }
+  ],
+  "summary": "The core of T-117 is sound: the harming set, is_enemy, R-46 in is_ally, R-52 for area spells, and every Disadvantage, Hide and Sneak Attack check uses it. Rejected because the 'enemy' log line for a targeted spell leaves out the target name, and because harm is only recorded inside the spell helpers and combat.attack. Grapple, shove and Divine Spark's damage mode never mark the actor as the victim's enemy, so the 'harmful effect' part of the ticket is incomplete."
+ },
+ "problems": [
+  "review: rejected (The core of T-117 is sound: the harming set, is_enemy, R-46 in is_ally, R-52 for area spells, and every Disadvantage, Hide and Sneak Attack check uses it. Rejected because the 'enemy' log line for a targeted spell leaves out the target name, and because harm is only recorded inside the spell helpers and combat.attack. Grapple, shove and Divine Spark's damage mode never mark the actor as the victim's enemy, so the 'harmful effect' part of the ticket is incomplete.)",
+  "review: other dungdra/spells.py:666 For a spell aimed at a creature, `how` is f\"casts {spell} on\" with no target name, and works_to_harm puts it into f\"{actor.name} {how} and is now {victim.name}'s enemy\". The player sees \"JOZAN casts Sacred Flame on and is now WATCHMAN's enemy\". The area version includes the target, but no unit test checks the text of the targeted version, so the garbled line got through.",
+  "review: layering dungdra/spells.py:659 'Actively works to harm' is only recorded in the spell helpers (spell_attack, spell_save, deal) and in combat.attack, not where harm lands. Other harmful actions on a PC skip it: grapple and shove (combat.py:1857 and :1895, both Unarmed Strike options and so attacks, which don't go through combat.attack) and Divine Spark's damage mode (class_actions.py:256, a save plus take_damage). A neutral creature that grapples or shoves a PC never becomes that PC's enemy, so the ticket's 'attack or harmful effect' is only partly done. Record harm at a shared point (for example where take_damage receives attacker=, and in the grapple/shove saves) instead of in each spell helper."
+ ],
+ "cost_usd": 0.3687,
+ "stash": "srdloop: T-117 attempt 2"
+}

@@ -1,0 +1,123 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_listening_search_doesnt_find_a_hidden_creature",
+    "verdict": "keep",
+    "reason": "Follows directly from 'can't hear' and the auto-fail: a Search that relies on listening can't succeed. Goes through the real Search action and checks the hider stays hidden.",
+    "mutation": "effects.py:206 Deafened branch changed to `if False:`. The test failed.",
+    "confidence": 0.85
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_searching_by_sight_still_finds_a_hidden_creature",
+    "verdict": "keep",
+    "reason": "A search described as 'looking around' depends on sight under either stage-A reading, so it doesn't rest on the open ambiguity in the way an untagged Perception check does.",
+    "mutation": "Treating Deafened as Blinded in can_see (game.py:212) did NOT make it fail, because the check goes through Condition.d20 and not can_see. Making Deafened auto-fail every check (effects.py:206 → `if ctx.kind == \"check\":`) made it fail.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
+    "verdict": "keep",
+    "reason": "The SRD text gives Deafened no effect on attacks. This negative test guards against carrying over Blinded's effects.",
+    "mutation": "game.py:212 changed so Deafened also blocks sight, like Blinded. The test failed because the attack roll was no longer normal.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal",
+    "verdict": "keep",
+    "reason": "The SRD text gives Deafened no effect on the creature's own attacks. This guards against copying Blinded's effects onto Deafened.",
+    "mutation": "Same game.py:212 change (Deafened treated as Blinded). The test failed.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_saving_throws_are_rolled_normally",
+    "verdict": "keep",
+    "reason": "The rule names only ability checks, so a save is rolled normally.",
+    "mutation": "effects.py:206 → `if ctx.kind in (\"check\", \"save\"):`. The test failed.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_hearing_check_fails_automatically",
+    "verdict": "keep",
+    "reason": "The core positive case. It checks auto == 'fail', that no dice were rolled, and that the reason names Deafened. The scenario test test_cond03 overlaps partly but makes fewer assertions.",
+    "mutation": "effects.py:206 → `if False:`. The test failed.",
+    "confidence": 0.9
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_any_ability_check_requiring_hearing_fails",
+    "verdict": "keep",
+    "reason": "'any ability check': this covers a skill other than Perception (Insight), so it isn't a duplicate of the Perception test.",
+    "mutation": "effects.py:206 → `if False:`. The test failed.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_automatic_failure_is_logged",
+    "verdict": "keep",
+    "reason": "Traceability: the automatic failure must show up in the log. This assertion is separate from the roll result.",
+    "mutation": "effects.py:206 → `if False:`. The test failed.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_automatic_failure_cites_the_rule",
+    "verdict": "keep",
+    "reason": "Red for the stated reason. Creature.check passes page='6' and rule=None, so roll_d20_test (d20.py:163) logs the auto-fail under D20_RULES['check'] on p.6, not GLOSS.deafened#2 on p.181. The clause id matches stage-A A.json, where #2 is the auto-fail clause.",
+    "mutation": "Not mutated. I checked the code path instead: d20.py:163-165 sets rule = rule or D20_RULES.get(kind) for the auto-fail log event, and Condition.rule is never passed through.",
+    "confidence": 0.8
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_hearing_check_without_deafened_is_rolled",
+    "verdict": "keep",
+    "reason": "Checks that the auto-fail depends on the condition: a hearing-tagged check without Deafened is rolled.",
+    "mutation": "creature.py:456 `or \"hearing\" in tags` had no effect, because auto_only still rolls when acc.auto is None (an ineffective mutation). creature.py:440 changed to call acc.fail for any hearing-tagged check regardless of condition. The test failed.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_check_not_requiring_hearing_is_rolled",
+    "verdict": "keep",
+    "reason": "Athletics doesn't require hearing, so it is rolled. Overlaps one line of scenario test_cond03 but belongs with this unit's suite.",
+    "mutation": "effects.py:206 → `if ctx.kind == \"check\":`. The test failed.",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
+    "verdict": "refute",
+    "reason": "Wrong oracle by choice of reading. The test's own comment says 'Reading A', which is stage-A's proposed ruling at confidence 0.6. The README register has no row on Deafened or hearing. Under reading B (every Perception check involves hearing) the expected result flips. CLAUDE.md says not to invent a reading. The mutation shows the test is sensitive to the rule, but its oracle needs a person to rule on the reading first.",
+    "mutation": "creature.py:436 changed to tag every Perception check 'hearing'. The test failed.",
+    "confidence": 0.4
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check",
+    "verdict": "refute",
+    "reason": "Same unratified Reading A as the perception-by-sight test: an untagged Perception check by a Deafened creature is expected to roll. It also largely duplicates that test, only through the Session 'check' command.",
+    "mutation": "creature.py:436 changed to tag every Perception check 'hearing'. The test failed.",
+    "confidence": 0.4
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_hearing_check_rolls_again_once_deafened_ends",
+    "verdict": "keep",
+    "reason": "'While you have the Deafened condition': after the condition is removed, the check is rolled again. This also covers removing the condition, which the no-condition test doesn't.",
+    "mutation": "creature.py:440 changed so hearing checks auto-fail regardless of condition. The test failed. (The creature.py:456 mutation was ineffective, as noted above.)",
+    "confidence": 0.7
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_advantage_still_fails",
+    "verdict": "keep",
+    "reason": "An automatic failure isn't rescued by Advantage.",
+    "mutation": "creature.py:456 → `if acc.auto == \"fail\" and not adv:`. The test failed.",
+    "confidence": 0.75
+   },
+   {
+    "test": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_a_bonus_still_fails",
+    "verdict": "keep",
+    "reason": "An automatic failure isn't turned into a roll by a flat bonus.",
+    "mutation": "creature.py:456 → `if acc.auto == \"fail\" and not bonus:`. The test failed.",
+    "confidence": 0.75
+   }
+  ],
+  "summary": "I'd keep 14 of the 16 Deafened tests. Every green test failed under at least one targeted mutation. Two of my mutations had no effect at first, and both turned out to be my mistakes, not weak tests. Treating Deafened as Blinded in game.can_see doesn't reach the check, which goes through Condition.d20. Adding `or \"hearing\" in tags` at creature.py:456 doesn't fail anything, because the auto path still rolls when acc.auto is None. Better mutations (Deafened auto-fails every check; acc.fail on any hearing-tagged check) made those tests fail.\n\nThe red test, test_deafened_automatic_failure_cites_the_rule, fails for the reason its xfail marker gives. Creature.check passes page '6' and no rule, so d20.py:163 logs the auto-fail under the generic check rule instead of GLOSS.deafened#2 on p.181.\n\nI refuted two tests at confidence 0.4, so they go to a person: test_deafened_perception_by_sight_is_rolled and test_deafened_check_command_rolls_an_ordinary_perception_check. Both expect an untagged Perception check by a Deafened creature to be rolled. That is stage-A's Reading A, proposed at confidence 0.6, and the README register has no ruling on it. Under Reading B the expected result flips. The second test also largely duplicates the first, only going through the Session command.\n\nThe scenario test test_cond03 (tests/scenarios/test_damage_rest.py) overlaps partly with the basic auto-fail test and the Athletics test. The SRD tests make more assertions, so I don't count them as duplicates."
+ },
+ "problems": [],
+ "cost_usd": 0.6368058000000001,
+ "session": "1f2c956c-d573-4397-a654-207529f4cadf",
+ "error": null
+}

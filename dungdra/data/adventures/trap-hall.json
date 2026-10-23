@@ -1,0 +1,45 @@
+{
+  "title": "The Trapped Hall",
+  "about": "Traps and treacherous ground: a scholar wants a wand from the vault of an old hall.",
+  "start": "camp",
+  "quests": {
+    "wand": {
+      "title": "The Scholar's Wand",
+      "giver": "wendel",
+      "offer": "The vault beyond the old hall holds a wand of magic missiles. The builders were fond of traps. Bring it to me and I'll pay 60 gold.",
+      "goal": {"bring": "wand of magic missiles"},
+      "reward": {"gp": 60},
+      "done": "Wendel turns the wand over in his ink-stained hands, delighted."
+    }
+  },
+  "places": {
+    "camp": {
+      "name": "The Scholar's Camp",
+      "aliases": ["camp"],
+      "text": "A tent pitched before a crumbling stone hall. A scholar pores over a map by the fire.",
+      "sunlight": true,
+      "people": [
+        {"id": "wendel", "name": "Wendel", "text": "A scholar in ink-stained robes.", "says": "Ah, you must be the help I sent for.", "quest": "wand"}
+      ],
+      "exits": [{"to": "hall"}]
+    },
+    "hall": {
+      "name": "The Old Hall",
+      "aliases": ["hall"],
+      "text": "A long hall of uniform flagstones, half buried under fallen masonry. An iron door stands at the far end.",
+      "light": "dim",
+      "traps": [{"kind": "hidden pit", "location": "the hall floor"}],
+      "ground": [{"kind": "rubble", "rect": [10, -15, 20, -5]}],
+      "exits": [{"to": "vault"}]
+    },
+    "vault": {
+      "name": "The Vault",
+      "aliases": ["vault"],
+      "text": "A small vault. Two skeletons stand guard beside an iron-bound chest with a heavy lock.",
+      "light": "dim",
+      "traps": [{"kind": "poisoned needle", "location": "the chest lock"}],
+      "encounter": {"monsters": ["skeleton", "skeleton"], "positions": [[30, 0], [30, 10]]},
+      "loot": {"items": ["wand of magic missiles"], "gp": 20}
+    }
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "fingerprint": "2b820db00f5be36b",
+  "for_review": [],
+  "id": "GLOSS.heroic-inspiration",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.heroic-inspiration#2",
+      "kind": "boundary",
+      "reason": "'Must use the new roll' has no threshold. The only edge, a worse reroll that turns a success into a failure, is already the positive test."
+    },
+    {
+      "clause": "GLOSS.heroic-inspiration#3",
+      "kind": "boundary",
+      "reason": "No threshold. Holding at most one is covered by the negative 'can't be banked' test, and there is no count to step across."
+    }
+  ],
+  "out_of_scope": [],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_is_not_2014_advantage",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_banked_as_two"
+  ],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792555017,
+      "summary": "Heroic Inspiration is held only by player characters, at most one at a time. Spending it rerolls one die you just rolled, and you must use the new roll. If you gain another while holding one, you can give it to a PC who lacks it; otherwise it is lost. The open questions are: one die or the whole rol"
+    },
+    "B": {
+      "at": 1792555042,
+      "summary": "The 3 scenarios and 10 tests I was given all have verdicts: 4 consistent (CORE-02, ORIG-03, and 3 of the tests) and the rest not-related. The Heroic Inspiration behaviour lives in test_core02d_* and test_orig03_human_inspiration, which agree with the unit. The ORIG-01 items and the Advantage and Hal"
+    },
+    "C": {
+      "at": 1792555314,
+      "summary": "I added 26 tests for GLOSS.heroic-inspiration to tests/srd/test_glossary.py. 21 pass and 5 fail as expected (strict xfail). I checked each xfail with --runxfail and each one fails for the reason stated. ruff check and ruff format are clean.\n\nWhat passes: the engine rerolls one chosen die of a check,"
+    },
+    "D": {
+      "at": 1792555480,
+      "summary": "I'm keeping 24 of the 26 tests and refuting 2, both as duplicates with low confidence (0.55 and 0.6).\n\n**Wrong oracle:** none found. Every expected outcome follows from the p.183 text, and none of the tests quietly picks a side on a disputed reading. Magic Missile is the closest case, but the engine"
+    }
+  },
+  "status": "red",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_check",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_weapon_damage_die",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_cantrip_damage_die",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_reroll_through_the_session",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_without_it_no_reroll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_declined_is_kept",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_spent_cant_be_spent_again",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_reroll_stands",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_damage_reroll_stands",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_given_to_a_pc_who_lacks_it",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_lost_when_every_pc_has_it",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_not_given_is_lost",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it"
+  ],
+  "tickets": [
+    "T-118",
+    "T-119",
+    "T-120",
+    "T-121",
+    "T-122"
+  ]
+}

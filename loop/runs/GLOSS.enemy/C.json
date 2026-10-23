@@ -1,0 +1,284 @@
+{
+ "summary": "GLOSS.enemy: 17 tests added to tests/srd/test_glossary.py. 12 pass (green) and 5 are strict xfails (red). The tests check who counts as an enemy through three engine rules that ask for one: Disadvantage on a ranged attack with an enemy within 5 ft (p.15), Help ('distract an enemy', p.183) and Hide ('out of any enemy's line of sight', p.183). The engine decides 'enemy' by team only. A creature the GM puts on the enemy side is an enemy, and party members and neutral creatures are not, so #1 and #3 pass. The engine gets three things wrong: (1) a neutral creature that attacks you never becomes an enemy (#2); (2) a Friendly NPC that attacks you is still an ally for Sneak Attack (ambiguity 3); (3) Help lets you distract any creature, including your own companion or a bystander. All three ambiguity readings are proposed as rulings. The GM can't designate an existing creature as an enemy (no command for it), so that is recorded as missing infrastructure. No clause has a threshold, so boundary tests are waived. The abuse catalogue has a new entry for enemy-status cheats.",
+ "interactions": [
+  {
+   "clause": "GLOSS.enemy#1",
+   "with": "PLAY.combat.ranged-attacks (Disadvantage within 5 ft of an enemy)",
+   "risk": "high",
+   "note": "Main way the engine uses 'enemy'. The engine checks by team, ignores the neutral team, and excludes Incapacitated creatures."
+  },
+  {
+   "clause": "GLOSS.enemy#1",
+   "with": "GLOSS.help (distract an enemy within 5 ft)",
+   "risk": "high",
+   "note": "help_attack has no enemy check: any creature within 5 ft can be distracted."
+  },
+  {
+   "clause": "GLOSS.enemy#1",
+   "with": "GLOSS.hide (out of any enemy's line of sight)",
+   "risk": "medium",
+   "note": "Uses game.enemies_of, which leaves out neutral creatures."
+  },
+  {
+   "clause": "GLOSS.enemy#2",
+   "with": "GLOSS.influence (Hostile attitude)",
+   "risk": "high",
+   "note": "Trap: a Hostile attitude isn't the same as an enemy (proposed ruling). The engine ignores attitude, so this passes."
+  },
+  {
+   "clause": "GLOSS.enemy#2",
+   "with": "GLOSS.ally (R-37 Friendly creature counts as an ally)",
+   "risk": "high",
+   "note": "A Friendly NPC that attacks you is still an ally in the engine (ambiguity 3)."
+  },
+  {
+   "clause": "GLOSS.enemy#2",
+   "with": "CLASS.rogue Sneak Attack",
+   "risk": "medium",
+   "note": "An ally next to the target turns Sneak Attack on, so a turncoat NPC wrongly enables it."
+  },
+  {
+   "clause": "GLOSS.enemy#3",
+   "with": "Session spawn command (team=)",
+   "risk": "medium",
+   "note": "The only way to designate: at spawn time. There is no command to change an existing creature's side."
+  },
+  {
+   "clause": "GLOSS.enemy#1",
+   "with": "PLAY.combat.melee-attacks Opportunity Attacks",
+   "risk": "low",
+   "note": "Engine OA uses the same team check. The SRD's OA trigger is 'a creature you can see', so this isn't tested here."
+  },
+  {
+   "clause": "GLOSS.enemy#1",
+   "with": "CLASS.barbarian Rage extension (attack an enemy)",
+   "risk": "low",
+   "note": "No barbarian fixture, so not tested."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Hiding in view of a foe, claiming it isn't 'your' enemy because it has only attacked a companion",
+   "test": "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
+   "reason": "Reading A of ambiguity 1: the whole opposing side counts as your enemy."
+  },
+  {
+   "case": "Hiding in plain sight of a bystander who just attacked you, because it was never put on a side",
+   "test": "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding",
+   "reason": "#2: a creature actively working to harm you is an enemy."
+  },
+  {
+   "case": "Keeping a Friendly NPC that turned on you as an ally for Sneak Attack",
+   "test": "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally",
+   "reason": "Ambiguity 3, reading B: enemy and ally don't overlap."
+  },
+  {
+   "case": "Help used on a non-enemy (a companion or a bystander)",
+   "test": "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion",
+   "reason": "Help distracts only 'an enemy'."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage",
+   "clause": "GLOSS.enemy#1",
+   "kind": "positive",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+   "clause": "GLOSS.enemy#1",
+   "kind": "positive",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_help_distracts_a_foe_within_5_feet",
+   "clause": "GLOSS.enemy#1",
+   "kind": "positive",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_foe_who_sees_you_stops_you_hiding",
+   "clause": "GLOSS.enemy#1",
+   "kind": "positive",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_companion_next_to_you_imposes_no_ranged_disadvantage",
+   "clause": "GLOSS.enemy#1",
+   "kind": "negative",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding",
+   "clause": "GLOSS.enemy#1",
+   "kind": "negative",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_companion",
+   "clause": "GLOSS.enemy#1",
+   "kind": "negative",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "red",
+   "ticket_title": "SRD: Help distracts only an enemy within 5 feet; engine: Help distracts any creature within 5 feet, even the helper's own companion"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage",
+   "clause": "GLOSS.enemy#1",
+   "kind": "negative",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_help_cant_distract_a_bystander_out_of_the_fight",
+   "clause": "GLOSS.enemy#1",
+   "kind": "negative",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "red",
+   "ticket_title": "SRD: Help distracts only an enemy; engine: Help distracts a bystander who isn't fighting or harming you"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused",
+   "clause": "GLOSS.enemy#1",
+   "kind": "abuse",
+   "rule_quote": "A creature is your enemy if it fights against you in combat",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
+   "clause": "GLOSS.enemy#2",
+   "kind": "positive",
+   "rule_quote": "actively works to harm you",
+   "claim": "red",
+   "ticket_title": "SRD: a creature that actively works to harm you is your enemy; engine: only creatures on the enemy team count, so a neutral creature that attacks you gives no ranged-attack Disadvantage"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding",
+   "clause": "GLOSS.enemy#2",
+   "kind": "positive",
+   "rule_quote": "actively works to harm you",
+   "claim": "red",
+   "ticket_title": "SRD: a creature that actively works to harm you is your enemy; engine: you can Hide in plain sight of a neutral creature that just attacked you"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally",
+   "clause": "GLOSS.enemy#2",
+   "kind": "positive",
+   "rule_quote": "actively works to harm you",
+   "claim": "red",
+   "ticket_title": "SRD: a creature that attacks you is your enemy; engine: a Friendly NPC that attacks you still counts as your ally and enables Sneak Attack"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy",
+   "clause": "GLOSS.enemy#2",
+   "kind": "negative",
+   "rule_quote": "actively works to harm you",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding",
+   "clause": "GLOSS.enemy#2",
+   "kind": "negative",
+   "rule_quote": "actively works to harm you",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_puts_on_the_enemy_side_is_an_enemy",
+   "clause": "GLOSS.enemy#3",
+   "kind": "positive",
+   "rule_quote": "is designated as your enemy by the rules or GM",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy",
+   "clause": "GLOSS.enemy#3",
+   "kind": "negative",
+   "rule_quote": "is designated as your enemy by the rules or GM",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "GLOSS.enemy#3",
+   "kind": "missing",
+   "reason": "The GM can designate a creature as an enemy only when spawning it. There is no command to make an existing creature an enemy, or to undo a designation, and the change isn't logged.",
+   "infra_ticket": "Add a GM command that designates an existing creature as an enemy of the party (or revokes that), logged with page=181 rule=GLOSS.enemy#3"
+  },
+  {
+   "clause": "GLOSS.enemy#3",
+   "kind": "out-of-scope",
+   "reason": "Designation 'by the rules' (Berserker Axe, Oathbow sworn enemy, Mysterious Deck) comes only from magic items the engine doesn't have.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.enemy#2",
+   "kind": "missing",
+   "reason": "Working to harm you without attacking (setting a trap for you, plotting an ambush) has no game state. The engine can't mark a creature as working against a PC.",
+   "infra_ticket": "Track 'actively works to harm' as creature state (set by an attack or a harmful effect on a PC, or by the GM), and use it when deciding who is an enemy"
+  }
+ ],
+ "kind_waivers": [
+  {
+   "clause": "GLOSS.enemy#1",
+   "kind": "boundary",
+   "reason": "The clause has no threshold. The 5-ft distance belongs to the ranged-attack rule, not to the enemy definition."
+  },
+  {
+   "clause": "GLOSS.enemy#2",
+   "kind": "boundary",
+   "reason": "No threshold: harming is either happening or not."
+  },
+  {
+   "clause": "GLOSS.enemy#3",
+   "kind": "boundary",
+   "reason": "No threshold: a creature is either designated or not."
+  }
+ ],
+ "scenario_changes": [],
+ "rulings_proposed": [
+  {
+   "ambiguity": "GLOSS.enemy ambiguity 1: 'fights against you in combat': the whole opposing side, or only creatures that personally fight you?",
+   "ruling": "Reading A. Every creature fighting on the side opposed to you is your enemy, whoever it is currently attacking.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+    "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.enemy ambiguity 2: 'actively works to harm you': does a Hostile attitude alone make a creature an enemy?",
+   "ruling": "Reading A. Only acting to harm you (for example, attacking you) or a GM or rule designation makes a creature an enemy. A Hostile attitude alone doesn't.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy",
+    "tests/srd/test_glossary.py::test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage",
+    "tests/srd/test_glossary.py::test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.enemy ambiguity 3: can one creature be both your ally and your enemy?",
+   "ruling": "Reading B. While any enemy test applies, the creature is your enemy and not your ally, so a Friendly NPC that attacks you no longer counts as an ally.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
+   ]
+  }
+ ]
+}

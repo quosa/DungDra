@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
+from .d20 import inspiration_reroll
 from .rules import HOUR, Refusal
 
 
 def grant_heroic_inspiration(game, pc, source="GM"):
     """p.8: only one at a time; a surplus may be given to a PC who lacks it, else lost."""
+    # SRD[GLOSS.heroic-inspiration#1]: only "you (a player character)" can have it (R-50);
+    # the party is the engine's player characters.
+    if pc not in game.pcs():
+        raise Refusal(
+            f"{pc.name} isn't a player character and can't have Heroic Inspiration",
+            page=183,
+            ruling="R-50",
+            rule="GLOSS.heroic-inspiration#1",
+        )
     if not pc.heroic_inspiration:
         pc.heroic_inspiration = True
         game.log.player(
@@ -26,21 +36,25 @@ def grant_heroic_inspiration(game, pc, source="GM"):
             prompt=f"{pc.name} already has Heroic Inspiration; give the new one to "
             f"({', '.join(c.name for c in lacking)})?",
         )
-        if pick:
-            other = game.get(pick)
+        # SRD[GLOSS.heroic-inspiration#3]: only a player character who lacks it can receive the
+        # surplus. decide() never returns anyone else: naming a monster declines, and it's lost.
+        other = next((c for c in lacking if c.id == pick), None)
+        if other is not None:
             other.heroic_inspiration = True
             game.log.player(
                 "inspiration",
                 f"{pc.name} already has Heroic Inspiration and gives the new instance to {other.name}",
-                page=8,
-                rule="GLOSS.heroic-inspiration",
+                page=183,
+                rule="GLOSS.heroic-inspiration#3",
+                ruling="R-51",
             )
             return other
     game.log.player(
         "inspiration",
         f"{pc.name} already has Heroic Inspiration; the new instance is lost",
-        page=8,
-        rule="GLOSS.heroic-inspiration",
+        page=183,
+        rule="GLOSS.heroic-inspiration#3",
+        ruling="R-51",
     )
     return None
 
@@ -137,6 +151,8 @@ def short_rest_benefits(game, pc, max_dice=None, focus=None):
         if not want:
             break
         roll = game.dice.roll(pc.hit_die)
+        # SRD[GLOSS.heroic-inspiration#1]: any die, a Hit Die included, can be rerolled.
+        (roll,) = inspiration_reroll(game, pc, [roll], pc.hit_die, "inspiration", "Hit Die")
         pc.hit_dice_spent += 1
         spent += 1
         pc.heal(

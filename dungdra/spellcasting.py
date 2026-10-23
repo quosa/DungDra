@@ -21,12 +21,14 @@ def arcane_recovery_offer(game, pc, slots=None):
                 if lvl <= left:
                     slots.append(lvl)
                     left -= lvl
+        # any of the expended slots may be picked; arcane_recovery() checks the budget
         slots = game.decide(
             pc,
             "arcane_recovery",
-            [slots, []],
+            [lvl for lvl, n in sorted(expended.items()) for _ in range(n)],
             default=slots,
             prompt=f"{pc.name}: use Arcane Recovery (up to {budget} slot levels)?",
+            many=True,
         )
     if not slots:
         return None

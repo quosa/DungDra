@@ -1,0 +1,21 @@
+{
+  "id": "T-120",
+  "kind": "bug",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "SRD: only a player character has Heroic Inspiration; engine: a monster can be granted it and is then offered rerolls",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "dispute",
+      "reason": "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it ends with `assert r.dice == [3] and not r.hit`, where r comes from `C.attack(...)`. That returns an AttackResult (dungdra/combat.py:938) with fields roll, hit, crit, damage, target and notes, and no `dice`. The d20 dice are at `r.roll.dice`, which is how the other attack tests in the same file read them (test_glossary.py:2474 and :2485). With the engine fix, every rule assertion in this test passes: the grant is refused cleanly with page 183 and ruling R-50, the ogre's heroic_inspiration stays False, and no reroll is offered. Only this attribute access raises an AttributeError. Proposed correction, for a person to approve: change the line to `assert r.roll.dice == [3] and not r.hit`. That keeps the assertion's intent: the forced 3 stands and the attack misses."
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
+    }
+  ]
+}

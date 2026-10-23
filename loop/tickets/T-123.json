@@ -1,0 +1,15 @@
+{
+  "id": "T-123",
+  "kind": "refactor",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "Heroic Inspiration's reroll is still decided in two places: roll_d20_test has its own inline block (dungdra/d20.py ~l.217, logged as page=8 rule=PLAY.d20-tests.advantage-disadvantage), next to the shared inspiration_reroll helper (page=183 rule=GLOSS.heroic-inspiration#1). Make the d20 path use the helper or share its spend-and-log step, so both paths follow the same rule and citation.",
+  "tests": [],
+  "status": "parked",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-118"
+    }
+  ]
+}

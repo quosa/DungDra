@@ -19,7 +19,7 @@ from dungdra.combat import (
 from dungdra.effects import Condition, Flag, SpeedPenalty, grapplers_of
 from dungdra.events import GM
 from dungdra.mounted import mount
-from dungdra.rules import Refusal
+from dungdra.rules import OutOfScope, Refusal
 from dungdra.spells import cast
 from tests.support.helpers import mon, pc
 from tests.unit.helpers import grappled_by
@@ -286,6 +286,14 @@ def test_only_the_crawl_entry_of_the_move_modes_table_is_crawling():
     assert [name for name, spec in MOVE_MODES.items() if spec.crawling] == ["crawl"]
 
 
+def test_crawling_through_a_difficult_terrain_scene_pays_both_extra_feet(game):
+    game.scene.difficult = True
+    brom = pc(game, "BROM", (0, 0))
+    assert move(game, brom, to=(5, 0), mode="crawl") == 15
+    assert move(game, brom, to=(10, 0), mode="walk") == 10
+    assert brom.position == (10, 0)
+
+
 def test_crawling_costs_double_without_being_prone_and_walking_does_not(game):
     brom = pc(game, "BROM", (0, 0))
     assert move(game, brom, to=(10, 0), mode="crawl") == 20
@@ -345,7 +353,7 @@ def test_alert_swap_offers_a_friendly_npc_but_not_an_enemy(game):
     brom = pc(game, "BROM", (0, 0))
     brom.feats.append({"name": "alert"})
     guard = mon(game, "guard", (10, 0))
-    guard.attitude = "friendly"
+    guard.team, guard.attitude = "neutral", "friendly"  # not fighting for the goblins (R-46)
     gob = mon(game, "goblin warrior", (30, 0))
     offered = {}
 
@@ -813,3 +821,208 @@ def test_static_damage_with_advantage_cancelled_by_disadvantage_omits_the_rider(
     game.dice.force_str("d20=[19]")
     r = attack(game, gob, brom, attack_name="scimitar", adv=["test"], dis=["test"])
     assert r.roll.mode == "normal" and r.damage == 5
+
+
+def test_entering_a_non_allys_space_costs_one_extra_foot_per_foot_and_logs_it(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    assert move(game, lidda, to=(15, 0)) == 20
+    ev = game.log.last("difficult-terrain")
+    assert (ev.rule, ev.page, ev.ruling) == ("GLOSS.difficult-terrain#5", "181", None)
+
+
+def test_a_large_creatures_space_charges_every_square_of_it_entered(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    big = mon(game, "bandit", (5, 0))
+    big.size = "large"
+    assert move(game, lidda, to=(20, 0)) == 30
+
+
+def test_a_tiny_an_allied_a_dead_or_a_dragged_creatures_space_isnt_difficult(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    rat = mon(game, "giant rat", (5, 0))
+    rat.size = "tiny"
+    pc(game, "BROM", (10, 0))
+    corpse = mon(game, "bandit", (15, 0))
+    corpse.hp = 0
+    corpse.dead = True
+    assert move(game, lidda, to=(20, 0)) == 20
+    assert not game.log.of_kind("difficult-terrain")
+
+
+def test_a_creature_at_another_elevation_doesnt_crowd_the_space(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    bandit.elevation = 20
+    assert move(game, lidda, to=(10, 0)) == 10
+
+
+def test_a_crowded_space_inside_scene_difficult_terrain_isnt_charged_twice(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    game.scene.difficult = True
+    assert move(game, lidda, to=(10, 0)) == 20
+
+
+def test_swimming_without_a_swim_speed_through_difficult_water_isnt_charged_again(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    assert move(game, lidda, to=(10, 0), mode="swim", difficult=True) == 30
+
+
+def test_an_indifferent_bystanders_space_is_difficult_under_ruling_r43(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team, guard.attitude = "neutral", "indifferent"
+    assert move(game, lidda, to=(10, 0)) == 15
+    assert game.log.last("difficult-terrain").ruling == "R-43"
+
+
+# ---------------- Difficult Terrain in part of a scene ----------------
+def test_only_the_feet_inside_a_difficult_area_cost_extra(game):
+    brom = pc(game, "BROM", (0, 0))
+    game.scene.mark_difficult("rubble", "cube", 10, (15, 0))  # a 10-ft Cube: x 15..20
+    assert move(game, brom, to=(30, 0)) == 30 + 10
+    assert "Difficult Terrain for 10 ft" in game.log.last("move").text
+
+
+def test_a_move_that_misses_the_area_costs_normally(game):
+    brom = pc(game, "BROM", (0, 30))
+    game.scene.mark_difficult("rubble", "cube", 10, (15, 0))
+    assert move(game, brom, to=(30, 30)) == 30
+
+
+def test_ground_cover_doesnt_slow_a_flyer(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.mark_difficult("undergrowth", "cube", 10, (5, 0))
+    walker = mon(game, "goblin warrior", (0, 15))
+    game.scene.mark_difficult("more undergrowth", "cube", 10, (5, 15))
+    assert move(game, gob, to=(10, 0), mode="fly") == 10
+    assert move(game, walker, to=(10, 15)) == 20
+
+
+def test_an_area_not_marked_as_ground_slows_every_mover(game):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.mark_difficult("brambles", "cube", 10, (5, 0), ground=False)
+    assert move(game, gob, to=(10, 0), mode="fly") == 20
+
+
+def test_a_space_that_is_difficult_twice_over_costs_one_extra_foot(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    mon(game, "bandit", (5, 0))
+    game.scene.mark_difficult("rubble", "cube", 10, (5, 0))  # under the bandit too
+    assert move(game, lidda, to=(10, 0)) == 10 + 10
+
+
+@pytest.mark.parametrize("ground", ["heavy snow", "ice", "rubble", "undergrowth"])
+def test_a_scene_covered_in_listed_ground_is_difficult_terrain_for_walkers(game, ground):
+    gob = mon(game, "goblin warrior", (0, 0))
+    gob.speeds["fly"] = 30
+    game.scene.add_ground(ground)
+    assert move(game, gob, to=(10, 0)) == 20
+    assert move(game, gob, to=(0, 0), mode="fly") == 10
+
+
+def test_a_patch_of_ground_makes_only_its_spaces_difficult(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (0, 30))
+    gob.speeds["fly"] = 30
+    game.scene.add_ground("Heavy-Snow", "cube", 10, (15, 0))
+    game.scene.add_ground("ice", "cube", 10, (15, 30), name="frozen pond")
+    assert move(game, brom, to=(30, 0)) == 30 + 10
+    assert move(game, gob, to=(30, 30), mode="fly") == 30
+
+
+def test_ground_without_rules_is_out_of_scope(game):
+    with pytest.raises(OutOfScope) as e:
+        game.scene.add_ground("lava")
+    assert e.value.rule == "GLOSS.difficult-terrain#7"
+    assert game.scene.difficult is False and game.scene.objects == {}
+
+
+def test_a_paved_road_through_a_snowfield_costs_normally_and_the_snow_beside_it_double(game):
+    brom = pc(game, "BROM", (-30, 0))
+    game.scene.add_ground("heavy snow", "rect", None, (-200, 10, 200, 200), name="north field")
+    game.scene.add_ground("heavy snow", "rect", None, (-200, -200, 200, -5), name="south field")
+    assert move(game, brom, to=(30, 5)) == 60  # along the road, y 0..5
+    assert move(game, brom, to=(30, 15)) == 20  # two squares off it into the snow
+
+
+# ---------------- Opportunity Attacks by creatures on no side ----------------
+def _bystander_in_a_fight(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = mon(game, "guard", (5, 0), name="WATCHMAN")
+    w.team = "neutral"
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, w])
+    return lidda, w
+
+
+def test_a_bystander_lets_a_creature_that_hasnt_harmed_it_go(game):
+    lidda, w = _bystander_in_a_fight(game)
+    move(game, lidda, to=(-20, 0))
+    assert not any("Opportunity Attack" in e.text for e in game.log.of_kind("oa"))
+
+
+def test_a_bystander_strikes_at_a_creature_that_harmed_it(game):
+    lidda, w = _bystander_in_a_fight(game)
+    game.works_to_harm(lidda, w, "an attack")
+    game.dice.force_str("d20=[2]")
+    move(game, lidda, to=(-20, 0))
+    assert any("WATCHMAN makes an Opportunity Attack against LIDDA" in e.text for e in game.log.of_kind("oa"))
+
+
+def test_a_bystander_out_of_reactions_is_mentioned_only_when_it_would_strike(game):
+    lidda, w = _bystander_in_a_fight(game)
+    game.combat.reaction_used.add(w.id)
+    move(game, lidda, to=(-10, 0))
+    assert game.log.of_kind("oa") == []
+    lidda.position = (0, 0)
+    game.works_to_harm(lidda, w, "an attack")
+    move(game, lidda, to=(-10, 0))
+    assert "WATCHMAN can't make an Opportunity Attack" in game.log.last("oa").text
+
+
+def test_the_movers_allies_arent_asked(game):
+    lidda, brom = pc(game, "LIDDA", (0, 0)), pc(game, "BROM", (5, 0))
+    asked = []
+    game.decider = lambda g, who, key, options, default, prompt: asked.append(key) or default
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, brom])
+    move(game, lidda, to=(-20, 0))
+    assert "opportunity_attack" not in asked
+
+
+# ---------------- Sneak Attack and masteries on a hit ----------------
+def test_sneak_attack_counts_an_ally_next_to_the_target(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    pc(game, "BROM", (10, 0))
+    game.dice.force_str("d20=[15]; d6=[4,5]")
+    r = attack(game, lidda, gob, weapon="shortsword")
+    assert r.damage == 4 + 3 + 5
+    assert game.log.last("sneak").text == "Sneak Attack (BROM is within 5 ft of Goblin Warrior): 1d6 = [5]"
+
+
+def test_no_sneak_attack_without_advantage_or_an_ally_next_to_the_target(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    game.dice.force_str("d20=[15]; d6=[4]")
+    assert attack(game, lidda, gob, weapon="shortsword").damage == 7
+    assert game.log.last("sneak").text.startswith("No Sneak Attack")
+
+
+def test_sap_gives_the_target_disadvantage_on_its_next_attack(game):
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.base_max_hp = gob.hp = 100
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[15]; d8=[3]")
+    assert attack(game, brom, gob, weapon="longsword").hit
+    assert game.log.last("mastery").text.startswith("Sap: Goblin Warrior has Disadvantage")
+    game.dice.force_str("d20=[18,2]")
+    assert attack(game, gob, brom, attack_name="scimitar").roll.mode == "disadvantage"

@@ -1,0 +1,17 @@
+{
+  "id": "T-103",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: a Small creature isn't Tiny, so its space is Difficult Terrain for a non-ally; engine: passing an Incapacitated Small enemy costs 1 ft per foot",
+  "tests": [
+    "tests/srd/test_glossary.py::test_small_hostile_creatures_space_is_difficult"
+  ],
+  "status": "fixed",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-100"
+    }
+  ]
+}

@@ -1,0 +1,257 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.deafened#2",
+   "with": "ambiguity 1 (which checks require hearing) / engine 'hearing' tag",
+   "risk": "high",
+   "note": "The engine fails a check only when the caller tags it 'hearing'; untagged Perception defaults to 'sight'. Tests follow Reading A (only checks that rely on hearing alone fail)."
+  },
+  {
+   "clause": "GLOSS.deafened#2",
+   "with": "Session cmd_check",
+   "risk": "medium",
+   "note": "cmd_check takes no tags, so a player can't make a listening check through the command. A deafened PC's plain Perception check is rolled normally."
+  },
+  {
+   "clause": "GLOSS.deafened#1",
+   "with": "GLOSS.search / GLOSS.hide (finding a hidden creature)",
+   "risk": "medium",
+   "note": "A listening Search by a deafened creature must not reveal a hidden creature. A Search by sight must still work."
+  },
+  {
+   "clause": "GLOSS.deafened#1",
+   "with": "PLAY.combat.making-an-attack (a creature you can hear but not see)",
+   "risk": "medium",
+   "note": "Deafened + Blinded should leave only guessing a location. The engine has no hearing-based location model, so this is listed under not_testable."
+  },
+  {
+   "clause": "GLOSS.deafened#2",
+   "with": "Advantage (Help), flat bonuses, Heroic Inspiration/Luck rerolls",
+   "risk": "medium",
+   "note": "An automatic failure rolls no die, so Advantage, bonuses and rerolls can't rescue it."
+  },
+  {
+   "clause": "GLOSS.deafened#1",
+   "with": "GLOSS.blinded (contrast: attacks and saves)",
+   "risk": "low",
+   "note": "Deafened gives no attack or save modifiers. Tests check that attacks by and against a deafened creature, and its saves, are rolled normally."
+  },
+  {
+   "clause": "GLOSS.deafened#1",
+   "with": "SPELL.lesser-restoration",
+   "risk": "low",
+   "note": "Ending the condition restores hearing checks. Tested through remove_condition; the spell belongs to its own unit."
+  },
+  {
+   "clause": "GLOSS.deafened#1",
+   "with": "SPELL.thunderwave (boom audible within 300 feet)",
+   "risk": "low",
+   "note": "The audible boom is narrated to everyone. The engine doesn't filter narration by hearing (not_testable)."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Turning a hearing check's automatic failure into a roll with Advantage (new catalogue entry)",
+   "test": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_advantage_still_fails",
+   "reason": "Advantage changes how the d20 is rolled. It can't override an automatic failure."
+  },
+  {
+   "case": "Beating a hearing check's automatic failure with a flat bonus (new catalogue entry)",
+   "test": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_a_bonus_still_fails",
+   "reason": "With no roll there's nothing for a bonus to add to."
+  },
+  {
+   "case": "Relabelling a hearing-only check as a sight check",
+   "test": null,
+   "reason": "The player-facing check command can't declare senses at all, so a player has no way to relabel a check. The tag is set by engine callers (the gap noted in stage A)."
+  },
+  {
+   "case": "Acting while Incapacitated etc. / sight-based targeting",
+   "test": null,
+   "reason": "Doesn't apply: Deafened doesn't affect actions or targeting."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_listening_search_doesnt_find_a_hidden_creature",
+   "clause": "GLOSS.deafened#1",
+   "kind": "positive",
+   "rule_quote": "You can’t hear",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_searching_by_sight_still_finds_a_hidden_creature",
+   "clause": "GLOSS.deafened#1",
+   "kind": "negative",
+   "rule_quote": "You can’t hear",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
+   "clause": "GLOSS.deafened#1",
+   "kind": "negative",
+   "rule_quote": "You can’t hear",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal",
+   "clause": "GLOSS.deafened#1",
+   "kind": "negative",
+   "rule_quote": "You can’t hear",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_saving_throws_are_rolled_normally",
+   "clause": "GLOSS.deafened#1",
+   "kind": "negative",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_hearing_check_fails_automatically",
+   "clause": "GLOSS.deafened#2",
+   "kind": "positive",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_any_ability_check_requiring_hearing_fails",
+   "clause": "GLOSS.deafened#2",
+   "kind": "positive",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_automatic_failure_is_logged",
+   "clause": "GLOSS.deafened#2",
+   "kind": "positive",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_automatic_failure_cites_the_rule",
+   "clause": "GLOSS.deafened#2",
+   "kind": "positive",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "red",
+   "ticket_title": "SRD: Deafened's automatic failure on a hearing check is a rule event citing p.181; engine: logged under the generic d20-test rule (PLAY.d20-tests), with no Deafened rule or page"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_hearing_check_without_deafened_is_rolled",
+   "clause": "GLOSS.deafened#2",
+   "kind": "negative",
+   "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_check_not_requiring_hearing_is_rolled",
+   "clause": "GLOSS.deafened#2",
+   "kind": "negative",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
+   "clause": "GLOSS.deafened#2",
+   "kind": "negative",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check",
+   "clause": "GLOSS.deafened#2",
+   "kind": "negative",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_hearing_check_rolls_again_once_deafened_ends",
+   "clause": "GLOSS.deafened#2",
+   "kind": "negative",
+   "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_advantage_still_fails",
+   "clause": "GLOSS.deafened#2",
+   "kind": "abuse",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_deafened_hearing_check_with_a_bonus_still_fails",
+   "clause": "GLOSS.deafened#2",
+   "kind": "abuse",
+   "rule_quote": "automatically fail any ability check that requires hearing",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "GLOSS.deafened#1",
+   "kind": "missing",
+   "reason": "Outside ability checks, the engine doesn't model what a creature hears. It can't locate an unseen creature by its noise ('a creature you can hear but not see', p.13), and it doesn't filter narration of sounds (Thunderwave's boom audible within 300 feet) by who can hear. So the broader 'can't hear' has nothing to act on. The part about hearing checks is tested.",
+   "infra_ticket": "Model hearing as a sense: whether a creature can hear a sound or another creature (used for locating unseen creatures and for player-visible narration of sounds), so Deafened can remove it."
+  },
+  {
+   "clause": "GLOSS.deafened#2",
+   "kind": "missing",
+   "reason": "Which checks require hearing is up to the caller's 'hearing' tag. The player's check command (Session cmd_check) can't make a listening check at all, so a player can't attempt a check that relies on hearing alone.",
+   "infra_ticket": "Let player-facing check and Search commands say which sense the check relies on (e.g. listening vs looking), so a check that requires hearing can be made through Session.execute."
+  }
+ ],
+ "kind_waivers": [
+  {
+   "clause": "GLOSS.deafened#1",
+   "kind": "boundary",
+   "reason": "No threshold: you either have the condition or you don't."
+  },
+  {
+   "clause": "GLOSS.deafened#2",
+   "kind": "boundary",
+   "reason": "No threshold: the failure is automatic whatever the DC or roll. The abuse tests use DC 1 and +20 bonuses to show that."
+  }
+ ],
+ "scenario_changes": [
+  {
+   "scenario": "COND-03 (tests/scenarios/test_damage_rest.py::test_cond03)",
+   "change": "under-asserts: the hearing check now also asserts that no die was rolled, and a deafened check that doesn't require hearing (Athletics, forced d20=15) is asserted to be rolled normally.",
+   "note_row": "| COND-03 | under-asserts (GLOSS.deafened) | Added: the deafened hearing check rolls no die; a deafened check that doesn't need hearing is rolled as usual. |"
+  }
+ ],
+ "rulings_proposed": [
+  {
+   "ambiguity": "GLOSS.deafened ambiguity 1: 'any ability check that requires hearing': only checks that rely on hearing alone, or any check where hearing plays a part?",
+   "ruling": "Reading A. Only a check that relies on hearing alone (listening at a door, hearing a voice) fails automatically. A check that can also succeed by sight, such as an ordinary Perception check or Search, is rolled normally.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_deafened_perception_by_sight_is_rolled",
+    "tests/srd/test_glossary.py::test_deafened_check_command_rolls_an_ordinary_perception_check",
+    "tests/srd/test_glossary.py::test_deafened_searching_by_sight_still_finds_a_hidden_creature"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.deafened ambiguity 2: does 'You can't hear' add effects beyond rules that name hearing?",
+   "ruling": "Reading A. Deafened has no automatic effect beyond rules that name hearing. It gives no modifier to attack rolls, attacks against the creature, or saving throws.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
+    "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal"
+   ]
+  }
+ ],
+ "summary": "I wrote 16 tests for GLOSS.deafened in tests/srd/test_glossary.py: 15 green and 1 red (xfail). Clause #2 is implemented correctly. A check tagged 'hearing' fails automatically with no die rolled, and Advantage or a +20 bonus can't rescue it. Checks that don't need hearing, saves and attacks are rolled normally, and the failure stops once the condition ends. The red test is about traceability: the automatic-failure log event cites PLAY.d20-tests instead of GLOSS.deafened#2 on p.181. For clause #1, a deafened creature's listening Search doesn't find a hidden goblin, and a Search by sight still does. Hearing beyond ability checks (locating creatures by sound, narration of sounds) isn't modelled, and the check command can't make a listening check. I filed both as missing infra. Following the stage B under-asserts verdict, I strengthened COND-03 (test_cond03). I proposed rulings for both ambiguities (Reading A) and added one abuse entry to the catalogue. Lint and format are clean."
+}

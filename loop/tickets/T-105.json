@@ -1,0 +1,15 @@
+{
+  "id": "T-105",
+  "kind": "infra",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "Per-space Difficult Terrain: let a scene mark squares or areas (rubble, a spell's area) as Difficult Terrain, and have movement charge the extra foot only for the squares of the path that are Difficult Terrain",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
+    }
+  ]
+}

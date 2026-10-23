@@ -1,0 +1,187 @@
+{
+ "verdicts": [
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_check",
+   "verdict": "keep",
+   "reason": "Follows directly from #1: the d20 is a die you roll, the reroll is used and the Inspiration is spent.",
+   "mutation": "d20.py:190 offer guard → `if False:`: covered by the same mutation that failed the save and session tests (same code path). Sanity check: `if True:` leaves it passing, which is expected for a positive test.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw",
+   "verdict": "keep",
+   "reason": "\"Any die\" includes a saving throw's d20. Saves reach roll_d20_test through their own entry point, so this guards against that entry point turning rerolls off.",
+   "mutation": "d20.py:190 `if getattr(actor, \"heroic_inspiration\", False):` → `if False:`: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_weapon_damage_die",
+   "verdict": "keep",
+   "reason": "A damage die is \"any die\". The expected 5+2 follows from the forced dice.",
+   "mutation": "combat.py:1499 damage-reroll guard → `if True:` (early return): test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_cantrip_damage_die",
+   "verdict": "keep",
+   "reason": "Spell damage dice are covered by \"any die\". It runs the damage path through spell casting, separately from weapon attacks.",
+   "mutation": "combat.py:1499 guard → `if True:`: test failed.",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_hit_die",
+   "verdict": "keep",
+   "reason": "A Hit Die is \"any die\". Run with --runxfail it fails for the stated reason: hp ends at 3 (1 + d8 of 1 + Con 1). No reroll was offered and the 7 was never used.",
+   "mutation": "Red test: ran with --runxfail. Failed as `assert 3 == 1+7+1`, which matches T-new (Short Rest Hit Die not offered).",
+   "confidence": 0.8
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_a_magic_missile_die",
+   "verdict": "keep",
+   "reason": "Each dart deals 1d4+1 and the engine already rolls one d4 per dart, so the forced dice don't depend on a disputed reading. Run with --runxfail it fails because no reroll was offered: damage is 6, three darts of 1+1.",
+   "mutation": "Red test: ran with --runxfail. Failed as 68-62=6 vs the expected 9, which matches the stated reason.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_reroll_through_the_session",
+   "verdict": "keep",
+   "reason": "Covers the Session answer/check command wiring, not only the Python API.",
+   "mutation": "d20.py:190 → `if False:`: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_without_it_no_reroll",
+   "verdict": "keep",
+   "reason": "\"If you have Heroic Inspiration\" is a precondition. Even with an answer queued, no offer and no reroll should happen.",
+   "mutation": "d20.py:190 → `if True:` (offer regardless of having it): test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_declined_is_kept",
+   "verdict": "keep",
+   "reason": "\"Can expend\" makes it optional, so declining must not spend it. No other test checks the declined path on its own.",
+   "mutation": "Not separately mutated: there is no single-line mutation that spends on decline without also breaking the positive tests. The assertion directly checks the flag stays True.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_reroll_a_monsters_attack_roll",
+   "verdict": "keep",
+   "reason": "\"Reroll any die immediately after rolling it\" refers to your own roll. The answers are keyed to Jozan, so only an engine that wrongly offers the reroll would trip it.",
+   "mutation": "d20.py:190 → `if True:`: an offer was logged for the ogre's roll and the test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it",
+   "verdict": "keep",
+   "reason": "The parenthetical \"(a player character)\" limits who can have it. The test also accepts a clean refusal. With --runxfail, ogre.heroic_inspiration is True, matching the stated reason (grant_heroic_inspiration has no PC check).",
+   "mutation": "Red test: ran with --runxfail. Failed as `assert True is False` on ogre.heroic_inspiration, which matches T-new.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+   "verdict": "keep",
+   "reason": "Checks that the offer comes after the die is known but before the result is logged, which is a reasonable reading of \"immediately after rolling it\".",
+   "mutation": "d20.py:197 removed `{roll.dice}` from the offer prompt: test failed (die value no longer shown).",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes",
+   "verdict": "keep",
+   "reason": "Weak as a 'window' test, because the engine structurally can't reach back to an earlier roll. It still checks something no other test does: declining on one roll keeps the Inspiration for the next one, where it is then used and spent.",
+   "mutation": "d20.py:205 `actor.heroic_inspiration = False` → `pass`: test failed. Disabling the offer also makes second.dice [10], which fails.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll",
+   "verdict": "keep",
+   "reason": "One Inspiration rerolls one die. With Advantage, the rerolled die joins the pair and the higher one is kept.",
+   "mutation": "d20.py:205 no-spend fails it (the spent assertion). Sanity: changing choose() to max keeps it passing, as expected under Advantage.",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll",
+   "verdict": "keep",
+   "reason": "Abuse case on the damage path, separate from the d20 path. Only one die of a 2d6 critical is rerolled.",
+   "mutation": "combat.py:1513 `actor.heroic_inspiration = False` → `pass`: test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_spent_cant_be_spent_again",
+   "verdict": "keep",
+   "reason": "\"Expend\" means it is used up.",
+   "mutation": "d20.py:205 spend → `pass`: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_reroll_stands",
+   "verdict": "keep",
+   "reason": "Direct oracle for #2, \"you must use the new roll\".",
+   "mutation": "d20.py:204 → `roll.dice[pick] = max(old, game.dice.d20())`: test failed.",
+   "confidence": 0.9
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_a_worse_damage_reroll_stands",
+   "verdict": "keep",
+   "reason": "Covers #2 on the separate damage-reroll code.",
+   "mutation": "combat.py:1512 → `max(old, game.dice.roll(sides))`: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_is_not_2014_advantage",
+   "verdict": "refute",
+   "reason": "Duplicate of test_heroic_inspiration_a_worse_reroll_stands: same setup, same answer, same forced d20=[15,2]. Any mutation that keeps the better die or switches to Advantage fails both. The only extra check, mode == 'normal', can't fail independently, because a 2014-style 'advantage' implementation would also pick 15 and fail the sibling test.",
+   "mutation": "d20.py:204 → keep-max: failed, but the sibling test failed on the same mutation.",
+   "confidence": 0.55
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair",
+   "verdict": "keep",
+   "reason": "The new die replaces only the rerolled one, and Disadvantage still keeps the lower. This is a distinct case, with Disadvantage and replacement rather than an added die.",
+   "mutation": "d20.py:204 → `roll.dice.append(game.dice.d20())` (adds a die instead of replacing): test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_given_to_a_pc_who_lacks_it",
+   "verdict": "keep",
+   "reason": "Direct reading of #3's \"unless\" branch.",
+   "mutation": "rest.py:29 `if pick:` → `if False:`: test failed.",
+   "confidence": 0.85
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_lost_when_every_pc_has_it",
+   "verdict": "keep",
+   "reason": "#3's lost branch when nobody lacks it. This is a different code branch from the declined case.",
+   "mutation": "rest.py:41 changed the message 'lost' → 'kept': test failed.",
+   "confidence": 0.75
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_duplicate_not_given_is_lost",
+   "verdict": "keep",
+   "reason": "Covers the lost branch when someone eligible exists but the player declines to give it.",
+   "mutation": "rest.py:29 `if pick:` → `if True:`: test failed (crashes or gives the Inspiration away).",
+   "confidence": 0.65
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_banked_as_two",
+   "verdict": "refute",
+   "reason": "Can't catch a grant-side bug, because heroic_inspiration is a boolean and a second grant can't be stored. The only thing that fails it is the d20 spend being removed, which test_heroic_inspiration_spent_cant_be_spent_again already covers. The 'lost' outcome is checked by the two duplicate_*_lost tests.",
+   "mutation": "rest.py:10 `if not pc.heroic_inspiration:` → `if True:` (always grant): test still passed. Only d20.py:205 no-spend fails it, which duplicates spent_cant_be_spent_again.",
+   "confidence": 0.6
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_monster",
+   "verdict": "keep",
+   "reason": "\"Give it to a player character\". With --runxfail the ogre ends up with it, because game.decide accepts an answer that isn't among the offered options. That is a real abuse vector and matches the stated reason.",
+   "mutation": "Red test: ran with --runxfail. Failed as ogre.heroic_inspiration True, which matches T-new.",
+   "confidence": 0.7
+  },
+  {
+   "test": "tests/srd/test_glossary.py::test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it",
+   "verdict": "keep",
+   "reason": "\"A player character who lacks it\". With --runxfail the log records that it was given to LIDDA, who already had it, because decide accepts an off-list answer. This matches the stated reason.",
+   "mutation": "Red test: ran with --runxfail. Failed with the log line 'JOZAN … gives the new instance to LIDDA'.",
+   "confidence": 0.7
+  }
+ ],
+ "summary": "I'm keeping 24 of the 26 tests and refuting 2, both as duplicates with low confidence (0.55 and 0.6).\n\n**Wrong oracle:** none found. Every expected outcome follows from the p.183 text, and none of the tests quietly picks a side on a disputed reading. Magic Missile is the closest case, but the engine already rolls one d4 per dart, so that test doesn't depend on the dice-per-dart question.\n\n**Red tests:** I ran all 5 with `--runxfail` and each fails for its stated reason:\n- **Hit Die:** no reroll is offered.\n- **Magic Missile:** no reroll is offered on the d4s.\n- **Monster can gain it:** `grant_heroic_inspiration` has no player-character check.\n- **Given to a monster / to a PC who already has it:** `game.decide` accepts an answer that wasn't among the offered options.\n\n**Right answer, wrong reason:** I broke the engine on purpose in `d20.py` (190, 197, 204, 205), `combat.py` (1499, 1512, 1513) and `rest.py` (10, 29, 41). Each kept test failed under the mutation aimed at its rule. A sanity mutation that shouldn't matter left the tests passing, so a \"failed\" result isn't just the tool erroring.\n\n**Refuted:**\n- **`is_not_2014_advantage`** uses the same setup, dice and answer as `a_worse_reroll_stands`, and any mutation that fails one fails the other.\n- **`cant_be_banked_as_two`** still passes with the grant changed to always grant, because the flag is a boolean and can't hold two. The only thing that fails it is the missing spend, which `spent_cant_be_spent_again` already catches.\n\n**Weakest keep:** `window_closes_once_the_next_roll_comes` (0.55). The engine can't reach back to an earlier roll, so the window itself can't fail. It earns its place by checking that declining keeps the Inspiration for a later roll.\n\n**Engine issues outside the tests (not acted on):**\n- `game.decide` doesn't check answers against the offered options. That is what makes both \"give it to\" red tests possible.\n- The d20 spend event in `d20.py:207-212` logs `rule=\"PLAY.d20-tests.advantage-disadvantage\"` and `page=8` instead of the `GLOSS.heroic-inspiration` rule. The CLAUDE.md traceability rule calls for the latter."
+}

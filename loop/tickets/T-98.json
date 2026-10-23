@@ -1,0 +1,17 @@
+{
+  "id": "T-98",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: every foot of movement in Difficult Terrain costs 1 extra foot; engine: choosing mode 'crawl' skips the scene's Difficult Terrain cost, so an over-budget crawl is allowed",
+  "tests": [
+    "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost"
+  ],
+  "status": "fixed",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "fixed",
+      "by": "T-97"
+    }
+  ]
+}

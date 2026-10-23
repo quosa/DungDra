@@ -1,0 +1,43 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/actions.py:359",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.creature-type#3\",",
+    "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+    "explanation": "This refusal is about the creature-type list (GLOSS.creature-type#3), and it matched only on the page number. It doesn't implement the creature definition."
+   },
+   {
+    "item": "dungdra/game.py:362",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# -- concentration (p.179) --------------------------------------------",
+    "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+    "explanation": "This is a section header for concentration, and it matched only on the page number."
+   },
+   {
+    "item": "dungdra/game.py:387",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.concentration\",",
+    "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+    "explanation": "This log line is tagged GLOSS.concentration, so it is about concentration ending, not the creature definition."
+   },
+   {
+    "item": "dungdra/game.py:406",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "rule=\"GLOSS.concentration\",",
+    "rule_quote": "Any being in the game, including a player’s character, is a creature.",
+    "explanation": "This is the concentration save, tagged GLOSS.concentration, and it matched only on the page number."
+   }
+  ],
+  "summary": "GLOSS.creature has no related scenarios or SRD tests. The four candidate code lines were found only by page number (p.179) and belong to other units: GLOSS.creature-type and GLOSS.concentration. I gave all four a not-related verdict. Nothing in the existing items checks clause #1, that a player character counts as a creature."
+ },
+ "problems": [],
+ "cost_usd": 0.0298596,
+ "session": "549f307d-0bf7-4e07-a961-fdd14f5ebad9",
+ "error": null
+}

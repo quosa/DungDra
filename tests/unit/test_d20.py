@@ -49,3 +49,28 @@ def test_no_rulings_log_nothing_extra(game):
     game.dice.force_str("d20=[12]")
     roll_d20_test(game, None, D20Roll("check", "a check", "nobody", target=10))
     assert game.log.of_kind("ruling") == []
+
+
+def test_inspiration_reroll_replaces_the_picked_die_and_spends_inspiration(game):
+    from dungdra.d20 import inspiration_reroll
+    from tests.support.helpers import pc
+
+    jozan = pc(game, "JOZAN", (0, 0))
+    jozan.heroic_inspiration = True
+    game.answer("inspiration_damage", 1)
+    game.dice.force_str("d6=[2]")
+    assert inspiration_reroll(game, jozan, [5, 1], 6) == [5, 2]
+    assert jozan.heroic_inspiration is False
+    ev = game.log.last("inspiration")
+    assert (ev.rule, ev.page) == ("GLOSS.heroic-inspiration#1", "183")
+
+
+def test_inspiration_reroll_declined_or_unavailable_keeps_the_rolls(game):
+    from dungdra.d20 import inspiration_reroll
+    from tests.support.helpers import pc
+
+    jozan = pc(game, "JOZAN", (0, 0))
+    assert inspiration_reroll(game, jozan, [1], 8, "inspiration", "Hit Die") == [1]
+    jozan.heroic_inspiration = True
+    assert inspiration_reroll(game, jozan, [1], 8, "inspiration", "Hit Die") == [1]
+    assert jozan.heroic_inspiration is True

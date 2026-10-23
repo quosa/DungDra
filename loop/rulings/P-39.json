@@ -1,0 +1,14 @@
+{
+  "id": "P-39",
+  "unit": "GLOSS.enemy",
+  "ambiguity": "GLOSS.enemy ambiguity 1: 'fights against you in combat': the whole opposing side, or only creatures that personally fight you?",
+  "ruling": "Reading A. Every creature fighting on the side opposed to you is your enemy, whoever it is currently attacking.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy",
+    "tests/srd/test_glossary.py::test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused"
+  ],
+  "status": "accepted",
+  "register_id": "R-44",
+  "note": "",
+  "reason": ""
+}

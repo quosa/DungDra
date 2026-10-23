@@ -257,6 +257,7 @@ def divine_spark(game, pc, target, mode="heal", dtype="radiant"):
         "con",
         pc.spell_dc(),
         label=f"Constitution save vs Divine Spark (DC {pc.spell_dc()})",
+        source=pc,
         page=37,
         rule="CLASS.cleric.level-2-channel-divinity",
     )
@@ -286,6 +287,7 @@ def turn_undead(game, pc, targets):
             "wis",
             pc.spell_dc(),
             label=f"Wisdom save vs Turn Undead (DC {pc.spell_dc()})",
+            source=pc,
             page=37,
             rule="CLASS.cleric.level-2-channel-divinity",
         )

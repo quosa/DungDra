@@ -1,0 +1,14 @@
+{
+  "id": "P-36",
+  "unit": "GLOSS.deafened",
+  "ambiguity": "GLOSS.deafened ambiguity 2: does 'You can't hear' add effects beyond rules that name hearing?",
+  "ruling": "Reading A. Deafened has no automatic effect beyond rules that name hearing. It gives no modifier to attack rolls, attacks against the creature, or saving throws.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_deafened_gives_no_advantage_on_attacks_against_it",
+    "tests/srd/test_glossary.py::test_deafened_attack_rolls_are_normal"
+  ],
+  "status": "accepted",
+  "register_id": "R-41",
+  "note": "",
+  "reason": ""
+}

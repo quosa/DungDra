@@ -1,0 +1,15 @@
+{
+ "output": {
+  "clauses": [],
+  "relations": [],
+  "ambiguities": [],
+  "conflicts": [],
+  "gaps": [],
+  "traps": [],
+  "summary": "This unit is only the introduction to the Rules Glossary's Rules Definitions section (\"Here are definitions of various rules.\"). It sets no rule that can be tested, so it has no clauses. It names no other units, so it has no relations or conflicts. Its text leaves no room for ambiguity, gaps or 2014-rule traps. The actual definitions are in the individual GLOSS.* units."
+ },
+ "problems": [],
+ "cost_usd": 0.112468,
+ "session": "d7e7a0d2-60c2-40d3-aec6-4317dc6c0440",
+ "error": null
+}

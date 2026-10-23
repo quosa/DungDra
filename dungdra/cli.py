@@ -4,8 +4,19 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
+from . import scenario
 from .play import Play
+
+
+def _ask(text):
+    """input() that treats end of input or Ctrl-C at a choice as 'take the default'."""
+    try:
+        return input(text).strip()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return ""
 
 
 def interactive_decider(game, who, key, options, default, prompt):
@@ -14,14 +25,22 @@ def interactive_decider(game, who, key, options, default, prompt):
         return default
     print(f"\n  ? {prompt}")
     if options and all(isinstance(o, bool) for o in options):
-        ans = input(f"    [y/n, default {'y' if default else 'n'}] > ").strip().lower()
+        ans = _ask(f"    [y/n, default {'y' if default else 'n'}] > ").lower()
         if not ans:
             return default
         return ans.startswith("y")
     shown = [o for o in (options or [])]
     for i, o in enumerate(shown):
         print(f"    {i}: {o}")
-    ans = input(f"    choose a number (Enter for default {default!r}) > ").strip()
+    if isinstance(default, list):  # several picks from the list (spells to learn, slots to recover)
+        ans = _ask(f"    choose numbers separated by commas (Enter for default {default!r}) > ")
+        if not ans:
+            return default
+        try:
+            return [shown[int(x)] for x in ans.replace(",", " ").split()]
+        except (ValueError, IndexError):
+            return default
+    ans = _ask(f"    choose a number (Enter for default {default!r}) > ")
     if not ans:
         return default
     try:
@@ -30,11 +49,24 @@ def interactive_decider(game, who, key, options, default, prompt):
         return default
 
 
+def save_errors(path, errors) -> str:
+    """Append the tracebacks of commands that hit a bug to the error log; say where they are."""
+    with Path(path).open("a", encoding="utf-8") as f:
+        f.write("\n".join(errors) + "\n")
+    return f"(The details are in {path}.)"
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="DungDra: a fifth-edition-compatible solo adventure")
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument(
-        "--llm", action="store_true", help="use Claude to interpret free-form input (needs ANTHROPIC_API_KEY)"
+        "--adventure",
+        default=scenario.FIRST,
+        help=f"an adventure by name ({', '.join(scenario.available())}) or the path of an adventure file "
+        "(default: %(default)s)",
+    )
+    ap.add_argument(
+        "--llm", action="store_true", help="interpret free-form input with an LLM (not built yet)"
     )
     ap.add_argument(
         "--manual-turns",
@@ -42,13 +74,25 @@ def main(argv=None):
         help="don't end a combat turn automatically when the character has nothing left to do",
     )
     ap.add_argument("--gm-log", action="store_true", help="also print GM-only log entries")
+    ap.add_argument(
+        "--error-log",
+        default="dungdra-errors.log",
+        help="where to write the details when a command runs into a bug (default: %(default)s)",
+    )
     args = ap.parse_args(argv)
     llm = None
     if args.llm:
-        from .llm import ClaudeInterpreter
-
-        llm = ClaudeInterpreter()
-    p = Play(seed=args.seed, decider=interactive_decider, llm=llm, auto_end_turn=not args.manual_turns)
+        ap.error("--llm isn't built yet: this version has no LLM interpreter, only the text parser")
+    try:
+        p = Play(
+            seed=args.seed,
+            decider=interactive_decider,
+            llm=llm,
+            auto_end_turn=not args.manual_turns,
+            adventure=args.adventure,
+        )
+    except scenario.AdventureError as e:
+        ap.error(str(e))
     if args.gm_log:
         p.game.log.listeners.append(lambda e: print("   [GM] " + str(e)) if e.visibility == "gm" else None)
     print(p.begin())
@@ -64,7 +108,10 @@ def main(argv=None):
         if line.strip().lower() == "help":
             print(HELP)
             continue
+        seen = len(p.errors)
         print(p.say(line))
+        if len(p.errors) > seen:
+            print(save_errors(args.error_log, p.errors[seen:]))
     print("Farewell, adventurer.")
 
 
@@ -75,6 +122,9 @@ HELP = """Examples:
   MIALEE casts magic missile at goblin 3            JOZAN casts healing word on MIALEE
   LIDDA uses cunning action to hide                 BROM uses second wind
   end turn      continue      short rest      long rest
+  go to the watchtower      go back      exits      map
+  talk to the reeve      accept the quest      quests      turn in the quest
+  shop      BROM buys a rope      LIDDA sells her dagger      rent a room
   travel 6 miles at normal pace through forest on the road
   LIDDA picks the lock      MIALEE examines the floor      BROM wedges a spike into the pit lid
 """

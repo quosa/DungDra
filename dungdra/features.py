@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from .data.classes import CLASSES, LIFE_DOMAIN_SPELLS, SCHOLAR_SKILLS, SUBCLASS_NAMES
 from .data.origins import SPECIES
-from .data.spells import CLASS_LISTS, OTHER_EVOCATION, OTHER_WIZARD_SPELLS, SPELLS, spell_level
-from .rules import Refusal
+from .data.spells import CLASS_LISTS, OTHER_EVOCATION, OTHER_WIZARD_SPELLS, SPELLS
 
 
 def grant_features(pc, level: int):
@@ -95,14 +94,11 @@ def on_level_up(pc):
                 options,
                 default=options[:2],
                 prompt=f"{pc.name}: add two Wizard spells to the spellbook",
+                many=True,
             )
             if g
             else options[:2]
         )
-        for p in picks[:2]:
-            lv = spell_level(p)
-            if lv is None or lv > max_lvl or lv < 1:
-                raise Refusal(f"{p.title()} isn't a Wizard spell of a level {pc.name} has slots for")
         add_to_spellbook(pc, picks[:2], "level advancement")
         if lvl == 2:
             opts = [s for s in SCHOLAR_SKILLS if s in pc.skills]
@@ -118,8 +114,6 @@ def on_level_up(pc):
                     if g
                     else opts[0]
                 )
-                if sk not in opts:
-                    raise Refusal(f"Scholar must be one of {opts} that you are proficient in")
                 pc.scholar_skill = sk
                 pc.skills[sk] = 2
                 if g:
@@ -162,11 +156,12 @@ def on_level_up(pc):
                     default=opts[:need],
                     prompt=f"{pc.name} can prepare {need} more spell(s): choose from "
                     f"{', '.join(o.title() for o in opts)}",
+                    many=True,
                 )
                 if g
                 else opts[:need]
             )
-            pc.prepared += [x for x in picks[:need] if x in opts]
+            pc.prepared += picks[:need]
     if g and pc.cdata.get("spellcasting"):
         g.log.player(
             "spells",
@@ -230,15 +225,11 @@ def choose_subclass(pc, name: str):
                 opts,
                 default=opts[:2],
                 prompt=f"{pc.name}: Evocation Savant — choose two Evocation spells (level 2 or lower)",
+                many=True,
             )
             if g
             else opts[:2]
         )
-        for p in picks[:2]:
-            if (p in SPELLS and (SPELLS[p]["school"] != "evocation" or SPELLS[p]["level"] > 2)) or (
-                p not in SPELLS and p not in OTHER_EVOCATION
-            ):
-                raise Refusal("Evocation Savant spells must be Evocation spells of level 2 or lower")
         add_to_spellbook(pc, picks[:2], "Evocation Savant")
     if g:
         g.log.player(

@@ -103,6 +103,10 @@ HOUR = 3600
 DAY = 86400
 
 
+# SRD[GLOSS.difficult-terrain#7] ground cover that makes a space Difficult Terrain
+DIFFICULT_GROUND = ("heavy snow", "ice", "rubble", "undergrowth")
+
+
 class Refusal(Exception):
     """An attempted action the rules don't allow. Carries a player-facing reason, and the SRD
     page, rule ("<unit id>[#<clause>]") and register ruling that forbid it, when there are any."""

@@ -1,0 +1,13 @@
+{
+  "id": "P-38",
+  "unit": "GLOSS.difficult-terrain",
+  "ambiguity": "GLOSS.difficult-terrain ambiguity 3: 'A creature that isn't Tiny or your ally': do neutral non-hostile creatures that aren't allies count?",
+  "ruling": "Reading A. Any creature that is neither Tiny nor your ally (R-36, R-37) makes its space Difficult Terrain, including an Indifferent bystander.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra"
+  ],
+  "status": "accepted",
+  "register_id": "R-43",
+  "note": "",
+  "reason": ""
+}

@@ -6,13 +6,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from .d20 import D20Roll, roll_d20_test
+from .d20 import D20Roll, inspiration_reroll, roll_d20_test
 from .data.equipment import WEAPONS
 from .dice import parse_expr
 from .effects import AdvNext, Ctx, Flag, SpeedPenalty, can_see, grapplers_of, grapples_on
-from .geometry import dist_points, step_away, step_toward
+from .geometry import dist_points, in_area, squares_overlap, step_away, step_toward, steps_between
 from .mounted import moves_on_riders_turn
-from .rules import ROUND, Refusal, fmt_mod, size_index
+from .rules import ROUND, SPACE, Refusal, fmt_mod, size_index
 
 
 # ---------------------------------------------------------------------------
@@ -420,6 +420,9 @@ def end_combat(game, reason=""):
     )
     game.combat = None
     game.turn_actor = None
+    # SRD[GLOSS.enemy#2] R-53: working to harm someone makes you its enemy until the combat ends
+    for c in game.creatures.values():
+        c.harming.clear()
     for c in game.creatures.values():
         for e in list(c.effects):
             if (
@@ -532,6 +535,8 @@ def move(
     spec = spec or MOVE_MODES["walk"]
     cost = dist
     notes = []
+    terrain_charged = False
+    crowded, occupants = 0, []
     if spec.crawling or (c.has("prone") and spec.speed == "walk" and dist > 0):
         cost += dist
         notes.append("crawling")
@@ -550,10 +555,23 @@ def move(
             # without the Speed, each foot costs 1 extra foot (2 extra in Difficult Terrain)
             cost += dist * (2 if difficult else 1)
             notes.append(spec.extra_note)
+            terrain_charged = difficult
             difficult = False
-    if difficult or (game.scene.difficult and mode == "walk"):
+    # SRD[GLOSS.difficult-terrain#1] a scene's Difficult Terrain charges every foot moved over
+    # its ground, walking or crawling. SRD[GLOSS.difficult-terrain#3] R-42: not cumulative only
+    # among terrain sources, so crawling's own extra foot adds on top (3 ft per foot)
+    if not terrain_charged and (difficult or (game.scene.difficult and spec.speed == "walk")):
         cost += dist
         notes.append("Difficult Terrain")
+    elif not terrain_charged:
+        # SRD[GLOSS.difficult-terrain#3] only the feet not already charged as Difficult Terrain,
+        # each foot once however many sources make its space Difficult Terrain
+        rough, crowded, occupants = _feet_in_difficult_spaces(
+            game, c, start, dest, drag, walking=spec.speed == "walk"
+        )
+        if rough:
+            cost += rough
+            notes.append(f"Difficult Terrain for {rough} ft")
     # SRD[GLOSS.grappled#3] "drag or carry" — the extra foot applies whatever the mode of movement
     two_smaller = drag is not None and size_index(c.size) - size_index(drag.size) >= 2
     if drag is not None and not (drag.size == "tiny" or two_smaller):
@@ -588,6 +606,15 @@ def move(
     )
     if budgeted:
         cb.turn.moved += dist
+    if crowded:
+        game.log.player(
+            "difficult-terrain",
+            f"{c.name} moves {crowded} ft through a creature's space: Difficult Terrain",
+            page=181,
+            rule="GLOSS.difficult-terrain#5",
+            # R-43: the space of a creature that is neither your ally nor your enemy counts too
+            ruling="R-43" if any(not game.is_enemy(c, o) for o in occupants) else None,
+        )
     if provoke:
         _check_leave_reach(game, c, start, dest, provoke=True)
         if c.dead or c.has("incapacitated") and c.hp == 0:
@@ -610,6 +637,43 @@ def move(
     return cost
 
 
+def _feet_in_difficult_spaces(game, c, start, dest, drag=None, walking=True) -> tuple[int, int, list]:
+    """Feet of a move from start to dest that enter spaces of Difficult Terrain; of those, the feet
+    in another creature's space; and the creatures whose spaces they are. A space is Difficult
+    Terrain inside the area of a scene object marked difficult (a web, a patch of rubble), or where
+    another creature is. Ground cover (an area marked `ground`) slows only walking-Speed moves."""
+    side = SPACE.get(c.size, 5)
+    # SRD[GLOSS.difficult-terrain#4] a space with a source of Difficult Terrain in it
+    areas = [
+        o["area"]
+        for o in game.scene.objects.values()
+        if o.get("difficult") and o.get("area") and (walking or not o["area"].get("ground"))
+    ]
+    # SRD[GLOSS.difficult-terrain#5] a creature that isn't Tiny or your ally (R-43: an
+    # Indifferent bystander counts too); a creature dragged along moves with the mover
+    others = [
+        o
+        for o in game.creatures.values()
+        if o is not c
+        and o is not drag
+        and not o.dead
+        and o.size != "tiny"
+        and o.elevation == c.elevation
+        and not game.is_ally(c, o)
+    ]
+    feet, crowded, occupants = 0, 0, []
+    for sq in steps_between(start, dest):
+        here = [o for o in others if squares_overlap(sq, side, o.position, SPACE.get(o.size, 5))]
+        rough = any(
+            in_area(a["shape"], a["size"], a["origin"], (*sq, c.elevation), toward=a.get("toward"))
+            for a in areas
+        )
+        feet += 5 if here or rough else 0
+        crowded += 5 if here else 0
+        occupants += [o for o in here if o not in occupants]
+    return feet, crowded, occupants
+
+
 def _after_move(game, c, start):
     # grapples end if the distance exceeds the grapple's range
     for other in game.creatures.values():
@@ -629,12 +693,14 @@ def _after_move(game, c, start):
 
 
 def _check_leave_reach(game, mover, start, dest, provoke=True):
-    """Opportunity Attacks (p.15, 185): leaving an enemy's reach with your own
-    movement provokes, unless you Disengaged; forced movement and teleports don't."""
+    """Opportunity Attacks (p.15, 185): leaving the reach of a creature that can see you with your
+    own movement provokes, unless you Disengaged; forced movement and teleports don't. The mover's
+    allies let it go without being asked; a creature on no side strikes only at its enemies."""
     if game.combat is None:
         return
     for enemy in list(game.creatures.values()):
-        if enemy is mover or enemy.dead or enemy.team == mover.team or enemy.team == "neutral":
+        # SRD[GLOSS.opportunity-attacks] any creature whose reach the mover leaves, on a side or not
+        if enemy is mover or enemy.dead or game.is_ally(enemy, mover):
             continue
         reach = oa_reach(enemy)
         d0 = dist_points(enemy.position, start)
@@ -658,17 +724,20 @@ def _check_leave_reach(game, mover, start, dest, provoke=True):
                 rule="GLOSS.disengage",
             )
             continue
+        hostile = game.is_enemy(enemy, mover)
         if not game.combat.has_reaction(enemy):
-            game.log.player(
-                "oa",
-                f"{enemy.name} can't make an Opportunity Attack (no Reaction available)",
-                page=185,
-                rule="GLOSS.opportunity-attacks",
-            )
+            if hostile:
+                game.log.player(
+                    "oa",
+                    f"{enemy.name} can't make an Opportunity Attack (no Reaction available)",
+                    page=185,
+                    rule="GLOSS.opportunity-attacks",
+                )
             continue
         if not can_see(enemy, mover):
             continue
-        default = enemy.team != "party"
+        # the players decide for the party; anyone else strikes at its enemies only
+        default = enemy.team != "party" and hostile
         if game.decide(
             enemy,
             "opportunity_attack",
@@ -1015,10 +1084,10 @@ def attack(
         elif game.scene.underwater:
             dis.append("ranged attack underwater (p.16)")
         for e in game.creatures.values():
+            # SRD[GLOSS.enemy#2] close combat counts an enemy by any test, a bystander who attacked included
             if (
-                e.team not in (attacker.team, "neutral")
+                game.is_enemy(attacker, e)
                 and not e.dead
-                and e is not attacker
                 and dist_points(e.position, attacker.position) <= 5
                 and not e.has("incapacitated")
                 and can_see(e, attacker)
@@ -1070,6 +1139,8 @@ def attack(
     target = _sanctuary(game, attacker, target)
     if target is None:
         return AttackResult(None, False, False)
+    # SRD[GLOSS.enemy#2] R-45: an attack works to harm its target, hit or miss
+    game.works_to_harm(attacker, target, "an attack")
     acc = attacker.gather(ctx)
     # --- build the roll ---
     roll = D20Roll(
@@ -1470,10 +1541,6 @@ def roll_damage_dice(
             default=again if sum(again) > sum(rolls) else rolls,
             prompt=f"Savage Attacker: use {rolls} or {again}?",
         )
-        if isinstance(choice, int):
-            choice = (
-                [rolls, again][choice] if choice in (0, 1) else (again if sum(again) == choice else rolls)
-            )
         game.log.player(
             "feat",
             f"Savage Attacker: rolled {rolls} and {again}; uses {choice}",
@@ -1491,34 +1558,8 @@ def roll_damage_dice(
                 rule="FEAT.feat-descriptions.fighting-style-feats.great-weapon-fighting",
             )
         rolls = new
-    rolls = _inspiration_reroll_damage(game, attacker, rolls, s)
+    rolls = inspiration_reroll(game, attacker, rolls, s)
     return sum(rolls) + m, rolls
-
-
-def _inspiration_reroll_damage(game, actor, rolls, sides):
-    if actor is None or not getattr(actor, "heroic_inspiration", False) or not rolls:
-        return rolls
-    pick = game.decide(
-        actor,
-        "inspiration_damage",
-        [None] + list(range(len(rolls))),
-        default=None,
-        prompt=f"{actor.name} rolled damage {rolls}: spend Heroic Inspiration to reroll a die?",
-    )
-    if pick is None or pick is False:
-        return rolls
-    rolls = list(rolls)
-    old = rolls[pick]
-    rolls[pick] = game.dice.roll(sides)
-    actor.heroic_inspiration = False
-    game.log.player(
-        "inspiration",
-        f"{actor.name} spends Heroic Inspiration to reroll a damage die: {old} → "
-        f"{rolls[pick]} (must use the new roll)",
-        page=8,
-        rule="GLOSS.heroic-inspiration",
-    )
-    return rolls
 
 
 def deal_attack_damage(
@@ -1841,6 +1882,7 @@ def grapple(game, attacker, target):
         ab,
         dc,
         label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs grapple (DC {dc})",
+        source=attacker,
         avoid={"grappled"},
         page=190,
         rule="GLOSS.unarmed-strike",
@@ -1877,6 +1919,7 @@ def shove(game, attacker, target, effect="prone"):
         ab,
         dc,
         label=f"{'Strength' if ab == 'str' else 'Dexterity'} save vs shove (DC {dc})",
+        source=attacker,
         page=190,
         rule="GLOSS.unarmed-strike",
     )

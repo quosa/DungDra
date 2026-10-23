@@ -1,0 +1,28 @@
+{
+  "id": "T-124",
+  "kind": "refactor",
+  "unit": "GLOSS.heroic-inspiration",
+  "title": "Game.decide returns a pre-set or decider answer without checking it against the offered options (dungdra/game.py:82), so any caller that resolves the answer with game.get(pick) can act on a creature the rule never offered. Validate answers against `options` in decide (refuse or fall back to default) so each rule doesn't need its own guard like grant_heroic_inspiration now has.",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 2,
+  "history": [
+    {
+      "event": "followup",
+      "of": "T-121"
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (Checking answers centrally in Game.decide is the right idea, but this version assumes every answer is a single element of `options`. The multi-pick choices (spellbook_add, prepare_more, evocation_savant), Arcane Recovery's slot subset and Savage Attacker's int answers have answers shaped differently, so they now always fall back to the default and ignore the player's choice. It also cuts off the per-rule refusals (Scholar, spellbook) that already exist, and the tests don't cover any of these callers. Rejected.)",
+        "review: other dungdra/game.py:99 `_offered` assumes every answer is one element of `options`. Several existing callers break that assumption. For some, `options` is a pool and the answer is a list picked from it: `spellbook_add` and `prepare_more` (features.py:92/158) and `evocation_savant` (features.py:227). A list is never `in` the pool, so the player's or API's picks are always thrown away and the default (`options[:2]` / `opts[:need]`) is used. Arcane Recovery (spellcasting.py:24) offers `[slots, []]`, so any other subset the wizard picks (e.g. `[1]` when the default is `[1,1]`) is silently swapped for the default recovery. Savage Attacker (combat.py:1511) documents int answers (an index or a sum) that it handles after decide; those are now replaced by the default. `subclass` lower-cases the answer in choose_subclass, but an answer like 'Champion' is now defaulted first. The gates pass only because the queued answers in today's tests happen to equal an option or the default. The check must not apply to choices whose answers aren't single elements of `options`. Either give such callers a way to say what a valid answer is (e.g. a validator or a `multi` mode checking that each pick is in the pool), or have them pass `options=None`. Don't silently override legitimate choices.",
+        "review: orthogonality dungdra/game.py:99 Some rules already check their answers themselves: Scholar raises a Refusal for an answer outside `opts` (features.py:~121), and spellbook_add / evocation_savant refuse an invalid spell. The new mechanism now runs before those checks and silently replaces a bad answer with the default, so those refusals can no longer fire and the two mechanisms disagree: one refuses, the other quietly defaults. Pick one policy for bad answers (the ticket allows either refusing or falling back) and move the existing per-rule guards onto it instead of leaving dead guards behind.",
+        "review: test-meaningfulness tests/unit/test_game.py:166 The new tests only cover scalar options. None checks that a legitimate answer of the kinds existing callers use (a list of picks from a pool, an Arcane Recovery subset) is still accepted, which is how the regression above got through. There is also no test that the grant_heroic_inspiration path (the case behind the ticket) still loses the surplus when a monster is named, now that rest.py's own guard and its player-visible log line are gone."
+      ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
+    }
+  ]
+}

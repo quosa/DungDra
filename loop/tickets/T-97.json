@@ -1,0 +1,17 @@
+{
+  "id": "T-97",
+  "kind": "bug",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "SRD: crawling through Difficult Terrain pays the crawl foot and the Difficult Terrain foot (3 ft per foot); engine: a scene's Difficult Terrain applies only to mode 'walk', so crawling costs 2",
+  "tests": [
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "fixed",
+      "summary": "A scene's Difficult Terrain (game.scene.difficult) now applies to every mode that spends walking Speed (walk and crawl), not just mode 'walk'. Crawling through rubble therefore costs 3 ft per foot (R-42 Reading A). Climb, swim and fly are unchanged. The fix also makes T-98's red test pass (strict xpass)."
+    }
+  ]
+}

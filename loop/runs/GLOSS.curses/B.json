@@ -1,0 +1,37 @@
+{
+ "verdicts": [
+  {
+   "item": "dungdra/actions.py:359",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=179,",
+   "rule_quote": "Some game effects curse a creature or an object.",
+   "explanation": "Refusal for creature types (GLOSS.creature-type#3); same page only."
+  },
+  {
+   "item": "dungdra/game.py:362",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "# -- concentration (p.179) --------------------------------------------",
+   "rule_quote": "Some game effects curse a creature or an object.",
+   "explanation": "Section header for concentration; matched by page only."
+  },
+  {
+   "item": "dungdra/game.py:387",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=179,",
+   "rule_quote": "Some game effects curse a creature or an object.",
+   "explanation": "Logs the end of Concentration with rule GLOSS.concentration, not curses."
+  },
+  {
+   "item": "dungdra/game.py:406",
+   "kind": "code",
+   "verdict": "not-related",
+   "evidence": "page=179,",
+   "rule_quote": "Some game effects curse a creature or an object.",
+   "explanation": "Concentration save, rule GLOSS.concentration, not curses."
+  }
+ ],
+ "summary": "No scenarios or SRD tests exist for GLOSS.curses. The four candidate code lines were matched only by page 179 and belong to other rules (creature type, concentration). No curse implementation exists. Clauses #1–#3 are uncovered, which is acceptable if curses are out of scope."
+}

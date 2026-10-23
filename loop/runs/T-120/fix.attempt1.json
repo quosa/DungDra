@@ -1,0 +1,25 @@
+{
+ "result": "dispute",
+ "fixer": {
+  "summary": "Engine fix done: `grant_heroic_inspiration` (dungdra/rest.py) now refuses anyone who isn't in the party, which is the engine's set of player characters. The refusal cites page 183, ruling R-50 and rule GLOSS.heroic-inspiration#1, so a monster never gains Heroic Inspiration and is never offered a reroll. A surplus is passed only to a party member, already filtered through game.pcs(). In test_heroic_inspiration_a_monster_cant_gain_it the grant is now refused, `ogre.heroic_inspiration is False` holds and no reroll is offered. Nothing the test checks about the rule still fails. The test still fails on its last line with an AttributeError: it reads `r.dice` from the result of combat.attack. That is an AttackResult, which keeps its dice at `r.roll.dice`, as the other attack tests in test_glossary.py do (lines 2474 and 2485). I didn't add a `dice` attribute to AttackResult just to fit the test. Checks: ruff check and ruff format --check pass, tests/unit has 575 passed, tests/srd plus tests/scenarios have 630 passed and 7 xfailed with no XPASS, and dev-gate passes. With --runxfail, test_heroic_inspiration_cant_be_given_to_a_monster and test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it also fail. Both belong to other tickets (they stay xfailed in the normal run) and fail on assertions I didn't look into. I chose party membership rather than Creature.is_pc() because scenario test_core02d_inspiration_cannot_hold_two uses a plain Creature on team 'party' as a PC, and is_pc() refused it.",
+  "files": [
+   "dungdra/rest.py",
+   "tests/unit/test_rest.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_rest.py::test_a_monster_is_refused_heroic_inspiration",
+   "tests/unit/test_rest.py::test_a_player_character_gains_heroic_inspiration",
+   "tests/unit/test_rest.py::test_a_surplus_goes_to_a_player_character_who_lacks_it_never_to_a_monster"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.heroic-inspiration#1]",
+   "SRD[GLOSS.heroic-inspiration#3]"
+  ],
+  "dispute": "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it ends with `assert r.dice == [3] and not r.hit`, where r comes from `C.attack(...)`. That returns an AttackResult (dungdra/combat.py:938) with fields roll, hit, crit, damage, target and notes, and no `dice`. The d20 dice are at `r.roll.dice`, which is how the other attack tests in the same file read them (test_glossary.py:2474 and :2485). With the engine fix, every rule assertion in this test passes: the grant is refused cleanly with page 183 and ruling R-50, the ogre's heroic_inspiration stays False, and no reroll is offered. Only this attribute access raises an AttributeError. Proposed correction, for a person to approve: change the line to `assert r.roll.dice == [3] and not r.hit`. That keeps the assertion's intent: the forced 3 stands and the attack misses.",
+  "test_change_request": "tests/srd/test_glossary.py::test_heroic_inspiration_a_monster_cant_gain_it: replace `r.dice` with `r.roll.dice`, because AttackResult keeps its dice on `.roll`. No assertion is weakened."
+ },
+ "review": null,
+ "problems": [],
+ "cost_usd": 0.4257,
+ "stash": "srdloop: T-120 dispute"
+}

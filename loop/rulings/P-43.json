@@ -1,0 +1,14 @@
+{
+  "id": "P-43",
+  "unit": "GLOSS.heroic-inspiration",
+  "ambiguity": "GLOSS.heroic-inspiration ambiguity 2: 'immediately after rolling it': before or after the outcome is known?",
+  "ruling": "Reading A. The choice is offered once the die's face is known and before the result is applied (before success or failure is reported). Once the roll resolves or another roll is made, that die can no longer be rerolled.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_heroic_inspiration_is_offered_before_the_roll_resolves",
+    "tests/srd/test_glossary.py::test_heroic_inspiration_window_closes_once_the_next_roll_comes"
+  ],
+  "status": "accepted",
+  "register_id": "R-48",
+  "note": "",
+  "reason": ""
+}

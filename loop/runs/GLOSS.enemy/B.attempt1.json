@@ -1,0 +1,83 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "dungdra/actions.py:209",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "game.log.player(\"action\", f\"{actor.name} takes the Dodge action\", page=181, rule=\"GLOSS.dodge\")",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Dodge action log; matched by page 181 only."
+   },
+   {
+    "item": "dungdra/actions.py:201",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=181,",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Part of the Dodge log call; page match only."
+   },
+   {
+    "item": "dungdra/api.py:677",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"End of a day: each PC eats a ration if carried and drinks (p.181, 185).\"\"\"",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Food and water; unrelated."
+   },
+   {
+    "item": "dungdra/combat.py:657",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=181,",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Disengage log tagged GLOSS.disengage. The local variable 'enemy' is not an implementation of the Enemy definition and has no SRD[GLOSS.enemy] tag."
+   },
+   {
+    "item": "dungdra/creature.py:244",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "def gain_exhaustion(self, n: int = 1, source: str = \"\", page=181, rule=\"GLOSS.exhaustion\"):",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Exhaustion; unrelated."
+   },
+   {
+    "item": "dungdra/creature.py:296",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=181,",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Exhaustion log, rule GLOSS.exhaustion."
+   },
+   {
+    "item": "dungdra/effects.py:357",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "\"\"\"Dodge action (p.181).\"\"\"",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Dodge; unrelated."
+   },
+   {
+    "item": "dungdra/hazards.py:84",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "# -- Food and water (p.181, 185) --------------------------------------------------------",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Food and water; unrelated."
+   },
+   {
+    "item": "dungdra/hazards.py:120",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "c.gain_exhaustion(1, \"dehydration\", page=181, rule=\"GLOSS.dehydration\")",
+    "rule_quote": "A creature is your enemy if it fights against you in combat",
+    "explanation": "Dehydration; unrelated."
+   }
+  ],
+  "summary": "GLOSS.enemy has no scenarios, SRD tests or SRD-tagged code. All nine candidate code lines matched only on page 181 (Dodge, Disengage, exhaustion, food and water) and are not-related. The enemy definition has no implementation or acceptance coverage. Stage C may want clause-level tests once the ambiguity rulings are decided."
+ },
+ "problems": [],
+ "cost_usd": 0.0644044,
+ "session": "049e9b16-7c84-4c7d-8518-82bb28f7d148",
+ "error": null
+}

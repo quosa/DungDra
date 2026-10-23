@@ -32,6 +32,23 @@ def step_toward(p, q, feet) -> tuple[int, int]:
     return (x, y)
 
 
+def steps_between(p, q) -> list[tuple[int, int]]:
+    """The squares (by corner) a mover enters walking from p toward q in 5-ft steps, in order;
+    p's own square isn't one of them."""
+    out = []
+    here = tuple(p[:2])
+    for _ in range(dist_points(p[:2], q[:2]) // 5):
+        here = step_toward(here, q[:2], 5)
+        out.append(here)
+    return out
+
+
+def squares_overlap(a, a_side, b, b_side) -> bool:
+    """Do the squares at corners a and b (lowest x, y) with edges a_side and b_side share any
+    interior? Touching an edge or a corner doesn't count."""
+    return all(a[i] < b[i] + b_side and b[i] < a[i] + a_side for i in (0, 1))
+
+
 def step_away(p, q, feet) -> tuple[int, int]:
     """Move from p directly away from q by `feet`."""
     x, y = p
@@ -98,8 +115,14 @@ def in_area(shape, size, origin, p, toward=None) -> bool:
     """Is p inside an area of `shape` ("cone", "cube" or "sphere") and `size` (a Cone's length, a
     Cube's side, a Sphere's radius) from `origin`? A Cone or Cube points at `toward`; a Cube
     without a direction is placed at the point `origin` (R-35); a Sphere is centred on `origin`.
-    Points are (x, y) or (x, y, elevation)."""
+    Points are (x, y) or (x, y, elevation). A "rect" isn't a spell's area but a footprint on a
+    map (a patch of rubble, a road): `origin` holds two opposite corners (x0, y0, x1, y1), and the
+    squares whose corners lie between them, edges included, are inside at any height."""
     shape = shape.lower()
+    if shape == "rect":
+        x0, y0, x1, y1 = origin
+        q = _xyz(p)
+        return min(x0, x1) <= q[0] <= max(x0, x1) and min(y0, y1) <= q[1] <= max(y0, y1)
     if shape == "sphere":
         return dist_points(origin, p) <= size
     if shape == "cube" and toward is None:

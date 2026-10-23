@@ -13,7 +13,41 @@ from collections import defaultdict, deque
 from .dice import Dice
 from .effects import Acc, Ctx, grapples_on
 from .events import EventLog
-from .rules import DAY, HOUR, MINUTE, ROUND, SPACE, Refusal, norm
+from .rules import DAY, DIFFICULT_GROUND, HOUR, MINUTE, ROUND, SPACE, OutOfScope, Refusal, norm
+
+_NOT_OFFERED = object()
+
+
+def _ground_kind(ground: str) -> str:
+    kind = norm(ground)
+    # SRD[GLOSS.difficult-terrain#7] heavy snow, ice, rubble or undergrowth
+    if kind not in DIFFICULT_GROUND:
+        raise OutOfScope(
+            f"There are no rules for {ground} ground here; the kinds are {', '.join(DIFFICULT_GROUND)}",
+            page=181,
+            rule="GLOSS.difficult-terrain#7",
+        )
+    return kind
+
+
+def _same(option, answer) -> bool:
+    """Does the answer name this option? Names match whatever their case or spelling of spaces;
+    otherwise the value and its type must match (1 doesn't answer True)."""
+    if isinstance(option, str) and isinstance(answer, str):
+        return norm(option) == norm(answer)
+    return type(option) is type(answer) and option == answer
+
+
+def _picks(options, answer):
+    """The options a multi-pick answer names, each used no more often than it is offered."""
+    left = list(options)
+    picks = []
+    for a in answer if isinstance(answer, (list, tuple)) else [answer]:
+        i = next((i for i, o in enumerate(left) if _same(o, a)), None)
+        if i is None:
+            return _NOT_OFFERED
+        picks.append(left.pop(i))
+    return picks
 
 
 class Scene:
@@ -37,6 +71,23 @@ class Scene:
         self.travel_pace: str | None = None
         self.objects: dict[str, dict] = {}  # named objects (crate, web, door ...)
         self.hidden: dict[str, dict] = {}  # hidden things (secret door, trap)
+
+    def mark_difficult(self, name, shape, size, origin, toward=None, ground=True):
+        """Make the spaces of an area Difficult Terrain: a scene object movement charges extra for.
+        `ground` cover (rubble, undergrowth) slows only movers using their walking Speed."""
+        # SRD[GLOSS.difficult-terrain#4] a space is Difficult Terrain if it contains a listed source
+        area = {"shape": shape, "size": size, "origin": tuple(origin), "toward": toward, "ground": ground}
+        self.objects[name] = {"difficult": True, "area": area}
+
+    def add_ground(self, ground, shape=None, size=None, origin=None, name=None):
+        """Cover the whole scene, or an area of it, with a kind of ground (heavy snow, ice, rubble,
+        undergrowth): its spaces are Difficult Terrain for walking movers. The whole scene sets the
+        `difficult` switch (as a collapsing roof's rubble does); an area is a ground-cover patch."""
+        kind = _ground_kind(ground)
+        if shape is None:
+            self.difficult = True
+        else:
+            self.mark_difficult(name or kind, shape, size, origin)
 
     def to_dict(self):
         return {
@@ -70,6 +121,7 @@ class Game:
         self.influence_cooldowns: dict = {}
         self.xp_log: list = []
         self.gm_mode = False
+        self.defeated = False  # every PC has fallen; the adventure is over
         self.fixed_monster_damage = False  # p.189: static damage numbers instead of dice
         self.content = None
 
@@ -79,21 +131,40 @@ class Game:
         k = (getattr(who, "id", who), key) if who is not None else key
         self.answers[k].append(value)
 
-    def decide(self, who, key: str, options, default=None, prompt: str = ""):
+    def decide(self, who, key: str, options, default=None, prompt: str = "", many: bool = False):
+        """A choice the rules offer. The answer comes from the queue (tests, API), else from the
+        decider (the player). It is one of `options`, or with `many` a list of picks from them
+        (each option as often as it is offered; a lone option counts as a list of one). An answer
+        that doesn't fit is never acted on: it declines where declining (None) is offered, and
+        otherwise takes the default. `options=None` leaves checking the answer to the caller."""
         wid = getattr(who, "id", who)
         for k in ((wid, key), key):
             if self.answers.get(k):
                 v = self.answers[k].popleft()
-                self._log_offer(who, key, prompt, v)
-                return v
+                return self._offered(who, key, options, default, prompt, v, many)
         if self.decider is not None and (
             who is None or getattr(who, "team", "party") == "party" or self.gm_mode
         ):
             v = self.decider(self, who, key, options, default, prompt)
-            self._log_offer(who, key, prompt, v)
-            return v
+            return self._offered(who, key, options, default, prompt, v, many)
         self._log_offer(who, key, prompt, default, defaulted=True)
         return default
+
+    def _offered(self, who, key, options, default, prompt, v, many):
+        if options is None:
+            picked = v
+        elif many:
+            picked = _picks(options, v)
+        else:
+            picked = next((o for o in options if _same(o, v)), _NOT_OFFERED)
+        if picked is _NOT_OFFERED:
+            fallback = None if not many and None in options else default
+            offered = list(options)
+            self.log.gm("decide", f"{v!r} doesn't fit the options for {key} {offered}; took {fallback!r}")
+            self._log_offer(who, key, prompt, fallback, defaulted=True)
+            return fallback
+        self._log_offer(who, key, prompt, picked)
+        return picked
 
     def _log_offer(self, who, key, prompt, value, defaulted=False):
         if prompt:
@@ -147,18 +218,71 @@ class Game:
         return [self.creatures[i] for i in self.party if i in self.creatures]
 
     def enemies_of(self, c):
-        return [x for x in self.creatures.values() if x.team not in (c.team, "neutral") and not x.dead]
+        return [x for x in self.creatures.values() if not x.dead and self.is_enemy(c, x)]
+
+    def party_foes(self):
+        """Living creatures fighting the party: those on the monsters' side, and anyone who is
+        currently an enemy of a living party member (a bystander drawn into the fight)."""
+        pcs = [p for p in self.pcs() if not p.dead]
+        return [
+            c
+            for c in self.creatures.values()
+            if not c.dead
+            and c.team != "party"
+            and (c.team == "enemy" or any(self.is_enemy(p, c) for p in pcs))
+        ]
+
+    def is_enemy(self, a, b) -> bool:
+        """Whether ``b`` is ``a``'s enemy (p.181)."""
+        if a is b:
+            return False
+        # SRD[GLOSS.enemy#1] it fights against you: you're both on sides, and not the same one
+        if "neutral" not in (a.team, b.team) and a.team != b.team:
+            return True
+        # SRD[GLOSS.enemy#2] R-45: it actively works to harm you (a Hostile attitude alone doesn't)
+        if a.id in b.harming:
+            return True
+        # SRD[GLOSS.enemy#1] R-54: in a combat, a creature that was harmed and the harmer's side fight
+        # against each other, whichever of the two was harmed
+        return self.combat is not None and (self._side_harmed(b, a) or self._side_harmed(a, b))
+
+    def _side_harmed(self, x, y) -> bool:
+        """Has ``x``, or a creature on ``x``'s side, worked to harm ``y``? A creature harming one on
+        its own side doesn't turn the rest of that side (only the harmer is its enemy)."""
+        if x.team == y.team != "neutral":
+            return False
+        return any(
+            y.id in m.harming for m in self.creatures.values() if m is x or m.team == x.team != "neutral"
+        )
+
+    def works_to_harm(self, actor, victim, what: str, ruling: str = "R-45"):
+        """Record that ``actor`` actively works to harm ``victim`` with ``what`` (an attack, a save it
+        forces, damage it deals): it is ``victim``'s enemy until the end of the combat (p.181, R-45,
+        R-53)."""
+        if actor is victim or victim.id in actor.harming:
+            return
+        was = self.is_enemy(victim, actor)
+        actor.harming.add(victim.id)
+        if not was:
+            self.log.player(
+                "enemy",
+                f"{actor.name} works to harm {victim.name} with {what} and is now {victim.name}'s enemy",
+                page=181,
+                rule="GLOSS.enemy#2",
+                ruling=ruling,
+            )
 
     def allies_of(self, c):
         return [x for x in self.creatures.values() if x is not c and not x.dead and self.is_ally(c, x)]
 
-    @staticmethod
-    def is_ally(a, b) -> bool:
+    def is_ally(self, a, b) -> bool:
         """Whether ``b`` is ``a``'s ally (p.176). Never yourself (R-36)."""
-        if a is b:
+        # R-46: while it is your enemy, it isn't your ally
+        if a is b or self.is_enemy(a, b):
             return False
-        # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side
-        if a.team == b.team:
+        # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side; a creature
+        # on no side ("neutral") has no side to share
+        if a.team == b.team != "neutral":
             return True
         # SRD[GLOSS.ally#2] R-37: a creature Friendly toward the party is the party's friend
         return (a.team == "party" and getattr(b, "attitude", None) == "friendly") or (

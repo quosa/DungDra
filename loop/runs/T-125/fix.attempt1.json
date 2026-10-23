@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I approve this fix. It solves T-125 with a small change in the right place: `Game.is_ally` (dungdra/game.py:259) now treats two creatures as being on the same side only when their shared team isn't \"neutral\". It uses the same \"neutral\" no-side marker that `is_enemy` already uses at game.py:228, so it adds no second mechanism and no special case for a fixture or monster.\n\n- **Acceptance test:** the strict xfail on `test_ally_two_bystanders_on_no_side_arent_each_others_allies` has been removed correctly, and the gates pass with it.\n- **Unit tests:** both check behaviour, not constants. The first checks that `is_ally` goes both ways and that `allies_of` is empty for two creatures on no side. The second is a bystander's Thunderwave catching another bystander, which now makes the caster that creature's enemy. That test would have failed before the fix: under R-52, catching an ally in an area spell doesn't make you its enemy, and the two bystanders used to count as allies.\n- **Scope:** the change stays within the ticket.\n- **Follow-up:** none filed. The separate side check at combat.py:698 for Opportunity Attacks is already covered by T-127."
+ },
+ "problems": [],
+ "cost_usd": 0.1888,
+ "stash": ""
+}

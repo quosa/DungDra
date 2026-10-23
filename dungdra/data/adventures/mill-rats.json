@@ -1,0 +1,46 @@
+{
+  "title": "Rats in the Mill",
+  "about": "A first adventure. Brindle's miller wants the giant rats cleared out of his cellar, and pays in coin.",
+  "start": "green",
+  "quests": {
+    "rats": {
+      "title": "Rats in the Mill",
+      "giver": "miller",
+      "offer": "Rats, big as dogs, in my cellar! They've had half my grain. Clear them out and I'll pay you 30 gold, and Tamsin will throw in a potion.",
+      "goal": {"defeat": "cellar"},
+      "reward": {"gp": 30, "items": ["potion of healing"]},
+      "done": "Miller Hobb weeps with relief and counts out the coins, and Tamsin presses a potion into your hands."
+    }
+  },
+  "places": {
+    "green": {
+      "name": "Brindle Green",
+      "aliases": ["green", "village", "brindle"],
+      "text": "A village green ringed by thatched cottages. A market stall sells odds and ends, and the Mossy Wheel inn faces the old mill across the stream. A flour-dusted man paces by the well.",
+      "sunlight": true,
+      "shop": {"name": "Tamsin's stall", "sells": ["rope", "torch", "rations", "iron spikes", "healer's kit", "potion of healing"]},
+      "inn": {"name": "The Mossy Wheel"},
+      "people": [
+        {"id": "miller", "name": "Miller Hobb", "text": "A flour-dusted man wringing his cap.", "says": "Please, you look like you can handle yourselves.", "quest": "rats"},
+        {"id": "tamsin", "name": "Tamsin", "text": "The stallholder, sharp-eyed and cheerful.", "says": "Rope, torches, a potion if you're feeling rich. Say 'shop' to see what I've got."}
+      ],
+      "exits": [{"to": "mill"}]
+    },
+    "mill": {
+      "name": "The Old Mill",
+      "aliases": ["mill"],
+      "text": "The waterwheel creaks overhead. Sacks are slumped against the walls, gnawed open, and a heap of fallen beams blocks part of the floor. A trapdoor leads down to the cellar.",
+      "light": "dim",
+      "ground": [{"kind": "rubble", "rect": [15, -10, 25, 10]}],
+      "exits": [{"to": "cellar"}]
+    },
+    "cellar": {
+      "name": "The Mill Cellar",
+      "aliases": ["cellar"],
+      "text": "A low stone cellar that stinks of wet grain. Red eyes glint between the barrels.",
+      "light": "dim",
+      "encounter": {"monsters": ["giant rat", "giant rat", "giant rat"], "positions": [[30, 0], [35, 5], [30, 10]]},
+      "loot": {"gp": 5}
+    }
+  }
+}

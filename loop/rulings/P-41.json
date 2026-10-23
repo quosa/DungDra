@@ -1,0 +1,13 @@
+{
+  "id": "P-41",
+  "unit": "GLOSS.enemy",
+  "ambiguity": "GLOSS.enemy ambiguity 3: can one creature be both your ally and your enemy?",
+  "ruling": "Reading B. While any enemy test applies, the creature is your enemy and not your ally, so a Friendly NPC that attacks you no longer counts as an ally.",
+  "tests": [
+    "tests/srd/test_glossary.py::test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally"
+  ],
+  "status": "accepted",
+  "register_id": "R-46",
+  "note": "",
+  "reason": ""
+}

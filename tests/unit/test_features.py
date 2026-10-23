@@ -26,3 +26,18 @@ def test_the_subclass_event_names_the_subclass_unit(game):
     brom = pc(game, "BROM")
     brom.award_xp(900, "testing")
     assert game.log.last("subclass").rule == "CLASS.fighter.fighter-subclass-champion"
+
+
+def test_a_wizard_adds_the_spells_the_player_picks_not_the_first_two(game):
+    mialee = pc(game, "MIALEE")
+    game.answer("spellbook_add", ["Sleep", "burning hands"])
+    mialee.award_xp(300, "testing")
+    assert {"sleep", "burning hands"} <= set(mialee.spellbook)
+
+
+def test_a_wizard_who_picks_a_spell_off_the_list_gets_the_default_two(game):
+    mialee = pc(game, "MIALEE")
+    before = set(mialee.spellbook)
+    game.answer("spellbook_add", ["wish"])
+    mialee.award_xp(300, "testing")
+    assert "wish" not in mialee.spellbook and len(set(mialee.spellbook) - before) == 2

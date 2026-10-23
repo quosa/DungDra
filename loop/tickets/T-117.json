@@ -1,0 +1,31 @@
+{
+  "id": "T-117",
+  "kind": "infra",
+  "unit": "GLOSS.enemy",
+  "title": "Track 'actively works to harm' as creature state (set by an attack or a harmful effect on a PC, or by the GM), and use it when deciding who is an enemy",
+  "tests": [],
+  "status": "fixed",
+  "attempts": 3,
+  "history": [
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (Most of the change is sound. `is_enemy`/`works_to_harm` is a single state-based mechanism that `enemies_of`, `is_ally` (R-46), and the ranged Disadvantage check (now used by both attack and spell attack) all share. The three xfails are correctly lifted, and the unit test edits match R-46. The problem is the spell-save hook: it skips every area spell, which is an invented ruling with no register entry. Because of it, a neutral creature that harms a PC with an area spell never becomes their enemy, so the ticket's 'harmful effect on a PC' isn't fully solved. Reject so that this case is either modelled from the data or sent to a person as a proposed ruling.)",
+        "review: other dungdra/spells.py:640 `if not c.data.get(\"area\")` makes every area spell exempt from 'actively works to harm'. Neither the SRD nor the register (R-45 only says 'acting to harm you (for example, attacking you)') gives that reading, so the fix invents a ruling inside the rule layer. It also gets the ticket's central case wrong: a neutral creature that drops a Fireball or Thunderwave on a PC is clearly working to harm them, yet it never becomes their enemy, so T-113, T-114 and T-115 still happen whenever the harm comes from an area. The fixer needs a principle based on the data, such as whom the caster chose to include or whether the creature is on the caster's own side, or should propose a ruling for a person to decide, and should not hard-wire 'area means never'. The unit test `test_catching_a_companion_in_an_area_spell_doesnt_make_you_its_enemy` locks in this invented reading. It only checks the case of a companion and never the case of a bystander or foe.",
+        "review: test-meaningfulness tests/unit/test_game.py:281 Nothing tests a harmful area effect aimed at a PC by a creature on no side, so the gap above goes unnoticed. Add a test where a neutral caster catches a PC in an area spell, and assert the enemy status your chosen rule produces."
+      ]
+    },
+    {
+      "event": "failed",
+      "problems": [
+        "review: rejected (The core of T-117 is sound: the harming set, is_enemy, R-46 in is_ally, R-52 for area spells, and every Disadvantage, Hide and Sneak Attack check uses it. Rejected because the 'enemy' log line for a targeted spell leaves out the target name, and because harm is only recorded inside the spell helpers and combat.attack. Grapple, shove and Divine Spark's damage mode never mark the actor as the victim's enemy, so the 'harmful effect' part of the ticket is incomplete.)",
+        "review: other dungdra/spells.py:666 For a spell aimed at a creature, `how` is f\"casts {spell} on\" with no target name, and works_to_harm puts it into f\"{actor.name} {how} and is now {victim.name}'s enemy\". The player sees \"JOZAN casts Sacred Flame on and is now WATCHMAN's enemy\". The area version includes the target, but no unit test checks the text of the targeted version, so the garbled line got through.",
+        "review: layering dungdra/spells.py:659 'Actively works to harm' is only recorded in the spell helpers (spell_attack, spell_save, deal) and in combat.attack, not where harm lands. Other harmful actions on a PC skip it: grapple and shove (combat.py:1857 and :1895, both Unarmed Strike options and so attacks, which don't go through combat.attack) and Divine Spark's damage mode (class_actions.py:256, a save plus take_damage). A neutral creature that grapples or shoves a PC never becomes that PC's enemy, so the ticket's 'attack or harmful effect' is only partly done. Record harm at a shared point (for example where take_damage receives attacker=, and in the grapple/shove saves) instead of in each spell helper."
+      ]
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
+    }
+  ]
+}

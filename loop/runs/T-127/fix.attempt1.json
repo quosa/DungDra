@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix resolves T-127. `_check_leave_reach` used to skip a creature on no side (`enemy.team == \"neutral\"`) and any creature on the mover's team. It now skips only the mover's allies, using the existing `game.is_ally`, so it reuses the ally/enemy rule in game.py and doesn't add a second check. A bystander now gets the Opportunity Attack offer, so the acceptance test's xfail could be removed and the test passes with the bystander's answer forced. The bystander's default choice is to strike only at a creature that is its enemy (`game.is_enemy`). Before the fix, any non-party creature struck by default. A bystander that the mover hasn't harmed therefore lets it go, which fits R-53/R-54. The \"no Reaction available\" message now appears only when the creature would have struck, which keeps the change small. There are no special cases for a fixture or a name. The unit tests check behaviour: a bystander lets go a creature that hasn't harmed it, strikes one that has, mentions it is out of Reactions only when it would have struck, and the mover's allies are never asked. Replacing `game.decider` to record what is asked is already done elsewhere in tests/unit, and it is the player-choice boundary. Bash was blocked partway through the review, so I couldn't run the tests myself. The gates passed, and the changes are all in scope."
+ },
+ "problems": [],
+ "cost_usd": 0.1815,
+ "stash": ""
+}

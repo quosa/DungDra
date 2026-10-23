@@ -1,0 +1,10 @@
+{
+  "id": "T-110",
+  "kind": "infra",
+  "unit": "GLOSS.difficult-terrain",
+  "title": "Slopes with an angle in a space: 20 degrees or more is Difficult Terrain, 19 degrees isn't",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": []
+}

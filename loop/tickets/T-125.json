@@ -1,0 +1,21 @@
+{
+  "id": "T-125",
+  "kind": "bug",
+  "unit": "GLOSS.ally",
+  "title": "SRD: an ally is on your side in combat, and a creature on no side has no side; engine: two creatures on no side count as each other's allies",
+  "tests": [
+    "tests/srd/test_glossary.py::test_ally_two_bystanders_on_no_side_arent_each_others_allies"
+  ],
+  "status": "fixed",
+  "attempts": 1,
+  "history": [
+    {
+      "event": "created",
+      "by": "person"
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
+    }
+  ]
+}

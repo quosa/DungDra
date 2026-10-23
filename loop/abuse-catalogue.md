@@ -19,6 +19,12 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Dragging a grappled creature past what your Speed covers once the extra drag cost is counted.
 - Escaping a Speed-0 condition with a special Speed (climbing, swimming or flying away while
   Grappled), using movement left over from before the condition started.
+- Choosing a movement mode (crawl, climb, swim) to drop the Difficult Terrain cost, or claiming
+  "not cumulative" means crawling or climbing through Difficult Terrain costs only 2 ft per foot.
+- Walking through a hostile or neutral non-ally's space (Halfling Nimbleness, an Incapacitated
+  foe) at 1 ft per foot, or calling an indifferent bystander an "ally" to clear its space.
+- Splitting a Difficult Terrain move into short steps, hoping the extra cost is rounded away or
+  that a step starting in Difficult Terrain and ending on clear ground costs nothing extra.
 
 ## Action economy
 - Taking two actions, two Bonus Actions or two Reactions in one turn or round.
@@ -38,6 +44,11 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Spending spell slots, Hit Dice, class-feature uses or ammunition that don't exist.
 - Recovering resources without the rest that restores them; two Long Rests back to back.
 - Negative, zero or huge quantities (buy −5 rations, move 1,000 feet, heal −3).
+- Stretching one Heroic Inspiration over several dice (both d20s of an Advantage roll, every die
+  of a damage roll), spending it twice, or keeping the better of the old and new roll (2014
+  Advantage). Banking a second one, or passing a surplus to a monster, an NPC or a PC who already
+  has it. Rerolling a die someone else rolled (a foe's attack roll against you), or waiting to see
+  whether the roll succeeds before deciding.
 
 ## Targets
 - Targeting a hidden, invisible, unseen, dead or out-of-range creature.
@@ -46,6 +57,10 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Counting a creature on the other side, or one that is merely nearby, as an ally to switch on
   an ally-based benefit (Sneak Attack, Pack Tactics, Help on an attack roll).
 - Targeting yourself, or an ally, where the rule says a creature you can see or an enemy.
+- Claiming a foe isn't "your" enemy because it has only attacked your companions (to Hide in
+  its sight or shoot next to it without Disadvantage), or that a bystander who just attacked you
+  isn't an enemy because the GM never put it on a side. Keeping a Friendly NPC who turned on you
+  as "an ally" for Sneak Attack.
 - More targets than a spell or feature allows.
 - Using a non-sight sense (Tremorsense, a sense that only pinpoints a location) as "a creature
   you can see": to cast a sight-targeted spell, to cancel the unseen-target Disadvantage, or to
@@ -93,6 +108,8 @@ this list and adds new cheats as it finds them. A cheat is tested with
 - Naming creatures for an area spell that the area can't hold: far from the point of origin,
   or on both sides of the caster for one Cone or Cube. Leaving creatures that are in the area
   off the list to spare them from a spell that hits every creature in it.
+- Treating a player character as something other than a creature: sparing a party member from
+  an "each creature" area, or refusing a creature-targeting benefit to them (a PC is a creature).
 - Stretching an area by aiming it at a far point, or by upcasting a spell whose higher levels
   add only damage (a 15-foot Cone stays 15 feet long).
 - Widening a Cone into a quarter-circle (width measured from the axis out to each side) by
@@ -128,6 +145,15 @@ this list and adds new cheats as it finds them. A cheat is tested with
   Disadvantage cancelled, or dropping it when the GM uses static damage numbers.
 - A monster using an action its stat block doesn't list (a weapon from its Gear line it has no
   attack for, a trait like Nimble Escape that another monster has).
+- Ending a curse with magic that doesn't explicitly end curses (Lesser Restoration, a Short or
+  Long Rest, a Potion of Healing), or getting more from Remove Curse or Greater Restoration than
+  their own text gives (keeping a cursed item while its curse goes, every curse from one
+  Greater Restoration).
+- Turning a condition's automatic failure (Deafened on a check that requires hearing, Blinded on
+  one that requires sight) back into a roll with Advantage, a flat bonus or a reroll; or
+  relabelling a check that relies on the lost sense as one that doesn't.
+- Shedding a curse by shape-shifting or by changing the cursed item's owner, when the curse's
+  own effect doesn't say it ends that way.
 
 ## Equipment
 - Two shields; armor you lack training in with no penalty; wielding more weapons than hands.

@@ -1,0 +1,43 @@
+{
+  "fingerprint": "1f5cad7230525a05",
+  "for_review": [],
+  "id": "GLOSS.curses",
+  "kind_waivers": [],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.curses#1",
+      "reason": "Spec §1.2: 'Curses and magical contagions' and 'sentient or cursed items' are out of scope. None of the 32 subset spells, 14 monsters or 7 magic items confers a curse."
+    },
+    {
+      "clause": "GLOSS.curses#2",
+      "reason": "No in-scope effect confers a curse, so there is nothing whose definition could decide what a curse does."
+    },
+    {
+      "clause": "GLOSS.curses#3",
+      "reason": "Remove Curse (level 3) and Greater Restoration (level 5) are above the level-2 spell subset. No in-scope magic explicitly ends curses, and with no curses implemented, a negative test (Lesser Restoration doesn't end a curse) can't be set up."
+    }
+  ],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792531700,
+      "summary": "This is a definitional entry. Effects can curse a creature or an object, and the effect that confers the curse defines what it does. Curses are removed by Remove Curse, Greater Restoration, or other magic that explicitly ends curses. There are no numeric thresholds. The open questions are whether en"
+    },
+    "B": {
+      "at": 1792531708,
+      "summary": "No scenarios or SRD tests exist for GLOSS.curses. The four candidate code lines were matched only by page 179 and belong to other rules (creature type, concentration). No curse implementation exists. Clauses #1–#3 are uncovered, which is acceptable if curses are out of scope."
+    },
+    "C": {
+      "at": 1792531763,
+      "summary": "I wrote no tests for GLOSS.curses because the whole unit is outside the implemented subset.\n\n- **Why it's out of scope:** spec §1.2 (`docs/dnd-golden-scenarios-srd521.md`) excludes \"Curses and magical contagions\" and \"sentient or cursed items\". Nothing in scope (the 32 spells, 14 monsters or 7 magic"
+    },
+    "D": {
+      "at": 1792531769,
+      "summary": "No tests were submitted for GLOSS.curses (the list is empty), so I had nothing to check or try to refute, and I ran no mutations. That seems plausible for this unit. Most of its text is definitional: a curse does whatever the effect that confers it says. The only mechanical clause is that curses can"
+    }
+  },
+  "status": "out-of-scope",
+  "tests": [],
+  "tickets": []
+}

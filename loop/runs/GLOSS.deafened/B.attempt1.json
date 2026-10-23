@@ -1,0 +1,67 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "COND-03",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "**Deafened:** automatically fails hearing checks.",
+    "rule_quote": "automatically fail any ability check that requires hearing",
+    "explanation": "The Deafened line restates clause 2. The other conditions in the scenario are covered by their own units."
+   },
+   {
+    "item": "SPELLS-06",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "Lesser Restoration ends Blinded, Deafened, Paralyzed or Poisoned as a Bonus Action.",
+    "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+    "explanation": "The scenario only mentions Deafened as a condition Lesser Restoration can end. That belongs to the spell's unit and says nothing about what Deafened does."
+   },
+   {
+    "item": "tests/scenarios/test_damage_rest.py::test_cond03",
+    "kind": "test",
+    "verdict": "under-asserts",
+    "evidence": "assert b.check(\"perception\", tags={\"hearing\"}).success is False",
+    "rule_quote": "You can’t hear and automatically fail any ability check that requires hearing.",
+    "explanation": "The test checks clause 2 only for a check the caller tags as hearing. It never checks that an untagged check is made normally. It doesn't check clause 1 (can't hear) either. Which checks require hearing is a gap, and the test relies on the caller's tag."
+   },
+   {
+    "item": "tests/scenarios/test_spells.py::test_spells06",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert not ally.has(\"poisoned\") and game.combat.turn.bonus_used",
+    "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+    "explanation": "The test removes Poisoned with Lesser Restoration. It never applies or checks Deafened."
+   },
+   {
+    "item": "dungdra/effects.py:205",
+    "kind": "code",
+    "verdict": "affected-by-ambiguity",
+    "evidence": "if ctx.kind == \"check\" and \"hearing\" in ctx.tags:",
+    "rule_quote": "automatically fail any ability check that requires hearing",
+    "explanation": "The code fails a check only when the caller tags it \"hearing\". That follows the 'requires hearing' wording, but the SRD never says which checks require hearing, so the tag is an unregistered choice. The branch also carries no SRD[...] tag. It adds no other Deafened effect, which matches reading A of 'You can’t hear'."
+   },
+   {
+    "item": "dungdra/actions.py:201",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "page=181,",
+    "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+    "explanation": "This line matched only on page number. It is about the Dodge action, not Deafened."
+   },
+   {
+    "item": "dungdra/creature.py:244",
+    "kind": "code",
+    "verdict": "not-related",
+    "evidence": "def gain_exhaustion(self, n: int = 1, source: str = \"\", page=181, rule=\"GLOSS.exhaustion\"):",
+    "rule_quote": "While you have the Deafened condition, you experience the following effect.",
+    "explanation": "This line matched only on page number. It is about Exhaustion, not Deafened."
+   }
+  ],
+  "summary": "The engine fails a check for Deafened only when the check is tagged \"hearing\" (dungdra/effects.py:205), which is a reasonable reading of clause 2 but depends on the unresolved gap about which checks require hearing. COND-03 is consistent. The COND-03 test checks only one tagged check, so it under-asserts. SPELLS-06 and its test only mention Deafened in passing, so they are not related. The other page-181 code hits are about Dodge, Exhaustion and food and water, so they are not related. I gave verdicts for two of those hits and didn't list the rest."
+ },
+ "problems": [],
+ "cost_usd": 0.08227369999999999,
+ "session": "9aff64f7-8202-4eae-a269-202666a082ed",
+ "error": null
+}

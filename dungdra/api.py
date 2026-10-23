@@ -46,6 +46,7 @@ from .events import PLAYER
 from .fixtures import make as make_fixture
 from .game import Game
 from .rules import OutOfScope, Refusal, norm
+from .town import xp_text
 
 
 def _enemy_state(e) -> str:
@@ -146,6 +147,32 @@ class Session:
             raise Refusal("Who is acting? Name the character.")
         return g.get(ref)
 
+    def would_harm(self, cmd: dict) -> list:
+        """The creatures a command would harm that its actor can see and doesn't count as an
+        enemy: an attack's target, and a harmful spell's targets and whoever its area catches."""
+        g = self.game
+        if cmd.get("cmd") not in ("attack", "cast"):
+            return []
+        try:
+            a = self._c(cmd.get("actor"))
+            if cmd["cmd"] == "attack":
+                hit = [g.get(cmd["target"])]
+            elif cmd.get("spell") in S.SPELLS and S.is_harmful(cmd["spell"]):
+                ids = cmd.get("targets") or []
+                ids = ids if isinstance(ids, list) else [ids]
+                named = [g.creatures[x] for x in ids if x in g.creatures]
+                hit = named + S.area_catches(g, a, cmd["spell"], named, cmd.get("point"))
+            else:
+                return []
+        except Refusal:
+            return []  # the command itself will say what's wrong with it
+        foes = g.enemies_of(a)
+        out = []
+        for c in hit:
+            if c is not a and not c.dead and c not in foes and c not in out and g.can_see(a, c):
+                out.append(c)
+        return out
+
     def _after_pc_action(self):
         g = self.game
         if g.combat is not None and gm.combat_over(g):
@@ -181,16 +208,18 @@ class Session:
     # -- information --------------------------------------------------------------
     def cmd_status(self):
         g = self.game
-        lines = [c.summary() for c in g.pcs()]
+        lines = [f"{c.summary()}; {xp_text(c)}" for c in g.pcs()]
         if g.combat:
             cb = g.combat
             lines.append(f"Round {cb.round}; turn: {cb.current.name if cb.current else '-'}")
-            lines += [f"  {g.creatures[i].name}: {v}" for i, v in cb.order]
+            lines += [
+                f"  {g.creatures[i].name}: {v}" + (" (dead)" if g.creatures[i].dead else "")
+                for i, v in cb.order
+            ]
             lines += [
                 "Enemies: "
                 + ", ".join(
-                    f"{e.name} ({_enemy_state(e)})"
-                    for e in (g.creatures[i] for i in cb.participants if g.creatures[i].team == "enemy")
+                    f"{e.name} ({_enemy_state(e)})" for e in g.party_foes() if e.id in cb.participants
                 )
             ]
         return "\n".join(lines)
@@ -594,9 +623,13 @@ class Session:
         self.game.get(actor).position = tuple(position)
 
     def cmd_buy(self, item, qty=1, actor=None):
+        if self.adventure is not None:
+            self.adventure.check_trade(item)
         gear.buy(self.game, self._c(actor), item, qty)
 
     def cmd_sell(self, item, qty=1, actor=None):
+        if self.adventure is not None:
+            self.adventure.check_trade(item, selling=True)
         return gear.sell(self.game, self._c(actor), item, qty)
 
     def cmd_lifestyle(self, level, days):
@@ -650,6 +683,11 @@ class Session:
         if self.adventure is None:
             return self.game.scene.name
         return self.adventure.describe()
+
+    def cmd_map(self):
+        if self.adventure is None:
+            raise Refusal("There's no adventure loaded, so there's no map")
+        return self.adventure.map_text()
 
     def cmd_loot(self):
         if self.adventure is None:
@@ -707,6 +745,29 @@ class Session:
         a = self._c(actor)
         a.inventory.remove(item, qty)
         self.game.log.player("inventory", f"{a.name} loses {qty} \u00d7 {item}")
+
+    def _town(self):
+        if self.adventure is None:
+            raise Refusal("There's no adventure loaded")
+        return self.adventure
+
+    def cmd_talk(self, who):
+        return self._town().talk(who)
+
+    def cmd_accept_quest(self):
+        return self._town().accept()
+
+    def cmd_quests(self):
+        return self._town().journal()
+
+    def cmd_turn_in(self):
+        return self._town().turn_in()
+
+    def cmd_wares(self):
+        return self._town().wares()
+
+    def cmd_rent_room(self):
+        return self._town().rent_room()
 
     def cmd_go(self, where=None):
         if self.adventure is None:

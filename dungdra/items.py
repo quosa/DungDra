@@ -95,7 +95,9 @@ class Item:
         return self.unit_weight() * self.qty
 
     def stackable(self) -> bool:
-        return not self.props or set(self.props) <= {"kind"}
+        """Plain gear of one name stacks; armor and shields are each their own item, so a spare
+        doesn't merge into the one being worn."""
+        return (not self.props or set(self.props) <= {"kind"}) and self.kind not in ("armor", "shield")
 
     def __repr__(self):
         return f"{self.display}" + (f" x{self.qty}" if self.qty != 1 else "")
@@ -139,6 +141,10 @@ class Inventory:
                 self.add(n, q * qty)
             return self.find(PACKS[name]["contents"][0][0])
         it = Item(name, qty, **props)
+        if qty > 1 and not it.stackable():  # each suit of armor or shield is an item of its own
+            for _ in range(qty - 1):
+                self.add(Item(name, 1, **props))
+            it.qty = 1
         return self.add(it)
 
     def find(self, name: str, stack_only=False) -> Item | None:

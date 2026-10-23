@@ -321,22 +321,37 @@ def find_actor(session, t: str, default=True):
         return None
 
 
+def _on_creature(session, t: str, actor, verb: str, **cmd) -> list[dict] | dict:
+    """A command aimed at the creature the text names, or a question back when it names none."""
+    tg = find_creatures(session, t, exclude=actor)
+    if not tg:
+        return {"say": f"Whom do you want to {verb}? Name the creature, e.g. 'goblin warrior 1'."}
+    return [{**cmd, "actor": getattr(actor, "id", None), "target": tg[0].id}]
+
+
 def find_creatures(session, t: str, exclude=None, enemies_first=True):
     g = session.game
     found = []
-    cands = sorted(g.creatures.values(), key=lambda c: -len(c.name))
+    # longest names first; the living before the dead, so a name a later fight reused finds the
+    # living creature, and a name only the dead carry still finds them (and is refused as dead)
+    cands = sorted(g.creatures.values(), key=lambda c: (-len(c.name), c.dead))
     taken = t
     for c in cands:
-        if c is exclude or c.dead:
+        if c is exclude:
             continue
         n = norm(c.name)
         if re.search(rf"\b{re.escape(n)}\b", taken):
             found.append(c)
             taken = taken.replace(n, " ")
     if not found:
-        # generic words: "the goblin", "the ogre" -> first living enemy whose name contains it
-        for c in cands:
-            if c is exclude or c.dead or c.team != "enemy":
+        # generic words: "the goblin", "the guard" -> the first creature whose name contains it:
+        # those fighting the party first, then anyone else outside it; for each, the ones the actor
+        # can see before the ones it can't (an unseen one's place isn't given away)
+        foes = g.party_foes()
+        for c in sorted(
+            cands, key=lambda c: (c not in foes, exclude is not None and not g.can_see(exclude, c))
+        ):
+            if c is exclude or c.dead or c.team == "party":
                 continue
             key = getattr(c, "key", "")
             words = set(norm(c.name).split()) | set(key.split())
@@ -412,15 +427,26 @@ def parse(session, text: str) -> list[dict] | dict:
         return [{"cmd": "status"}]
     if re.search(r"\b(sheet|character sheet)\b", t):
         return [{"cmd": "sheet", "actor": aid}]
-    if re.fullmatch(r"(look|look around|where are we|describe)", t):
-        return [{"cmd": "look"}]
-    m = re.search(
-        r"\b(?:go|goes|head|heads|travel|travels|walk|walks|set off|proceed|return)\s+"
-        r"(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$",
+    town = _town_cmds(session, t)
+    if town is not None:
+        return town
+    m = re.fullmatch(
+        r"look|look around|where are we|where am i|describe|exits|where can we go"
+        r"|(?:show (?:me )?)?(?:the )?(map)",
         t,
     )
+    if m:
+        return [{"cmd": m.group(1) or "look"}]
+    m = re.search(
+        r"\b(?:go|goes|head|heads|travel|travels|walk|walks|set off|proceed|return)\s+"
+        r"(?:back\s+)?(?:on\s+)?(?:to|towards?|for|into)\s+(?:the\s+)?(.+)$"
+        r"|^(?:(?:go|head|turn|walk) )?back$|^(?:return|retreat)$",
+        t,
+    )
+    if m and m.group(1) and _names_creature(session, m.group(1)):
+        m = None  # "walks toward goblin warrior 1" is a move toward a creature, not a journey
     if m and g.combat is None and session.adventure is not None:
-        return [{"cmd": "go", "where": m.group(1)}]
+        return [{"cmd": "go", "where": m.group(1) or "back"}]
     if (
         m or re.search(r"\b(continue|go on|press on|move on|onward|leave|travel)\b", t)
     ) and g.combat is not None:
@@ -504,36 +530,25 @@ def parse(session, text: str) -> list[dict] | dict:
     if m:
         tg = find_creatures(session, t, exclude=actor)
         return [{"cmd": "drink", "actor": aid, "target": tg[0].id if tg else None}]
-    if re.search(r"\b(healer'?s kit)\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "stabilize", "actor": aid, "target": tg[0].id, "kit": True}]
+    if re.search(r"\b(healer'?s kit)\b", t) and not re.search(r"\b(buys?|sells?)\b", t):
+        return _on_creature(session, t, actor, "use the Healer's Kit on", cmd="stabilize", kit=True)
     if re.search(r"\bstabili[sz]es?\b|\bfirst aid\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "stabilize", "actor": aid, "target": tg[0].id}]
+        return _on_creature(session, t, actor, "stabilize", cmd="stabilize")
     if re.search(r"\bhides?\b", t):
         cover = "total" if "total cover" in t else "three-quarters"
         return [{"cmd": "hide", "actor": aid, "cover": cover}]
     if re.search(r"\bgrapples?\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [{"cmd": "grapple", "actor": aid, "target": tg[0].id}]
+        return _on_creature(session, t, actor, "grapple", cmd="grapple")
     if re.search(r"\bshoves?\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        return [
-            {
-                "cmd": "shove",
-                "actor": aid,
-                "target": tg[0].id,
-                "effect": "push" if "push" in t or "away" in t else "prone",
-            }
-        ]
+        effect = "push" if "push" in t or "away" in t else "prone"
+        return _on_creature(session, t, actor, "shove", cmd="shove", effect=effect)
     if re.search(r"\b(stands? up|gets? up)\b", t):
         return [{"cmd": "stand", "actor": aid}]
     if re.search(r"\bturn undead\b", t):
         return [{"cmd": "turn_undead", "actor": aid}]
     if re.search(r"\bdivine spark\b", t):
-        tg = find_creatures(session, t, exclude=actor)
         mode = "harm" if re.search(r"\b(harm|damage|smite|blast)\b", t) else "heal"
-        return [{"cmd": "divine_spark", "actor": aid, "target": tg[0].id, "mode": mode}]
+        return _on_creature(session, t, actor, "target with Divine Spark", cmd="divine_spark", mode=mode)
     if re.search(r"\b(pick|picks|open|opens) the lock\b|\blockpick", t):
         return [{"cmd": "use_tool", "actor": aid, "task": "pick a lock"}]
     if re.search(r"\bdisarms?\b", t):
@@ -582,7 +597,7 @@ def parse(session, text: str) -> list[dict] | dict:
         return [cmd]
     if re.search(r"\bhelps?\b", t):
         tg = find_creatures(session, t, exclude=actor)
-        if tg and tg[0].team == "enemy":
+        if tg and tg[0] in g.party_foes():
             return [{"cmd": "help", "actor": aid, "enemy": tg[0].id}]
         skill = next((s for s in SKILLS if s in t), None)
         tool = next((x for x in TOOLS if x in t), None)
@@ -644,23 +659,9 @@ def parse(session, text: str) -> list[dict] | dict:
                 "approach": approach,
             }
         ]
-    m = re.search(r"\bmoves?\s+(\d+)\s*(?:ft|feet)?\s*(toward|towards|to|away from)?\s*", t)
-    if m or re.search(r"\b(approach(es)?|charges?|closes? in on|runs? (to|toward))\b", t):
-        tg = find_creatures(session, t, exclude=actor)
-        cmd = {"cmd": "move", "actor": aid}
-        if m:
-            cmd["feet"] = int(m.group(1))
-        if tg:
-            key = "away_from" if m and m.group(2) == "away from" else "toward"
-            cmd[key] = tg[0].id
-        if "climb" in t:
-            cmd["mode"] = "climb"
-        cmds = [cmd]
-        if re.search(VERB_ATTACK, t):
-            att = _attack_cmd(session, actor, t)
-            if att:
-                cmds.append(att)
-        return cmds
+    move = _move_cmds(session, actor, t)
+    if move is not None:
+        return move
     if re.search(VERB_ATTACK, t) or re.search(r"\battack", t):
         att = _attack_cmd(session, actor, t)
         if att:
@@ -717,12 +718,74 @@ def parse(session, text: str) -> list[dict] | dict:
     }
 
 
+def _names_creature(session, where: str) -> bool:
+    """Does 'go to <where>' name a creature rather than a place: a living creature by its full
+    name, or something that matches a creature here and no place of the adventure?"""
+    w = norm(where)
+    living = [c for c in session.game.creatures.values() if not c.dead]
+    if any(re.search(rf"\b{re.escape(norm(c.name))}\b", w) for c in living):
+        return True
+    adv = session.adventure
+    return (adv is None or adv.resolve(where) is None) and bool(find_creatures(session, w))
+
+
+def _town_cmds(session, t: str) -> list[dict] | None:
+    """Talking, quests, shops and inns, when an adventure is loaded; None for any other line."""
+    if session.adventure is None:
+        return None
+    m = re.fullmatch(r"(?:\w+ )?(?:talks?|speaks?|chats?|asks?) (?:to |with )?(.+)", t)
+    if m:
+        return [{"cmd": "talk", "who": m.group(1)}]
+    if re.search(
+        r"\b(?:accept|accepts|take|takes|agree to) (?:the |that |this )?(?:quest|job|task|offer)\b", t
+    ):
+        return [{"cmd": "accept_quest"}]
+    if re.fullmatch(r"(?:show (?:me )?)?(?:the |my |our )?(?:quests?|journal|quest log)", t):
+        return [{"cmd": "quests"}]
+    if re.search(
+        r"\b(?:turn in|hand in|report back|claim (?:the |our )?reward|collect (?:the |our )?reward)\b", t
+    ):
+        return [{"cmd": "turn_in"}]
+    if re.fullmatch(
+        r"shop|browse|wares|what'?s for sale|what do (?:you|they) sell|(?:show|see) (?:me )?(?:the )?wares", t
+    ):
+        return [{"cmd": "wares"}]
+    if re.search(r"\b(?:rent|rents|book|take) (?:a |some )?rooms?\b|\b(?:stay|sleep|rest) at the inn\b", t):
+        return [{"cmd": "rent_room"}]
+    return None
+
+
+def _move_cmds(session, actor, t: str) -> list[dict] | dict | None:
+    """A move ("moves 30 feet toward X", "move toward X", "walks to X", "runs away from X",
+    "charges X"), with an attack after it when the line has one; None when the line isn't a move."""
+    m = re.search(
+        r"\b(?:moves?|walks?|runs?|steps?|go|goes|heads?)\s+"
+        r"(?:(\d+)\s*(?:ft|feet)?\s*)?(towards?|to|away from)?\b",
+        t,
+    )
+    charge = re.search(r"\b(approach(es)?|charges?|closes? in on)\b", t)
+    if not ((m and (m.group(1) or m.group(2))) or charge):
+        return None
+    tg = find_creatures(session, t, exclude=actor)
+    cmd = {"cmd": "move", "actor": getattr(actor, "id", None)}
+    if m and m.group(1):
+        cmd["feet"] = int(m.group(1))
+    if tg:
+        cmd["away_from" if m and m.group(2) == "away from" else "toward"] = tg[0].id
+    elif "feet" not in cmd:
+        return {"say": "Move toward whom? Name the creature, e.g. 'move toward goblin warrior 1'."}
+    if "climb" in t:
+        cmd["mode"] = "climb"
+    att = _attack_cmd(session, actor, t) if re.search(VERB_ATTACK, t) else None
+    return [cmd, att] if att else [cmd]
+
+
 def _combat_help(session, lead: str) -> str:
     """A combat-aware hint: whose turn it is, what they can do, and which enemies are about."""
     g = session.game
     cb = g.combat
     cur = cb.current
-    foes = [e for e in g.creatures.values() if e.team == "enemy" and not e.dead and not e.notes.get("fled")]
+    foes = [e for e in g.party_foes() if not e.notes.get("fled")]
     seen = [e for e in foes if cur is not None and g.can_see(cur, e)]
     hidden = [e for e in foes if e not in seen]
     lines = [lead]

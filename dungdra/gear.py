@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from string import capwords
+
 from .data.equipment import ARMOR, DON_DOFF, GP, LIFESTYLE, TOOLS, WEAPONS, canonical, item_cost
 from .items import Item, fmt_cp, make_change
 from .rules import DAY, Refusal, div, div_up, norm
@@ -152,22 +154,32 @@ def buy(game, pc, name: str, qty: int = 1):
     pc.inventory.add(n, qty)
     game.log.player(
         "trade",
-        f"{pc.name} buys {qty} × {n.title()} for {fmt_cp(price)} (left: {pc.purse})",
+        f"{pc.name} buys {qty} × {capwords(n)} for {fmt_cp(price)} (left: {pc.purse})",
         page=89,
         rule="EQUIP.coins",
     )
 
 
 def sell(game, pc, name: str, qty: int = 1):
-    it = pc.inventory.find(name)
-    if it is None:
+    """Sell `qty` of an item, a spare before the one being worn."""
+    owned = pc.inventory.find_all(name) or [x for x in [pc.inventory.find(name)] if x]
+    if not owned:
         raise Refusal(f"{pc.name} doesn't have {name}")
-    if it is pc.armor or it is pc.shield:
-        raise Refusal(f"Take off {it.display} before selling it")
-    price = it.sale_price() * qty
-    pc.inventory.remove(it, qty)
-    if it in pc.wielded:
-        pc.wielded.remove(it)
+    spare = [x for x in owned if x is not pc.armor and x is not pc.shield]
+    if not spare:
+        raise Refusal(f"Take off {owned[0].display} before selling it")
+    if sum(x.qty for x in spare) < qty:
+        raise Refusal(f"{pc.name} has only {sum(x.qty for x in spare)} × {spare[0].display} to sell")
+    it, price, left = spare[0], 0, qty
+    for x in spare:  # from one stack or several separate items, until `qty` are sold
+        n = min(left, x.qty)
+        price += x.sale_price() * n
+        pc.inventory.remove(x, n)
+        if x in pc.wielded and x.qty <= 0:  # the last of the stack in hand is gone
+            pc.wielded.remove(x)
+        left -= n
+        if not left:
+            break
     pc.purse.add(price)
     game.log.player(
         "trade",
@@ -191,7 +203,9 @@ def pay_with(game, pc, cost_cp: int, coin_cp: int):
 
 
 # -- lifestyle (p.101) --------------------------------------------------------------------
-def live(game, pcs, lifestyle: str, days: int):
+def live(game, pcs, lifestyle: str, days: int, advance: bool = True):
+    """Each PC pays for `days` of a lifestyle (p.101); the days pass unless the caller passes the
+    time itself (`advance=False`: a night at an inn, spent in a Long Rest)."""
     lifestyle = norm(lifestyle)
     if lifestyle not in LIFESTYLE:
         raise Refusal(f"Lifestyles: {', '.join(LIFESTYLE)}")
@@ -207,7 +221,8 @@ def live(game, pcs, lifestyle: str, days: int):
             page=101,
             rule="EQUIP.lifestyle-expenses",
         )
-    game.advance(days * DAY, f"{days} days of {lifestyle.title()} living")
+    if advance:
+        game.advance(days * DAY, f"{days} days of {lifestyle.title()} living")
 
 
 # -- crafting (p.103) ---------------------------------------------------------------------

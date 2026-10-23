@@ -236,3 +236,6 @@ loop/triage/
 
 # The loop run records of a unit whose id ends in ".cover" (PLAY.combat.cover), which *.cover above hides
 !loop/runs/*.cover/
+
+# the play CLI writes the details of a command that hit a bug here
+dungdra-errors.log

@@ -1,0 +1,99 @@
+{
+  "fingerprint": "94989c67e7b7a249",
+  "for_review": [],
+  "id": "GLOSS.difficult-terrain",
+  "kind_waivers": [
+    {
+      "clause": "GLOSS.difficult-terrain#3",
+      "kind": "boundary",
+      "reason": "The clause has no threshold. A space either is Difficult Terrain or it isn't."
+    },
+    {
+      "clause": "GLOSS.difficult-terrain#4",
+      "kind": "boundary",
+      "reason": "This is the clause that introduces the list of sources and has no threshold of its own. The thresholds are in #5-#10."
+    },
+    {
+      "clause": "GLOSS.difficult-terrain#7",
+      "kind": "boundary",
+      "reason": "Rubble is present or not; 'heavy' snow has no measurable boundary in the engine (see not_testable)."
+    }
+  ],
+  "out_of_scope": [
+    {
+      "clause": "GLOSS.difficult-terrain#5",
+      "reason": "The Tiny exemption needs a Tiny creature, and none of the in-scope monsters or PCs is Tiny."
+    }
+  ],
+  "refuted": [
+    "tests/srd/test_glossary.py::test_difficult_terrain_leftover_movement_cant_cover_another_step",
+    "tests/srd/test_glossary.py::test_five_feet_of_clear_ground_costs_five"
+  ],
+  "relations": [],
+  "revisit": true,
+  "stages": {
+    "A": {
+      "at": 1792532161,
+      "summary": "Difficult Terrain adds 1 extra foot of cost per foot moved in the space, and several sources don't stack. Six kinds of source are listed, all judged against the creature that is moving: a creature that is neither Tiny nor your ally, furniture sized for your size or larger, heavy snow, ice, rubble or"
+    },
+    "B": {
+      "at": 1792532183,
+      "summary": "The engine only has a coarse Difficult Terrain flag: a per-move `difficult` argument and a scene-wide `scene.difficult`. Together they add 1 extra foot per foot once. Clauses #5–#10 (creature, furniture, liquid, narrow opening, slope) have no implementation or SRD tests. Neither scenario test checks"
+    },
+    "C": {
+      "at": 1792554378,
+      "summary": "I added 30 tests for GLOSS.difficult-terrain to tests/srd/test_glossary.py: 22 green and 8 red. With --runxfail, each red test fails on the expected value, not on an error. The engine applies Difficult Terrain correctly when it is a per-move `difficult` flag or a scene-wide flag: 1 extra foot per fo"
+    },
+    "D": {
+      "at": 1792554545,
+      "summary": "I kept 27 of the 30 tests. I refuted two as duplicates and sent one to a person.\n\n**Rule text.** I checked the disputed readings against the rules text and they hold up. GLOSS.crawling says \"1 extra foot (2 extra feet in Difficult Terrain)\", so the 15 ft expected for 5 ft of crawling through rubble "
+    }
+  },
+  "status": "red",
+  "tests": [
+    "tests/srd/test_glossary.py::test_difficult_terrain_doubles_the_cost_of_a_move",
+    "tests/srd/test_glossary.py::test_rubble_scene_costs_extra_through_move_command",
+    "tests/srd/test_glossary.py::test_clear_ground_costs_one_foot_per_foot",
+    "tests/srd/test_glossary.py::test_difficult_terrain_move_that_uses_exactly_all_speed_is_allowed",
+    "tests/srd/test_glossary.py::test_difficult_terrain_one_step_past_speed_is_refused",
+    "tests/srd/test_glossary.py::test_difficult_terrain_isnt_free_through_move_command",
+    "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_costs_ten",
+    "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_ten_feet_left_fits_exactly",
+    "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused",
+    "tests/srd/test_glossary.py::test_two_difficult_terrain_sources_cost_one_extra_foot",
+    "tests/srd/test_glossary.py::test_hostile_creature_in_rubble_isnt_doubly_difficult",
+    "tests/srd/test_glossary.py::test_space_with_no_source_isnt_difficult",
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone",
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost",
+    "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost",
+    "tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra",
+    "tests/srd/test_glossary.py::test_moving_outside_the_web_costs_normally",
+    "tests/srd/test_glossary.py::test_moving_through_a_hostile_creatures_space_costs_extra",
+    "tests/srd/test_glossary.py::test_move_command_through_a_hostile_creature_costs_extra",
+    "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra",
+    "tests/srd/test_glossary.py::test_moving_through_an_allys_space_costs_normally",
+    "tests/srd/test_glossary.py::test_move_command_through_an_allys_space_costs_normally",
+    "tests/srd/test_glossary.py::test_moving_through_a_friendly_creatures_space_costs_normally",
+    "tests/srd/test_glossary.py::test_hostile_creature_off_the_path_adds_nothing",
+    "tests/srd/test_glossary.py::test_small_hostile_creatures_space_is_difficult",
+    "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free",
+    "tests/srd/test_glossary.py::test_rubble_from_a_collapsed_roof_is_difficult_terrain",
+    "tests/srd/test_glossary.py::test_untriggered_roof_leaves_no_rubble"
+  ],
+  "tickets": [
+    "T-97",
+    "T-98",
+    "T-99",
+    "T-100",
+    "T-101",
+    "T-102",
+    "T-103",
+    "T-104",
+    "T-105",
+    "T-106",
+    "T-107",
+    "T-108",
+    "T-109",
+    "T-110"
+  ]
+}

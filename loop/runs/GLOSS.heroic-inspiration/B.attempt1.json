@@ -1,0 +1,115 @@
+{
+ "output": {
+  "verdicts": [
+   {
+    "item": "CORE-02",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "Only one die is rerolled, chosen by the player. Inspiration is consumed, and he can't hold two instances.",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it, and you must use the new roll",
+    "explanation": "Rerolling one chosen die and consuming the Inspiration matches clauses 1–3. The one-die reading is the proposed Reading A."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02d_heroic_inspiration_reroll_one_die",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert r.dice == [11, 18] and r.chosen == 18",
+    "rule_quote": "you must use the new roll",
+    "explanation": "The die showing 3 is rerolled to 11 and replaces the old value. Inspiration is consumed (`heroic_inspiration is False`). The other die stays as rolled."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02d_inspiration_cannot_hold_two",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert a.heroic_inspiration and b.heroic_inspiration",
+    "rule_quote": "If you gain Heroic Inspiration but already have it, it’s lost unless you give it to a player character who lacks it.",
+    "explanation": "A second gain is given to a PC who lacks it. The next gain, when nobody lacks it, is logged as lost."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02a_one_advantage",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "r = bob.check(ability=\"str\", adv=[\"high ground\"])",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+    "explanation": "This is about Advantage only, with no Heroic Inspiration."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02b_mixed_cancels",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "r = bob.check(ability=\"str\", adv=[\"a\", \"b\"], dis=[\"c\"])",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+    "explanation": "This is about Advantage and Disadvantage cancelling, which is a different rule."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02c_three_advantages_two_dice",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "r = bob.check(ability=\"str\", adv=[\"x\", \"y\", \"z\"])",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+    "explanation": "This is about Advantage sources not stacking, which is a different rule."
+   },
+   {
+    "item": "tests/scenarios/test_core.py::test_core02e_halfling_luck_offered_not_automatic",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "lidda.traits.add(\"luck\")",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it",
+    "explanation": "This tests the Halfling Luck trait, which is a separate rule."
+   },
+   {
+    "item": "ORIG-03",
+    "kind": "scenario",
+    "verdict": "consistent",
+    "evidence": "He can reroll **any die**, including damage dice, and must use the new roll.",
+    "rule_quote": "you can expend it to reroll any die immediately after rolling it, and you must use the new roll",
+    "explanation": "Reroll of any die including damage dice, a forced new roll, and a second instance offered to a PC who lacks it (otherwise lost) all match the unit."
+   },
+   {
+    "item": "tests/scenarios/test_damage_rest.py::test_orig03_human_inspiration",
+    "kind": "test",
+    "verdict": "consistent",
+    "evidence": "assert \"lost\" in game.log.last(\"inspiration\").text",
+    "rule_quote": "If you gain Heroic Inspiration but already have it, it’s lost unless you give it to a player character who lacks it.",
+    "explanation": "Lidda already has Inspiration, so Jozan's duplicate is lost. A damage die is then rerolled and the Inspiration consumed. Both agree with the unit."
+   },
+   {
+    "item": "ORIG-01",
+    "kind": "scenario",
+    "verdict": "not-related",
+    "evidence": "**Human:** Small or Medium, Resourceful (Heroic Inspiration on each Long Rest), Skillful (+1 skill), Versatile (+1 Origin feat).",
+    "rule_quote": "If you (a player character) have Heroic Inspiration",
+    "explanation": "This is a species trait list. How Heroic Inspiration works is not checked here, only that the Human gets it."
+   },
+   {
+    "item": "tests/scenarios/test_creation.py::test_orig01_species",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert {\"resourceful\", \"skillful\", \"versatile\"} <= j.traits and len(j.feats) == 2",
+    "rule_quote": "If you (a player character) have Heroic Inspiration",
+    "explanation": "This only checks that the trait names are present, not Heroic Inspiration behaviour."
+   },
+   {
+    "item": "tests/scenarios/test_creation.py::test_orig01_elf_lineage_spell_at_3",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "assert \"detect magic\" in m.always_prepared",
+    "rule_quote": "If you (a player character) have Heroic Inspiration",
+    "explanation": "This is about the Elf lineage spell, not Heroic Inspiration."
+   },
+   {
+    "item": "tests/scenarios/test_creation.py::test_orig01_saves_advantage",
+    "kind": "test",
+    "verdict": "not-related",
+    "evidence": "r = b.save(\"con\", 11, avoid={\"poisoned\"})",
+    "rule_quote": "If you (a player character) have Heroic Inspiration",
+    "explanation": "This is about Dwarf save Advantage, not Heroic Inspiration."
+   }
+  ],
+  "summary": "The 3 scenarios and 10 tests I was given all have verdicts: 4 consistent (CORE-02, ORIG-03, and 3 of the tests) and the rest not-related. The Heroic Inspiration behaviour lives in test_core02d_* and test_orig03_human_inspiration, which agree with the unit. The ORIG-01 items and the Advantage and Halfling Luck tests only matched on the term. No engine code carries `SRD[GLOSS.heroic-inspiration…]`. The page-183 candidates in actions.py, combat.py, creature.py, damage.py, effects.py and explore.py are about Hide, Knocking Out, Help and jumping, so they get no verdicts. The clause \"must use the new roll\" is only asserted incidentally. Nothing checks the ambiguous points, namely a single die versus the whole roll, the timing window, and only your own dice."
+ },
+ "problems": [],
+ "cost_usd": 0.0936664,
+ "session": "5d102320-5627-4664-ac63-ca4edf498be5",
+ "error": null
+}

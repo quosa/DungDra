@@ -6,6 +6,7 @@ from dungdra import actions
 from dungdra import class_actions as CA
 from dungdra import combat as C
 from dungdra import spells as S
+from dungdra import traps as TR
 from dungdra.api import Session
 from dungdra.effects import SpeedPenalty
 from dungdra.mounted import mount
@@ -2344,3 +2345,1119 @@ def test_creature_type_studying_fey_lore_with_history_is_refused(game):
         {"cmd": "study", "actor": mialee.id, "creature_type": "fey", "skill": "history"},
         match="Arcana",
     )
+
+
+# ==================================================================================================
+# GLOSS.creature (p.179): Creature
+# ==================================================================================================
+CREATURE = "GLOSS.creature"
+
+
+def jozan_and_brom(game):
+    """JOZAN (Cure Wounds and Bless prepared) with a wounded BROM in reach of his touch."""
+    j = pc(game, "JOZAN", (0, 0))
+    for spell in ("cure wounds", "bless"):
+        if spell not in j.prepared:
+            j.prepared.append(spell)
+    brom = pc(game, "BROM", (5, 0))
+    brom.hp = 1
+    return j, brom
+
+
+def wave_over_brom(game, name_brom):
+    """MIALEE casts Thunderwave east with BROM (a PC) and a goblin side by side in the Cube.
+    Both fail their saves (d20=1 each) and take 2d8=[2,2] = 4 thunder damage. The goblin is
+    always named; BROM only when `name_brom`."""
+    m = pc(game, "MIALEE", (0, 0))
+    m.prepared.append("thunderwave")
+    brom = pc(game, "BROM", (5, 0))
+    gob = mon(game, "goblin warrior", (5, 5), name="GOB")
+    gob.hp = 30
+    before = brom.hp
+    game.dice.force_str("d8=[2,2]; d20=[1,1]")
+    S.cast(game, m, "thunderwave", [brom, gob] if name_brom else [gob], point=(15, 0))
+    return brom, before, gob
+
+
+# ---------------------------------------------------------------- #1 every being, PCs included
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_pc_is_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, brom = jozan_and_brom(game)
+    game.dice.force_str("d8=[4,5]")
+    out = Session(game).execute({"cmd": "cast", "spell": "cure wounds", "actor": j.id, "targets": [brom.id]})
+    assert out.get("ok") is not False, out
+    assert brom.hp == min(brom.max_hp, 1 + 9 + j.mod("wis"))
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_pc_in_an_area_that_hits_each_creature_is_hit(game):
+    brom, before, gob = wave_over_brom(game, name_brom=True)
+    assert brom.hp == before - 4
+    assert gob.hp == 26
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="positive")
+def test_creature_a_monster_is_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, _ = jozan_and_brom(game)
+    gob = mon(game, "goblin warrior", (0, 5))
+    gob.hp = 1
+    game.dice.force_str("d8=[4,5]")
+    S.cast(game, j, "cure wounds", [gob])
+    assert gob.hp == min(gob.max_hp, 1 + 9 + j.mod("wis"))
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="negative")
+def test_creature_an_object_isnt_a_creature_for_a_spell_that_targets_a_creature(game):
+    j, _ = jozan_and_brom(game)
+    game.scene.objects["door"] = {"position": (0, 5)}
+    assert_refused_cleanly(
+        game,
+        Session(game).execute,
+        {"cmd": "cast", "spell": "cure wounds", "actor": j.id, "targets": ["door"]},
+    )
+
+
+@pytest.mark.srd(CREATURE, clause=f"{CREATURE}#1", kind="abuse")
+def test_creature_leaving_a_pc_off_the_list_doesnt_spare_it_from_each_creature(game):
+    # Thunderwave hits each creature in the Cube; a PC is a creature, so leaving BROM unnamed
+    # doesn't keep him out of it
+    brom, before, gob = wave_over_brom(game, name_brom=False)
+    assert brom.hp == before - 4
+    assert gob.hp == 26
+
+
+# ================= GLOSS.deafened =================
+DEAF = "GLOSS.deafened"
+
+
+def deafened_brom(game, pos=(0, 0)):
+    brom = pc(game, "BROM", pos)
+    brom.add_condition("deafened", "test")
+    assert brom.has("deafened")
+    return brom
+
+
+# ---------------- #1 · You can't hear ----------------
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="positive")
+def test_deafened_listening_search_doesnt_find_a_hidden_creature(game):
+    # A deafened creature listening for a hidden goblin can't hear it: the Search fails
+    # without a roll and the goblin stays hidden
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.hidden_total = 12
+    r = actions.search(game, brom, "perception", tags={"hearing"}, what="listening for footsteps")
+    assert r.success is False
+    assert r.dice == []
+    assert gob.hidden_total == 12
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-40")
+def test_deafened_searching_by_sight_still_finds_a_hidden_creature(game):
+    # Not hearing doesn't stop a creature from seeing: a Perception Search by sight is rolled
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (30, 0))
+    gob.hidden_total = 12
+    game.dice.force_str("d20=[20]")
+    r = actions.search(game, brom, "perception", what="looking around")
+    assert r.dice == [20]
+    assert gob.hidden_total is None
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-41")
+def test_deafened_gives_no_advantage_on_attacks_against_it(game):
+    # Unlike Blinded, not hearing gives attackers nothing: a goblin's attack is a normal roll
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.dice.force_str("d20=[5]")
+    r = C.attack(game, gob, brom, attack_name="scimitar")
+    assert r.roll.mode == "normal"
+    assert r.roll.dice == [5]
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative", ruling="R-41")
+def test_deafened_attack_rolls_are_normal(game):
+    brom = deafened_brom(game)
+    gob = mon(game, "goblin warrior", (5, 0))
+    game.answer("use_savage_attacker", False)
+    game.dice.force_str("d20=[5]")
+    r = C.attack(game, brom, gob, weapon="longsword")
+    assert r.roll.mode == "normal"
+    assert r.roll.dice == [5]
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#1", kind="negative")
+def test_deafened_saving_throws_are_rolled_normally(game):
+    # Deafened names only ability checks; a saving throw isn't one, so it is rolled
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[19]")
+    r = brom.save("wis", dc=10)
+    assert r.dice == [19]
+    assert r.success is True
+
+
+# ---------------- #2 · automatically fail checks that require hearing ----------------
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_hearing_check_fails_automatically(game):
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"})
+    assert r.success is False
+    assert r.auto == "fail"
+    assert r.dice == []
+    assert "Deafened" in r.auto_reason
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_any_ability_check_requiring_hearing_fails(game):
+    # 'any ability check': not only Perception. Insight from a voice heard through a door
+    brom = deafened_brom(game)
+    r = brom.check("insight", dc=1, tags={"hearing"})
+    assert r.success is False
+    assert r.dice == []
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_automatic_failure_is_logged(game):
+    brom = deafened_brom(game)
+    start = len(game.log.events)
+    brom.check("perception", dc=1, tags={"hearing"})
+    texts = [e.text for e in game.log.since(start)]
+    assert any("automatic failure" in t and "Deafened" in t for t in texts)
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="positive")
+def test_deafened_automatic_failure_cites_the_rule(game):
+    brom = deafened_brom(game)
+    start = len(game.log.events)
+    brom.check("perception", dc=1, tags={"hearing"})
+    events = [e for e in game.log.since(start) if "Deafened" in e.text]
+    assert events
+    assert events[0].rule == f"{DEAF}#2"
+    assert str(events[0].page) == "181"
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_hearing_check_without_deafened_is_rolled(game):
+    brom = pc(game, "BROM", (0, 0))
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5, tags={"hearing"})
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_deafened_check_not_requiring_hearing_is_rolled(game):
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    r = brom.check("athletics", dc=5)
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="R-40")
+def test_deafened_perception_by_sight_is_rolled(game):
+    # Reading A: a Perception check that can succeed by sight doesn't require hearing
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5)
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative", ruling="R-40")
+def test_deafened_check_command_rolls_an_ordinary_perception_check(game):
+    s = Session(game)
+    brom = deafened_brom(game)
+    game.dice.force_str("d20=[15]")
+    out = s.execute({"cmd": "check", "actor": brom.id, "skill": "perception", "dc": 5})
+    assert out["ok"] is True
+    assert out["result"]["success"] is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="negative")
+def test_hearing_check_rolls_again_once_deafened_ends(game):
+    brom = deafened_brom(game)
+    brom.remove_condition("deafened")
+    game.dice.force_str("d20=[15]")
+    r = brom.check("perception", dc=5, tags={"hearing"})
+    assert r.dice == [15]
+    assert r.success is True
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="abuse")
+def test_deafened_hearing_check_with_advantage_still_fails(game):
+    # Advantage (from Help or anywhere else) can't rescue a check that fails automatically
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"}, adv=("Help",))
+    assert r.success is False
+    assert r.dice == []
+
+
+@pytest.mark.srd(DEAF, clause=f"{DEAF}#2", kind="abuse")
+def test_deafened_hearing_check_with_a_bonus_still_fails(game):
+    # A flat bonus that would beat the DC on any roll doesn't turn an automatic failure into a roll
+    brom = deafened_brom(game)
+    r = brom.check("perception", dc=1, tags={"hearing"}, bonus=[(20, "test bonus")])
+    assert r.success is False
+    assert r.dice == []
+
+
+# ================ GLOSS.difficult-terrain (p.181) ================
+DT = "GLOSS.difficult-terrain"
+
+
+def rubble_scene(game, name="BROM"):
+    """The collapsing roof (p.199) leaves its area full of rubble; save and damage dice are forced."""
+    c = pc(game, name, (0, 0))
+    roof = TR.place(game, "collapsing roof")
+    game.dice.force_str("d20=[20]; d10=[1,1]")
+    TR.trigger(game, c, roof)
+    assert game.scene.difficult is True
+    return c
+
+
+def webbed_goblin(game):
+    """Mialee webs a goblin that makes its save; the 20-ft Cube covers x 25..40, y 0..15 (R-35)."""
+    m = pc(game, "MIALEE", (-30, 5))
+    m.award_xp(900)
+    m.prepared.append("web")
+    gob = mon(game, "goblin warrior", (30, 5))
+    game.dice.force_str("d20=[20]")
+    S.cast(game, m, "web", [gob])
+    assert not gob.has("restrained")
+    in_combat(game, gob, m)
+    return gob
+
+
+# ---------------- #1 · every foot in the space costs 1 extra foot ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="positive")
+def test_difficult_terrain_doubles_the_cost_of_a_move(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(10, 0), difficult=True) == 20
+    assert game.combat.turn.movement_left == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="positive")
+def test_rubble_scene_costs_extra_through_move_command(game):
+    s = Session(game)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    out = s.execute({"cmd": "move", "actor": brom.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 10
+    assert brom.position == (10, 0)
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="negative")
+def test_clear_ground_costs_one_foot_per_foot(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(10, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="boundary")
+def test_difficult_terrain_move_that_uses_exactly_all_speed_is_allowed(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert brom.speed() == 30
+    assert C.move(game, brom, to=(15, 0), difficult=True) == 30
+    assert game.combat.turn.movement_left == 0
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="boundary")
+def test_difficult_terrain_one_step_past_speed_is_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert_refused_cleanly(game, C.move, game, brom, to=(20, 0), difficult=True)
+    assert brom.position == (0, 0)
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#1", kind="abuse")
+def test_difficult_terrain_isnt_free_through_move_command(game):
+    # 20 ft of rubble costs 40 ft: more than BROM's Speed 30
+    s = Session(game)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert_refused_cleanly(game, s.execute, {"cmd": "move", "actor": brom.id, "to": [20, 0]})
+    assert brom.position == (0, 0)
+
+
+# ---------------- #2 · 5 feet costs 10 feet ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="positive")
+def test_five_feet_of_difficult_terrain_costs_ten(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="boundary")
+def test_five_feet_of_difficult_terrain_with_ten_feet_left_fits_exactly(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    C.move(game, brom, to=(20, 0))
+    assert game.combat.turn.movement_left == 10
+    assert C.move(game, brom, to=(25, 0), difficult=True) == 10
+    assert game.combat.turn.movement_left == 0
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#2", kind="boundary")
+def test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    C.move(game, brom, to=(25, 0))
+    assert game.combat.turn.movement_left == 5
+    assert_refused_cleanly(game, C.move, game, brom, to=(30, 0), difficult=True)
+
+
+# ---------------- #3 · not cumulative ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="positive")
+def test_two_difficult_terrain_sources_cost_one_extra_foot(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    # rubble everywhere and a second Difficult source on the move: still 2 ft per foot, not 3
+    assert C.move(game, brom, to=(5, 0), difficult=True) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="positive")
+def test_hostile_creature_in_rubble_isnt_doubly_difficult(game):
+    # every square is rubble and the bandit's square also holds a hostile creature: 10 ft costs 20
+    lidda = rubble_scene(game, "LIDDA")
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative")
+def test_space_with_no_source_isnt_difficult(game):
+    brom = pc(game, "BROM", (0, 0))
+    in_combat(game, brom)
+    assert game.scene.difficult is False
+    assert C.move(game, brom, to=(5, 0)) == 5
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="R-42")
+def test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone(game):
+    # Reading A: only Difficult Terrain sources don't stack; crawling's own extra foot adds on top
+    brom = rubble_scene(game)
+    brom.add_condition("prone", "test")
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="negative", ruling="R-42")
+def test_not_cumulative_doesnt_cancel_the_crawl_cost(game):
+    # Reading A: crawling 5 ft through rubble costs 5 + 5 (crawl) + 5 (Difficult Terrain)
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0), mode="crawl") == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#3", kind="abuse", ruling="R-42")
+def test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost(game):
+    # after 5 ft of rubble (10 ft) 20 ft is left; crawling 10 more ft through rubble costs 30
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(5, 0)) == 10
+    assert_refused_cleanly(game, C.move, game, brom, to=(15, 0), mode="crawl")
+
+
+# ---------------- #4 · a space with a listed source "or something similar" ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#4", kind="positive")
+def test_moving_inside_a_web_costs_extra(game):
+    gob = webbed_goblin(game)
+    assert C.move(game, gob, to=(35, 5)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#4", kind="negative")
+def test_moving_outside_the_web_costs_normally(game):
+    gob = webbed_goblin(game)
+    gob.position = (45, 5)
+    assert C.move(game, gob, to=(50, 5)) == 5
+
+
+# ---------------- #5 · a creature that isn't Tiny or your ally ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
+def test_moving_through_a_hostile_creatures_space_costs_extra(game):
+    # LIDDA (Small) can pass a Medium bandit (Halfling Nimbleness); its square costs 10 ft
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 15
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive")
+def test_move_command_through_a_hostile_creature_costs_extra(game):
+    s = Session(game)
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    out = s.execute({"cmd": "move", "actor": lidda.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="positive", ruling="R-43")
+def test_moving_through_an_indifferent_creatures_space_costs_extra(game):
+    # Reading A: a creature that isn't your ally counts even when it isn't hostile
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team = "neutral"
+    guard.attitude = "indifferent"
+    in_combat(game, lidda, guard)
+    assert not game.is_ally(lidda, guard)
+    assert C.move(game, lidda, to=(10, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_moving_through_an_allys_space_costs_normally(game):
+    # 2014 made every creature's space Difficult Terrain; in 2024 an ally's space isn't
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    in_combat(game, lidda, brom)
+    assert game.is_ally(lidda, brom)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_move_command_through_an_allys_space_costs_normally(game):
+    s = Session(game)
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    in_combat(game, lidda, brom)
+    out = s.execute({"cmd": "move", "actor": lidda.id, "to": [10, 0]})
+    assert out["ok"] is True
+    assert game.combat.turn.movement_left == 20
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative", ruling="R-37")
+def test_moving_through_a_friendly_creatures_space_costs_normally(game):
+    # R-37: a creature Friendly toward the party is its ally, so its space isn't Difficult Terrain
+    lidda = pc(game, "LIDDA", (0, 0))
+    guard = mon(game, "guard", (5, 0))
+    guard.team = "neutral"
+    guard.attitude = "friendly"
+    in_combat(game, lidda, guard)
+    assert game.is_ally(lidda, guard)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="negative")
+def test_hostile_creature_off_the_path_adds_nothing(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 10))
+    in_combat(game, lidda, bandit)
+    assert C.move(game, lidda, to=(10, 0)) == 10
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="boundary")
+def test_small_hostile_creatures_space_is_difficult(game):
+    # Small is the smallest size that still counts, one size above Tiny. The goblin is
+    # Incapacitated, so BROM may pass through its space.
+    brom = pc(game, "BROM", (0, 0))
+    gob = mon(game, "goblin warrior", (5, 0))
+    gob.add_condition("incapacitated", "test")
+    in_combat(game, brom, gob)
+    assert C.move(game, brom, to=(10, 0)) == 15
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#5", kind="abuse")
+def test_cant_walk_through_an_enemy_for_free(game):
+    # 30 ft past a bandit costs 35 ft: more than LIDDA's Speed 30
+    lidda = pc(game, "LIDDA", (0, 0))
+    bandit = mon(game, "bandit", (5, 0))
+    in_combat(game, lidda, bandit)
+    assert_refused_cleanly(game, C.move, game, lidda, to=(30, 0))
+    assert lidda.position == (0, 0)
+
+
+# ---------------- #7 · heavy snow, ice, rubble, or undergrowth ----------------
+@pytest.mark.srd(DT, clause=f"{DT}#7", kind="positive")
+def test_rubble_from_a_collapsed_roof_is_difficult_terrain(game):
+    brom = rubble_scene(game)
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(15, 0)) == 30
+
+
+@pytest.mark.srd(DT, clause=f"{DT}#7", kind="negative")
+def test_untriggered_roof_leaves_no_rubble(game):
+    brom = pc(game, "BROM", (0, 0))
+    TR.place(game, "collapsing roof")
+    in_combat(game, brom)
+    assert C.move(game, brom, to=(15, 0)) == 15
+
+
+# ==================================================================================================
+# GLOSS.enemy (p.181): Enemy
+# ==================================================================================================
+ENEMY = "GLOSS.enemy"
+
+
+def archer_scene(game):
+    """LIDDA with her Shortbow and a goblin target 30 ft off with nobody next to it. A ranged
+    attack has Disadvantage while an enemy who can see her stands within 5 ft (p.15), so the
+    shot is a probe for who counts as her enemy."""
+    lidda = pc(game, "LIDDA", (0, 0))
+    target = mon(game, "goblin warrior", (30, 0), name="TARGET")
+    return lidda, target
+
+
+def shoot(game, lidda, target, disadvantage):
+    """One Shortbow shot that misses (d20=2, rolled twice under Disadvantage); returns the mode."""
+    game.dice.force_str("d20=[2,2]" if disadvantage else "d20=[2]")
+    return C.attack(game, lidda, target, weapon="shortbow").roll.mode
+
+
+def d20s_rolled(game):
+    return sum(1 for h in game.dice.history if h[0] == 20)
+
+
+def neutral(game, pos=(5, 0), attitude="indifferent", name="WATCHMAN"):
+    """A guard who isn't in the party and hasn't been put on either side."""
+    g = mon(game, "guard", pos, name=name)
+    g.team = "neutral"
+    g.attitude = attitude
+    return g
+
+
+def spear_at(game, attacker, victim):
+    """`attacker` thrusts its Spear at `victim` and misses (d20=2): an attempt to harm it."""
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, attacker, victim, attack_name="spear").hit
+
+
+# ---------------- #1 · fights against you in combat ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive")
+def test_enemy_a_foe_in_the_fight_next_to_you_imposes_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    gob = mon(game, "goblin warrior", (5, 0), name="BRAWLER")
+    in_combat(game, lidda, gob)
+    game.dice.force_str("d20=[2,2]")
+    r = C.attack(game, lidda, target, weapon="shortbow")
+    assert r.roll.mode == "disadvantage"
+    assert any("BRAWLER" in s for s in r.roll.dis)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="R-44")
+def test_enemy_a_foe_attacking_only_your_companion_is_still_your_enemy(game):
+    # The goblin fights the party but has only gone for BROM: it is still LIDDA's enemy.
+    lidda, target = archer_scene(game)
+    brom = pc(game, "BROM", (10, 0))
+    gob = mon(game, "goblin warrior", (5, 0), name="BRAWLER")
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, gob, brom, attack_name="scimitar").hit
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive")
+def test_enemy_a_foe_who_sees_you_stops_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    gob = mon(game, "goblin warrior", (30, 0))
+    assert_refused_cleanly(
+        game, actions.hide, game, lidda, cover="three-quarters", seen_by=[gob.id], match="enemy"
+    )
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_companion_next_to_you_imposes_no_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    pc(game, "BROM", (5, 0))
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_companion_who_sees_you_doesnt_stop_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (30, 0))
+    game.dice.force_str("d20=[15]")
+    r = actions.hide(game, lidda, cover="three-quarters", seen_by=[brom.id])
+    assert r.success and lidda.has("invisible")
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_help_cant_distract_a_companion(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (5, 0))
+    assert_refused_cleanly(game, actions.help_attack, game, lidda, brom)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_a_bystander_out_of_the_fight_imposes_no_ranged_disadvantage(game):
+    # The 2014-style "every non-party creature is an enemy" is wrong: the watchman isn't fighting.
+    lidda, target = archer_scene(game)
+    neutral(game)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative")
+def test_enemy_help_cant_distract_a_bystander_out_of_the_fight(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    assert_refused_cleanly(game, actions.help_attack, game, lidda, w)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="abuse", ruling="R-44")
+def test_enemy_hiding_in_view_of_a_foe_busy_with_your_companion_is_refused(game):
+    # "It's fighting BROM, not me": the goblin is still LIDDA's enemy, and it sees her.
+    lidda = pc(game, "LIDDA", (0, 0))
+    brom = pc(game, "BROM", (30, 5))
+    gob = mon(game, "goblin warrior", (30, 0))
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, gob, brom, attack_name="scimitar").hit
+    assert_refused_cleanly(game, actions.hide, game, lidda, cover="three-quarters", seen_by=[gob.id])
+
+
+# ---------------- #2 · actively works to harm you ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
+def test_enemy_a_bystander_who_attacks_you_imposes_ranged_disadvantage(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-45")
+def test_enemy_a_bystander_who_attacked_you_and_sees_you_stops_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    assert_refused_cleanly(game, actions.hide, game, lidda, cover="three-quarters", seen_by=[w.id])
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-46")
+def test_enemy_a_friendly_npc_who_attacks_you_is_no_longer_your_ally(game):
+    lidda, gob = sneak_setup(game)
+    turncoat = bystander(game, pos=(5, 5), attitude="friendly")
+    spear_at(game, turncoat, lidda)
+    assert_stab_without_sneak_attack(game, lidda, gob)
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-45")
+def test_enemy_a_hostile_attitude_alone_doesnt_make_an_enemy(game):
+    # The watchman dislikes the party but does nothing to harm LIDDA.
+    lidda, target = archer_scene(game)
+    neutral(game, attitude="hostile")
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-45")
+def test_enemy_a_hostile_bystander_who_sees_you_doesnt_stop_you_hiding(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game, pos=(30, 0), attitude="hostile")
+    game.dice.force_str("d20=[15]")
+    r = actions.hide(game, lidda, cover="three-quarters", seen_by=[w.id])
+    assert r.success and lidda.has("invisible")
+
+
+# ---------------- #3 · designated as your enemy by the rules or GM ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#3", kind="positive")
+def test_enemy_a_creature_the_gm_puts_on_the_enemy_side_is_an_enemy(game):
+    lidda, target = archer_scene(game)
+    s = Session(game)
+    out = s.execute({"cmd": "spawn", "monsters": ["guard"], "positions": [[5, 0]], "team": "enemy"})
+    assert out["ok"], out
+    before = d20s_rolled(game)
+    game.dice.force_str("d20=[2,2]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": target.id, "weapon": "shortbow"})
+    assert out["ok"], out
+    assert d20s_rolled(game) - before == 2, "the shot wasn't rolled with Disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#3", kind="negative")
+def test_enemy_a_creature_the_gm_leaves_neutral_is_no_enemy(game):
+    lidda, target = archer_scene(game)
+    s = Session(game)
+    out = s.execute({"cmd": "spawn", "monsters": ["guard"], "positions": [[5, 0]], "team": "neutral"})
+    assert out["ok"], out
+    before = d20s_rolled(game)
+    game.dice.force_str("d20=[2]")
+    out = s.execute({"cmd": "attack", "actor": lidda.id, "target": target.id, "weapon": "shortbow"})
+    assert out["ok"], out
+    assert d20s_rolled(game) - before == 1, "the shot was rolled with Disadvantage"
+
+
+# =============================== GLOSS.heroic-inspiration (p.183) ===============================
+HI = "GLOSS.heroic-inspiration"
+
+
+def inspired(game, name="JOZAN", pos=(0, 0)):
+    c = pc(game, name, pos)
+    c.heroic_inspiration = True
+    return c
+
+
+def grant(game, who):
+    """Grant Heroic Inspiration; a clean refusal (citing a page) is an acceptable outcome."""
+    from dungdra import rest as R
+    from dungdra.rules import Refusal
+
+    try:
+        return R.grant_heroic_inspiration(game, who)
+    except Refusal as e:
+        assert e.page is not None or e.ruling is not None, e.reason
+        return e
+
+
+def inspiration_offers(game, start=0):
+    return [e for e in game.log.events[start:] if e.kind == "offer" and "Heroic Inspiration" in e.text]
+
+
+# ---------------- #1 · expend it to reroll any die immediately after rolling it ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_the_d20_of_a_check(game):
+    jozan = inspired(game)
+    game.dice.force_str("d20=[4,17]")
+    game.answer("inspiration", 0)
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [17] and r.chosen == 17 and r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_the_d20_of_a_saving_throw(game):
+    jozan = inspired(game)
+    game.dice.force_str("d20=[2,16]")
+    game.answer("inspiration", 0)
+    r = jozan.save("dex", 15)
+    assert r.dice == [16] and r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_a_weapon_damage_die(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)  # keeps the attack roll
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[15]; d6=[1,5]")
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 5 + 2
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_a_cantrip_damage_die(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (10, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[2]; d8=[1,8]")  # the ogre fails its save; the d8 is rerolled
+    S.cast(game, jozan, "sacred flame", targets=[ogre.id])
+    assert hp - ogre.hp == 8
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_rerolls_a_hit_die(game):
+    from dungdra import rest as R
+
+    jozan = inspired(game)
+    jozan.hp = 1
+    game.answer("inspiration", 0)
+    game.dice.force_str("d8=[1,7]")
+    R.short_rest(game, [jozan], hit_dice={jozan.id: 1})
+    assert jozan.hp == 1 + 7 + jozan.mod("con")
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive", ruling="R-47")
+def test_heroic_inspiration_rerolls_a_magic_missile_die(game):
+    mialee = inspired(game, "MIALEE")
+    ogre = mon(game, "ogre", (20, 0))
+    hp = ogre.hp
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d4=[1,1,1,4]")
+    S.cast(game, mialee, "magic missile", targets=[ogre.id], slot=1)
+    assert hp - ogre.hp == (4 + 1) + (1 + 1) + (1 + 1)
+    assert mialee.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="positive")
+def test_heroic_inspiration_reroll_through_the_session(game):
+    jozan = inspired(game)
+    s = Session(game)
+    out = s.execute({"cmd": "answer", "key": "inspiration", "value": 0, "actor": jozan.id})
+    assert out["ok"], out
+    game.dice.force_str("d20=[3,18]")
+    out = s.execute({"cmd": "check", "ability": "wis", "dc": 15, "actor": jozan.id})
+    assert out["ok"], out
+    assert out["result"] == {"total": 18 + jozan.mod("wis"), "success": True}
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative")
+def test_heroic_inspiration_without_it_no_reroll(game):
+    jozan = pc(game, "JOZAN")
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[4]")
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [4] and not r.rerolls and not r.success
+    assert not inspiration_offers(game)
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative")
+def test_heroic_inspiration_declined_is_kept(game):
+    jozan = inspired(game)
+    game.answer("inspiration", None)
+    game.dice.force_str("d20=[4]")
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [4] and not r.success
+    assert jozan.heroic_inspiration is True
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="R-49")
+def test_heroic_inspiration_cant_reroll_a_monsters_attack_roll(game):
+    # "after rolling it": only the dice you roll yourself; a foe's attack roll isn't yours.
+    jozan = inspired(game, pos=(5, 0))
+    ogre = mon(game, "ogre", (0, 0))
+    game.answer("inspiration", 0, who=jozan)
+    game.answer("inspiration_damage", 0, who=jozan)
+    game.dice.force_str("d20=[18]; d8=[6,6]")
+    r = C.attack(game, ogre, jozan, attack_name="greatclub")
+    assert r.hit and r.damage == 6 + 6 + 4
+    assert jozan.heroic_inspiration is True
+    assert not inspiration_offers(game)
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="negative", ruling="R-50")
+def test_heroic_inspiration_a_monster_cant_gain_it(game):
+    jozan = pc(game, "JOZAN")
+    ogre = mon(game, "ogre", (5, 0))
+    grant(game, ogre)
+    assert ogre.heroic_inspiration is False
+    game.answer("inspiration", 0, who=ogre)
+    game.dice.force_str("d20=[3]")
+    r = C.attack(game, ogre, jozan, attack_name="greatclub")
+    assert r.roll.dice == [3] and not r.hit
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="R-48")
+def test_heroic_inspiration_is_offered_before_the_roll_resolves(game):
+    # "immediately after rolling it": the choice comes once the die is known, before the result.
+    jozan = inspired(game)
+    start = len(game.log.events)
+    game.answer("inspiration", None)
+    game.dice.force_str("d20=[9]")
+    jozan.check(ability="wis", dc=12)
+    events = game.log.events[start:]
+    offer = events.index(inspiration_offers(game, start)[0])
+    result = next(i for i, e in enumerate(events) if e.kind == "check")
+    assert offer < result, [e.kind for e in events]
+    assert "9" in events[offer].text
+    assert not any(w in events[offer].text.lower() for w in ("success", "fail"))
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="boundary", ruling="R-48")
+def test_heroic_inspiration_window_closes_once_the_next_roll_comes(game):
+    jozan = inspired(game)
+    game.answer("inspiration", None)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[3,10,19]")
+    first = jozan.check(ability="wis", dc=15)
+    second = jozan.check(ability="wis", dc=15)
+    assert first.dice == [3] and not first.success  # the earlier die is past rerolling
+    assert second.dice == [19] and jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="R-47")
+def test_heroic_inspiration_rerolls_only_one_die_of_an_advantage_roll(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.answer("inspiration", 1)  # tries to spend the same Inspiration on the second d20
+    game.dice.force_str("d20=[2,3,6]")
+    r = jozan.check(ability="wis", adv=["Help"], dc=15)
+    assert r.dice == [6, 3] and r.chosen == 6 and not r.success
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse", ruling="R-47")
+def test_heroic_inspiration_rerolls_one_die_of_a_multi_die_damage_roll(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)
+    game.answer("inspiration_damage", 0)
+    game.answer("inspiration_damage", 1)  # a second reroll from the same Inspiration
+    game.dice.force_str("d20=[20]; d6=[1,1,6]")  # a Critical Hit: 2d6, the first one rerolled
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 6 + 1 + 2
+    assert jozan.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#1", kind="abuse")
+def test_heroic_inspiration_spent_cant_be_spent_again(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[2,15,1]")
+    assert jozan.check(ability="wis", dc=15).dice == [15]
+    r = jozan.check(ability="wis", dc=15)
+    assert r.dice == [1] and not r.rerolls
+
+
+# ---------------- #2 · you must use the new roll ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="positive")
+def test_heroic_inspiration_a_worse_reroll_stands(game):
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[15,2]")
+    r = jozan.check(ability="wis", dc=12)
+    assert r.chosen == 2 and r.total == 2 + jozan.mod("wis") and not r.success
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="positive")
+def test_heroic_inspiration_a_worse_damage_reroll_stands(game):
+    jozan = inspired(game)
+    ogre = mon(game, "ogre", (5, 0))
+    game.answer("inspiration", None)
+    game.answer("inspiration_damage", 0)
+    game.dice.force_str("d20=[15]; d6=[5,1]")
+    r = C.attack(game, jozan, ogre, weapon="mace")
+    assert r.damage == 1 + 2
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#2", kind="negative", ruling="R-47")
+def test_heroic_inspiration_on_disadvantage_the_new_die_joins_the_pair(game):
+    # The new die replaces only the rerolled one; Disadvantage still takes the lower of the pair.
+    jozan = inspired(game)
+    game.answer("inspiration", 0)
+    game.dice.force_str("d20=[3,8,19]")
+    r = jozan.check(ability="wis", dis=["Poisoned"], dc=10)
+    assert r.dice == [19, 8] and r.chosen == 8 and r.success
+
+
+# ---------------- #3 · a second one is lost unless given to a PC who lacks it ----------------
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="positive")
+def test_heroic_inspiration_duplicate_given_to_a_pc_who_lacks_it(game):
+    jozan, lidda = inspired(game), pc(game, "LIDDA", (5, 0))
+    game.answer("give_inspiration", lidda.id)
+    grant(game, jozan)
+    assert jozan.heroic_inspiration and lidda.heroic_inspiration
+    # one each: Jozan spends his and has none left
+    game.answer("inspiration", 0, who=jozan)
+    game.answer("inspiration", 0, who=jozan)
+    game.dice.force_str("d20=[2,14,5]")
+    assert jozan.check(ability="wis").dice == [14]
+    assert jozan.check(ability="wis").dice == [5]
+    assert lidda.heroic_inspiration is True
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="positive")
+def test_heroic_inspiration_duplicate_lost_when_every_pc_has_it(game):
+    jozan, lidda = inspired(game), inspired(game, "LIDDA", (5, 0))
+    grant(game, jozan)
+    assert "lost" in game.log.last("inspiration").text
+    assert jozan.heroic_inspiration and lidda.heroic_inspiration
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="negative", ruling="R-51")
+def test_heroic_inspiration_duplicate_not_given_is_lost(game):
+    jozan, lidda = inspired(game), pc(game, "LIDDA", (5, 0))
+    game.answer("give_inspiration", None)
+    grant(game, jozan)
+    assert "lost" in game.log.last("inspiration").text
+    assert lidda.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="R-50")
+def test_heroic_inspiration_cant_be_given_to_a_monster(game):
+    jozan = inspired(game)
+    pc(game, "LIDDA", (5, 0))
+    ogre = mon(game, "ogre", (10, 0))
+    game.answer("give_inspiration", ogre.id)
+    grant(game, jozan)
+    assert ogre.heroic_inspiration is False
+
+
+@pytest.mark.srd(HI, clause=f"{HI}#3", kind="abuse", ruling="R-51")
+def test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it(game):
+    jozan, lidda = inspired(game), inspired(game, "LIDDA", (5, 0))
+    pc(game, "BROM", (10, 0))
+    game.answer("give_inspiration", lidda.id)
+    grant(game, jozan)
+    given = [e.text for e in game.log.of_kind("inspiration") if "gives" in e.text]
+    assert not any(lidda.name in t for t in given), given
+
+
+# ---------------- GLOSS.ally #3 · a creature on no side has no side (T-125) ----------------
+@pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
+def test_ally_two_bystanders_on_no_side_arent_each_others_allies(game):
+    # Two wolves that belong to no side: neither is on the other's side, so no Pack Tactics.
+    brom = pc(game, "BROM", (0, 0))
+    wolf = mon(game, "wolf", (5, 0))
+    other = mon(game, "wolf", (0, 5), name="SECOND WOLF")
+    wolf.team = other.team = "neutral"
+    game.dice.force_str("d20=[18]; d6=[3]")
+    r = C.attack(game, wolf, brom)
+    assert r.roll.mode != "advantage"
+
+
+# ---------------- GLOSS.enemy · how long harm lasts, and who it brings in (T-126) ----------------
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-53")
+def test_enemy_harm_wears_off_when_the_combat_ends(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    in_combat(game, lidda, w)
+    assert w in game.enemies_of(lidda)
+    C.end_combat(game)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="negative", ruling="R-53")
+def test_enemy_harm_outside_a_combat_doesnt_wear_off_with_time(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    spear_at(game, w, lidda)
+    game.advance(3600)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="R-54")
+def test_enemy_a_bystander_attacked_by_one_of_you_in_a_combat_fights_your_whole_side(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)  # next to LIDDA
+    brom = pc(game, "BROM", (10, 0))  # next to the watchman, not to LIDDA
+    in_combat(game, brom, w, lidda)
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, brom, w, weapon="longsword").hit
+    set_turn(game, lidda)
+    assert shoot(game, lidda, target, disadvantage=True) == "disadvantage"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative", ruling="R-54")
+def test_enemy_outside_a_combat_a_bystander_a_companion_attacked_isnt_your_enemy(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game)
+    brom = pc(game, "BROM", (10, 0))
+    game.dice.force_str("d20=[2]")
+    assert not C.attack(game, brom, w, weapon="longsword").hit
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+@pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="negative", ruling="R-54")
+def test_enemy_a_bystander_who_attacks_you_brings_no_other_bystander_into_the_fight(game):
+    lidda, target = archer_scene(game)
+    w = neutral(game, pos=(0, 5))
+    porter = mon(game, "bandit", (5, 0), name="PORTER")  # next to LIDDA, on no side
+    porter.team = "neutral"
+    in_combat(game, w, lidda, porter)
+    spear_at(game, w, lidda)
+    w.position = (0, 30)  # the watchman steps back out of reach
+    set_turn(game, lidda)
+    assert w in game.enemies_of(lidda) and porter not in game.enemies_of(lidda)
+    assert shoot(game, lidda, target, disadvantage=False) == "normal"
+
+
+# ---------------- GLOSS.opportunity-attacks · any creature that can see you (T-127) ----------------
+@pytest.mark.srd("GLOSS.opportunity-attacks", kind="positive")
+def test_opportunity_attack_a_bystander_can_strike_a_creature_leaving_its_reach(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = neutral(game)
+    in_combat(game, lidda, w)
+    game.answer("opportunity_attack", True, who=w)
+    game.dice.force_str("d20=[2]")
+    C.move(game, lidda, to=(-20, 0))
+    assert any("WATCHMAN makes an Opportunity Attack against LIDDA" in e.text for e in game.log.of_kind("oa"))

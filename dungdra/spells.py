@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .d20 import D20Roll, roll_d20_test
+from .d20 import D20Roll, inspiration_reroll, roll_d20_test
 from .data.equipment import GP
 from .data.spells import SPELLS, spell_level, spell_rule
 from .effects import ACBonus, AdvNext, Condition, Ctx, Effect, SpeedPenalty, can_see
@@ -505,6 +505,15 @@ def _target_kind(spell, sd, targets):
     """Refuses a target of the wrong kind before anything is paid: a spell whose data says
     targets="creature" can't be aimed at an object (or anything else that isn't a creature), and
     one whose data says targets="object" can't be aimed at a creature."""
+    # SRD[SPELL.casting-spells.effects.targets#1] a spell that targets creatures or objects needs
+    # one named; without it there's nothing to cast it on
+    if not targets and not sd.get("area") and sd["targets"] in ("creature", "object"):
+        raise Refusal(
+            f"{spell.title()} targets {'an object' if sd['targets'] == 'object' else 'a creature'}: "
+            f"name the target",
+            page=106,
+            rule="SPELL.casting-spells.effects.targets#1",
+        )
     if sd["targets"] == "object":
         # SRD[SPELL.casting-spells.effects.targets#1] the description says the spell targets objects
         for t in targets:
@@ -574,14 +583,17 @@ def spell_attack(game, c: Casting, target, melee=False, dist=None):
     caster = c.caster
     dist = dist if dist is not None else caster.distance_to(target)
     ctx = Ctx("attack", caster, target=target, melee=melee, ranged=not melee, spell=c.spell, distance=dist)
+    # SRD[GLOSS.enemy#2] R-45: a spell attack works to harm its target, hit or miss
+    game.works_to_harm(caster, target, c.spell.title())
     acc = caster.gather(ctx)
     roll = D20Roll("attack", f"spell attack ({c.spell.title()}) on {target.name}", caster.name)
     roll.mods = [(c.attack, "spell attack bonus")] + acc.mods
     roll.adv, roll.dis = list(acc.adv), list(acc.dis)
     if not melee:
         for e in game.creatures.values():
+            # SRD[GLOSS.enemy#2] close combat counts an enemy by any test, a bystander who attacked included
             if (
-                e.team not in (caster.team, "neutral")
+                game.is_enemy(caster, e)
                 and not e.dead
                 and dist_points(e.position, caster.position) <= 5
                 and not e.has("incapacitated")
@@ -632,6 +644,7 @@ def spell_save(game, c: Casting, target, ability, ignore_cover=False, avoid=(), 
         bonus=bonus,
         avoid=avoid,
         source=c.caster,
+        harm=_harms(game, c, target),
         label=label or f"{ability.title()} save vs {c.spell.title()} (DC {c.dc})",
         page=c.data["page"],
         rule=c.rule,
@@ -644,11 +657,24 @@ def roll_dice(game, expr, crit=False, actor=None):
     return roll_damage_dice(game, actor, expr, crit)
 
 
+def _harms(game, c: Casting, target) -> bool:
+    """Does the spell's save or damage on `target` work to harm it? Records it with the ruling
+    that applies; the save or damage then knows not to record it again."""
+    # SRD[GLOSS.enemy#2] R-45: aimed at you, it's working to harm you. R-52: an area works to harm
+    # everyone it catches except the creatures that were the caster's allies when it was cast
+    area = bool(c.data.get("area"))
+    if not is_creature(target) or (area and game.is_ally(c.caster, target)):
+        return False
+    game.works_to_harm(c.caster, target, c.spell.title(), ruling="R-52" if area else "R-45")
+    return True
+
+
 def deal(game, c, target, amount, dtype, crit=False):
+    harm = _harms(game, c, target)
     if amount <= 0:
         return 0
     dealt = target.take_damage(
-        amount, dtype, attacker=c.caster, crit=crit, source=c.spell.title(), rule=c.rule
+        amount, dtype, attacker=c.caster, crit=crit, source=c.spell.title(), rule=c.rule, harm=harm
     )
     from .combat import _post_damage_hooks
 
@@ -1069,6 +1095,30 @@ def _area_point(spell, caster, targets, point):
     return None
 
 
+def is_harmful(spell: str) -> bool:
+    """Does the spell deal damage, force a save or make an attack (rather than heal or help)?"""
+    sd = SPELLS[spell]
+    return not sd.get("healing") and bool(sd.get("dtype") or sd.get("save") or sd.get("attack"))
+
+
+def area_catches(game, caster, spell, targets, point=None) -> list:
+    """The living creatures the spell's area would catch if `caster` cast it now at `targets` or
+    `point`: the same placement and geometry as casting it, cover aside. [] without an area."""
+    sd = SPELLS[spell]
+    if not sd.get("area") or _area_point(spell, caster, targets, point) is None:
+        return []
+    as_if = Casting(spell, caster, sd["level"], None, 0, 0)
+    shape, size, origin, toward = _area_placement(as_if, targets, point)
+    pool = [t for t in targets if is_creature(t)] if sd.get("area_choice") else list(game.creatures.values())
+    return [
+        t
+        for t in pool
+        if not t.dead
+        and not (sd["range"] == "self" and t is caster)
+        and in_area(shape, size, origin, (*t.position, t.elevation), toward=toward)
+    ]
+
+
 def _area_placement(c, targets, point=None):
     """The spell's area as (shape, size, origin, toward): shape and size from its `area` data, the
     origin at the caster for a spell with a range of Self (else at the placement point), and the
@@ -1348,11 +1398,10 @@ def _magic_missile(game, c, targets, option=None, **kw):
                 rule="SPELL.shield",
             )
             continue
-        total = 0
-        for _ in range(n):
-            r = game.dice.roll(4)
-            total += r + 1
-        deal(game, c, t, total, "force")
+        rolls = [game.dice.roll(4) for _ in range(n)]
+        # SRD[GLOSS.heroic-inspiration#1]: any die, a dart's d4 included, can be rerolled.
+        rolls = inspiration_reroll(game, c.caster, rolls, 4)
+        deal(game, c, t, sum(r + 1 for r in rolls), "force")
 
 
 def _sanctuary(game, c, targets, **kw):
@@ -1547,6 +1596,7 @@ def spiritual_weapon_attack(game, caster, target, first=False):
 
 def _web(game, c, targets, point=None, option=None, **kw):
     # SRD[GLOSS.cube#1] the webs fill a 20-foot Cube at the point: the area decides who saves (R-35)
+    shape, size, origin, toward = _area_placement(c, targets, point)
     targets = _area_targets(game, c, targets, point=point)
     anchored = option != "unanchored"
     name = f"web ({c.caster.name})"
@@ -1556,7 +1606,9 @@ def _web(game, c, targets, point=None, option=None, **kw):
         "concentration": c.caster.id,
         "flammable": True,
         "anchored": anchored,
+        # SRD[GLOSS.difficult-terrain#4] the Cube's spaces are Difficult Terrain, for any mover
         "difficult": True,
+        "area": {"shape": shape, "size": size, "origin": origin, "toward": toward},
         "lightly_obscured": True,
         "caught": [t.id for t in targets if is_creature(t)],
     }
@@ -1615,6 +1667,10 @@ def burn_web(game, web_name, creatures_in_fire=()):
 # checks: what a spell's own text refuses, run by `_check` before anything is paid or let go
 # ---------------------------------------------------------------------------
 def _fire_bolt_check(game, caster, level, targets, point, option):
+    if not targets:
+        raise Refusal(
+            "Fire Bolt needs a target: name a creature or an object", page=132, rule="SPELL.fire-bolt"
+        )
     for t in targets:
         if isinstance(t, str) and t not in game.scene.objects:
             raise Refusal(f"No target {t!r}")

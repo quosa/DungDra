@@ -131,7 +131,7 @@ def combat_over(game) -> bool:
     if cb is None:
         return True
     ids = cb.participants
-    foes = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "enemy"]
+    foes = [c for c in game.party_foes() if c.id in ids]  # anyone still fighting the party
     pcs = [
         game.creatures[i]
         for i in ids
@@ -151,6 +151,7 @@ def finish_combat(game):
     ids = [i for i, _ in cb.order if i in cb.participants] + sorted(
         i for i in cb.participants if i not in dict(cb.order)
     )
+    # XP only for the monsters' side: beating up a bystander earns nothing (decided by a person)
     foes = [game.creatures[i] for i in ids if i in game.creatures and game.creatures[i].team == "enemy"]
     pcs = [p for p in game.pcs() if p.id in cb.participants]
     if not any(not p.dead and p.hp > 0 for p in pcs):

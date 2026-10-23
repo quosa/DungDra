@@ -1,0 +1,30 @@
+{
+  "fingerprint": "bc509576e24c2edd",
+  "for_review": [],
+  "id": "GLOSS.rules-definitions",
+  "kind_waivers": [],
+  "out_of_scope": [],
+  "refuted": [],
+  "relations": [],
+  "stages": {
+    "A": {
+      "at": 1792531468,
+      "summary": "This unit is only the introduction to the Rules Glossary's Rules Definitions section (\"Here are definitions of various rules.\"). It sets no rule that can be tested, so it has no clauses. It names no other units, so it has no relations or conflicts. Its text leaves no room for ambiguity, gaps or 2014"
+    },
+    "B": {
+      "at": 1792531475,
+      "summary": "GLOSS.rules-definitions is only an intro sentence with no clauses. It has no scenarios or SRD tests. All 5 candidate code lines matched by page number only and belong to other glossary units, so each is not-related."
+    },
+    "C": {
+      "at": 1792531484,
+      "summary": "I wrote no tests for GLOSS.rules-definitions. The unit is just the sentence that opens the Rules Glossary's Rules Definitions section: \"Here are definitions of various rules.\" It doesn't state a rule. Stage A found no clauses, relations, ambiguities or gaps in it.\n\n- **Interactions:** with no clause"
+    },
+    "D": {
+      "at": 1792531491,
+      "summary": "No tests were submitted for GLOSS.rules-definitions (SRD p.176). The unit is only the Rules Glossary intro line \"Here are definitions of various rules.\" It sets no rule, so an empty test set is right and there is nothing to keep or refute. I ran no mutations because there was nothing to run them aga"
+    }
+  },
+  "status": "green",
+  "tests": [],
+  "tickets": []
+}

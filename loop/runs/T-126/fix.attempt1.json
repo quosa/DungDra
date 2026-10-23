@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix solves T-126 and the change is sound.\n\n**R-53 (harm lasts until the combat ends):** `end_combat` is the only place a combat ends; `gm.py` calls it both when the party falls and when the fight is over. It now clears every creature's `harming` set, which handles both cases:\n- Harm done in a combat ends with that combat.\n- Harm done outside a combat lasts until the next combat ends. The existing negative test, which advances time without a combat, still passes.\n\n**R-54 (the harmer's side and the harmed creature fight each other):** this lives in `Game.is_enemy`, next to the existing enemy rules, through `_side_harmed`.\n- It only applies while a combat is running, so outside a combat only the harmer counts (R-45).\n- It works in both directions.\n- A creature on no side brings only itself in.\n- A creature that harms someone on its own side doesn't turn the rest of that side against them; only the harmer becomes their enemy.\n\n**Design:** it reuses the existing `harming` set rather than adding a second way to track harm, and nothing is special-cased for a fixture or a name. The SRD/ruling comments use stage A's clause numbers.\n\n**Scope:** the diff only lifts the two T-126 xfails and adds unit tests. The three new unit tests check real behaviour: harm wearing off when the combat ends, the whole side becoming enemies both ways inside a combat (and only the attacker outside one, with the party still allies), and harm within one side not spreading to the rest of it.\n\n**One reading to note:** harm recorded before a combat starts spreads to the harmer's whole side once initiative is rolled. This fits R-54's example of the commoner attacked by one thug, so it isn't a defect.\n\nNo follow-up filed: the related gap, bystanders' Opportunity Attacks, is already open as T-127."
+ },
+ "problems": [],
+ "cost_usd": 0.1661,
+ "stash": ""
+}

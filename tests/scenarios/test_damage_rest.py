@@ -239,7 +239,12 @@ def test_cond03(game):
     assert C.attack(game, gob, b, attack_name="scimitar").roll.mode == "advantage"
     b.remove_condition("blinded")
     b.add_condition("deafened")
-    assert b.check("perception", tags={"hearing"}).success is False
+    heard = b.check("perception", tags={"hearing"})
+    assert heard.success is False
+    assert heard.dice == []
+    # a check that doesn't require hearing is rolled as usual
+    game.dice.force_str("d20=[15]")
+    assert b.check("athletics").dice == [15]
     b.remove_condition("deafened")
     gob.add_condition("invisible")
     game.dice.force_str("d20=[5,5]")

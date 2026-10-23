@@ -14,6 +14,35 @@ from .events import PLAYER
 from .rules import fmt_mod
 
 
+def inspiration_reroll(game, actor, rolls, sides, key="inspiration_damage", what="damage"):
+    """Offer Heroic Inspiration on a non-d20 roll (damage, Hit Die, ...); returns the rolls."""
+    # SRD[GLOSS.heroic-inspiration#1]: expend it to reroll any die immediately after rolling it.
+    if actor is None or not getattr(actor, "heroic_inspiration", False) or not rolls:
+        return rolls
+    pick = game.decide(
+        actor,
+        key,
+        [None] + list(range(len(rolls))),
+        default=None,
+        prompt=f"{actor.name} rolled {what} {rolls}: spend Heroic Inspiration to reroll a die?",
+    )
+    if pick is None:
+        return rolls
+    # SRD[GLOSS.heroic-inspiration#2]: the new roll must be used.
+    rolls = list(rolls)
+    old = rolls[pick]
+    rolls[pick] = game.dice.roll(sides)
+    actor.heroic_inspiration = False
+    game.log.player(
+        "inspiration",
+        f"{actor.name} spends Heroic Inspiration to reroll a {what} die: {old} → "
+        f"{rolls[pick]} (must use the new roll)",
+        page=183,
+        rule="GLOSS.heroic-inspiration#1",
+    )
+    return rolls
+
+
 @dataclass
 class D20Roll:
     kind: str  # 'check', 'save', 'attack', 'initiative', 'death save'
@@ -197,9 +226,7 @@ def roll_d20_test(
                 prompt=f"{actor.name} rolled {roll.dice} ({roll.label}). "
                 f"Spend Heroic Inspiration to reroll a die? (index or no)",
             )
-            if pick is not None and pick is not False:
-                if pick is True:
-                    pick = roll.dice.index(min(roll.dice))
+            if pick is not None:
                 old = roll.dice[pick]
                 roll.dice[pick] = game.dice.d20()
                 actor.heroic_inspiration = False

@@ -1,0 +1,32 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "Deafened's automatic failure on a hearing check is now logged as GLOSS.deafened#2 on p.181. Before, it was logged under the generic ability-check rule.\n\nHow it works: `Acc.fail()` now takes an optional `rule=` and `page=` and stores them as `auto_rule`/`auto_page`, kept from the first failure, the same way `auto_reason` is. When a roll fails automatically, `Creature._finish` logs it under that rule and page if the effect gave one; otherwise the caller's rule is used as before. The Deafened branch in `Condition.d20` passes rule=\"GLOSS.deafened#2\", page=181 and carries an SRD tag.\n\nOnly Deafened passes a rule for now. Blinded and the Paralyzed/Stunned save failures can use the same `fail(rule=, page=)` parameters, but I didn't change them so their logged rules stay as they are.\n\nResults:\n- Unit tests: 552 passed.\n- The ticket test passes with --runxfail.\n- tests/srd and tests/scenarios: 618 passed, 18 xfailed. The one reported failure is the ticket test itself: it now passes but still has its strict xfail marker, which the harness removes.\n- `ruff check` and `ruff format --check` are clean.\n- `dev-gate` passes.",
+  "files": [
+   "dungdra/effects.py",
+   "dungdra/creature.py",
+   "tests/unit/test_effects.py",
+   "tests/unit/test_creature.py"
+  ],
+  "unit_tests": [
+   "tests/unit/test_effects.py::test_acc_keeps_the_rule_and_page_of_the_first_automatic_failure",
+   "tests/unit/test_effects.py::test_deafened_fails_a_hearing_check_citing_its_rule",
+   "tests/unit/test_creature.py::test_an_automatic_failure_logs_the_rule_of_the_effect_that_decided_it",
+   "tests/unit/test_creature.py::test_an_automatic_failure_without_a_rule_keeps_the_callers_rule"
+  ],
+  "srd_tags": [
+   "SRD[GLOSS.deafened#2]"
+  ],
+  "dispute": null,
+  "test_change_request": null
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "The fix extends the existing automatic-result mechanism in `Acc` instead of adding a second one. `Acc.fail` now takes an optional rule and page. Deafened passes `GLOSS.deafened#2` and p.181 and carries the `SRD[...]` tag. When an effect supplies its own rule, `_finish` logs the automatic result under that rule and page; otherwise it keeps the caller's rule. Fail still overrides a success, and the first failure's reason, rule and page win, so the change is consistent. The rule lives in the effect layer, where the condition decides the result. Removing the T-94 xfail is right, because the acceptance test now passes.\n\nThe unit tests check behaviour:\n- the logged check event cites the Deafened rule and page;\n- a paralyzed save without a rule keeps the caller's rule;\n- `Acc` keeps the first failure's rule;\n- Deafened fails a hearing check but not a sight check.\n\nAll gates pass. I also ran the Deafened-filtered selection of the related test files: 17 passed. No scope creep beyond the `loop/costs.jsonl` bookkeeping line."
+ },
+ "problems": [],
+ "cost_usd": 0.7828,
+ "stash": ""
+}

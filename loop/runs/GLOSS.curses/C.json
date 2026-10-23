@@ -1,0 +1,76 @@
+{
+ "interactions": [
+  {
+   "clause": "GLOSS.curses#1",
+   "with": "SPELL.bestow-curse, SPELL.hex-style curse spells, cursed magic items",
+   "risk": "low",
+   "note": "None of the curse-conferring spells (Bestow Curse etc.) and no cursed items are in the subset. Spec §1.2 puts 'Curses and magical contagions' and 'sentient or cursed items' out of scope."
+  },
+  {
+   "clause": "GLOSS.curses#2",
+   "with": "TOOLBOX.curses-and-magical-contagions",
+   "risk": "low",
+   "note": "The conferring effect decides what a curse does. There is no in-scope conferring effect for that to apply to."
+  },
+  {
+   "clause": "GLOSS.curses#3",
+   "with": "SPELL.remove-curse, SPELL.greater-restoration",
+   "risk": "low",
+   "note": "Both spells are above level 2, so they are out of scope."
+  },
+  {
+   "clause": "GLOSS.curses#3",
+   "with": "SPELL.lesser-restoration",
+   "risk": "low",
+   "note": "Lesser Restoration is in scope but doesn't end curses. A negative test would need a curse to exist first, and none can."
+  },
+  {
+   "clause": "GLOSS.curses#1",
+   "with": "GLOSS.shape-shifting (curses carry over)",
+   "risk": "low",
+   "note": "Curses carry over between forms. No in-scope effect causes a curse, so there is nothing to carry over."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Ending a curse with magic that doesn't explicitly end curses (Lesser Restoration, a rest, a potion), or getting more out of Remove Curse or Greater Restoration than their own text gives",
+   "test": null,
+   "reason": "Added to the catalogue. It can't be tested yet because no curse can exist in the engine (out of scope)."
+  },
+  {
+   "case": "Shedding a curse by shape-shifting or by changing the cursed item's owner",
+   "test": null,
+   "reason": "Added to the catalogue. Shape-shifting and cursed items are both out of scope."
+  },
+  {
+   "case": "Probing a creature's type or immunities, or stacking the same effect twice",
+   "test": null,
+   "reason": "Doesn't apply: no curse effect is implemented."
+  }
+ ],
+ "tests": [],
+ "not_testable": [
+  {
+   "clause": "GLOSS.curses#1",
+   "kind": "out-of-scope",
+   "reason": "Spec §1.2: 'Curses and magical contagions' and 'sentient or cursed items' are out of scope. None of the 32 subset spells, 14 monsters or 7 magic items confers a curse.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.curses#2",
+   "kind": "out-of-scope",
+   "reason": "No in-scope effect confers a curse, so there is nothing whose definition could decide what a curse does.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.curses#3",
+   "kind": "out-of-scope",
+   "reason": "Remove Curse (level 3) and Greater Restoration (level 5) are above the level-2 spell subset. No in-scope magic explicitly ends curses, and with no curses implemented, a negative test (Lesser Restoration doesn't end a curse) can't be set up.",
+   "infra_ticket": ""
+  }
+ ],
+ "kind_waivers": [],
+ "scenario_changes": [],
+ "rulings_proposed": [],
+ "summary": "I wrote no tests for GLOSS.curses because the whole unit is outside the implemented subset.\n\n- **Why it's out of scope:** spec §1.2 (`docs/dnd-golden-scenarios-srd521.md`) excludes \"Curses and magical contagions\" and \"sentient or cursed items\". Nothing in scope (the 32 spells, 14 monsters or 7 magic items) puts a curse on anything. Remove Curse and Greater Restoration are level 3 and level 5 spells, above the level-2 limit. Lesser Restoration is in scope but doesn't end curses, and a test of that would need a curse to exist first. Per CLAUDE.md, out-of-scope content gets no tests, so all three clauses are recorded as `out-of-scope` with no infra tickets.\n- **Stage B:** all four verdicts are \"not-related\" (the code lines only share page 179), so no scenario changes are needed.\n- **Rulings:** stage A's two ambiguities (Dispel Magic ending a curse that a spell conferred, and the removal spells' own limits) don't affect any test now, so I proposed no rulings. They should be decided when curses come into scope.\n- **Abuse catalogue:** I added two cheats under \"Spells and effects\" in `loop/abuse-catalogue.md`:\n  - ending a curse with magic that doesn't explicitly end curses, or getting more from Remove Curse or Greater Restoration than their own text gives;\n  - shedding a curse by shape-shifting or by changing a cursed item's owner.\n- **Files:** that catalogue edit is my only change."
+}

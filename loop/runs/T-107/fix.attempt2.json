@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "This attempt fixes the problems the last review rejected and solves T-107. `Scene.add_ground` checks the ground kind against `DIFFICULT_GROUND` (heavy snow, ice, rubble, undergrowth), which lives in rules.py and cites GLOSS.difficult-terrain#7. It then reuses the two mechanisms that already exist. For the whole scene, it sets the single `scene.difficult` switch, the same one the rubble trap in traps.py sets. For an area, it calls `mark_difficult`, whose `area.ground` flag movement already reads to slow only walking movers. There is no second whole-scene flag and no write-only key. Any other ground kind is refused with `OutOfScope` (page 181, the same rule) and leaves the scene unchanged. GMs can still use `mark_difficult` directly for the SRD's \"something similar\" cases.\n\nThe tests check behaviour through `move`. They cover each listed kind over the whole scene, where walking costs double and flying costs normal. They also cover a patch: only its squares cost extra, a flier crosses at normal cost, and the kind name is matched loosely (\"Heavy-Snow\"). A last test checks that an unknown kind is refused cleanly with no state change. Nothing was hard-coded or out of scope."
+ },
+ "problems": [],
+ "cost_usd": 0.184,
+ "stash": ""
+}

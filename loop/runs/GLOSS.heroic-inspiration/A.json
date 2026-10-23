@@ -1,0 +1,80 @@
+{
+ "clauses": [
+  {
+   "id": "GLOSS.heroic-inspiration#1",
+   "text": "If you (a player character) have Heroic Inspiration, you can expend it to reroll any die immediately after rolling it",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.heroic-inspiration#2",
+   "text": "and you must use the new roll",
+   "threshold": false
+  },
+  {
+   "id": "GLOSS.heroic-inspiration#3",
+   "text": "If you gain Heroic Inspiration but already have it, it’s lost unless you give it to a player character who lacks it.",
+   "threshold": false
+  }
+ ],
+ "relations": [],
+ "ambiguities": [
+  {
+   "quote": "reroll any die immediately after rolling it",
+   "reading_a": "You reroll one die of your choice. In a multi-die roll (such as 2d6 damage) only that die is rerolled and the rest stand.",
+   "reading_b": "You reroll the whole roll the die was part of (all the dice of a damage roll, for example).",
+   "proposed_ruling": "Reading A. The text says 'any die', singular, so you reroll exactly one die you just rolled and keep the others.",
+   "confidence": 0.7
+  },
+  {
+   "quote": "immediately after rolling it",
+   "reading_a": "You decide once the die's face is known but before its result is applied (before you learn whether the roll succeeds and before any later roll or action). After that the chance is gone.",
+   "reading_b": "You may wait until the outcome is known (hit or miss, save passed or failed) and reroll then, as long as no other roll or action has come in between.",
+   "proposed_ruling": "Reading A. Give the choice right after the die is rolled and before the result resolves. Once anything else happens, the window is closed.",
+   "confidence": 0.55
+  },
+  {
+   "quote": "any die",
+   "reading_a": "Only dice you roll yourself: your d20 Tests, your damage dice, your Hit Dice and so on.",
+   "reading_b": "Any die rolled in the game, including dice that other creatures roll against you.",
+   "proposed_ruling": "Reading A. 'After rolling it' ties the die to the person who rolled it, so you can reroll only your own dice.",
+   "confidence": 0.75
+  },
+  {
+   "quote": "unless you give it to a player character who lacks it",
+   "reading_a": "You can give it to any player character who lacks it, at the moment you gain the duplicate, with no limit on distance or awareness.",
+   "reading_b": "You can give it only to a PC who is present or can be reached, and you may hold on to the duplicate for a while before giving it.",
+   "proposed_ruling": "Reading A. Choose the recipient right when you gain the duplicate. Any PC without Heroic Inspiration can receive it. If you don't give it at that point, it's lost.",
+   "confidence": 0.6
+  }
+ ],
+ "conflicts": [],
+ "gaps": [
+  {
+   "quote": "If you (a player character) have Heroic Inspiration",
+   "explanation": "The unit doesn't say whether non-player creatures (NPCs, monsters, companions) can ever have or use Heroic Inspiration, or what happens if an effect would give it to one. Read literally, the rule only works for player characters."
+  },
+  {
+   "quote": "If you gain Heroic Inspiration but already have it, it’s lost",
+   "explanation": "This implies you can hold at most one Heroic Inspiration at a time, but no rule says so directly. It also doesn't say how long Heroic Inspiration lasts (through rests, or for good) or whether it is spent when its holder dies or falls unconscious."
+  },
+  {
+   "quote": "reroll any die immediately after rolling it",
+   "explanation": "The unit doesn't say how a reroll combines with Advantage or Disadvantage (which of the two d20s you may reroll) or with other reroll features. It also doesn't say whether a die that has already been rerolled can be rerolled again."
+  }
+ ],
+ "traps": [
+  {
+   "quote": "you can expend it to reroll any die immediately after rolling it, and you must use the new roll",
+   "note": "In 2014, Inspiration gave Advantage on one attack roll, saving throw or ability check, and you had to decide before rolling. In 2024 it rerolls any die (damage dice included) after it is rolled, and you must keep the new result. An engine built from memory might grant Advantage or let you keep the better roll."
+  },
+  {
+   "quote": "it’s lost unless you give it to a player character who lacks it",
+   "note": "In 2014 you could give your Inspiration to another player at any time, as a reward for good play. In 2024 you can pass it on only when you gain a second one while already holding one, and only to a PC who lacks it. If you don't, the second one is lost, not banked."
+  },
+  {
+   "quote": "Heroic Inspiration",
+   "note": "In 2014 this was called 'Inspiration' and only the DM awarded it. In 2024 features also grant Heroic Inspiration (for example, the Human's Resourceful trait), so code looking for the 2014 name or treating it as a DM-only award will miss it."
+  }
+ ],
+ "summary": "Heroic Inspiration is held only by player characters, at most one at a time. Spending it rerolls one die you just rolled, and you must use the new roll. If you gain another while holding one, you can give it to a PC who lacks it; otherwise it is lost. The open questions are: one die or the whole roll, how long the window to reroll lasts, whether you can reroll only your own dice, and when the extra one must be given away. The 2014 rule differed: Inspiration gave Advantage, decided before rolling, and could be given away at any time."
+}

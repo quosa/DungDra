@@ -1,0 +1,419 @@
+{
+ "summary": "I added 30 tests for GLOSS.difficult-terrain to tests/srd/test_glossary.py: 22 green and 8 red. With --runxfail, each red test fails on the expected value, not on an error. The engine applies Difficult Terrain correctly when it is a per-move `difficult` flag or a scene-wide flag: 1 extra foot per foot, sources don't stack, and the Speed budget is enforced at the boundary. The Collapsing Roof trap's rubble works this way, and so does the Session move command. What the engine lacks is any per-space model. A hostile, neutral or Small creature's space is never Difficult Terrain (2 rules plus the Session path). The Web object's `difficult` flag has no area, so moving inside the web costs nothing extra. The scene flag is applied only in mode 'walk', so `mode='crawl'` through rubble drops the Difficult Terrain cost, while a Prone walk correctly pays 15. I couldn't test furniture, liquid depth, narrow openings, slopes, snow, ice, undergrowth, or a path that is only partly Difficult Terrain: the engine has no terrain features in spaces (infra tickets below). The Tiny exemption is out of scope because no Tiny creature exists. I acted on stage B's 'under-asserts' verdict by adding the web's Difficult Terrain and Lightly Obscured flags and the log line to test_spells06. The extra cost of moving through the web is covered by the new red test instead, so the scenario stays green. I added three new cheats to the abuse catalogue. The tests in tests/srd and tests/scenarios give 590 passed and 9 xfailed. Ruff check and ruff format --check are clean on the two edited test files.",
+ "interactions": [
+  {
+   "clause": "GLOSS.difficult-terrain#3",
+   "with": "GLOSS.prone / crawling (mode='crawl')",
+   "risk": "high",
+   "note": "The scene flag only applies when mode=='walk', so mode='crawl' through a Difficult Terrain scene loses the extra foot. A Prone walk does pay 15. The two paths are inconsistent (red)."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#5",
+   "with": "GLOSS.ally (R-36, R-37), team 'neutral', attitude",
+   "risk": "high",
+   "note": "The engine has no per-space cost for other creatures' spaces. Allies are correctly free; hostile and indifferent creatures are wrongly free too."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#5",
+   "with": "Halfling Nimbleness / Incapacitated (moving through a creature's space)",
+   "risk": "medium",
+   "note": "These are the legal ways to pass a non-ally, used to reach a non-ally's space at all. The engine does no occupancy check, so it never charges for the space."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#4",
+   "with": "SPELL.web",
+   "risk": "high",
+   "note": "The web object has difficult=True but no stored area (R-35 Cube). Movement never checks scene objects."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#7",
+   "with": "TOOLBOX.traps collapsing roof",
+   "risk": "medium",
+   "note": "The rubble sets scene.difficult scene-wide (not just the roof's area). Clause #1's cost is correct."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#3",
+   "with": "climbing/swimming without the Speed (EXPL-04)",
+   "risk": "medium",
+   "note": "The difficult flag stacks correctly with the climb cost (15). The scene flag is ignored for climb and swim, the same as for crawl."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#1",
+   "with": "GLOSS.grappled#4 dragging",
+   "risk": "low",
+   "note": "An existing test already covers dragging plus Difficult Terrain (30 for 10 ft)."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#1",
+   "with": "Dash / movement budget",
+   "risk": "low",
+   "note": "spend_movement refuses an overspend cleanly, and the boundary at exactly Speed is allowed."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#6-#10",
+   "with": "creature size (furniture, opening), liquid depth, slope",
+   "risk": "medium",
+   "note": "No terrain features with size, depth or angle exist."
+  }
+ ],
+ "abuse": [
+  {
+   "case": "Difficult Terrain for free: moving farther than Speed once the extra cost is counted",
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_isnt_free_through_move_command",
+   "reason": "20 ft of rubble costs 40 ft, more than Speed 30. The Session command must refuse it cleanly."
+  },
+  {
+   "case": "Leftover movement covering another Difficult step",
+   "test": "tests/srd/test_glossary.py::test_difficult_terrain_leftover_movement_cant_cover_another_step",
+   "reason": "Spending in steps must not dodge the cost."
+  },
+  {
+   "case": "Choosing crawl mode to drop the Difficult Terrain cost (new)",
+   "test": "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost",
+   "reason": "The engine applies the scene flag only to walking (red)."
+  },
+  {
+   "case": "Walking through a hostile creature's space for free (new)",
+   "test": "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free",
+   "reason": "The engine charges nothing for a non-ally's space (red)."
+  },
+  {
+   "case": "Calling an indifferent bystander an ally to clear its space (new)",
+   "test": "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra",
+   "reason": "Under the proposed reading A, a non-ally that isn't Tiny counts (red)."
+  },
+  {
+   "case": "A step from Difficult Terrain onto clear ground costing nothing extra (new)",
+   "test": null,
+   "reason": "This needs per-space terrain (see not_testable). The ruling on which square sets the cost is still proposed."
+  }
+ ],
+ "tests": [
+  {
+   "name": "tests/srd/test_glossary.py::test_difficult_terrain_doubles_the_cost_of_a_move",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "positive",
+   "rule_quote": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_rubble_scene_costs_extra_through_move_command",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "positive",
+   "rule_quote": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_clear_ground_costs_one_foot_per_foot",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "negative",
+   "rule_quote": "If a space is Difficult Terrain, every foot of movement in that space costs 1 extra foot.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_difficult_terrain_move_that_uses_exactly_all_speed_is_allowed",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_difficult_terrain_one_step_past_speed_is_refused",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "boundary",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_difficult_terrain_isnt_free_through_move_command",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "abuse",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_difficult_terrain_leftover_movement_cant_cover_another_step",
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "abuse",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_costs_ten",
+   "clause": "GLOSS.difficult-terrain#2",
+   "kind": "positive",
+   "rule_quote": "For example, moving 5 feet through Difficult Terrain costs 10 feet of movement.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_five_feet_of_clear_ground_costs_five",
+   "clause": "GLOSS.difficult-terrain#2",
+   "kind": "negative",
+   "rule_quote": "For example, moving 5 feet through Difficult Terrain costs 10 feet of movement.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_ten_feet_left_fits_exactly",
+   "clause": "GLOSS.difficult-terrain#2",
+   "kind": "boundary",
+   "rule_quote": "moving 5 feet through Difficult Terrain costs 10 feet of movement",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_five_feet_of_difficult_terrain_with_five_feet_left_is_refused",
+   "clause": "GLOSS.difficult-terrain#2",
+   "kind": "boundary",
+   "rule_quote": "moving 5 feet through Difficult Terrain costs 10 feet of movement",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_two_difficult_terrain_sources_cost_one_extra_foot",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "positive",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_hostile_creature_in_rubble_isnt_doubly_difficult",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "positive",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_space_with_no_source_isnt_difficult",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "negative",
+   "rule_quote": "either a space is Difficult Terrain or it isn’t",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "negative",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "negative",
+   "rule_quote": "Difficult Terrain isn’t cumulative; either a space is Difficult Terrain or it isn’t.",
+   "claim": "red",
+   "ticket_title": "SRD: crawling through Difficult Terrain pays the crawl foot and the Difficult Terrain foot (3 ft per foot); engine: a scene's Difficult Terrain applies only to mode 'walk', so crawling costs 2"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost",
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "abuse",
+   "rule_quote": "every foot of movement in that space costs 1 extra foot",
+   "claim": "red",
+   "ticket_title": "SRD: every foot of movement in Difficult Terrain costs 1 extra foot; engine: choosing mode 'crawl' skips the scene's Difficult Terrain cost, so an over-budget crawl is allowed"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra",
+   "clause": "GLOSS.difficult-terrain#4",
+   "kind": "positive",
+   "rule_quote": "A space is Difficult Terrain if the space contains any of the following or something similar:",
+   "claim": "red",
+   "ticket_title": "SRD: the spaces in Web's Cube are Difficult Terrain; engine: the web's 'difficult' flag has no area and movement never checks it"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_outside_the_web_costs_normally",
+   "clause": "GLOSS.difficult-terrain#4",
+   "kind": "negative",
+   "rule_quote": "A space is Difficult Terrain if the space contains any of the following or something similar:",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_through_a_hostile_creatures_space_costs_extra",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "positive",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "red",
+   "ticket_title": "SRD: a space holding a creature that isn't Tiny or your ally is Difficult Terrain; engine: moving through a hostile creature's space costs 1 ft per foot"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_move_command_through_a_hostile_creature_costs_extra",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "positive",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "red",
+   "ticket_title": "SRD: a hostile creature's space is Difficult Terrain; engine: the move command charges nothing extra for it"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "positive",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "red",
+   "ticket_title": "SRD: any creature that isn't Tiny or your ally makes its space Difficult Terrain; engine: a neutral non-ally's space costs nothing extra"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_through_an_allys_space_costs_normally",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "negative",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_move_command_through_an_allys_space_costs_normally",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "negative",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_moving_through_a_friendly_creatures_space_costs_normally",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "negative",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_hostile_creature_off_the_path_adds_nothing",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "negative",
+   "rule_quote": "A space is Difficult Terrain if the space contains any of the following",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_small_hostile_creatures_space_is_difficult",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "boundary",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "red",
+   "ticket_title": "SRD: a Small creature isn't Tiny, so its space is Difficult Terrain for a non-ally; engine: passing an Incapacitated Small enemy costs 1 ft per foot"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_cant_walk_through_an_enemy_for_free",
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "abuse",
+   "rule_quote": "A creature that isn’t Tiny or your ally",
+   "claim": "red",
+   "ticket_title": "SRD: an enemy's space costs 1 extra foot per foot; engine: a move through an enemy that exceeds Speed once that cost is counted is allowed"
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_rubble_from_a_collapsed_roof_is_difficult_terrain",
+   "clause": "GLOSS.difficult-terrain#7",
+   "kind": "positive",
+   "rule_quote": "Heavy snow, ice, rubble, or undergrowth",
+   "claim": "green",
+   "ticket_title": null
+  },
+  {
+   "name": "tests/srd/test_glossary.py::test_untriggered_roof_leaves_no_rubble",
+   "clause": "GLOSS.difficult-terrain#7",
+   "kind": "negative",
+   "rule_quote": "Heavy snow, ice, rubble, or undergrowth",
+   "claim": "green",
+   "ticket_title": null
+  }
+ ],
+ "not_testable": [
+  {
+   "clause": "GLOSS.difficult-terrain#1",
+   "kind": "missing",
+   "reason": "The boundary of 'in that space' (a path where only some squares are Difficult Terrain, and whether leaving one costs extra) can't be expressed. Difficult Terrain is either a flag for the whole move or a flag for the whole scene.",
+   "infra_ticket": "Per-space Difficult Terrain: let a scene mark squares or areas (rubble, a spell's area) as Difficult Terrain, and have movement charge the extra foot only for the squares of the path that are Difficult Terrain"
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#5",
+   "kind": "out-of-scope",
+   "reason": "The Tiny exemption needs a Tiny creature, and none of the in-scope monsters or PCs is Tiny.",
+   "infra_ticket": ""
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#6",
+   "kind": "missing",
+   "reason": "There is no furniture object with a size it is built for, and nothing ties a space's terrain to the mover's size.",
+   "infra_ticket": "Terrain features in spaces with a mover-relative test: furniture sized for a creature size, which is Difficult Terrain for creatures of that size or smaller"
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#7",
+   "kind": "missing",
+   "reason": "Rubble is testable through the collapsing roof. Heavy snow, ice and undergrowth have no terrain representation; scene.terrain is used only for travel pace.",
+   "infra_ticket": "Scene or space terrain types (heavy snow, ice, undergrowth) that make those spaces Difficult Terrain"
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#8",
+   "kind": "missing",
+   "reason": "There is no liquid depth in a space, and no depth measured against the mover's size.",
+   "infra_ticket": "Liquid with a depth in a space: Difficult Terrain between shin- and waist-deep for the moving creature"
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#9",
+   "kind": "missing",
+   "reason": "There are no narrow openings with a size, and no squeezing.",
+   "infra_ticket": "Narrow openings sized for a creature size: Difficult Terrain for a creature one size larger, with a ruled outcome for creatures two or more sizes larger"
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#10",
+   "kind": "missing",
+   "reason": "There is no slope angle on a space.",
+   "infra_ticket": "Slopes with an angle in a space: 20 degrees or more is Difficult Terrain, 19 degrees isn't"
+  }
+ ],
+ "kind_waivers": [
+  {
+   "clause": "GLOSS.difficult-terrain#3",
+   "kind": "boundary",
+   "reason": "The clause has no threshold. A space either is Difficult Terrain or it isn't."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#4",
+   "kind": "boundary",
+   "reason": "This is the clause that introduces the list of sources and has no threshold of its own. The thresholds are in #5-#10."
+  },
+  {
+   "clause": "GLOSS.difficult-terrain#7",
+   "kind": "boundary",
+   "reason": "Rubble is present or not; 'heavy' snow has no measurable boundary in the engine (see not_testable)."
+  }
+ ],
+ "scenario_changes": [
+  {
+   "scenario": "tests/scenarios/test_spells.py::test_spells06",
+   "change": "Stage B said this test under-asserts. I added assertions that the web object is Difficult Terrain and Lightly Obscured and that the cast's log says so. The extra cost of moving inside the web is covered by the red test tests/srd/test_glossary.py::test_moving_inside_a_web_costs_extra, so the scenario stays green.",
+   "note_row": ""
+  }
+ ],
+ "rulings_proposed": [
+  {
+   "ambiguity": "GLOSS.difficult-terrain ambiguity 2: 'Difficult Terrain isn't cumulative': does it also stop crawling, climbing or swimming costs from adding on top?",
+   "ruling": "Reading A. Only several Difficult Terrain sources in one space don't stack. Crawling, climbing or swimming without the Speed adds its own extra foot, so crawling through Difficult Terrain costs 3 ft per foot.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost_when_prone",
+    "tests/srd/test_glossary.py::test_not_cumulative_doesnt_cancel_the_crawl_cost",
+    "tests/srd/test_glossary.py::test_crawl_mode_doesnt_dodge_the_difficult_terrain_cost"
+   ]
+  },
+  {
+   "ambiguity": "GLOSS.difficult-terrain ambiguity 3: 'A creature that isn't Tiny or your ally': do neutral non-hostile creatures that aren't allies count?",
+   "ruling": "Reading A. Any creature that is neither Tiny nor your ally (R-36, R-37) makes its space Difficult Terrain, including an Indifferent bystander.",
+   "tests": [
+    "tests/srd/test_glossary.py::test_moving_through_an_indifferent_creatures_space_costs_extra"
+   ]
+  }
+ ]
+}

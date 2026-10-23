@@ -7,13 +7,42 @@ A rules-faithful, single-player game engine that is compatible with fifth editio
 ## Play
 
 ```bash
-python -m dungdra              # interactive adventure: "The Goblin Trail"
-python -m dungdra --gm-log     # also show GM-only log lines (budgets, hidden DCs, rulings)
+python -m dungdra                           # start with "Rats in the Mill", a first adventure
+python -m dungdra --adventure town          # or pick one: mill-rats, goblin-cellar, trap-hall, town, goblin-trail
+python -m dungdra --adventure my-quest.json # or play your own adventure file
+python -m dungdra --gm-log                  # also show GM-only log lines (budgets, hidden DCs, rulings)
 ```
 
-Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Here are some example commands: `inventory`, `BROM inventory`, `MIALEE spells`, `JOZAN potions`, `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `LIDDA uses cunning action to hide`, `end turn`, `continue`, `short rest`, `status`. In combat, a refused command (such as an out-of-range attack) doesn't cost anything. After each command the game shows what the active character can still do, and the turn ends on its own once no action or useful Bonus Action is left. Use `--manual-turns` to always type `end turn` yourself. Whenever the rules offer you a choice (a Reaction such as Shield, Halfling Luck, Heroic Inspiration or Savage Attacker), the game asks you.
+| Adventure | What it is |
+|---|---|
+| `mill-rats` | A first quest: the miller's rats. A village with a stall and an inn, an easy fight, a reward in coin. |
+| `goblin-cellar` | Combat and magic: goblins have dug into a farmhouse cellar. |
+| `trap-hall` | Traps and treacherous ground: a hidden pit, rubble and a trapped chest guarded by skeletons. |
+| `town` | Thornbury, a market town: shopping, the inn, the temple, and two jobs from the townsfolk. |
+| `goblin-trail` | The original campaign: a one-way road to a goblin lair. Hard at level 1. |
 
-Stuck on the goblin ambush? `docs/example-ambush.md` has a full winning session (`--seed 5`) with the commands used and some tactics.
+Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Type `help` in the game for more examples.
+
+| To... | Say, for example |
+|---|---|
+| Look around and move | `look`, `exits`, `map`, `continue`, `go to the cellar`, `go back` |
+| Meet people and take quests | `talk to the miller`, `accept the quest`, `quests`, `turn in the quest` |
+| Shop and rest | `shop`, `BROM buys a rope`, `LIDDA sells her dagger`, `rent a room`, `short rest`, `long rest` |
+| Check the party | `status` (HP, conditions, level, XP and coins), `inventory`, `BROM inventory`, `MIALEE spells` |
+| Fight | `BROM moves toward goblin warrior 1`, `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `JOZAN casts healing word on BROM`, `LIDDA uses cunning action to hide`, `end turn` |
+| Deal with traps | `MIALEE examines the floor for traps`, `BROM wedges a spike into the pit lid`, `LIDDA disarms the trap`, `open the chest` |
+
+How the game helps:
+
+- **In combat** the game shows what the active character can still do after each command, and the turn ends on its own once no action or useful Bonus Action is left (`--manual-turns` to always type `end turn` yourself). A refused command, such as an out-of-range attack, doesn't cost anything.
+- **Choices the rules offer you** (a Reaction such as Shield, Halfling Luck, Heroic Inspiration, Savage Attacker) are asked at the keyboard; Enter takes the default.
+- **A typo** gets "Did you mean 'begin the adventure'?", and `yes` does it.
+- **Harming someone who isn't fighting you** (a bystander, or a companion caught in a spell's area) asks "Do it anyway?" first.
+- **A bug in the game** never ends the session: the command is stopped, the game goes on, and the details go to `dungdra-errors.log` (`--error-log` to put them elsewhere).
+
+You win XP for the monsters you defeat (shared out, R-02) and gold and items for the quests you finish; the party reaches level 2 at 300 XP and level 3 at 900. Stuck on the Goblin Trail's ambush? `docs/example-ambush.md` has a full winning session (`--adventure goblin-trail --seed 5`) with the commands used and some tactics.
+
+**Writing your own adventure:** an adventure is a JSON file of places joined by exits, with the fights, traps, treasure, shops, inns, people and quests in each. `docs/adventure-format.md` describes it, and the files in `dungdra/data/adventures/` are worked examples. The file is checked when it's loaded, and a mistake is reported with where it is.
 
 ## Architecture
 
@@ -27,7 +56,8 @@ Stuck on the goblin ambush? `docs/example-ambush.md` has a full winning session 
 | `monster.py`, `gm.py`, `encounters.py` | The 14 stat blocks, monster tactics, encounter budgets (R-03), and the XP split (R-02) |
 | `rest.py`, `hazards.py`, `traps.py`, `explore.py`, `gear.py` | Rests, hazards, poisons, traps, travel, jumping, trade, lifestyle, and crafting |
 | `api.py` | Structured command API: `Session().execute({"cmd": ..., ...})` |
-| `nl.py`, `play.py`, `cli.py`, `adventure.py` | Natural-language interface, the campaign, and the terminal UI |
+| `scenario.py`, `adventure.py`, `town.py` | Adventure files and their checks; places, exits, fights, traps and loot; shops, inns, people and quests |
+| `nl.py`, `play.py`, `cli.py` | Natural-language interface and the terminal UI |
 | `audit.py`, `snapshot.py` | JSON state snapshot and log reconciliation |
 
 ## Tests
@@ -36,7 +66,7 @@ Stuck on the goblin ambush? `docs/example-ambush.md` has a full winning session 
 pip install pytest && pytest       # pytest 7+; `python -m pytest` also works
 ```
 
-Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
+Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6, and one per adventure in `tests/scenarios/test_arenas.py`) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
 
 > **License note (CC-BY-4.0).** The SRD may be used freely, but the game and any repo that includes SRD text or data **must** include this attribution statement verbatim (SRD p.1):
 > *"This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."*
@@ -128,3 +158,18 @@ The engine must implement each of these as an explicit, logged ruling. The judge
 | R-37 | GLOSS.ally: GLOSS.ally gap: 'your friend' has no game state | A creature whose attitude toward the party is Friendly (the GLOSS.influence attitudes) is the party's friend and so its ally, even if it isn't fighting on a side. An Indifferent or Hostile creature isn't a friend. *Note: 'Your friend' is a Friendly attitude toward that PC; the GM can designate otherwise (T-90).* |
 | R-38 | GLOSS.creature-type: GLOSS.creature-type ambiguity 1: does a creature have exactly one type, and is a parenthetical stat-block descriptor (Goblinoid) or a species a type? | Reading A: each creature has exactly one creature type from the 14 listed. A parenthetical descriptor or a PC's species is not a creature type for rules that name types. *Note: 'the type' is singular; species and descriptors aren't types.* |
 | R-39 | GLOSS.creature-type: GLOSS.creature-type ambiguity 2: is the list of 14 types closed? | Reading A: the 14 listed types are the only valid values. A command or rule that names any other type is refused cleanly, citing p.179. *Note: The 14 listed types are the only values; anything else is refused at the command.* |
+| R-40 | GLOSS.deafened: GLOSS.deafened ambiguity 1: 'any ability check that requires hearing': only checks that rely on hearing alone, or any check where hearing plays a part? | Reading A. Only a check that relies on hearing alone (listening at a door, hearing a voice) fails automatically. A check that can also succeed by sight, such as an ordinary Perception check or Search, is rolled normally. |
+| R-41 | GLOSS.deafened: GLOSS.deafened ambiguity 2: does 'You can't hear' add effects beyond rules that name hearing? | Reading A. Deafened has no automatic effect beyond rules that name hearing. It gives no modifier to attack rolls, attacks against the creature, or saving throws. |
+| R-42 | GLOSS.difficult-terrain: GLOSS.difficult-terrain ambiguity 2: 'Difficult Terrain isn't cumulative': does it also stop crawling, climbing or swimming costs from adding on top? | Reading A. Only several Difficult Terrain sources in one space don't stack. Crawling, climbing or swimming without the Speed adds its own extra foot, so crawling through Difficult Terrain costs 3 ft per foot. |
+| R-43 | GLOSS.difficult-terrain: GLOSS.difficult-terrain ambiguity 3: 'A creature that isn't Tiny or your ally': do neutral non-hostile creatures that aren't allies count? | Reading A. Any creature that is neither Tiny nor your ally (R-36, R-37) makes its space Difficult Terrain, including an Indifferent bystander. |
+| R-44 | GLOSS.enemy: GLOSS.enemy ambiguity 1: 'fights against you in combat': the whole opposing side, or only creatures that personally fight you? | Reading A. Every creature fighting on the side opposed to you is your enemy, whoever it is currently attacking. |
+| R-45 | GLOSS.enemy: GLOSS.enemy ambiguity 2: 'actively works to harm you': does a Hostile attitude alone make a creature an enemy? | Reading A. Only acting to harm you (for example, attacking you) or a GM or rule designation makes a creature an enemy. A Hostile attitude alone doesn't. |
+| R-46 | GLOSS.enemy: GLOSS.enemy ambiguity 3: can one creature be both your ally and your enemy? | Reading B. While any enemy test applies, the creature is your enemy and not your ally, so a Friendly NPC that attacks you no longer counts as an ally. |
+| R-47 | GLOSS.heroic-inspiration: GLOSS.heroic-inspiration ambiguity 1: 'reroll any die': one die, or the whole roll it was part of? | Reading A. Spending Heroic Inspiration rerolls exactly one die the player chooses. The other dice of the roll (the second d20 of Advantage, the other damage dice) stand. |
+| R-48 | GLOSS.heroic-inspiration: GLOSS.heroic-inspiration ambiguity 2: 'immediately after rolling it': before or after the outcome is known? | Reading A. The choice is offered once the die's face is known and before the result is applied (before success or failure is reported). Once the roll resolves or another roll is made, that die can no longer be rerolled. |
+| R-49 | GLOSS.heroic-inspiration: GLOSS.heroic-inspiration ambiguity 3: 'any die': only your own dice, or any die in the game? | Reading A. Only dice the inspired PC rolls. A foe's attack or damage roll against the PC can't be rerolled with the PC's Heroic Inspiration. |
+| R-50 | GLOSS.heroic-inspiration: GLOSS.heroic-inspiration gap: '(a player character)': can a non-player creature have Heroic Inspiration? | No. Only player characters have Heroic Inspiration. Granting it to a monster or NPC either has no effect or is refused cleanly (citing p.183), and a surplus can't be passed to one. |
+| R-51 | GLOSS.heroic-inspiration: GLOSS.heroic-inspiration ambiguity 4: when, and to whom, the surplus can be given | Reading A. The recipient is chosen when the duplicate is gained, and any living PC who lacks Heroic Inspiration may receive it. Naming a creature that isn't such a PC doesn't give it to them. If it isn't given at that moment, it's lost. |
+| R-52 | GLOSS.enemy: GLOSS.enemy gap: is a creature caught in another's area spell 'actively harmed'? | Yes, unless it was the caster's ally when the spell was cast. A creature that catches you in its area effect is working to harm you and becomes your enemy (R-45); a companion caught by accident isn't, and stays your ally. *Note: decided by a person in review of T-117.* |
+| R-53 | GLOSS.enemy: GLOSS.enemy gap: how long does 'actively works to harm you' last? | Until the end of the combat. A creature that worked to harm you stops being your enemy for that reason when the combat ends (harm done outside a combat lasts until the next one ends). Its attitude toward you is unchanged. *Note: decided by a person; there is no GM in play to lift it.* |
+| R-54 | GLOSS.enemy: GLOSS.enemy gap: 'fights against you in combat': who fights against a creature that was harmed in a combat? | Once a creature works to harm you in a combat, you and the creatures on its side fight against each other for the rest of that combat, so you are each other's enemies; a creature on no side brings only itself into it. Outside a combat, only the creature that harmed you counts (R-45). *Note: decided by a person: a commoner attacked by one thug defends against the whole gang.* |

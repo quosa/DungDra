@@ -47,6 +47,9 @@ def inventory_text(pc, section=None) -> str:
             worn.append("Shield")
         worn += [i.display for i in pc.attuned]
         lines.append("Wearing: " + (", ".join(worn) or "no armor"))
+        spare = [i for i in pc.inventory if i.kind in ("armor", "shield") and i not in (pc.armor, pc.shield)]
+        if spare:
+            lines.append("Carried armor: " + ", ".join(str(i) for i in spare))
         weapons = [i for i in pc.inventory if i.kind == "weapon"]
         if weapons:
             lines.append("Weapons:")

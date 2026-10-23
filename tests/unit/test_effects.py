@@ -40,7 +40,7 @@ def _helped_attack_by(game, attacker):
 
 def test_help_attack_gives_a_friendly_npc_advantage(game):
     guard = mon(game, "guard", (10, 0))
-    guard.attitude = "friendly"
+    guard.team, guard.attitude = "neutral", "friendly"  # not fighting against the party (R-46)
     eff, acc = _helped_attack_by(game, guard)
     assert acc.adv == ["Help from LIDDA"]
     assert acc.consumed == [eff]
@@ -212,3 +212,19 @@ def test_a_condition_names_its_glossary_entry():
 def test_every_condition_names_a_real_srd_unit():
     ids = {json.loads(line)["id"] for line in Path("docs/srd/units.jsonl").read_text().splitlines()}
     assert {condition_rule(n) for n in CONDITIONS} <= ids
+
+
+def test_acc_keeps_the_rule_and_page_of_the_first_automatic_failure():
+    acc = Acc()
+    acc.fail("Deafened: can't hear", rule="GLOSS.deafened#2", page=181)
+    acc.fail("Blinded: can't see")
+    assert acc.auto_reason == "Deafened: can't hear"
+    assert (acc.auto_rule, acc.auto_page) == ("GLOSS.deafened#2", 181)
+
+
+def test_deafened_fails_a_hearing_check_citing_its_rule(game):
+    brom = pc(game, "BROM", (0, 0))
+    brom.add_condition("deafened", "test")
+    acc = brom.gather(Ctx("check", actor=brom, skill="perception", tags={"hearing"}))
+    assert (acc.auto, acc.auto_rule, acc.auto_page) == ("fail", "GLOSS.deafened#2", 181)
+    assert brom.gather(Ctx("check", actor=brom, skill="perception", tags={"sight"})).auto is None

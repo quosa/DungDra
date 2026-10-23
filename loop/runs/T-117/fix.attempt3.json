@@ -1,0 +1,15 @@
+{
+ "result": "fixed",
+ "fixer": {
+  "summary": "rechecked the change already in the working tree"
+ },
+ "review": {
+  "verdict": "approve",
+  "findings": [],
+  "followups": [],
+  "summary": "I'm approving this: T-117 is solved and the rule sits in the right layer.\n\n**What the change does**\n- **One rule for enemies.** `Game.is_enemy` is now the single place that decides who is an enemy. A creature is your enemy if it fights against you (sides, #1) or if it actively works to harm you (`harming`, #2).\n- **Every caller uses it.** `enemies_of`, the check for an enemy within 5 ft of a ranged attack (weapon and spell), and `is_ally` all go through it. `is_ally` now gives way to `is_enemy`, as R-46 says.\n- **The record is set in shared paths, not per fixture.**\n  - `attack` and `spell_attack` record it before the roll, so a hit or a miss both count (R-45).\n  - `Creature.save` records it when a creature `source` forces the save. Grapple, shove, Divine Spark and Turn Undead now pass `source`.\n  - `take_damage` records it when a creature `attacker` deals the damage.\n  - For spells, `_harms` applies R-52: an area spell doesn't make the caster an enemy of creatures that were its allies when it was cast. It passes `harm=False` so the save or damage doesn't record it again.\n- **Paths that shouldn't count don't.** Concentration, Sanctuary, Undead Fortitude, traps and hazards pass no creature source, so they never record harm. Fire Bolt on an object returns before `spell_attack`, so the object check is safe. The GM designation is left to T-116, which is still open.\n\n**Tests**\n- The three acceptance xfails for T-113, T-114 and T-115 are removed, and the tests now pass. That fixes the engine's result rather than weakening the tests.\n- The new unit tests check behaviour: the attacker becomes the victim's enemy but not the other way round, and the \"is now X's enemy\" event is logged once, citing page 181, `GLOSS.enemy#2` and R-45 or R-52. They also cover:\n  - grapple and shove;\n  - Divine Spark harming versus healing;\n  - a spell aimed at one creature;\n  - an area spell catching a companion versus one cast by a bystander.\n- Three unit-test fixtures changed a Friendly guard to `team=\"neutral\"`. A Friendly creature on the opposing team now counts as an enemy under R-46, so that edit follows from the ruling and doesn't hide a regression.\n\n**One weak spot, not blocking**\n`save()` gets the name of the cause for the log line by running a regex over the save's display label. Passing the name in directly would be sturdier. It only changes the log wording, never who counts as an enemy, so I didn't reject over it.\n\nI filed no follow-up."
+ },
+ "problems": [],
+ "cost_usd": 0.4128,
+ "stash": ""
+}

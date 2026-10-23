@@ -1,0 +1,16 @@
+{
+ "output": {
+  "interactions": [],
+  "abuse": [],
+  "tests": [],
+  "not_testable": [],
+  "kind_waivers": [],
+  "scenario_changes": [],
+  "rulings_proposed": [],
+  "summary": "I wrote no tests for GLOSS.rules-definitions. The unit is just the sentence that opens the Rules Glossary's Rules Definitions section: \"Here are definitions of various rules.\" It doesn't state a rule. Stage A found no clauses, relations, ambiguities or gaps in it.\n\n- **Interactions:** with no clauses there was nothing to build an interaction matrix from.\n- **Abuse catalogue:** none of the cheats apply to an intro sentence, and I found no new ones to add.\n- **Stage B:** all 5 verdicts are \"not-related\" (the code lines only share page 176 with this unit), so no scenario changes or scenario-notes rows are needed.\n- **Rulings:** I proposed none.\n- **Files:** I changed nothing.\n\nThe definitions themselves are tested under their own GLOSS.* units."
+ },
+ "problems": [],
+ "cost_usd": 0.226828,
+ "session": "da500b12-f4e4-45b0-b3a0-6a813cac31f4",
+ "error": null
+}
