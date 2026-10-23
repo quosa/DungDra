@@ -16,6 +16,7 @@ from . import gm, scenario
 from . import magic_items as MI
 from . import traps as T
 from .rules import Refusal, norm
+from .town import TownMixin
 
 
 def _ways(places: dict) -> dict[str, list[tuple[str, dict]]]:
@@ -32,7 +33,7 @@ def _ways(places: dict) -> dict[str, list[tuple[str, dict]]]:
     return ways
 
 
-class Adventure:
+class Adventure(TownMixin):
     def __init__(self, session, data: dict | None = None):
         self.session = session
         self.data = data or scenario.load()
@@ -45,6 +46,7 @@ class Adventure:
         self.fought: set[str] = set()
         self.loot_taken: set[str] = set()
         self.left_behind: dict[str, tuple[dict, bool]] = {}  # a place's objects and Difficult Terrain
+        self._town_init()
 
     @property
     def game(self):
@@ -58,7 +60,8 @@ class Adventure:
 
     def describe(self):
         p = self.places[self.current]
-        return f"{p['name']}\n{p['text']}\n{self.exits_text()}"
+        town = self.town_text()
+        return f"{p['name']}\n{p['text']}\n" + (f"{town}\n" if town else "") + self.exits_text()
 
     def exits_text(self):
         ways = self.ways[self.current]
@@ -125,6 +128,8 @@ class Adventure:
         g.scene.sunlight = p.get("sunlight", False)
         g.scene.objects, g.scene.difficult = self.left_behind.get(pid, ({}, False))
         g.log.player("scene", f"== {p['name']} ==\n{p['text']}")
+        if self.town_text():
+            g.log.player("scene", self.town_text())
         fight = pid not in self.fought and (p.get("ambush") or p.get("encounter"))
         if self.ways[pid] and not fight:
             g.log.player("scene", self.exits_text())
@@ -151,6 +156,7 @@ class Adventure:
         g = self.game
         for t in p.get("traps", []):
             T.place(g, t["kind"], location=t.get("location", ""))
+        self.place_people(p)
         ground = p.get("ground", [])
         for i, gr in enumerate([ground] if isinstance(ground, str) else ground):
             if isinstance(gr, str):
@@ -297,6 +303,7 @@ class Adventure:
     def _ambush(self, spec):
         g = self.game
         mons = self._spawn(spec["monsters"], spec["positions"])
+        self.spawned[self.current] = [m.id for m in mons]
         levels = [p.level for p in g.pcs() if not p.dead]
         E.rate(g, levels, mons)
         for i, m in enumerate(mons):
@@ -313,6 +320,7 @@ class Adventure:
     def _encounter(self, spec):
         g = self.game
         mons = self._spawn(spec["monsters"], spec["positions"])
+        self.spawned[self.current] = [m.id for m in mons]
         levels = [p.level for p in g.pcs() if not p.dead]
         E.rate(g, levels, mons)
         C.roll_initiative(g, [p for p in g.pcs() if not p.dead] + mons)

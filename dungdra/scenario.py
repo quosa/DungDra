@@ -14,6 +14,7 @@ from importlib import resources
 from pathlib import Path
 
 from . import magic_items as MI
+from .data.equipment import LIFESTYLE, canonical, item_cost
 from .data.monsters import MONSTERS
 from .explore import PACE_MPH, TERRAIN_MAX
 from .rules import DIFFICULT_GROUND, Refusal, norm
@@ -21,7 +22,7 @@ from .traps import TRAPS
 
 DEFAULT = "goblin-trail"
 
-TOP = {"title", "about", "start", "places"}
+TOP = {"title", "about", "start", "places", "quests"}
 PLACE = {
     "name",
     "text",
@@ -35,7 +36,16 @@ PLACE = {
     "traps",
     "loot",
     "ending",
+    "shop",
+    "inn",
+    "people",
 }
+SHOP = {"name", "sells", "buys"}
+INN = {"name", "room"}
+PERSON = {"id", "name", "text", "says", "quest", "creature", "attitude", "side", "position"}
+QUEST = {"title", "giver", "offer", "goal", "reward", "done"}
+GOAL = {"defeat", "bring"}
+REWARD = {"gp", "xp", "items"}
 EXIT = {"to", "one_way", "travel"}
 TRAVEL = {"miles", "hours", "pace", "terrain", "road"}
 FIGHT = {"monsters", "positions"}
@@ -84,6 +94,15 @@ def check(data: dict, name: str = "adventure") -> None:
         raise AdventureError(f"{name}: start: there's no place {data['start']!r}")
     for pid, place in places.items():
         _place(place, places, f"{name}: places.{pid}")
+    people = {p["id"]: pid for pid, place in places.items() for p in place.get("people", [])}
+    for qid, q in data.get("quests", {}).items():
+        _quest(q, places, people, f"{name}: quests.{qid}")
+    for pid, place in places.items():
+        for i, p in enumerate(place.get("people", [])):
+            if p.get("quest") is not None and p["quest"] not in data.get("quests", {}):
+                raise AdventureError(
+                    f"{name}: places.{pid}.people[{i}].quest: there's no quest {p['quest']!r}"
+                )
 
 
 def _place(p: dict, places: dict, at: str) -> None:
@@ -111,6 +130,59 @@ def _place(p: dict, places: dict, at: str) -> None:
     if "loot" in p:
         _loot(p["loot"], f"{at}.loot")
     _ground(p.get("ground", []), f"{at}.ground")
+    if "shop" in p:
+        _keys(p["shop"], SHOP, f"{at}.shop", required=set())
+        for it in p["shop"].get("sells", []):
+            _item(it, f"{at}.shop.sells")
+    if "inn" in p:
+        _keys(p["inn"], INN, f"{at}.inn", required=set())
+        if p["inn"].get("room", "modest") not in LIFESTYLE:
+            raise AdventureError(f"{at}.inn.room: {p['inn']['room']!r} isn't one of {', '.join(LIFESTYLE)}")
+    for i, person in enumerate(p.get("people", [])):
+        _person(person, f"{at}.people[{i}]")
+
+
+def _person(p: dict, at: str) -> None:
+    _keys(p, PERSON, at, required={"id", "name", "text"})
+    if "creature" in p and p["creature"] not in MONSTERS:
+        raise AdventureError(
+            f"{at}.creature: no monster {p['creature']!r}; the monsters are {', '.join(MONSTERS)}"
+        )
+    if p.get("attitude", "indifferent") not in ("friendly", "indifferent", "hostile"):
+        raise AdventureError(f"{at}.attitude: {p['attitude']!r} isn't friendly, indifferent or hostile")
+    if p.get("side", "neutral") not in ("neutral", "party", "enemy"):
+        raise AdventureError(f"{at}.side: {p['side']!r} isn't neutral, party or enemy")
+
+
+def _quest(q: dict, places: dict, people: dict, at: str) -> None:
+    _keys(q, QUEST, at, required={"title", "giver", "offer", "goal", "reward"})
+    if q["giver"] not in people:
+        raise AdventureError(f"{at}.giver: nobody in the adventure has the id {q['giver']!r}")
+    goal = q["goal"]
+    _keys(goal, GOAL, f"{at}.goal", required=set())
+    if len(goal) != 1:
+        raise AdventureError(f"{at}.goal: one of defeat (a place) or bring (an item)")
+    if "defeat" in goal and goal["defeat"] not in places:
+        raise AdventureError(f"{at}.goal.defeat: there's no place {goal['defeat']!r}")
+    if "defeat" in goal and not (
+        places[goal["defeat"]].get("encounter") or places[goal["defeat"]].get("ambush")
+    ):
+        raise AdventureError(f"{at}.goal.defeat: {goal['defeat']!r} has no encounter or ambush to defeat")
+    if "bring" in goal:
+        _item(goal["bring"], f"{at}.goal.bring")
+    _keys(q["reward"], REWARD, f"{at}.reward", required=set())
+    for it in q["reward"].get("items", []):
+        _item(it, f"{at}.reward.items")
+
+
+def _item(name: str, at: str) -> None:
+    """An item the engine knows: equipment with a price, or a magic item it can make."""
+    if item_cost(canonical(name)) is not None:
+        return
+    try:
+        MI.make(name)
+    except Refusal as e:
+        raise AdventureError(f"{at}: no item {name!r} ({e.reason})") from e
 
 
 def _travel(tv: dict, at: str) -> None:
@@ -133,10 +205,7 @@ def _fight(f: dict, allowed: set, at: str, required: set) -> None:
 def _loot(loot: dict, at: str) -> None:
     _keys(loot, LOOT, at, required=set())
     for it in loot.get("items", []):
-        try:
-            MI.make(it)
-        except Refusal as e:
-            raise AdventureError(f"{at}.items: {e.reason}") from e
+        _item(it, f"{at}.items")
 
 
 def _ground(ground, at: str) -> None:

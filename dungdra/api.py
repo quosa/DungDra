@@ -46,6 +46,7 @@ from .events import PLAYER
 from .fixtures import make as make_fixture
 from .game import Game
 from .rules import OutOfScope, Refusal, norm
+from .town import xp_text
 
 
 def _enemy_state(e) -> str:
@@ -207,7 +208,7 @@ class Session:
     # -- information --------------------------------------------------------------
     def cmd_status(self):
         g = self.game
-        lines = [c.summary() for c in g.pcs()]
+        lines = [f"{c.summary()}; {xp_text(c)}" for c in g.pcs()]
         if g.combat:
             cb = g.combat
             lines.append(f"Round {cb.round}; turn: {cb.current.name if cb.current else '-'}")
@@ -619,9 +620,13 @@ class Session:
         self.game.get(actor).position = tuple(position)
 
     def cmd_buy(self, item, qty=1, actor=None):
+        if self.adventure is not None:
+            self.adventure.check_trade(item)
         gear.buy(self.game, self._c(actor), item, qty)
 
     def cmd_sell(self, item, qty=1, actor=None):
+        if self.adventure is not None:
+            self.adventure.check_trade(item, selling=True)
         return gear.sell(self.game, self._c(actor), item, qty)
 
     def cmd_lifestyle(self, level, days):
@@ -737,6 +742,29 @@ class Session:
         a = self._c(actor)
         a.inventory.remove(item, qty)
         self.game.log.player("inventory", f"{a.name} loses {qty} \u00d7 {item}")
+
+    def _town(self):
+        if self.adventure is None:
+            raise Refusal("There's no adventure loaded")
+        return self.adventure
+
+    def cmd_talk(self, who):
+        return self._town().talk(who)
+
+    def cmd_accept_quest(self):
+        return self._town().accept()
+
+    def cmd_quests(self):
+        return self._town().journal()
+
+    def cmd_turn_in(self):
+        return self._town().turn_in()
+
+    def cmd_wares(self):
+        return self._town().wares()
+
+    def cmd_rent_room(self):
+        return self._town().rent_room()
 
     def cmd_go(self, where=None):
         if self.adventure is None:

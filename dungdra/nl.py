@@ -425,6 +425,9 @@ def parse(session, text: str) -> list[dict] | dict:
         return [{"cmd": "status"}]
     if re.search(r"\b(sheet|character sheet)\b", t):
         return [{"cmd": "sheet", "actor": aid}]
+    town = _town_cmds(session, t)
+    if town is not None:
+        return town
     m = re.fullmatch(
         r"look|look around|where are we|where am i|describe|exits|where can we go"
         r"|(?:show (?:me )?)?(?:the )?(map)",
@@ -523,7 +526,7 @@ def parse(session, text: str) -> list[dict] | dict:
     if m:
         tg = find_creatures(session, t, exclude=actor)
         return [{"cmd": "drink", "actor": aid, "target": tg[0].id if tg else None}]
-    if re.search(r"\b(healer'?s kit)\b", t):
+    if re.search(r"\b(healer'?s kit)\b", t) and not re.search(r"\b(buys?|sells?)\b", t):
         return _on_creature(session, t, actor, "use the Healer's Kit on", cmd="stabilize", kit=True)
     if re.search(r"\bstabili[sz]es?\b|\bfirst aid\b", t):
         return _on_creature(session, t, actor, "stabilize", cmd="stabilize")
@@ -709,6 +712,32 @@ def parse(session, text: str) -> list[dict] | dict:
         "'BROM inventory', "
         "'MIALEE spells', 'short rest', 'status', or 'help' for more."
     }
+
+
+def _town_cmds(session, t: str) -> list[dict] | None:
+    """Talking, quests, shops and inns, when an adventure is loaded; None for any other line."""
+    if session.adventure is None:
+        return None
+    m = re.fullmatch(r"(?:\w+ )?(?:talks?|speaks?|chats?|asks?) (?:to |with )?(.+)", t)
+    if m:
+        return [{"cmd": "talk", "who": m.group(1)}]
+    if re.search(
+        r"\b(?:accept|accepts|take|takes|agree to) (?:the |that |this )?(?:quest|job|task|offer)\b", t
+    ):
+        return [{"cmd": "accept_quest"}]
+    if re.fullmatch(r"(?:show (?:me )?)?(?:the |my |our )?(?:quests?|journal|quest log)", t):
+        return [{"cmd": "quests"}]
+    if re.search(
+        r"\b(?:turn in|hand in|report back|claim (?:the |our )?reward|collect (?:the |our )?reward)\b", t
+    ):
+        return [{"cmd": "turn_in"}]
+    if re.fullmatch(
+        r"shop|browse|wares|what'?s for sale|what do (?:you|they) sell|(?:show|see) (?:me )?(?:the )?wares", t
+    ):
+        return [{"cmd": "wares"}]
+    if re.search(r"\b(?:rent|rents|book|take) (?:a |some )?rooms?\b|\b(?:stay|sleep|rest) at the inn\b", t):
+        return [{"cmd": "rent_room"}]
+    return None
 
 
 def _move_cmds(session, actor, t: str) -> list[dict] | dict | None:

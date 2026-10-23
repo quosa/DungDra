@@ -8,6 +8,9 @@
       "text": "Millbrook's square smells of bread and woodsmoke. The reeve has posted a notice: goblins have been raiding carts on the forest road east of the village, and whoever clears the old watchtower they use as a lair will be paid in coin. The general store is open if you need supplies.",
       "light": "bright",
       "sunlight": true,
+      "shop": {
+        "name": "the general store"
+      },
       "exits": [
         {
           "to": "road",

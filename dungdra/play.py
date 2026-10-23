@@ -30,6 +30,20 @@ KNOWN = (
     "long rest",
     "end turn",
 )
+# commands whose answer is text for the player (the rest report through the event log)
+SHOWN = (
+    "status",
+    "sheet",
+    "look",
+    "map",
+    "inventory",
+    "talk",
+    "accept_quest",
+    "quests",
+    "turn_in",
+    "wares",
+    "rent_room",
+)
 YES = ("yes", "y", "yes please", "sure", "ok", "okay", "do that")
 
 
@@ -125,7 +139,7 @@ class Play:
                 out.append(f"(Refused) {res['error']}")
                 break
             r = res.get("result")
-            if isinstance(r, str) and cmd["cmd"] in ("status", "sheet", "look", "map", "inventory"):
+            if isinstance(r, str) and cmd["cmd"] in SHOWN:
                 out.append(r)
         out += self._turn_flow(cmds)
         return "\n".join(x for x in out if x)

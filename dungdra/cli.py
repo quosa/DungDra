@@ -117,6 +117,8 @@ HELP = """Examples:
   LIDDA uses cunning action to hide                 BROM uses second wind
   end turn      continue      short rest      long rest
   go to the watchtower      go back      exits      map
+  talk to the reeve      accept the quest      quests      turn in the quest
+  shop      BROM buys a rope      LIDDA sells her dagger      rent a room
   travel 6 miles at normal pace through forest on the road
   LIDDA picks the lock      MIALEE examines the floor      BROM wedges a spike into the pit lid
 """

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from string import capwords
+
 from .data.equipment import ARMOR, DON_DOFF, GP, LIFESTYLE, TOOLS, WEAPONS, canonical, item_cost
 from .items import Item, fmt_cp, make_change
 from .rules import DAY, Refusal, div, div_up, norm
@@ -152,7 +154,7 @@ def buy(game, pc, name: str, qty: int = 1):
     pc.inventory.add(n, qty)
     game.log.player(
         "trade",
-        f"{pc.name} buys {qty} × {n.title()} for {fmt_cp(price)} (left: {pc.purse})",
+        f"{pc.name} buys {qty} × {capwords(n)} for {fmt_cp(price)} (left: {pc.purse})",
         page=89,
         rule="EQUIP.coins",
     )
@@ -191,7 +193,9 @@ def pay_with(game, pc, cost_cp: int, coin_cp: int):
 
 
 # -- lifestyle (p.101) --------------------------------------------------------------------
-def live(game, pcs, lifestyle: str, days: int):
+def live(game, pcs, lifestyle: str, days: int, advance: bool = True):
+    """Each PC pays for `days` of a lifestyle (p.101); the days pass unless the caller passes the
+    time itself (`advance=False`: a night at an inn, spent in a Long Rest)."""
     lifestyle = norm(lifestyle)
     if lifestyle not in LIFESTYLE:
         raise Refusal(f"Lifestyles: {', '.join(LIFESTYLE)}")
@@ -207,7 +211,8 @@ def live(game, pcs, lifestyle: str, days: int):
             page=101,
             rule="EQUIP.lifestyle-expenses",
         )
-    game.advance(days * DAY, f"{days} days of {lifestyle.title()} living")
+    if advance:
+        game.advance(days * DAY, f"{days} days of {lifestyle.title()} living")
 
 
 # -- crafting (p.103) ---------------------------------------------------------------------
