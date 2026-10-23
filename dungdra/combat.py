@@ -693,12 +693,14 @@ def _after_move(game, c, start):
 
 
 def _check_leave_reach(game, mover, start, dest, provoke=True):
-    """Opportunity Attacks (p.15, 185): leaving an enemy's reach with your own
-    movement provokes, unless you Disengaged; forced movement and teleports don't."""
+    """Opportunity Attacks (p.15, 185): leaving the reach of a creature that can see you with your
+    own movement provokes, unless you Disengaged; forced movement and teleports don't. The mover's
+    allies let it go without being asked; a creature on no side strikes only at its enemies."""
     if game.combat is None:
         return
     for enemy in list(game.creatures.values()):
-        if enemy is mover or enemy.dead or enemy.team == mover.team or enemy.team == "neutral":
+        # SRD[GLOSS.opportunity-attacks] any creature whose reach the mover leaves, on a side or not
+        if enemy is mover or enemy.dead or game.is_ally(enemy, mover):
             continue
         reach = oa_reach(enemy)
         d0 = dist_points(enemy.position, start)
@@ -722,17 +724,20 @@ def _check_leave_reach(game, mover, start, dest, provoke=True):
                 rule="GLOSS.disengage",
             )
             continue
+        hostile = game.is_enemy(enemy, mover)
         if not game.combat.has_reaction(enemy):
-            game.log.player(
-                "oa",
-                f"{enemy.name} can't make an Opportunity Attack (no Reaction available)",
-                page=185,
-                rule="GLOSS.opportunity-attacks",
-            )
+            if hostile:
+                game.log.player(
+                    "oa",
+                    f"{enemy.name} can't make an Opportunity Attack (no Reaction available)",
+                    page=185,
+                    rule="GLOSS.opportunity-attacks",
+                )
             continue
         if not can_see(enemy, mover):
             continue
-        default = enemy.team != "party"
+        # the players decide for the party; anyone else strikes at its enemies only
+        default = enemy.team != "party" and hostile
         if game.decide(
             enemy,
             "opportunity_attack",

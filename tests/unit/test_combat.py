@@ -948,3 +948,48 @@ def test_a_paved_road_through_a_snowfield_costs_normally_and_the_snow_beside_it_
     game.scene.add_ground("heavy snow", "rect", None, (-200, -200, 200, -5), name="south field")
     assert move(game, brom, to=(30, 5)) == 60  # along the road, y 0..5
     assert move(game, brom, to=(30, 15)) == 20  # two squares off it into the snow
+
+
+# ---------------- Opportunity Attacks by creatures on no side ----------------
+def _bystander_in_a_fight(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = mon(game, "guard", (5, 0), name="WATCHMAN")
+    w.team = "neutral"
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, w])
+    return lidda, w
+
+
+def test_a_bystander_lets_a_creature_that_hasnt_harmed_it_go(game):
+    lidda, w = _bystander_in_a_fight(game)
+    move(game, lidda, to=(-20, 0))
+    assert not any("Opportunity Attack" in e.text for e in game.log.of_kind("oa"))
+
+
+def test_a_bystander_strikes_at_a_creature_that_harmed_it(game):
+    lidda, w = _bystander_in_a_fight(game)
+    game.works_to_harm(lidda, w, "an attack")
+    game.dice.force_str("d20=[2]")
+    move(game, lidda, to=(-20, 0))
+    assert any("WATCHMAN makes an Opportunity Attack against LIDDA" in e.text for e in game.log.of_kind("oa"))
+
+
+def test_a_bystander_out_of_reactions_is_mentioned_only_when_it_would_strike(game):
+    lidda, w = _bystander_in_a_fight(game)
+    game.combat.reaction_used.add(w.id)
+    move(game, lidda, to=(-10, 0))
+    assert game.log.of_kind("oa") == []
+    lidda.position = (0, 0)
+    game.works_to_harm(lidda, w, "an attack")
+    move(game, lidda, to=(-10, 0))
+    assert "WATCHMAN can't make an Opportunity Attack" in game.log.last("oa").text
+
+
+def test_the_movers_allies_arent_asked(game):
+    lidda, brom = pc(game, "LIDDA", (0, 0)), pc(game, "BROM", (5, 0))
+    asked = []
+    game.decider = lambda g, who, key, options, default, prompt: asked.append(key) or default
+    game.dice.force_str("d20=[20,1]")
+    roll_initiative(game, [lidda, brom])
+    move(game, lidda, to=(-20, 0))
+    assert "opportunity_attack" not in asked

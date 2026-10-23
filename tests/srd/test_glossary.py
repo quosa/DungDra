@@ -3453,11 +3453,6 @@ def test_enemy_a_bystander_who_attacks_you_brings_no_other_bystander_into_the_fi
 
 # ---------------- GLOSS.opportunity-attacks · any creature that can see you (T-127) ----------------
 @pytest.mark.srd("GLOSS.opportunity-attacks", kind="positive")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-127: a creature on no side never gets an Opportunity Attack, so LIDDA leaves the "
-    "watchman's reach unchallenged",
-)
 def test_opportunity_attack_a_bystander_can_strike_a_creature_leaving_its_reach(game):
     lidda = pc(game, "LIDDA", (0, 0))
     w = neutral(game)

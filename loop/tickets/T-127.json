@@ -6,12 +6,16 @@
   "tests": [
     "tests/srd/test_glossary.py::test_opportunity_attack_a_bystander_can_strike_a_creature_leaving_its_reach"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "created",
       "by": "person"
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }
