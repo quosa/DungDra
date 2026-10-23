@@ -141,6 +141,10 @@ class Inventory:
                 self.add(n, q * qty)
             return self.find(PACKS[name]["contents"][0][0])
         it = Item(name, qty, **props)
+        if qty > 1 and not it.stackable():  # each suit of armor or shield is an item of its own
+            for _ in range(qty - 1):
+                self.add(Item(name, 1, **props))
+            it.qty = 1
         return self.add(it)
 
     def find(self, name: str, stack_only=False) -> Item | None:

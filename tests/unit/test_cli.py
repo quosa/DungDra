@@ -51,3 +51,14 @@ def test_the_llm_option_says_it_isnt_built_yet(capsys):
     with pytest.raises(SystemExit):
         cli.main(["--llm"])
     assert "--llm isn't built yet" in capsys.readouterr().err
+
+
+def test_several_picks_are_chosen_by_numbers_at_the_keyboard(monkeypatch):
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "2, 0")
+    pool = ["shield", "sleep", "burning hands"]
+    picks = cli.interactive_decider(None, None, "learn", pool, ["shield"], "Learn?")
+    assert picks == ["burning hands", "shield"]
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "")
+    assert cli.interactive_decider(None, None, "learn", pool, ["shield"], "Learn?") == ["shield"]
+    monkeypatch.setattr(builtins, "input", lambda prompt="": "9")
+    assert cli.interactive_decider(None, None, "learn", pool, ["sleep"], "Learn?") == ["sleep"]

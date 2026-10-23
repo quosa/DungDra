@@ -6,6 +6,7 @@ import pytest
 
 from dungdra.adventure import Adventure
 from dungdra.combat import end_combat
+from dungdra.encounters import spawn
 from dungdra.play import Play
 from dungdra.scenario import check
 
@@ -264,3 +265,47 @@ def test_a_locked_chest_is_left_behind_when_the_party_turns_back():
     assert "locked chest is still here" in p.say("continue")  # pressing on: it holds them up
     p.say("go back")
     assert at(p) == "yard" and sum(c.purse.gp for c in p.game.pcs()) == gp
+
+
+# ---------------- a place keeps its creatures ----------------
+def test_a_places_creatures_stay_there_when_the_party_leaves_and_return_with_it():
+    p = play()
+    p.say("continue")
+    p.say("continue")  # the cellar's rat
+    rat = next(c for c in p.game.creatures.values() if c.team == "enemy")
+    clear_the_fight(p)
+    p.say("go back")
+    assert rat.id not in p.game.creatures
+    p.say("go to the cellar")
+    assert p.game.creatures.get(rat.id) is rat
+
+
+def test_a_returning_creature_whose_id_was_taken_gets_a_new_one_and_the_quest_follows():
+    p = play()
+    p.say("continue")
+    p.say("continue")
+    adv = p.session.adventure
+    (rat_id,) = adv.spawned["cellar"]
+    clear_the_fight(p)
+    p.say("go back")
+    spawn(p.game, ["giant rat"], [(50, 50)], team="party")  # a rat travelling with the party takes the id
+    assert rat_id in p.game.creatures
+    p.say("go to the cellar")
+    (new_id,) = adv.spawned["cellar"]
+    assert new_id != rat_id and p.game.creatures[new_id].dead
+
+
+def test_the_party_wont_leave_a_member_who_cant_move():
+    p = play()
+    lidda = p.game.get("lidda")
+    lidda.add_condition("restrained", "a web")
+    assert "LIDDA can't move (Speed 0: restrained). Free them first." in p.say("continue")
+    assert at(p) == "town"
+
+
+def test_setting_off_is_told_only_when_the_party_sets_off():
+    p = play()
+    p.game.get("lidda").add_condition("restrained", "a web")
+    assert "You set off" not in p.say("go to the cellar")
+    p.game.get("lidda").remove_condition("restrained")
+    assert "You set off toward Mill Cellar" in p.say("go to the cellar")

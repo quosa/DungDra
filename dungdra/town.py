@@ -155,7 +155,8 @@ class TownMixin:
         goal, g = self.quests[qid]["goal"], self.game
         if "defeat" in goal:
             pid = goal["defeat"]
-            foes = [g.creatures[i] for i in self.spawned.get(pid, []) if i in g.creatures]
+            there = {c.id: c for c in self.left_behind.get(pid, ({}, False, []))[2]} | g.creatures
+            foes = [there[i] for i in self.spawned.get(pid, []) if i in there]
             return pid in self.fought and all(c.dead or c.notes.get("fled") for c in foes)
         return any(not p.dead and p.inventory.find(goal["bring"]) for p in g.pcs())
 
@@ -229,6 +230,8 @@ class TownMixin:
         res = self.session.execute({"cmd": "long_rest"})
         if not res["ok"]:
             raise Refusal(res["error"])
+        if g.combat is not None:  # the night was interrupted: nobody pays for a night they didn't get
+            return f"The night at {name} is interrupted!"
         gear.live(g, guests, room, 1, advance=False)
         return f"The party spends the night at {name}."
 

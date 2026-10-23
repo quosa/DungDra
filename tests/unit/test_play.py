@@ -314,3 +314,17 @@ def test_status_marks_the_dead_in_the_initiative_order():
     gob.dead = True
     line = next(x for x in p.say("status").splitlines() if x.startswith("  Goblin Warrior 1: "))
     assert line.endswith(" (dead)")
+
+
+@pytest.mark.parametrize("line", ["LIDDA walks toward goblin warrior 1", "go to goblin warrior 1"])
+def test_walking_toward_a_creature_is_a_move_not_a_journey(line):
+    p = _party()
+    spawn(p.game, ["goblin warrior", "goblin warrior"], [(30, 0), (35, 0)])
+    cmds = nl.parse(p.session, line)
+    assert cmds[0]["cmd"] == "move" and cmds[0]["toward"] == "goblin_warrior_1"
+
+
+def test_going_to_a_place_with_a_creature_word_in_it_is_still_a_journey():
+    p = _party()
+    spawn(p.game, ["guard"], [(10, 0)])
+    assert nl.parse(p.session, "go to the forest road") == [{"cmd": "go", "where": "forest road"}]

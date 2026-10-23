@@ -58,3 +58,20 @@ def test_selling_one_of_a_stack_in_hand_keeps_the_rest_in_hand(game):
     assert sword.qty == 1 and sword in brom.wielded
     gear.sell(game, brom, "longsword")
     assert sword not in brom.wielded
+
+
+def test_armor_bought_several_at_a_time_is_separate_items(game):
+    lidda = pc(game, "LIDDA")
+    lidda.purse.add(gp=100)
+    gear.buy(game, lidda, "shield", 2)
+    assert [s.qty for s in lidda.inventory.find_all("shield")] == [1, 1]
+
+
+def test_selling_several_takes_them_from_separate_items(game):
+    brom = pc(game, "BROM")
+    brom.purse.add(gp=200)
+    gear.buy(game, brom, "chain shirt", 2)
+    with pytest.raises(Refusal, match="has only 2"):
+        gear.sell(game, brom, "chain shirt", 3)
+    assert gear.sell(game, brom, "chain shirt", 2) == 2 * 2500
+    assert brom.inventory.find_all("chain shirt") == []

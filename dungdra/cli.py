@@ -32,6 +32,14 @@ def interactive_decider(game, who, key, options, default, prompt):
     shown = [o for o in (options or [])]
     for i, o in enumerate(shown):
         print(f"    {i}: {o}")
+    if isinstance(default, list):  # several picks from the list (spells to learn, slots to recover)
+        ans = _ask(f"    choose numbers separated by commas (Enter for default {default!r}) > ")
+        if not ans:
+            return default
+        try:
+            return [shown[int(x)] for x in ans.replace(",", " ").split()]
+        except (ValueError, IndexError):
+            return default
     ans = _ask(f"    choose a number (Enter for default {default!r}) > ")
     if not ans:
         return default

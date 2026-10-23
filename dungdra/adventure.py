@@ -45,7 +45,9 @@ class Adventure(TownMixin):
         self.visited: list[str] = []
         self.fought: set[str] = set()
         self.loot_taken: set[str] = set()
-        self.left_behind: dict[str, tuple[dict, bool]] = {}  # a place's objects and Difficult Terrain
+        # what stays in a place when the party leaves: its objects, its Difficult Terrain, and the
+        # creatures there that aren't on the party's side
+        self.left_behind: dict[str, tuple[dict, bool, list]] = {}
         self._town_init()
 
     @property
@@ -122,7 +124,7 @@ class Adventure(TownMixin):
     def enter(self, pid, way: dict | None = None):
         g = self.game
         if self.current is not None:
-            self.left_behind[self.current] = (g.scene.objects, g.scene.difficult)
+            self.left_behind[self.current] = (g.scene.objects, g.scene.difficult, self._stow())
         first = pid not in self.visited
         if self.current is not None:  # stepping back to where you came from retraces the trail
             if self.came_from == pid:
@@ -136,7 +138,8 @@ class Adventure(TownMixin):
         g.scene.name = p["name"]
         g.scene.light = p.get("light", "bright")
         g.scene.sunlight = p.get("sunlight", False)
-        g.scene.objects, g.scene.difficult = self.left_behind.get(pid, ({}, False))
+        g.scene.objects, g.scene.difficult, here = self.left_behind.get(pid, ({}, False, []))
+        self._unstow(here)
         g.log.player("scene", f"== {p['name']} ==\n{p['text']}")
         if self.town_text():
             g.log.player("scene", self.town_text())
@@ -160,6 +163,24 @@ class Adventure(TownMixin):
             else:
                 self._encounter(p["encounter"])
         return self.describe()
+
+    def _stow(self) -> list:
+        """Take the creatures of the place being left out of the game: they stay there."""
+        g = self.game
+        away = [c for c in g.creatures.values() if c.team != "party"]
+        for c in away:
+            g.remove(c)
+        return away
+
+    def _unstow(self, creatures: list):
+        """Put a place's creatures back as the party returns. One that a creature elsewhere has
+        since taken the id of gets a new one, and the place's records follow it."""
+        for c in creatures:
+            old = c.id
+            self.game.add(c)
+            if c.id != old:
+                self.spawned = {k: [c.id if i == old else i for i in v] for k, v in self.spawned.items()}
+                self.standing = {k: c.id if v == old else v for k, v in self.standing.items()}
 
     def _set_up(self, p):
         """What the place holds the first time the party comes: its traps and its ground."""
@@ -187,11 +208,6 @@ class Adventure(TownMixin):
                     f"There's no way back to {self.name(target)}: it's behind you. {self.exits_text()}"
                 )
             raise Refusal(f"There's no way from here to {self.name(target)}. {self.exits_text()}")
-        if len(path) > 1:
-            g.log.player(
-                "scene",
-                f"You set off toward {self.name(target)}; the way leads through {self.name(path[0])} first.",
-            )
         if g.combat is not None:
             raise Refusal("You can't leave in the middle of a fight")
         g.resolve_dying()
@@ -199,6 +215,11 @@ class Adventure(TownMixin):
             return "The End"
         if not self._walking():
             raise Refusal("Nobody in the party is awake to lead the way. Heal someone, or wait.")
+        stuck = [pc for pc in self._walking() if pc.speed() == 0]
+        if stuck:  # Restrained in a web, Grappled: their Speed is 0, and the party won't leave them
+            pc = stuck[0]
+            held = ", ".join(sorted(pc.conditions() & {"grappled", "restrained", "paralyzed", "petrified"}))
+            raise Refusal(f"{pc.name} can't move (Speed 0{': ' + held if held else ''}). Free them first.")
         for pc in self._walking():  # out of combat, getting up costs nothing that matters
             if pc.has("prone") and pc.speed() > 0:
                 C.stand_up(g, pc)
@@ -212,6 +233,11 @@ class Adventure(TownMixin):
                 return "The End"
             raise Refusal(f"There's no way on from here. {self.exits_text()}")
         way = next(ex for to, ex in self.ways[self.current] if to == path[0])
+        if len(path) > 1:
+            g.log.player(
+                "scene",
+                f"You set off toward {self.name(target)}; the way leads through {self.name(path[0])} first.",
+            )
         return self.enter(path[0], way)
 
     def _target(self, where):

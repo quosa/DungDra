@@ -168,11 +168,18 @@ def sell(game, pc, name: str, qty: int = 1):
     spare = [x for x in owned if x is not pc.armor and x is not pc.shield]
     if not spare:
         raise Refusal(f"Take off {owned[0].display} before selling it")
-    it = spare[0]
-    price = it.sale_price() * qty
-    pc.inventory.remove(it, qty)
-    if it in pc.wielded and it.qty <= 0:  # the last of the stack in hand is gone
-        pc.wielded.remove(it)
+    if sum(x.qty for x in spare) < qty:
+        raise Refusal(f"{pc.name} has only {sum(x.qty for x in spare)} × {spare[0].display} to sell")
+    it, price, left = spare[0], 0, qty
+    for x in spare:  # from one stack or several separate items, until `qty` are sold
+        n = min(left, x.qty)
+        price += x.sale_price() * n
+        pc.inventory.remove(x, n)
+        if x in pc.wielded and x.qty <= 0:  # the last of the stack in hand is gone
+            pc.wielded.remove(x)
+        left -= n
+        if not left:
+            break
     pc.purse.add(price)
     game.log.player(
         "trade",

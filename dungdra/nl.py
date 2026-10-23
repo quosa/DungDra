@@ -443,6 +443,8 @@ def parse(session, text: str) -> list[dict] | dict:
         r"|^(?:(?:go|head|turn|walk) )?back$|^(?:return|retreat)$",
         t,
     )
+    if m and m.group(1) and _names_creature(session, m.group(1)):
+        m = None  # "walks toward goblin warrior 1" is a move toward a creature, not a journey
     if m and g.combat is None and session.adventure is not None:
         return [{"cmd": "go", "where": m.group(1) or "back"}]
     if (
@@ -716,6 +718,17 @@ def parse(session, text: str) -> list[dict] | dict:
     }
 
 
+def _names_creature(session, where: str) -> bool:
+    """Does 'go to <where>' name a creature rather than a place: a living creature by its full
+    name, or something that matches a creature here and no place of the adventure?"""
+    w = norm(where)
+    living = [c for c in session.game.creatures.values() if not c.dead]
+    if any(re.search(rf"\b{re.escape(norm(c.name))}\b", w) for c in living):
+        return True
+    adv = session.adventure
+    return (adv is None or adv.resolve(where) is None) and bool(find_creatures(session, w))
+
+
 def _town_cmds(session, t: str) -> list[dict] | None:
     """Talking, quests, shops and inns, when an adventure is loaded; None for any other line."""
     if session.adventure is None:
@@ -746,7 +759,9 @@ def _move_cmds(session, actor, t: str) -> list[dict] | dict | None:
     """A move ("moves 30 feet toward X", "move toward X", "walks to X", "runs away from X",
     "charges X"), with an attack after it when the line has one; None when the line isn't a move."""
     m = re.search(
-        r"\b(?:moves?|walks?|runs?|steps?)\s+(?:(\d+)\s*(?:ft|feet)?\s*)?(towards?|to|away from)?\b", t
+        r"\b(?:moves?|walks?|runs?|steps?|go|goes|heads?)\s+"
+        r"(?:(\d+)\s*(?:ft|feet)?\s*)?(towards?|to|away from)?\b",
+        t,
     )
     charge = re.search(r"\b(approach(es)?|charges?|closes? in on)\b", t)
     if not ((m and (m.group(1) or m.group(2))) or charge):

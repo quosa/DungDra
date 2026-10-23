@@ -612,8 +612,8 @@ def move(
             f"{c.name} moves {crowded} ft through a creature's space: Difficult Terrain",
             page=181,
             rule="GLOSS.difficult-terrain#5",
-            # R-43: the space of a creature that isn't hostile but isn't your ally counts too
-            ruling="R-43" if any(getattr(o, "attitude", None) != "hostile" for o in occupants) else None,
+            # R-43: the space of a creature that is neither your ally nor your enemy counts too
+            ruling="R-43" if any(not game.is_enemy(c, o) for o in occupants) else None,
         )
     if provoke:
         _check_leave_reach(game, c, start, dest, provoke=True)
