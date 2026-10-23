@@ -338,3 +338,19 @@ def test_catching_a_companion_in_an_area_spell_doesnt_make_you_its_enemy(game):
     S.cast(game, mialee, "thunderwave", [lidda])
     assert not game.is_enemy(lidda, mialee) and game.is_ally(lidda, mialee)  # R-52: her ally
     assert game.is_enemy(gob, mialee)  # the goblin she caught too
+
+
+def test_creatures_on_no_side_are_not_each_others_allies(game):
+    w = bystander(game)
+    porter = bystander(game, pos=(10, 0))
+    assert not game.is_ally(w, porter) and not game.is_ally(porter, w)
+    assert game.allies_of(w) == []
+
+
+def test_a_bystanders_area_spell_harms_another_bystander_it_catches(game):
+    mage = pc(game, "MIALEE", (0, 0))
+    mage.team = "neutral"
+    game.party.remove(mage.id)
+    porter = bystander(game, pos=(5, 0))
+    S.cast(game, mage, "thunderwave", [porter])
+    assert game.is_enemy(porter, mage)  # R-52: not the caster's ally, so it's harmed

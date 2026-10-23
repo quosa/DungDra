@@ -254,8 +254,9 @@ class Game:
         # R-46: while it is your enemy, it isn't your ally
         if a is b or self.is_enemy(a, b):
             return False
-        # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side
-        if a.team == b.team:
+        # SRD[GLOSS.ally#1] SRD[GLOSS.ally#3] party members and creatures on your side; a creature
+        # on no side ("neutral") has no side to share
+        if a.team == b.team != "neutral":
             return True
         # SRD[GLOSS.ally#2] R-37: a creature Friendly toward the party is the party's friend
         return (a.team == "party" and getattr(b, "attitude", None) == "friendly") or (

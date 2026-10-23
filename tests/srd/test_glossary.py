@@ -3383,11 +3383,6 @@ def test_heroic_inspiration_cant_be_given_to_a_pc_who_has_it(game):
 
 # ---------------- GLOSS.ally #3 · a creature on no side has no side (T-125) ----------------
 @pytest.mark.srd(ALLY, clause=f"{ALLY}#3", kind="negative")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-125: two creatures on no side count as each other's allies, so a wolf on no side "
-    "gets Pack Tactics from another wolf on no side",
-)
 def test_ally_two_bystanders_on_no_side_arent_each_others_allies(game):
     # Two wolves that belong to no side: neither is on the other's side, so no Pack Tactics.
     brom = pc(game, "BROM", (0, 0))
