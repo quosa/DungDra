@@ -1,0 +1,15 @@
+{
+  "id": "T-128",
+  "kind": "bug",
+  "unit": "PLAY.combat.making-an-attack",
+  "title": "SRD: an attacker that can't see its target has to guess its location; engine: an attack on a creature the attacker can't see is refused with its exact distance ('Goblin Warrior 1 is 30 ft away, beyond JOZAN's reach of 5 ft'), telling the player where a hidden creature is",
+  "tests": [],
+  "status": "open",
+  "attempts": 0,
+  "history": [
+    {
+      "event": "created",
+      "by": "person"
+    }
+  ]
+}
