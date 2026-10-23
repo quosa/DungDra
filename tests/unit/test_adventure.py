@@ -1,5 +1,7 @@
 """Unit tests for dungdra.adventure: moving between places, both ways, and what each place keeps."""
 
+import copy
+
 import pytest
 
 from dungdra.adventure import Adventure
@@ -223,3 +225,42 @@ def test_a_prone_character_gets_up_before_the_party_moves_on():
     mialee.add_condition("prone", "knocked down")
     out = p.say("continue")
     assert "MIALEE gets back on their feet." in out and not mialee.has("prone")
+
+
+def test_going_back_retraces_the_whole_trail():
+    p = play()
+    p.say("continue")
+    p.say("continue")  # town -> yard -> cellar
+    clear_the_fight(p)
+    p.say("go back")
+    assert at(p) == "yard"
+    p.say("go back")
+    assert at(p) == "town"
+    assert "nowhere to go back to" in p.say("go back")
+
+
+def test_loose_treasure_is_picked_up_on_the_way_back_too():
+    p = play()
+    p.say("continue")
+    p.say("continue")
+    clear_the_fight(p)
+    gp = p.game.pcs()[0].purse.gp
+    p.say("go back")
+    assert p.game.pcs()[0].purse.gp == gp + 5
+
+
+def test_a_locked_chest_is_left_behind_when_the_party_turns_back():
+    world = copy.deepcopy(HALL)  # the yard leads to a hall with a locked chest and no way on
+    world["start"] = "yard"
+    world["places"]["yard"]["exits"] = [{"to": "hall"}]
+    needle = {"kind": "poisoned needle", "location": "the chest lock"}
+    world["places"]["hall"].update(traps=[needle], exits=[])
+    p = Play(seed=1, adventure=False, decider=lambda g, who, key, options, default, prompt: default)
+    p.say("use the sample party")
+    p.session.adventure = Adventure(p.session, world)
+    p.say("begin the adventure")
+    p.say("continue")
+    gp = sum(c.purse.gp for c in p.game.pcs())
+    assert "locked chest is still here" in p.say("continue")  # pressing on: it holds them up
+    p.say("go back")
+    assert at(p) == "yard" and sum(c.purse.gp for c in p.game.pcs()) == gp

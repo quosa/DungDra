@@ -41,12 +41,17 @@ class Adventure(TownMixin):
         self.places = self.data["places"]
         self.ways = _ways(self.places)
         self.current: str | None = None
-        self.came_from: str | None = None
+        self.trail: list[str] = []  # the places the party came through, the latest last
         self.visited: list[str] = []
         self.fought: set[str] = set()
         self.loot_taken: set[str] = set()
         self.left_behind: dict[str, tuple[dict, bool]] = {}  # a place's objects and Difficult Terrain
         self._town_init()
+
+    @property
+    def came_from(self) -> str | None:
+        """Where 'go back' leads: the place the party came here from."""
+        return self.trail[-1] if self.trail else None
 
     @property
     def game(self):
@@ -119,7 +124,12 @@ class Adventure(TownMixin):
         if self.current is not None:
             self.left_behind[self.current] = (g.scene.objects, g.scene.difficult)
         first = pid not in self.visited
-        self.came_from, self.current = self.current, pid
+        if self.current is not None:  # stepping back to where you came from retraces the trail
+            if self.came_from == pid:
+                self.trail.pop()
+            else:
+                self.trail.append(self.current)
+        self.current = pid
         if first:
             self.visited.append(pid)
         p = self.places[pid]
@@ -193,10 +203,9 @@ class Adventure(TownMixin):
             if pc.has("prone") and pc.speed() > 0:
                 C.stand_up(g, pc)
                 g.log.player("scene", f"{pc.name} gets back on their feet.", page=186, rule="GLOSS.prone#2")
-        if not path or path[0] != self.came_from:
-            stop = self._before_moving_on(here)
-            if stop:
-                return stop
+        stop = self._before_leaving(here, onward=not path or path[0] != self.came_from)
+        if stop:
+            return stop
         if not path:
             if here.get("ending"):
                 g.log.player("scene", here["ending"])
@@ -236,9 +245,10 @@ class Adventure(TownMixin):
             return f"The {thing} is part of {here['name']}, where you are now.{how}"
         return f"I don't know a place called '{where}'. {self.exits_text()}"
 
-    def _before_moving_on(self, here):
-        """A pit in the floor ahead and a locked chest hold the party up when it presses on (not
-        when it turns back). Returns the event to report when the floor gives way."""
+    def _before_leaving(self, here, onward: bool):
+        """The party picks up the place's treasure as it leaves. Pressing on (not turning back),
+        a pit in the floor ahead and a locked chest hold it up. Returns the event to report when
+        the floor gives way."""
         g = self.game
         pending = [
             o["trap"]
@@ -246,7 +256,7 @@ class Adventure(TownMixin):
             if "trap" in o and not o["trap"].disabled and not o["trap"].triggered
         ]
         pit = next((t for t in pending if t.kind in ("hidden pit", "spiked pit")), None)
-        if pit is not None:
+        if pit is not None and onward:
             lead = self._walking()[0]
             T.passive_detection(g, self._walking(), pit)
             if not pit.detected:
@@ -258,6 +268,8 @@ class Adventure(TownMixin):
                 raise Refusal("There's a pit trap in the floor ahead; wedge it with an Iron Spike first")
         if here.get("loot") and self.current not in self.loot_taken:
             chest = next((t for t in pending if t.kind == "poisoned needle"), None)
+            if chest is not None and not onward:
+                return None  # the chest stays locked behind them
             if chest is not None:
                 raise Refusal(
                     "The locked chest is still here. Open it (pick the lock, or disarm it) before moving on, "

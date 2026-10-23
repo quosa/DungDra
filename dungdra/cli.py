@@ -53,7 +53,7 @@ def main(argv=None):
     ap.add_argument("--seed", type=int, default=None)
     ap.add_argument(
         "--adventure",
-        default=scenario.DEFAULT,
+        default=scenario.FIRST,
         help=f"an adventure by name ({', '.join(scenario.available())}) or the path of an adventure file "
         "(default: %(default)s)",
     )

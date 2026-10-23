@@ -20,7 +20,8 @@ from .explore import PACE_MPH, TERRAIN_MAX
 from .rules import DIFFICULT_GROUND, Refusal, norm
 from .traps import TRAPS
 
-DEFAULT = "goblin-trail"
+DEFAULT = "goblin-trail"  # what Play() loads when no adventure is named
+FIRST = "mill-rats"  # what a new player starts with at the command line
 
 TOP = {"title", "about", "start", "places", "quests"}
 PLACE = {

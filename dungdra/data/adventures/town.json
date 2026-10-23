@@ -1,0 +1,60 @@
+{
+  "title": "Thornbury",
+  "about": "A market town to explore: shop, rest at the inn, visit the temple, and take on work from the townsfolk.",
+  "start": "square",
+  "quests": {
+    "wolves": {
+      "title": "Wolves at the Woods' Edge",
+      "giver": "captain",
+      "offer": "Wolves have been taking sheep at the edge of the woods, a mile east. Put an end to it and the town pays 40 gold.",
+      "goal": {"defeat": "woods"},
+      "reward": {"gp": 40},
+      "done": "Captain Reyes nods. 'Good work. The shepherds will sleep tonight.'"
+    },
+    "kit": {
+      "title": "A Kit for the Temple",
+      "giver": "sister",
+      "offer": "Our healer's kit is spent, and the market's prices are beyond the temple. Could you bring us one?",
+      "goal": {"bring": "healer's kit"},
+      "reward": {"items": ["potion of healing"], "xp": 25},
+      "done": "Sister Maren blesses you and gives you a potion from the temple stores."
+    }
+  },
+  "places": {
+    "square": {
+      "name": "Thornbury Market",
+      "aliases": ["market", "square", "thornbury"],
+      "text": "A busy market square. Stalls sell everything from rope to longswords, and the Thorn and Thistle inn does a roaring trade. The temple's bell tower rises to the north; the east gate leads to the woods.",
+      "sunlight": true,
+      "shop": {"name": "the market"},
+      "inn": {"name": "The Thorn and Thistle", "room": "comfortable"},
+      "exits": [{"to": "temple"}, {"to": "gate"}]
+    },
+    "temple": {
+      "name": "The Temple of the Dawn",
+      "aliases": ["temple"],
+      "text": "A quiet temple of pale stone, scented with incense.",
+      "people": [
+        {"id": "sister", "name": "Sister Maren", "text": "A young priestess in white.", "says": "Light keep you, travellers.", "quest": "kit", "creature": "priest acolyte", "attitude": "friendly", "position": [20, 0]}
+      ]
+    },
+    "gate": {
+      "name": "The East Gate",
+      "aliases": ["gate"],
+      "text": "The town's east gate, watched by a captain of the guard.",
+      "sunlight": true,
+      "people": [
+        {"id": "captain", "name": "Captain Reyes", "text": "A weathered captain of the guard.", "says": "Looking for work?", "quest": "wolves", "creature": "guard", "attitude": "indifferent", "position": [10, 10]}
+      ],
+      "exits": [{"to": "woods", "travel": {"miles": 1, "pace": "normal", "terrain": "forest"}}]
+    },
+    "woods": {
+      "name": "The Woods' Edge",
+      "aliases": ["woods", "forest"],
+      "text": "Tangled undergrowth at the edge of the woods. Tufts of wool hang on the brambles, and something growls.",
+      "sunlight": true,
+      "ground": [{"kind": "undergrowth", "rect": [15, -20, 25, 20]}],
+      "encounter": {"monsters": ["wolf", "wolf"], "positions": [[35, 0], [35, 10]]}
+    }
+  }
+}

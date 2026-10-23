@@ -69,9 +69,12 @@ class Play:
             self.session.adventure = Adventure(self.session, data)
 
     def begin(self) -> str:
+        adv = self.session.adventure
+        about = f"This adventure: {adv.title}. {adv.data.get('about', '')}\n" if adv is not None else ""
         return (
             "Welcome to DungDra, a fifth-edition-compatible adventure.\n"
-            "Create your party: describe a character (e.g. 'A dwarf fighter, ex-soldier, standard "
+            + about
+            + "Create your party: describe a character (e.g. 'A dwarf fighter, ex-soldier, standard "
             "array ...'), "
             "or type 'use the sample party'. Type 'begin the adventure' when everyone is ready."
         )

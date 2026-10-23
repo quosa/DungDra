@@ -1,0 +1,45 @@
+{
+  "title": "The Goblin Cellar",
+  "about": "Combat and magic: a band of goblins has dug into a farmhouse cellar. Drive them out.",
+  "start": "farmhouse",
+  "quests": {
+    "goblins": {
+      "title": "Goblins Under the Floor",
+      "giver": "edda",
+      "offer": "Goblins! They tunnelled into my cellar two nights ago. Get them out of there and the coin in my strongbox is yours: 50 gold.",
+      "goal": {"defeat": "cellar"},
+      "reward": {"gp": 50},
+      "done": "Edda opens her strongbox with shaking hands."
+    }
+  },
+  "places": {
+    "farmhouse": {
+      "name": "Edda's Farmhouse",
+      "aliases": ["farmhouse", "farm", "kitchen"],
+      "text": "A low farmhouse kitchen. The farmer, Edda, has barricaded the cellar door with a table, and something scratches on the other side.",
+      "people": [
+        {"id": "edda", "name": "Edda", "text": "A grey-haired farmer holding a pitchfork.", "says": "Thank the gods, adventurers!", "quest": "goblins", "creature": "guard", "attitude": "friendly", "position": [-10, 0]}
+      ],
+      "exits": [{"to": "stairs"}]
+    },
+    "stairs": {
+      "name": "The Cellar Stairs",
+      "aliases": ["stairs"],
+      "text": "Narrow stairs into the dark, littered with broken crockery.",
+      "light": "dim",
+      "ground": [{"kind": "rubble", "rect": [5, -5, 15, 5]}],
+      "exits": [{"to": "cellar"}]
+    },
+    "cellar": {
+      "name": "The Goblin Cellar",
+      "aliases": ["cellar"],
+      "text": "Shelves of preserves have been knocked over. Two goblins in scavenged mail and a pair of scrawny ones squat around a stolen ham.",
+      "light": "dim",
+      "encounter": {
+        "monsters": ["goblin warrior", "goblin warrior", "goblin minion", "goblin minion"],
+        "positions": [[30, 0], [30, 10], [40, 5], [40, -5]]
+      },
+      "loot": {"items": ["potion of healing"], "gp": 15}
+    }
+  }
+}
