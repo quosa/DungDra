@@ -3396,11 +3396,6 @@ def test_ally_two_bystanders_on_no_side_arent_each_others_allies(game):
 
 # ---------------- GLOSS.enemy · how long harm lasts, and who it brings in (T-126) ----------------
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#2", kind="positive", ruling="R-53")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-126: harm by deed never wears off, so a bystander who attacked LIDDA is still her "
-    "enemy after the combat has ended",
-)
 def test_enemy_harm_wears_off_when_the_combat_ends(game):
     lidda, target = archer_scene(game)
     w = neutral(game)
@@ -3421,11 +3416,6 @@ def test_enemy_harm_outside_a_combat_doesnt_wear_off_with_time(game):
 
 
 @pytest.mark.srd(ENEMY, clause=f"{ENEMY}#1", kind="positive", ruling="R-54")
-@pytest.mark.xfail(
-    strict=True,
-    reason="T-126: only the creature that attacked counts, so a bystander BROM attacks in a combat "
-    "isn't LIDDA's enemy and her shot next to it has no Disadvantage",
-)
 def test_enemy_a_bystander_attacked_by_one_of_you_in_a_combat_fights_your_whole_side(game):
     lidda, target = archer_scene(game)
     w = neutral(game)  # next to LIDDA

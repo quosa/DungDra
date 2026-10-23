@@ -354,3 +354,31 @@ def test_a_bystanders_area_spell_harms_another_bystander_it_catches(game):
     porter = bystander(game, pos=(5, 0))
     S.cast(game, mage, "thunderwave", [porter])
     assert game.is_enemy(porter, mage)  # R-52: not the caster's ally, so it's harmed
+
+
+def test_harm_lasts_until_the_combat_ends(game):
+    lidda = pc(game, "LIDDA", (0, 0))
+    w = bystander(game)
+    game.works_to_harm(w, lidda, "an attack")
+    C.roll_initiative(game, [lidda, w])
+    assert game.is_enemy(lidda, w)
+    C.end_combat(game)
+    assert not game.is_enemy(lidda, w) and w.harming == set()
+
+
+def test_in_a_combat_the_harmed_and_the_harmers_side_fight_each_other(game):
+    lidda, brom = pc(game, "LIDDA", (0, 0)), pc(game, "BROM", (10, 0))
+    w = bystander(game)
+    game.works_to_harm(brom, w, "an attack")
+    assert game.is_enemy(w, brom) and not game.is_enemy(w, lidda)  # outside a combat: BROM only
+    C.roll_initiative(game, [lidda, brom, w])
+    assert game.is_enemy(w, lidda) and game.is_enemy(lidda, w)  # R-54: both ways, the whole side
+    assert game.is_ally(lidda, brom)  # the party's own alliance is untouched
+
+
+def test_harming_a_creature_on_your_own_side_doesnt_turn_the_rest_of_it(game):
+    lidda, brom, mialee = pc(game, "LIDDA", (0, 0)), pc(game, "BROM", (10, 0)), pc(game, "MIALEE", (5, 5))
+    C.roll_initiative(game, [lidda, brom, mialee])
+    game.works_to_harm(mialee, lidda, "an attack")
+    assert game.is_enemy(lidda, mialee)  # the one who harmed her
+    assert not game.is_enemy(lidda, brom) and game.is_ally(lidda, brom)

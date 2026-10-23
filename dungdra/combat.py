@@ -420,6 +420,9 @@ def end_combat(game, reason=""):
     )
     game.combat = None
     game.turn_actor = None
+    # SRD[GLOSS.enemy#2] R-53: working to harm someone makes you its enemy until the combat ends
+    for c in game.creatures.values():
+        c.harming.clear()
     for c in game.creatures.values():
         for e in list(c.effects):
             if (

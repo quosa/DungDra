@@ -7,12 +7,16 @@
     "tests/srd/test_glossary.py::test_enemy_harm_wears_off_when_the_combat_ends",
     "tests/srd/test_glossary.py::test_enemy_a_bystander_attacked_by_one_of_you_in_a_combat_fights_your_whole_side"
   ],
-  "status": "open",
-  "attempts": 0,
+  "status": "fixed",
+  "attempts": 1,
   "history": [
     {
       "event": "created",
       "by": "person"
+    },
+    {
+      "event": "fixed",
+      "summary": "rechecked the change already in the working tree"
     }
   ]
 }

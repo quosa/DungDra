@@ -228,11 +228,25 @@ class Game:
         if "neutral" not in (a.team, b.team) and a.team != b.team:
             return True
         # SRD[GLOSS.enemy#2] R-45: it actively works to harm you (a Hostile attitude alone doesn't)
-        return a.id in b.harming
+        if a.id in b.harming:
+            return True
+        # SRD[GLOSS.enemy#1] R-54: in a combat, a creature that was harmed and the harmer's side fight
+        # against each other, whichever of the two was harmed
+        return self.combat is not None and (self._side_harmed(b, a) or self._side_harmed(a, b))
+
+    def _side_harmed(self, x, y) -> bool:
+        """Has ``x``, or a creature on ``x``'s side, worked to harm ``y``? A creature harming one on
+        its own side doesn't turn the rest of that side (only the harmer is its enemy)."""
+        if x.team == y.team != "neutral":
+            return False
+        return any(
+            y.id in m.harming for m in self.creatures.values() if m is x or m.team == x.team != "neutral"
+        )
 
     def works_to_harm(self, actor, victim, what: str, ruling: str = "R-45"):
         """Record that ``actor`` actively works to harm ``victim`` with ``what`` (an attack, a save it
-        forces, damage it deals): from now on it is ``victim``'s enemy (p.181, R-45)."""
+        forces, damage it deals): it is ``victim``'s enemy until the end of the combat (p.181, R-45,
+        R-53)."""
         if actor is victim or victim.id in actor.harming:
             return
         was = self.is_enemy(victim, actor)
