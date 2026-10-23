@@ -7,13 +7,42 @@ A rules-faithful, single-player game engine that is compatible with fifth editio
 ## Play
 
 ```bash
-python -m dungdra              # interactive adventure: "The Goblin Trail"
-python -m dungdra --gm-log     # also show GM-only log lines (budgets, hidden DCs, rulings)
+python -m dungdra                           # start with "Rats in the Mill", a first adventure
+python -m dungdra --adventure town          # or pick one: mill-rats, goblin-cellar, trap-hall, town, goblin-trail
+python -m dungdra --adventure my-quest.json # or play your own adventure file
+python -m dungdra --gm-log                  # also show GM-only log lines (budgets, hidden DCs, rulings)
 ```
 
-Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Here are some example commands: `inventory`, `BROM inventory`, `MIALEE spells`, `JOZAN potions`, `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `LIDDA uses cunning action to hide`, `end turn`, `continue`, `short rest`, `status`. In combat, a refused command (such as an out-of-range attack) doesn't cost anything. After each command the game shows what the active character can still do, and the turn ends on its own once no action or useful Bonus Action is left. Use `--manual-turns` to always type `end turn` yourself. Whenever the rules offer you a choice (a Reaction such as Shield, Halfling Luck, Heroic Inspiration or Savage Attacker), the game asks you.
+| Adventure | What it is |
+|---|---|
+| `mill-rats` | A first quest: the miller's rats. A village with a stall and an inn, an easy fight, a reward in coin. |
+| `goblin-cellar` | Combat and magic: goblins have dug into a farmhouse cellar. |
+| `trap-hall` | Traps and treacherous ground: a hidden pit, rubble and a trapped chest guarded by skeletons. |
+| `town` | Thornbury, a market town: shopping, the inn, the temple, and two jobs from the townsfolk. |
+| `goblin-trail` | The original campaign: a one-way road to a goblin lair. Hard at level 1. |
 
-Stuck on the Goblin Trail's ambush? `docs/example-ambush.md` has a full winning session (`--adventure goblin-trail --seed 5`) with the commands used and some tactics.
+Type `use the sample party` (BROM, LIDDA, MIALEE, JOZAN) or describe your own characters, for example *"A dwarf fighter, ex-soldier, standard array with Str 15, Dex 14 ... Defense style. Chain mail, shield and longsword."* The game asks for any missing choices. Then type `begin the adventure`. Type `help` in the game for more examples.
+
+| To... | Say, for example |
+|---|---|
+| Look around and move | `look`, `exits`, `map`, `continue`, `go to the cellar`, `go back` |
+| Meet people and take quests | `talk to the miller`, `accept the quest`, `quests`, `turn in the quest` |
+| Shop and rest | `shop`, `BROM buys a rope`, `LIDDA sells her dagger`, `rent a room`, `short rest`, `long rest` |
+| Check the party | `status` (HP, conditions, level, XP and coins), `inventory`, `BROM inventory`, `MIALEE spells` |
+| Fight | `BROM moves toward goblin warrior 1`, `BROM attacks the goblin with his longsword`, `MIALEE casts magic missile at goblin warrior 2`, `JOZAN casts healing word on BROM`, `LIDDA uses cunning action to hide`, `end turn` |
+| Deal with traps | `MIALEE examines the floor for traps`, `BROM wedges a spike into the pit lid`, `LIDDA disarms the trap`, `open the chest` |
+
+How the game helps:
+
+- **In combat** the game shows what the active character can still do after each command, and the turn ends on its own once no action or useful Bonus Action is left (`--manual-turns` to always type `end turn` yourself). A refused command, such as an out-of-range attack, doesn't cost anything.
+- **Choices the rules offer you** (a Reaction such as Shield, Halfling Luck, Heroic Inspiration, Savage Attacker) are asked at the keyboard; Enter takes the default.
+- **A typo** gets "Did you mean 'begin the adventure'?", and `yes` does it.
+- **Harming someone who isn't fighting you** (a bystander, or a companion caught in a spell's area) asks "Do it anyway?" first.
+- **A bug in the game** never ends the session: the command is stopped, the game goes on, and the details go to `dungdra-errors.log` (`--error-log` to put them elsewhere).
+
+You win XP for the monsters you defeat (shared out, R-02) and gold and items for the quests you finish; the party reaches level 2 at 300 XP and level 3 at 900. Stuck on the Goblin Trail's ambush? `docs/example-ambush.md` has a full winning session (`--adventure goblin-trail --seed 5`) with the commands used and some tactics.
+
+**Writing your own adventure:** an adventure is a JSON file of places joined by exits, with the fights, traps, treasure, shops, inns, people and quests in each. `docs/adventure-format.md` describes it, and the files in `dungdra/data/adventures/` are worked examples. The file is checked when it's loaded, and a mistake is reported with where it is.
 
 ## Architecture
 
@@ -27,7 +56,8 @@ Stuck on the Goblin Trail's ambush? `docs/example-ambush.md` has a full winning 
 | `monster.py`, `gm.py`, `encounters.py` | The 14 stat blocks, monster tactics, encounter budgets (R-03), and the XP split (R-02) |
 | `rest.py`, `hazards.py`, `traps.py`, `explore.py`, `gear.py` | Rests, hazards, poisons, traps, travel, jumping, trade, lifestyle, and crafting |
 | `api.py` | Structured command API: `Session().execute({"cmd": ..., ...})` |
-| `nl.py`, `play.py`, `cli.py`, `adventure.py` | Natural-language interface, the campaign, and the terminal UI |
+| `scenario.py`, `adventure.py`, `town.py` | Adventure files and their checks; places, exits, fights, traps and loot; shops, inns, people and quests |
+| `nl.py`, `play.py`, `cli.py` | Natural-language interface and the terminal UI |
 | `audit.py`, `snapshot.py` | JSON state snapshot and log reconciliation |
 
 ## Tests
@@ -36,7 +66,7 @@ Stuck on the Goblin Trail's ambush? `docs/example-ambush.md` has a full winning 
 pip install pytest && pytest       # pytest 7+; `python -m pytest` also works
 ```
 
-Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
+Each test file maps to scenario IDs in `docs/dnd-golden-scenarios-srd521.md`. The journey tests (J1–J6, and one per adventure in `tests/scenarios/test_arenas.py`) play through the natural-language interface. `docs/scenario-notes.md` lists where the engine follows the SRD over a scenario, plus the extra ruling R-04.
 
 > **License note (CC-BY-4.0).** The SRD may be used freely, but the game and any repo that includes SRD text or data **must** include this attribution statement verbatim (SRD p.1):
 > *"This work includes material from the System Reference Document 5.2.1 ("SRD 5.2.1") by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode."*

@@ -33,7 +33,7 @@ is (`goblin-trail: places.road.ambush.monsters: no monster 'gobln'`).
 | `encounter` | A fight when the party first arrives: `{"monsters": ["goblin warrior"], "positions": [[30, 0]]}`. |
 | `ambush` | A fight with hidden attackers: an encounter plus `hide_total` (their Stealth) and `text`. |
 | `traps` | `[{"kind": "hidden pit", "location": "the hall floor"}]`. |
-| `loot` | `{"items": ["potion of healing"], "gp": 30}`, taken when the party moves on (a `poisoned needle` trap locks it in a chest). |
+| `loot` | `{"items": ["potion of healing"], "gp": 30}`, picked up by the first character on their feet when the party leaves, or with `open the chest`. A `poisoned needle` trap locks it in a chest: the party must open or leave the chest to press on, and turning back leaves it locked. |
 | `ending` | Said when the party says `continue` here and the place has no exit of its own: the adventure ends. |
 
 | `shop` | `{"name": "the general store", "sells": ["rope", "iron spikes"], "buys": true}`. Without `sells` it stocks every weapon, armor and piece of gear at list price (p.89). When an adventure has any shop, buying and selling happen only at one. |
@@ -50,7 +50,7 @@ web, Difficult Terrain) is still there when it comes back.
 by the travel rules (p.12) each time the party goes that way.
 
 The party moves with `continue` (the place's first exit), `go to <place>` (any place it can
-reach, one place at a time), and `go back` (where it came from). `exits` describes the place,
+reach, one place at a time), and `go back` (retracing the way it came, one place at a time). `exits` describes the place,
 and `map` lists the places visited and their ways on.
 
 ## Quests
