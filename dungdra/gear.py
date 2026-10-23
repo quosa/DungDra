@@ -161,14 +161,17 @@ def buy(game, pc, name: str, qty: int = 1):
 
 
 def sell(game, pc, name: str, qty: int = 1):
-    it = pc.inventory.find(name)
-    if it is None:
+    """Sell `qty` of an item, a spare before the one being worn."""
+    owned = pc.inventory.find_all(name) or [x for x in [pc.inventory.find(name)] if x]
+    if not owned:
         raise Refusal(f"{pc.name} doesn't have {name}")
-    if it is pc.armor or it is pc.shield:
-        raise Refusal(f"Take off {it.display} before selling it")
+    spare = [x for x in owned if x is not pc.armor and x is not pc.shield]
+    if not spare:
+        raise Refusal(f"Take off {owned[0].display} before selling it")
+    it = spare[0]
     price = it.sale_price() * qty
     pc.inventory.remove(it, qty)
-    if it in pc.wielded:
+    if it in pc.wielded and it.qty <= 0:  # the last of the stack in hand is gone
         pc.wielded.remove(it)
     pc.purse.add(price)
     game.log.player(
